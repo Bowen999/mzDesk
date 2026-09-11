@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+# large vendored binary (unchanged; kept out of the local history)
+lib/*.jar

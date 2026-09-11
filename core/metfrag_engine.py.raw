@@ -1,0 +1,366 @@
+```python
+import os, re, json, base64, tempfile, subprocess
+from pathlib import Path
+import streamlit as st
+import pandas as pd
+import plotly, plotly.graph_objects as go
+from rdkit import Chem
+from rdkit.Chem import Descriptors, rdMolDescriptors
+from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit import RDLogger
+
+RDLogger.DisableLog('rdApp.*')
+
+JAR = Path(__file__).parent.parent / "lib" / "MetFragCommandLine-2.5.2.jar"
+
+
+@st.cache_resource
+def get_plotlyjs():
+    return plotly.offline.get_plotlyjs()
+
+
+def render_frag_png(smi, size=(240, 170)):
+    """Best-effort 2D depiction of a (possibly artifact-laden) MetFrag fragment SMILES -> base64 PNG str."""
+    if not smi:
+        return ""
+    m = Chem.MolFromSmiles(smi)
+    if m is None:
+        m = Chem.MolFromSmiles(smi, sanitize=False)
+        if m is None:
+            return ""
+        try:
+            m.UpdatePropertyCache(strict=False)
+            Chem.SanitizeMol(m, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^
+                             Chem.SanitizeFlags.SANITIZE_PROPERTIES ^ Chem.SanitizeFlags.SANITIZE_KEKULIZE)
+        except Exception:
+            pass
+    try:
+        d = rdMolDraw2D.MolDraw2DCairo(*size)
+        rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+        d.FinishDrawing()
+        return base64.b64encode(d.GetDrawingText()).decode()
+    except Exception:
+        return ""
+
+
+@st.cache_data(show_spinner=False)
+def render_input_png(smiles, size=(560, 360)):
+    """Render the INPUT molecule to PNG bytes for display (None if the SMILES is invalid)."""
+    if not smiles or not smiles.strip():
+        return None
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return None
+    d = rdMolDraw2D.MolDraw2DCairo(*size)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, mol)
+    d.FinishDrawing()
+    return d.GetDrawingText()
+
+
+def decode_metfrag_ion(s):
+    """Decode a MetFrag ion-formula string like '[C3H8O5P-H]-H-' -> (net_formula_dict, total_H_shift)."""
+    m = re.match(r'\[([^\]]+)\](.*)$', s)
+    if not m:
+        return {}, 0
+    inner, tail = m.group(1), m.group(2)
+    hshift = 0
+    for a in re.finditer(r'([+-])(\d*)H(?![a-z])', inner):
+        hshift += (1 if a.group(1) == '+' else -1) * (int(a.group(2)) if a.group(2) else 1)
+    base = re.sub(r'[+-]\d*H(?![a-z])', '', inner)
+    for a in re.finditer(r'([+-])(\d*)H', tail):
+        hshift += (1 if a.group(1) == '+' else -1) * (int(a.group(2)) if a.group(2) else 1)
+    counts = {}
+    for el, n in re.findall(r'([A-Z][a-z]?)(\d*)', base):
+        if el:
+            counts[el] = counts.get(el, 0) + (int(n) if n else 1)
+    counts['H'] = counts.get('H', 0) + hshift
+    return counts, hshift
+
+
+def ion_mz(counts, positive):
+    """m/z of a singly-charged ion. Cation: -1 electron; anion: +1 electron."""
+    mass = sum(ATOMIC.get(el, 0.0) * n for el, n in counts.items())
+    return mass + (-ELECTRON if positive else ELECTRON)
+
+
+def formula_str(counts):
+    order = ['C', 'H', 'N', 'O', 'P', 'S', 'F', 'Cl', 'Br', 'Na', 'K']
+    parts = []
+    for el in order:
+        n = counts.get(el, 0)
+        if n:
+            parts.append(el + (str(n) if n != 1 else ''))
+    for el, n in counts.items():
+        if el not in order and n:
+            parts.append(el + (str(n) if n != 1 else ''))
+    return ''.join(parts)
+
+
+def parse_spectrum(text):
+    """Parse a peak list into [(mz, intensity), ...]."""
+    text = (text or "").strip()
+    if not text:
+        return []
+    peaks = []
+    if ":" in text:
+        for tok in text.split():
+            bits = tok.split(":")
+            try:
+                mz = float(bits[0])
+            except (ValueError, IndexError):
+                continue
+            inten = 1.0
+            if len(bits) > 1 and bits[1]:
+                try:
+                    inten = float(bits[1])
+                except ValueError:
+                    inten = 1.0
+            peaks.append((mz, inten))
+    else:
+        for line in text.splitlines():
+            parts = [p for p in re.split(r"[\s,]+", line.strip()) if p]
+            if not parts:
+                continue
+            try:
+                mz = float(parts[0])
+            except ValueError:
+                continue
+            inten = float(parts[1]) if len(parts) > 1 else 1.0
+            peaks.append((mz, inten))
+    agg = {}
+    for mz, i in peaks:
+        agg[round(mz, 5)] = max(agg.get(round(mz, 5), 0.0), i)
+    return sorted(agg.items())
+
+
+def parse_metfrag_psv(psv_path):
+    """Parse FragmentSmilesPSV: returns dicts keyed by float(mz) -> ion-formula str / fragment-SMILES."""
+    lines = Path(psv_path).read_text(encoding='utf-8').strip().splitlines()
+    formulas, smiles = {}, {}
+    if len(lines) < 2:
+        return formulas, smiles
+    for field in lines[1].split('|'):
+        field = field.strip()
+        if re.search(r'\d+\.\d+:\[', field):
+            for e in field.split(';'):
+                if ':' in e:
+                    k, v = e.split(':', 1); formulas[float(k)] = v
+        elif re.search(r'\d+\.\d+:[A-Za-z(\[]', field) and not smiles:
+            for e in field.split(';'):
+                if ':' in e:
+                    k, v = e.split(':', 1); smiles[float(k)] = v
+    return formulas, smiles
+
+
+HOVER_TEMPLATE = r'''<!doctype html><html><head><meta charset="utf-8">
+<style>
+ html,body{margin:0;font-family:-apple-system,Helvetica,Arial,sans-serif;background:#fff}
+ #plot{width:100%}
+ #structbox{position:fixed;display:none;z-index:9999;background:#fff;border:1px solid #d7dce3;
+   border-radius:10px;box-shadow:0 6px 24px rgba(20,40,90,.14);padding:10px 12px;pointer-events:none;max-width:270px}
+ #structbox .hdr{font-weight:600;font-size:13px;color:#16357a;margin-bottom:2px}
+ #structbox .row{font-size:12px;color:#334;margin-bottom:1px}
+ #structbox img{margin-top:6px;width:240px;height:auto;display:block}
+</style>
+<script>__PLOTLYJS__</script></head>
+<body>
+<div id="plot"></div>
+<div id="structbox"></div>
+<script>
+ var fig = __FIGJSON__;
+ Plotly.newPlot('plot', fig.data, fig.layout, {responsive:true, displayModeBar:false});
+ var gd = document.getElementById('plot'), box = document.getElementById('structbox');
+ gd.on('plotly_hover', function(ev){
+   var pt = ev.points[0];
+   if(pt.data.name === 'annotated' && pt.customdata){
+     var cd = pt.customdata;
+     var ppm = (cd[2]===null||cd[2]===undefined) ? '' : '  ('+Number(cd[2]).toFixed(1)+' ppm)';
+     box.innerHTML = '<div class="hdr">m/z '+Number(pt.x).toFixed(4)+'</div>'+
+       '<div class="row">NL '+Number(cd[1]).toFixed(4)+'</div>'+
+       '<div class="row">'+cd[0]+ppm+'</div>'+
+       (cd[3] ? '<img src="data:image/png;base64,'+cd[3]+'"/>' : '');
+     box.style.display='block';
+     var e = ev.event, bw=270, bh=box.offsetHeight||230;
+     var lx=(e.clientX||0)+16, ty=(e.clientY||0)+16;
+     if(lx+bw>window.innerWidth) lx=(e.clientX||0)-bw-16;
+     if(ty+bh>window.innerHeight) ty=window.innerHeight-bh-8;
+     box.style.left=lx+'px'; box.style.top=ty+'px';
+   }
+ });
+ gd.on('plotly_unhover', function(){ box.style.display='none'; });
+</script></body></html>'''
+
+ATOMIC = {'C':12.0,'H':1.00782503,'O':15.99491462,'P':30.97376199,'N':14.0030740,'S':31.9720707,
+          'F':18.99840322,'Cl':34.96885268,'Br':78.9183376,'Na':22.98976928,'K':38.96370649}
+ELECTRON = 0.000548579909
+DARK = "#1B3A8F"
+LIGHT = "#A9BEEA"
+
+ADDUCTS = {
+    "[M-H]-":     {"mode": -1, "positive": False, "shift": -1.0072764},
+    "[M+Cl]-":    {"mode": 35, "positive": False, "shift": 34.9694011},
+    "[M+HCOO]-":  {"mode": 45, "positive": False, "shift": 44.9982010},
+    "[M+CH3COO]-":{"mode": 59, "positive": False, "shift": 59.0138510},
+    "[M+H]+":     {"mode":  1, "positive": True,  "shift":  1.0072764},
+    "[M+Na]+":    {"mode": 23, "positive": True,  "shift": 22.9892214},
+    "[M+NH4]+":   {"mode": 18, "positive": True,  "shift": 18.0338254},
+}
+
+DEFAULT_SPECTRUM = """139.00977 3
+152.99622 24
+168.04965 3
+279.22757 48
+280.2258 27
+281.24707 1101
+282.24652 24
+283.26199 14
+491.25638 10
+509.2948 17
+599.81622 3
+713.46429 10
+773.53589 416"""
+
+
+def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_ppm):
+    """Run MetFrag and return annotation results."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        raise ValueError("Invalid SMILES string. Please check the structure.")
+    try:
+        mol = rdMolStandardize.Uncharger().uncharge(mol)
+    except Exception:
+        pass
+    if Chem.GetFormalCharge(mol) != 0:
+        raise ValueError(
+            f"The input structure carries a net charge that could not be neutralized "
+            f"(net {Chem.GetFormalCharge(mol):+d}). Please provide the NEUTRAL molecule's "
+            "SMILES — MetFrag adds the adduct itself."
+        )
+    neutral_smiles = Chem.MolToSmiles(mol)
+    inchi = Chem.MolToInchi(mol)
+    inchikey = Chem.InchiToInchiKey(inchi)
+    mol_formula = rdMolDescriptors.CalcMolFormula(mol)
+    mono_mass = Descriptors.ExactMolWt(mol)
+    expected_precursor = mono_mass + ADDUCTS[adduct]["shift"]
+    warning = None
+    if precursor_mz is None or precursor_mz == "":
+        precursor_mz = expected_precursor
+    elif abs(precursor_mz - expected_precursor) > 0.5:
+        warning = (
+            f"Precursor m/z {precursor_mz:.4f} does not match the structure's {adduct} m/z "
+            f"{expected_precursor:.4f} (Δ {precursor_mz - expected_precursor:+.3f} Da). "
+            "Check the SMILES, adduct, or precursor value — annotation may be poor."
+        )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+        (tmp / "results").mkdir(exist_ok=True)
+        candidate_path = tmp / "candidate.csv"
+        with open(candidate_path, "w") as f:
+            f.write('"Identifier","InChI","MonoisotopicMass","MolecularFormula","SMILES","InChIKey","CompoundName"\n')
+            f.write(f'"candidate","{inchi}","{mono_mass:.6f}","{mol_formula}","{neutral_smiles}","{inchikey}","candidate"\n')
+        peaks_path = tmp / "peaks.txt"
+        with open(peaks_path, "w") as f:
+            for mz, inten in peaks:
+                f.write(f"{mz:.5f} {inten:.1f}\n")
+        param_path = tmp / "param.txt"
+        params = [
+            f"PeakListPath = {peaks_path}",
+            "MetFragDatabaseType = LocalCSV",
+            f"LocalDatabasePath = {candidate_path}",
+            f"NeutralPrecursorMolecularFormula = {mol_formula}",
+            f"PrecursorIonMode = {ADDUCTS[adduct]['mode']}",
+            f"IsPositiveIonMode = {ADDUCTS[adduct]['positive']}",
+            "MetFragCandidateWriter = FragmentSmilesPSV",
+            "SampleName = sample",
+            f"ResultsPath = {tmp / 'results'}",
+            f"MaximumTreeDepth = {tree_depth}",
+            f"FragmentPeakMatchAbsoluteMassDeviation = {tol_abs}",
+            f"FragmentPeakMatchRelativeMassDeviation = {tol_ppm}",
+            "DatabaseSearchRelativeMassDeviation = 10",
+            "MetFragPreProcessingCandidateFilter = UnconnectedCompoundFilter",
+        ]
+        with open(param_path, "w") as f:
+            f.write("\n".join(params))
+        try:
+            result = subprocess.run(
+                ["java", "-jar", str(JAR), str(param_path)],
+                capture_output=True, text=True, timeout=1200
+            )
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("MetFrag timed out after 1200 seconds.")
+        if result.returncode != 0:
+            log_tail = ((result.stdout or "") + (result.stderr or ""))[-700:] or "No output"
+            raise RuntimeError(f"MetFrag failed with exit code {result.returncode}.\nLog tail:\n{log_tail}")
+        psv_path = tmp / "results" / "sample.psv"
+        if not psv_path.exists():
+            raise RuntimeError("MetFrag did not produce expected output file.")
+        formulas, smiles_dict = parse_metfrag_psv(psv_path)
+    max_inten = max(i for _, i in peaks) if peaks else 1.0
+    positive = ADDUCTS[adduct]["positive"]
+    annotation = []
+    for mz, inten in peaks:
+        rel = inten / max_inten * 100.0
+        tol = max(tol_abs, precursor_mz * tol_ppm / 1e6)
+        if abs(mz - precursor_mz) <= tol:
+            annotation.append({
+                "mz": mz, "intensity": inten, "rel": rel, "annotated": True,
+                "ion_formula": mol_formula, "nl": 0.0,
+                "ppm": (mz - precursor_mz) / precursor_mz * 1e6,
+                "b64": render_frag_png(smiles)})
+            continue
+        match_key = None
+        for key in formulas:
+            if abs(key - mz) <= 1e-3:
+                match_key = key
+                break
+        if match_key is not None:
+            ion = formulas[match_key]
+            counts, _ = decode_metfrag_ion(ion)
+            ion_formula = formula_str(counts)
+            calc_mz = ion_mz(counts, positive)
+            ppm = (mz - calc_mz) / calc_mz * 1e6
+            nl = precursor_mz - mz
+            b64 = render_frag_png(smiles_dict.get(match_key, ""))
+            annotation.append({
+                "mz": mz, "intensity": inten, "rel": rel, "annotated": True,
+                "ion_formula": ion_formula, "nl": nl, "ppm": ppm, "b64": b64})
+        else:
+            annotation.append({
+                "mz": mz, "intensity": inten, "rel": rel, "annotated": False,
+                "ion_formula": "", "nl": None, "ppm": None, "b64": ""})
+    return {
+        "mol_formula": mol_formula, "mono_mass": mono_mass,
+        "precursor_mz": precursor_mz, "positive": positive,
+        "annotation": annotation, "warning": warning}
+
+
+def build_figure(result, dark="#1B3A8F", light="#A9BEEA"):
+    """Build the interactive MS2 figure."""
+    annotation = result["annotation"]
+    annotated = [a for a in annotation if a["annotated"]]
+    unannotated = [a for a in annotation if not a["annotated"]]
+    if not annotation:
+        return go.Figure()
+    mz_min = min(a["mz"] for a in annotation)
+    mz_max = max(a["mz"] for a in annotation)
+    width = max((mz_max - mz_min) * 0.005, 0.4)
+    fig = go.Figure()
+    if unannotated:
+        fig.add_trace(go.Bar(
+            name="unannotated", x=[a["mz"] for a in unannotated], y=[a["rel"] for a in unannotated],
+            marker_color=light, width=width,
+            hovertemplate="m/z %{x:.4f}<br>rel. int %{y:.1f}%<extra></extra>"))
+    if annotated:
+        fig.add_trace(go.Bar(
+            name="annotated", x=[a["mz"] for a in annotated], y=[a["rel"] for a in annotated],
+            marker_color=dark, width=width,
+            customdata=[[a["ion_formula"], a["nl"], a["ppm"], a["b64"]] for a in annotated],
+            hoverinfo="none"))
+    fig.update_layout(
+        template="simple_white", bargap=0, showlegend=False, hovermode="closest",
+        hoverdistance=20, margin=dict(l=55, r=20, t=15, b=45), height=470,
+        xaxis_title="m/z", yaxis_title="Relative intensity (%)",
+        xaxis_range=[mz_min - 15, mz_max + 15], yaxis_range=[0, 108])
+    return fig
+```

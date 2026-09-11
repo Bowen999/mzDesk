@@ -1,0 +1,599 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ms2_similarity.py — 计算两张 MS/MS 谱图之间的多种相似度得分。
+
+输入：两张 MS2 谱（JSON 峰列表，precursor m/z 可选）。
+输出：终端打印按类别分组的所有相似度得分表。
+
+用法（CLI）：
+    python ms2_similarity.py \
+        --spec1 '{"peaks": [[100.05, 1000], [200.10, 500]], "precursor_mz": 500.20}' \
+        --spec2 spec2.json
+
+    --spec1/--spec2   JSON 字符串、JSON 文件路径、或 @文件路径
+    --tolerance       碎片匹配容差（Da），默认 0.02
+    --no-deep         跳过深度学习方法（MS2DeepScore / Spec2Vec）
+    --ms2deepscore-model PATH   本地 MS2DeepScore 模型路径（默认自动下载并缓存）
+    --spec2vec-model PATH       本地 Spec2Vec 模型路径（默认自动下载并缓存）
+
+作为模块导入：
+    from ms2_similarity import compute_all_similarities
+    results = compute_all_similarities(peaks1, peaks2, precursor_mz1=500.2,
+                                       precursor_mz2=516.2, tolerance=0.02)
+
+依赖：
+    必需: matchms, ms_entropy, numpy, scipy
+    可选: ms2deepscore (+torch), gensim
+    注: Spec2Vec 打分直接基于 gensim Word2Vec 模型实现（与官方预训练模型兼容），
+        无需安装 spec2vec 包（其与新版 matchms 不兼容）。
+
+覆盖指标（共 14 种）：
+    经典峰匹配 (matchms): CosineGreedy, CosineHungarian, CosineLinear,
+        ModifiedCosineGreedy, ModifiedCosineHungarian, NeutralLossesCosine, BlinkCosine
+    谱熵 (ms_entropy): 加权 / 未加权谱熵相似度
+    自定义 (numpy/scipy): NIST 加权点积, Reverse dot product,
+        分箱余弦, 分箱 Pearson 相关, 分箱 Spearman 相关
+    深度学习: MS2DeepScore, Spec2Vec
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+import urllib.request
+from functools import lru_cache
+
+import numpy as np
+
+# --------------------------------------------------------------------------- #
+# 模型下载地址（首次使用时自动下载并缓存到 ~/.cache/ms2_similarity/）
+# --------------------------------------------------------------------------- #
+CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "ms2_similarity")
+
+MS2DEEPSCORE_MODEL_URLS = [
+    "https://zenodo.org/records/17826815/files/ms2deepscore_model.pt?download=1",
+]
+# Spec2Vec 预训练模型（GNPS AllPositive, iter 15; Zenodo record 3978070）
+# gensim 加载需要主 .model 文件及两个分离保存的 .npy 数组
+SPEC2VEC_MODEL_FILES = {
+    "spec2vec_AllPositive_ratio05_filtered_iter_15.model":
+        "https://zenodo.org/records/3978070/files/spec2vec_AllPositive_ratio05_filtered_iter_15.model?download=1",
+    "spec2vec_AllPositive_ratio05_filtered_iter_15.model.wv.vectors.npy":
+        "https://zenodo.org/records/3978070/files/spec2vec_AllPositive_ratio05_filtered_iter_15.model.wv.vectors.npy?download=1",
+    "spec2vec_AllPositive_ratio05_filtered_iter_15.model.trainables.syn1neg.npy":
+        "https://zenodo.org/records/3978070/files/spec2vec_AllPositive_ratio05_filtered_iter_15.model.trainables.syn1neg.npy?download=1",
+}
+
+
+# --------------------------------------------------------------------------- #
+# 输入解析与预处理
+# --------------------------------------------------------------------------- #
+def load_spectrum_input(arg: str) -> dict:
+    """接受 JSON 字符串、JSON 文件路径或 @文件路径，返回 dict。"""
+    if arg.startswith("@"):
+        with open(arg[1:], "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    if os.path.isfile(arg):
+        with open(arg, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    return json.loads(arg)
+
+
+def normalize_peaks_input(peaks) -> tuple[np.ndarray, np.ndarray]:
+    """接受 [[mz, intensity], ...] 或 (mz_array, intensity_array)，返回两个数组。"""
+    if isinstance(peaks, tuple) and len(peaks) == 2:
+        mz = np.asarray(peaks[0], dtype=float)
+        intensities = np.asarray(peaks[1], dtype=float)
+    else:
+        arr = np.asarray(peaks, dtype=float)
+        if arr.ndim != 2 or arr.shape[1] != 2:
+            raise ValueError("peaks must be in [[mz, intensity], ...] format")
+        mz, intensities = arr[:, 0], arr[:, 1]
+    return mz, intensities
+
+
+def clean_peaks(mz: np.ndarray, intensities: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """去除非法/零强度峰，按 m/z 排序，强度归一化到基峰（=100）。"""
+    mask = (intensities > 0) & np.isfinite(mz) & np.isfinite(intensities) & (mz > 0)
+    mz, intensities = mz[mask], intensities[mask]
+    if mz.size == 0:
+        raise ValueError("spectrum has no valid peaks")
+    order = np.argsort(mz)
+    mz, intensities = mz[order], intensities[order]
+    intensities = intensities / intensities.max() * 100.0
+    return mz, intensities
+
+
+def to_matchms_spectrum(mz, intensities, precursor_mz=None, ionmode=None):
+    """构建 matchms Spectrum（仅做强度归一化，避免默认过滤链对 precursor 的要求）。"""
+    from matchms import Spectrum
+    from matchms.filtering import normalize_intensities
+
+    metadata = {}
+    if precursor_mz is not None:
+        metadata["precursor_mz"] = float(precursor_mz)
+    if ionmode is not None:
+        metadata["ionmode"] = ionmode
+    spec = Spectrum(mz=np.asarray(mz, dtype=float),
+                    intensities=np.asarray(intensities, dtype=float),
+                    metadata=metadata)
+    return normalize_intensities(spec)
+
+
+# --------------------------------------------------------------------------- #
+# 自定义相似度实现（numpy / scipy）
+# --------------------------------------------------------------------------- #
+def _greedy_match(mz1, w1, mz2, w2, tolerance):
+    """贪心峰匹配：候选峰对按权重乘积降序，每个峰最多匹配一次。"""
+    candidates = []
+    for i, m in enumerate(mz1):
+        lo = np.searchsorted(mz2, m - tolerance)
+        hi = np.searchsorted(mz2, m + tolerance, side="right")
+        for j in range(lo, hi):
+            candidates.append((w1[i] * w2[j], i, j))
+    candidates.sort(key=lambda x: -x[0])
+    used1, used2, matches = set(), set(), []
+    for _, i, j in candidates:
+        if i not in used1 and j not in used2:
+            used1.add(i)
+            used2.add(j)
+            matches.append((i, j))
+    return matches
+
+
+def _nist_weights(mz, intensities, mz_power=3.0, int_power=0.6):
+    """NIST 加权：w = mz^mz_power * I^int_power（Stein & Scott 1994）。"""
+    return (mz ** mz_power) * (intensities ** int_power)
+
+
+def nist_dot_product(mz1, i1, mz2, i2, tolerance):
+    """NIST 加权点积（归一化到两张谱全部峰）。"""
+    w1 = _nist_weights(mz1, i1)
+    w2 = _nist_weights(mz2, i2)
+    matches = _greedy_match(mz1, w1, mz2, w2, tolerance)
+    num = sum(np.sqrt(w1[i] * w2[j]) for i, j in matches)
+    den = np.sqrt(w1.sum() * w2.sum())
+    return (float(num / den) if den > 0 else 0.0), len(matches)
+
+
+def reverse_dot_product(mz1, i1, mz2, i2, tolerance):
+    """Reverse dot product：spec1 为查询谱（只用匹配上的峰归一化），spec2 为库谱（用全部峰归一化）。"""
+    w1 = _nist_weights(mz1, i1)
+    w2 = _nist_weights(mz2, i2)
+    matches = _greedy_match(mz1, w1, mz2, w2, tolerance)
+    num = sum(np.sqrt(w1[i] * w2[j]) for i, j in matches)
+    den = np.sqrt(sum(w1[i] for i, _ in matches) * w2.sum())
+    return (float(num / den) if den > 0 else 0.0), len(matches)
+
+
+def _binned_vectors(mz1, i1, mz2, i2, bin_width):
+    lo = np.floor(min(mz1.min(), mz2.min()) / bin_width) * bin_width
+    hi = max(mz1.max(), mz2.max()) + 2 * bin_width
+    edges = np.arange(lo, hi, bin_width)
+    v1, _ = np.histogram(mz1, bins=edges, weights=i1)
+    v2, _ = np.histogram(mz2, bins=edges, weights=i2)
+    return v1.astype(float), v2.astype(float)
+
+
+def binned_cosine(mz1, i1, mz2, i2, bin_width):
+    v1, v2 = _binned_vectors(mz1, i1, mz2, i2, bin_width)
+    den = np.linalg.norm(v1) * np.linalg.norm(v2)
+    return float(np.dot(v1, v2) / den) if den > 0 else 0.0
+
+
+def binned_correlation(mz1, i1, mz2, i2, bin_width, method="pearson"):
+    from scipy import stats
+    v1, v2 = _binned_vectors(mz1, i1, mz2, i2, bin_width)
+    if method == "pearson":
+        r = stats.pearsonr(v1, v2).statistic
+    else:
+        r = stats.spearmanr(v1, v2).statistic
+    return float(r) if np.isfinite(r) else None
+
+
+# --------------------------------------------------------------------------- #
+# 各指标计算（统一封装，失败时写入 note，不中断整体运行）
+# --------------------------------------------------------------------------- #
+def _add_result(results, category, method, score=None, matches=None, note=""):
+    results.append({"category": category, "method": method,
+                    "score": score, "matches": matches, "note": note})
+
+
+def _unpack_matchms_score(out):
+    """matchms .pair() 返回带 ('score','matches') 字段的 0 维结构化数组。"""
+    names = getattr(getattr(out, "dtype", None), "names", None)
+    if names:
+        score = float(out["score"])
+        matches = int(out["matches"]) if "matches" in names else None
+        return score, matches
+    return float(out), None
+
+
+def _matchms_scores(spec1, spec2, tolerance, results):
+    from matchms import similarity
+
+    cat = "Classic peak matching (matchms)"
+    has_precursor = (spec1.get("precursor_mz") is not None
+                     and spec2.get("precursor_mz") is not None)
+
+    entries = [
+        ("CosineGreedy", "CosineGreedy", False),
+        ("CosineHungarian", "CosineHungarian", False),
+        ("CosineLinear", "CosineLinear", False),
+        ("ModifiedCosineGreedy", "ModifiedCosineGreedy", True),
+        ("ModifiedCosineHungarian", "ModifiedCosineHungarian", True),
+        ("NeutralLossesCosine", "NeutralLossesCosine", True),
+        ("BlinkCosine", "BlinkCosine", False),
+    ]
+    for name, cls_name, needs_precursor in entries:
+        cls = getattr(similarity, cls_name, None)
+        if cls is None:
+            _add_result(results, cat, name,
+                        note="skipped: not provided by this matchms version")
+            continue
+        if needs_precursor and not has_precursor:
+            _add_result(results, cat, name, note="N/A: missing precursor m/z")
+            continue
+        try:
+            score, matches = _unpack_matchms_score(cls(tolerance=tolerance).pair(spec1, spec2))
+            _add_result(results, cat, name, score=score, matches=matches)
+        except Exception as exc:  # noqa: BLE001
+            _add_result(results, cat, name, note=f"Failed: {exc}")
+
+
+def _entropy_scores(mz1, i1, mz2, i2, tolerance, results):
+    cat = "Spectral entropy (ms_entropy)"
+    try:
+        import ms_entropy as me
+    except ImportError:
+        _add_result(results, cat, "SpectralEntropy", note="skipped: ms_entropy is not installed")
+        return
+
+    peaks1 = np.column_stack([mz1, i1])
+    peaks2 = np.column_stack([mz2, i2])
+    for name, fn_name in [("SpectralEntropy (weighted)", "calculate_entropy_similarity"),
+                          ("SpectralEntropy (unweighted)", "calculate_unweighted_entropy_similarity")]:
+        fn = getattr(me, fn_name, None)
+        if fn is None:
+            _add_result(results, cat, name, note="skipped: ms_entropy does not provide this function")
+            continue
+        try:
+            score = fn(peaks1, peaks2, ms2_tolerance_in_da=tolerance)
+            _add_result(results, cat, name, score=float(score))
+        except Exception as exc:  # noqa: BLE001
+            _add_result(results, cat, name, note=f"Failed: {exc}")
+
+
+def _custom_scores(mz1, i1, mz2, i2, tolerance, results):
+    cat = "Custom (numpy/scipy)"
+    try:
+        score, n = nist_dot_product(mz1, i1, mz2, i2, tolerance)
+        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", score=score, matches=n)
+    except Exception as exc:  # noqa: BLE001
+        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", note=f"Failed: {exc}")
+    try:
+        score, n = reverse_dot_product(mz1, i1, mz2, i2, tolerance)
+        _add_result(results, cat, "Reverse dot product", score=score, matches=n,
+                    note="Directional: query spectrum vs. reference library")
+    except Exception as exc:  # noqa: BLE001
+        _add_result(results, cat, "Reverse dot product", note=f"Failed: {exc}")
+    for name, fn in [("Binned cosine", lambda: binned_cosine(mz1, i1, mz2, i2, tolerance)),
+                     ("Binned Pearson correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "pearson")),
+                     ("Binned Spearman correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "spearman"))]:
+        try:
+            _add_result(results, cat, name, score=fn(), note=f"bin width = {tolerance} Da")
+        except Exception as exc:  # noqa: BLE001
+            _add_result(results, cat, name, note=f"Failed: {exc}")
+
+
+def _download_file(url, dest):
+    """下载单个文件，成功返回 True。"""
+    try:
+        print(f"  Downloading: {url}", file=sys.stderr)
+        urllib.request.urlretrieve(url, dest)
+        return os.path.getsize(dest) > 0
+    except Exception as exc:  # noqa: BLE001
+        print(f"  Download failed: {exc}", file=sys.stderr)
+        return False
+
+
+def _get_ms2deepscore_model():
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    dest = os.path.join(CACHE_DIR, "ms2deepscore_model.pt")
+    if os.path.isfile(dest) and os.path.getsize(dest) > 0:
+        return dest
+    for url in MS2DEEPSCORE_MODEL_URLS:
+        if _download_file(url, dest):
+            return dest
+    return None
+
+
+def _get_spec2vec_model():
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    main_dest = os.path.join(CACHE_DIR, "spec2vec_AllPositive_ratio05_filtered_iter_15.model")
+    for fname, url in SPEC2VEC_MODEL_FILES.items():
+        dest = os.path.join(CACHE_DIR, fname)
+        if os.path.isfile(dest) and os.path.getsize(dest) > 0:
+            continue
+        if not _download_file(url, dest):
+            return None
+    return main_dest
+
+
+@lru_cache(maxsize=1)
+def _load_ms2deepscore_model(model_path: str):
+    """Load and cache the MS2DeepScore model in memory for the process lifetime."""
+    from ms2deepscore.models import load_model
+    return load_model(model_path)
+
+
+def _ms2deepscore_score(spec1, spec2, model_path, results):
+    cat, name = "Deep learning", "MS2DeepScore"
+    if spec1.get("precursor_mz") is None or spec2.get("precursor_mz") is None:
+        _add_result(results, cat, name, note="N/A: missing precursor m/z")
+        return
+    try:
+        from ms2deepscore import MS2DeepScore
+    except ImportError:
+        _add_result(results, cat, name, note="skipped: ms2deepscore is not installed")
+        return
+    if model_path is None:
+        model_path = _get_ms2deepscore_model()
+    if model_path is None or not os.path.isfile(model_path):
+        _add_result(results, cat, name,
+                    note="skipped: model unavailable; provide a local path via --ms2deepscore-model")
+        return
+    try:
+        model = _load_ms2deepscore_model(model_path)
+        sim = MS2DeepScore(model, progress_bar=False)
+        score, _ = _unpack_matchms_score(sim.pair(spec1, spec2))
+        _add_result(results, cat, name, score=score, note="Predicted structural Tanimoto similarity")
+    except Exception as exc:  # noqa: BLE001
+        _add_result(results, cat, name, note=f"Failed: {exc}")
+
+
+class _DummyBase:
+    """占位基类：实例可调用、可迭代、属性可任意访问。"""
+
+    def __call__(self, *args, **kwargs):
+        return None
+
+    def __iter__(self):
+        return iter(())
+
+    def __getattr__(self, attr):
+        return _DummyBase()
+
+
+def _install_custom_functions_shim():
+    """官方 Spec2Vec 预训练模型（gensim 3.x 保存）的 pickle 引用了训练仓库中的
+    custom_functions 模块（及其子模块）。注册一个 meta path finder，为
+    custom_functions[.*] 提供占位模块，使模型可在新版 gensim 中加载。"""
+    import importlib.abc
+    import importlib.machinery
+    import types
+
+    def _make_dummy_module(name):
+        mod = types.ModuleType(name)
+        mod.__path__ = []
+
+        def _getattr(attr):
+            if attr.startswith("__") and attr.endswith("__"):
+                raise AttributeError(attr)
+            # 返回动态类而非实例：同时兼容函数引用与 pickle NEWOBJ 类实例化
+            return type(attr, (_DummyBase,), {})
+
+        mod.__getattr__ = _getattr
+        return mod
+
+    class _DummyLoader(importlib.abc.Loader):
+        def create_module(self, spec):
+            return _make_dummy_module(spec.name)
+
+        def exec_module(self, module):
+            pass
+
+    class _CustomFunctionsFinder(importlib.abc.MetaPathFinder):
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname == "custom_functions" or fullname.startswith("custom_functions."):
+                return importlib.machinery.ModuleSpec(fullname, _DummyLoader(), is_package=True)
+            return None
+
+    if not any(type(f).__name__ == "_CustomFunctionsFinder" for f in sys.meta_path):
+        sys.meta_path.insert(0, _CustomFunctionsFinder())
+
+
+def _spectrum_to_words(mz, intensities, precursor_mz, n_decimals):
+    """把谱图转成 spec2vec 词序列（peak@xxx / loss@xxx）及强度权重。"""
+    words = [f"peak@{m:.{n_decimals}f}" for m in mz]
+    weights = list(intensities ** 0.5)
+    if precursor_mz is not None:
+        for m, inten in zip(mz, intensities):
+            loss = float(precursor_mz) - m
+            if loss > 0:
+                words.append(f"loss@{loss:.{n_decimals}f}")
+                weights.append(inten ** 0.5)
+    return words, weights
+
+
+@lru_cache(maxsize=1)
+def _load_spec2vec_model(model_path: str):
+    """Load and cache the Spec2Vec gensim model in memory for the process lifetime."""
+    from gensim.models import Word2Vec
+    _install_custom_functions_shim()
+    return Word2Vec.load(model_path)
+
+
+def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results):
+    """基于 gensim Word2Vec 模型直接计算 Spec2Vec 嵌入余弦（无需 spec2vec 包）。"""
+    cat, name = "Deep learning", "Spec2Vec"
+    try:
+        import gensim  # noqa: F401
+    except ImportError:
+        _add_result(results, cat, name, note="skipped: gensim is not installed")
+        return
+    if model_path is None:
+        model_path = _get_spec2vec_model()
+    if model_path is None or not os.path.isfile(model_path):
+        _add_result(results, cat, name,
+                    note="skipped: model unavailable; provide a local path via --spec2vec-model")
+        return
+    try:
+        model = _load_spec2vec_model(model_path)
+        wv = model.wv
+
+        # 根据词表覆盖率自动选择 n_decimals（1 或 2）
+        best_nd, best_cov = 2, -1.0
+        for nd in (2, 1):
+            words, _ = _spectrum_to_words(mz1[:20], i1[:20], None, nd)
+            cov = float(np.mean([w in wv for w in words])) if words else 0.0
+            if cov > best_cov:
+                best_nd, best_cov = nd, cov
+
+        def embedding(mz, ii, pmz):
+            words, weights = _spectrum_to_words(mz, ii, pmz, best_nd)
+            vecs, ws = [], []
+            for w, wt in zip(words, weights):
+                if w in wv:
+                    vecs.append(wv[w] * wt)
+                    ws.append(wt)
+            if not vecs:
+                return None
+            return np.sum(vecs, axis=0) / sum(ws)
+
+        v1 = embedding(mz1, i1, pmz1)
+        v2 = embedding(mz2, i2, pmz2)
+        if v1 is None or v2 is None:
+            _add_result(results, cat, name, note="Failed: spectrum words are not in the model vocabulary")
+            return
+        den = np.linalg.norm(v1) * np.linalg.norm(v2)
+        score = float(np.dot(v1, v2) / den) if den > 0 else 0.0
+        _add_result(results, cat, name, score=score,
+                    note=f"GNPS AllPositive pretrained model, n_decimals={best_nd}")
+    except Exception as exc:  # noqa: BLE001
+        _add_result(results, cat, name, note=f"Failed: {exc}")
+
+
+# --------------------------------------------------------------------------- #
+# 主入口
+# --------------------------------------------------------------------------- #
+def compute_all_similarities(peaks1, peaks2, precursor_mz1=None, precursor_mz2=None,
+                             tolerance=0.02, use_deep=True, ionmode="positive",
+                             ms2deepscore_model_path=None, spec2vec_model_path=None):
+    """
+    计算两张 MS2 谱之间的所有相似度得分。
+
+    参数
+    ----
+    peaks1, peaks2 : [[mz, intensity], ...] 或 (mz_array, intensity_array)
+    precursor_mz1, precursor_mz2 : float 或 None（可选）
+    tolerance : 碎片匹配容差（Da）
+    use_deep : 是否计算深度学习方法（MS2DeepScore / Spec2Vec）
+    ionmode : "positive" 或 "negative"（MS2DeepScore 需要），默认 "positive"
+
+    返回
+    ----
+    list[dict]，字段：category, method, score, matches, note
+    """
+    mz1, i1 = clean_peaks(*normalize_peaks_input(peaks1))
+    mz2, i2 = clean_peaks(*normalize_peaks_input(peaks2))
+
+    results: list[dict] = []
+
+    spec1 = to_matchms_spectrum(mz1, i1, precursor_mz1, ionmode)
+    spec2 = to_matchms_spectrum(mz2, i2, precursor_mz2, ionmode)
+
+    _matchms_scores(spec1, spec2, tolerance, results)
+    _entropy_scores(mz1, i1, mz2, i2, tolerance, results)
+    _custom_scores(mz1, i1, mz2, i2, tolerance, results)
+
+    if use_deep:
+        _ms2deepscore_score(spec1, spec2, ms2deepscore_model_path, results)
+        _spec2vec_score(mz1, i1, precursor_mz1, mz2, i2, precursor_mz2,
+                        spec2vec_model_path, results)
+
+    return results
+
+
+def print_results(results, info_lines=None):
+    """终端打印按类别分组的得分表。"""
+    if info_lines:
+        for line in info_lines:
+            print(line)
+        print()
+
+    headers = ["Method", "Score", "Matched peaks", "Note"]
+    rows = []
+    for r in results:
+        rows.append([
+            r["method"],
+            f"{r['score']:.4f}" if r["score"] is not None else "N/A",
+            str(r["matches"]) if r["matches"] is not None else "-",
+            r["note"],
+        ])
+    widths = [len(h) for h in headers]
+    for row in rows:
+        for k, cell in enumerate(row):
+            widths[k] = max(widths[k], len(str(cell)))
+
+    def fmt(row):
+        return "  ".join(str(c).ljust(widths[k]) for k, c in enumerate(row))
+
+    current_cat = None
+    for r, row in zip(results, rows):
+        if r["category"] != current_cat:
+            current_cat = r["category"]
+            print(f"\n-- {current_cat} " + "-" * max(2, 60 - len(current_cat)))
+            print(fmt(headers))
+            print("  ".join("-" * w for w in widths))
+        print(fmt(row))
+    print()
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Compute multiple similarity scores between two MS2 spectra",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Example:\n"
+               '  python ms2_similarity.py --spec1 \'{"peaks": [[100.05, 1000]], "precursor_mz": 500.2}\''
+               ' --spec2 spec2.json\n')
+    parser.add_argument("--spec1", required=True, help="Spectrum 1: JSON string / JSON file path / @file path")
+    parser.add_argument("--spec2", required=True, help="Spectrum 2: same as above")
+    parser.add_argument("--tolerance", type=float, default=0.02, help="Fragment matching tolerance (Da), default 0.02")
+    parser.add_argument("--no-deep", action="store_true", help="Skip deep-learning methods")
+    parser.add_argument("--ionmode", default="positive", choices=["positive", "negative"],
+                        help="Ion mode (required by MS2DeepScore), default positive")
+    parser.add_argument("--ms2deepscore-model", default=None, help="Local MS2DeepScore model path")
+    parser.add_argument("--spec2vec-model", default=None, help="Local Spec2Vec model path")
+    args = parser.parse_args(argv)
+
+    s1 = load_spectrum_input(args.spec1)
+    s2 = load_spectrum_input(args.spec2)
+
+    results = compute_all_similarities(
+        s1["peaks"], s2["peaks"],
+        precursor_mz1=s1.get("precursor_mz"),
+        precursor_mz2=s2.get("precursor_mz"),
+        tolerance=args.tolerance,
+        use_deep=not args.no_deep,
+        ionmode=args.ionmode,
+        ms2deepscore_model_path=args.ms2deepscore_model,
+        spec2vec_model_path=args.spec2vec_model,
+    )
+
+    mz1, i1 = clean_peaks(*normalize_peaks_input(s1["peaks"]))
+    mz2, i2 = clean_peaks(*normalize_peaks_input(s2["peaks"]))
+    info = [
+        f"Spectrum 1: {len(mz1)} peaks, precursor_mz={s1.get('precursor_mz', 'N/A')}",
+        f"Spectrum 2: {len(mz2)} peaks, precursor_mz={s2.get('precursor_mz', 'N/A')}",
+        f"Fragment matching tolerance: {args.tolerance} Da",
+    ]
+    print_results(results, info)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

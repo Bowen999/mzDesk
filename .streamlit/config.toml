@@ -1,0 +1,14 @@
+# Cool-white + indigo light base for the neo-brutalist / minimalist blue theme.
+[theme]
+base = "light"
+primaryColor = "#1B3A8F"
+backgroundColor = "#F3F5FA"
+secondaryBackgroundColor = "#E9EDF7"
+textColor = "#0A1633"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+maxUploadSize = 50

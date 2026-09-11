@@ -1,0 +1,17 @@
+streamlit>=1.53
+rdkit>=2023.9
+plotly>=5.18
+pandas>=2.0
+matplotlib>=3.7
+numpy>=1.24
+# MS2 Similarity tab
+matchms>=0.24
+ms_entropy>=1.1
+scipy>=1.10
+# Optional: enable MS2DeepScore / Spec2Vec deep-learning scores
+gensim>=4.3
+ms2deepscore>=2.0
+# MS² tab shells out to MetFrag (bundled JAR in lib/); requires a Java 8+ runtime on PATH.
+# Structure Annotation tab — BUDDY molecular formula annotation
+msbuddy>=0.3
+# Optional second engine: SIRIUS 6 CLI (https://v6.docs.sirius-ms.io) — auto-detected on PATH
