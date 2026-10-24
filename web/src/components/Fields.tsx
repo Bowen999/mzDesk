@@ -106,10 +106,10 @@ function SpectrumInput({ field, value, onChange }: P) {
     <div className="field wide composite">
       <span>{field.label}</span>
       <div className="radio-row">{sources.map(s => <label key={s}><input type="radio" checked={value.source === s} onChange={() => set({ source: s, value: "", filename: "" })} /> {s}</label>)}</div>
-      {value.source === "Paste" && <textarea rows={5} placeholder="m/z intensity per line" value={value.value} onChange={e => set({ value: e.target.value })} />}
+      {value.source === "Paste" && <textarea rows={5} placeholder="m/z intensity per line (or mz:int, MSP, MGF, JSON, MassBank, HMDB XML …)" value={value.value} onChange={e => set({ value: e.target.value })} />}
       {value.source === "MGF / MSP file" && (
         <div className="file-row">
-          <input type="file" accept=".mgf,.msp,.txt" multiple={!!field.multi}
+          <input type="file" accept=".mgf,.msp,.txt,.csv,.json,.xml,.ms" multiple={!!field.multi}
             onChange={async e => { const r = await readFiles(e.target.files); set({ value: r.text, filename: r.name }); }} />
           {value.filename && <small>{value.filename}</small>}
         </div>)}

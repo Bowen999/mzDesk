@@ -40,7 +40,7 @@ def test_module_ids_unique_and_subgroups_known():
 
 def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
-    assert ms2 == ["ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
+    assert ms2 == ["ms2_clean", "ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
     assert "ms2" not in {m["id"] for m in MODULES}
 
 
@@ -71,6 +71,22 @@ def test_example_runs_and_fills_every_block(mod):
     assert body["status"] == "ok"
     expected = {b["id"] for b in mod["outputs"] if b.get("id")} - OPTIONAL_BLOCKS
     assert expected <= set(body["outputs"]), expected - set(body["outputs"])
+
+
+def test_clean_page_reads_any_format_and_removes_peaks():
+    body = _run("ms2_clean", {"spectrum": _paste("[[100.1, 5], [200.2, 100], [250.0, 40], [300.3, 0.5]]"), "precursor_mz": "250",
+                              "noise_pct": "1", "remove_precursor": True, "normalize": "Base peak = 999", "sort_by": "Intensity"}).json()
+    out = body["outputs"]
+    assert out["summary"]["values"]["Detected format"] == "GNPS peaks_json"
+    assert out["summary"]["values"]["Removed"]["note"] == "1 noise · 1 precursor"
+    assert [r[3] for r in out["peaks"]["rows"]] == ["yes", "yes", "no", "no"]
+    assert out["formats"]["formats"]["Peak list"].splitlines() == ["200.2\t999", "100.1\t49.95"]
+
+
+def test_clean_page_reads_precursor_from_pasted_record():
+    body = _run("ms2_clean", {"spectrum": _paste("BEGIN IONS\nPEPMASS=250.5\n100 1\n250.5 9\nEND IONS"), "remove_precursor": True}).json()
+    assert body["outputs"]["summary"]["values"]["Peaks out"] == "1"
+    assert any("250.5000" in w for w in body["warnings"])
 
 
 def test_placeholder_module_answers_placeholder():
@@ -131,6 +147,9 @@ def test_theory_handles_permanent_cation():
     ("properties", {"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}}),
     ("ms1_formula", {"precursor": {"precursor_mz": "2000", "ion_mode": "Positive", "adduct": "Auto"}}),
     ("ms2_similarity", {"query": _paste("100 1"), "reference": _paste("not a spectrum")}),
+    ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
+    ("ms2_clean", {"spectrum": _paste("100 1"), "noise_pct": "150"}),
+    ("ms2_clean", {"spectrum": _paste("100 1"), "normalize": "Everything = 7"}),
     ("ms2_fragments", {"structure": {"mode": "SMILES / InChI", "value": "CCO"},
                        "precursor": {"precursor_mz": "", "ion_mode": "Positive", "adduct": "[2M+H]+"}, "ms2": _paste("47.05 100")}),
     ("ms2_fragments", {"structure": {"mode": "SMILES / InChI", "value": "CCO"},

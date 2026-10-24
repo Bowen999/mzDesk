@@ -51,7 +51,7 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
     const txt = p.mz.toFixed(4), w = txt.length * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
     const b = { l: px - w / 2, r: px + w / 2, t: py - 16, b: py - 2 };
     if (b.l < 0 || b.r > xa._length || b.t < 0) continue;
-    const isPrecursor = p.kind.startsWith("Precursor");
+    const isPrecursor = /precursor/i.test(p.kind);
     const hit = boxes.some(o => b.l < o.r + 4 && b.r > o.l - 4 && b.t < o.b + 1 && b.b > o.t - 1)
       || sticks.some(s => s.i !== i && !(s.i === -1 && isPrecursor) && s.x > b.l - 1 && s.x < b.r + 1 && s.top < b.b);
     if (hit) continue;

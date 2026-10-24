@@ -2,13 +2,16 @@
 
 字段类型：structure, precursor, spectrum, ms1, number, text, select, multiselect, radio,
 checkbox, slider, file, table, heading。
-输出块类型：table, cards, figure, code, notes, button, heading。
+输出块类型：table, cards, figure, code, formats, notes, button, heading。
+  formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：pipeline 的 stage 用 exclude 按 key 过滤块。
 模块：group 是侧栏大类（pipelines / modules）；subgroup 是 Modules 下的小类（ms1 / ms2 / orthogonal / dmpk），
   None = 直接列在 Modules 下。live=True 表示已接引擎（后端 mzdesk/api/runners.py 里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
+from mzdesk.shared.ms2_clean import NORMALIZE, SORT_BY
+
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
 # 引擎各自支持的加合物（Auto = [M+H]+ / [M-H]-）
@@ -61,6 +64,8 @@ def figure(label, key=None, id=None):
     return {"type": "figure", "label": label, "key": key, "id": id}
 def code(label, title=None, key=None, id=None):
     return {"type": "code", "title": title, "label": label, "key": key, "id": id}
+def formats(label, title=None, key=None, id=None):
+    return {"type": "formats", "title": title, "label": label, "key": key, "id": id}
 def notes(title, key=None, id=None):
     return {"type": "notes", "title": title, "key": key, "id": id}
 def button(label, key=None):
@@ -132,15 +137,6 @@ MODULES = [
         [structure(), multiselect("reagents", "Reagents", ["TMS (MSTFA / BSTFA)", "MeOx + TMS", "TBDMS (MTBSTFA)", "Acylation (TFAA / PFPA)"], ["TMS (MSTFA / BSTFA)", "MeOx + TMS"])],
         [table(["Reagent", "Derivative", "Formula", "MW", "Derivatized groups", "Monoisotopic mass", "Key EI ions"], caption="One row per reagent")]),
 
-    module("cleanup", "Spectrum cleanup & conversion", "B", "Clean one or more spectra, merge collision energies, convert format. First step of every pipeline.",
-        [spectrum("spectra", "Spectrum", multi=True), precursor(adduct=False),
-         number("noise_pct", "Noise threshold (% base peak)", 1.0, 0.1), checkbox("deisotope", "Deisotope", True),
-         checkbox("remove_precursor", "Remove precursor", True), checkbox("merge_ce", "Merge collision energies"),
-         checkbox("normalize", "Normalize to 100", True), select("out_format", "Output format", ["MSP", "MGF", "MassBank record", "JSON"])],
-        [cards([("Peaks in", ""), ("Peaks out", ""), ("Removed", "noise / isotope / precursor")]),
-         table(["m/z", "Intensity", "Kept", "Reason"], caption="Reason: noise, isotope peak, precursor, merged from CE"),
-         figure("Before vs after (mirror)"), code("converted spectrum", "Converted record"), button("Download converted file")]),
-
     # ---- MS1 ----
     module("ms1_theory", "Theoretical m/z", "A", "Precursor m/z of a structure or formula for an adduct, and its isotope pattern.",
         [structure(label="Compound or formula"), precursor(label="Observed precursor m/z (optional)")],
@@ -173,6 +169,20 @@ MODULES = [
         example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
 
     # ---- MS2 ----
+    module("ms2_clean", "Clean & Vis", "B", "Clean an MS2 spectrum, see it, and get it in every common format (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).",
+        [spectrum("spectrum", "MS2 spectrum (any common format)"), number("precursor_mz", "Precursor m/z (optional)", step=0.0001),
+         radio("ion_mode", "Ion mode (for MSP / MGF headers)", ["Positive", "Negative"]),
+         number("noise_pct", "Noise threshold (% of base peak)", 0, 0.1), select("normalize", "Normalize", NORMALIZE),
+         checkbox("remove_precursor", "Remove precursor"), number("precursor_tol", "Precursor tolerance (Da)", 0.02, 0.001),
+         select("sort_by", "Sort by", SORT_BY)],
+        [cards([("Detected format", ""), ("Peaks in", ""), ("Peaks out", ""), ("Removed", "noise · precursor")], id="summary"),
+         figure("Cleaned spectrum; light grey = removed (hover a peak for details)", id="spectrum"),
+         table(["m/z", "Intensity", "Rel. intensity (%)", "Kept", "Reason"], "Peaks", "Rel. intensity: % of the input base peak. Reason: noise, precursor", id="peaks"),
+         formats("Cleaned spectrum in every format", "Formats", id="formats")],
+        subgroup="ms2", live=True,
+        example={"spectrum": _paste("42.0338:5 56.0495:4 61.0012:0.3 69.0447:6 83.0604:9 97.5521:0.6 110.0713:18 138.0662:100 195.0877:32"),
+                 "precursor_mz": "195.0877", "noise_pct": "1", "normalize": "Base peak = 100", "remove_precursor": True}),
+
     module("ms2_predicted", "Predicted spectrum", "A", "Predict the MS2 spectrum of a structure.",
         [structure(), precursor(label="Precursor m/z (optional)"), text("ce", "Collision energy", placeholder="20 eV or NCE 30")],
         [table(["m/z", "Fragment formula", "Relative intensity", "Structure"], "Predicted spectrum"), figure("Predicted spectrum"),
@@ -307,13 +317,13 @@ def stage(title, modules, exclude=None):
 PIPELINES = [
     {"id": "library_search", "title": "Library search", "one_liner": "I have a spectrum and no structure. Find it in the libraries and check the hit.",
      "inputs": [spectrum(), precursor(), multiselect("libraries", "Libraries", LIBRARIES), number("tol_ppm", "Tolerance (ppm)", 10.0, 0.1)],
-     "stages": [stage("Spectrum cleanup", "cleanup"), stage("MS2 library search", ["ms2_library", "ms2_similarity"]),
+     "stages": [stage("Spectrum cleanup", "ms2_clean"), stage("MS2 library search", ["ms2_library", "ms2_similarity"]),
                 stage("MS1 check of the hits", ["ms1_theory", "ms1_match"]), stage("Exclusivity", "exclusivity"), stage("Report", "report")]},
     {"id": "de_novo", "title": "De novo annotation", "one_liner": "I have a spectrum, the libraries do not have it. Infer formula, then structure candidates.",
      "inputs": [precursor(), ms1(), spectrum(), number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1),
                 text("elements", "Element constraints", "C0-50 H0-100 N0-10 O0-20 P0-3 S0-3"),
                 multiselect("databases", "Candidate databases", DATABASES, ["HMDB", "PubChem"])],
-     "stages": [stage("Spectrum cleanup", "cleanup"), stage("MS1: formula", "ms1_formula"), stage("MS2: fragment explanation / de novo", ["ms2_fragments", "ms2_denovo"]),
+     "stages": [stage("Spectrum cleanup", "ms2_clean"), stage("MS1: formula", "ms1_formula"), stage("MS2: fragment explanation / de novo", ["ms2_fragments", "ms2_denovo"]),
                 stage("Exclusivity", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
     {"id": "verify", "title": "Result verification", "one_liner": "I have a candidate structure. Does every piece of evidence support it?",
      "inputs": [structure(label="Candidate structure"), precursor(), ms1(), spectrum(),
@@ -327,7 +337,7 @@ PIPELINES = [
      "stages": [stage("Molecular properties", "properties"), stage("Adduct prediction", "platform_fit", ["ph", "column", "detect"]),
                 stage("MS1 theory: precursor m/z and isotope pattern", "ms1_theory"),
                 stage("MS2 prediction", "ms2_predicted"),
-                stage("Export", "cleanup")]},
+                stage("Export", "ms2_clean")]},
 ]
 
 GROUPS = [{"id": "pipelines", "title": "Pipelines"}, {"id": "modules", "title": "Modules"}]

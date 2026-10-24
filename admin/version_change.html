@@ -250,11 +250,11 @@ const ROW_GROUPS = {};   // 行不分组
 // 行 = 模块。d = 一句话说明；w = 对应的文件 / 文件夹（用 " · " 分开）
 const SECTIONS = [
   {id:'ms1',   name:'MS1',        d:'理论 m/z · 同位素 · 分子式',        w:'mzdesk/ms1/ · mzdesk/api/runners/ms1.py'},
-  {id:'ms2',   name:'MS2',        d:'理论谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py'},
+  {id:'ms2',   name:'MS2',        d:'理论谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/spec.py'},
   {id:'pipe',  name:'Pipeline',   d:'4 条鉴定流程',                    w:'mzdesk/spec.py'},
-  {id:'other', name:'Other',      d:'身份 · 清洗 · 排他性 · 正交 · 报告等', w:'mzdesk/spec.py · mzdesk/shared/'},
+  {id:'other', name:'Other',      d:'身份 · 排他性 · 正交 · 报告等', w:'mzdesk/spec.py · mzdesk/shared/'},
   {id:'docs',  name:'Docs',       d:'计划 · 本页',                     w:'admin/README.md · admin/version_change.html'},
   {id:'app',   name:'App',        d:'网页 · API',                      w:'web/ · mzdesk/api/'}
 ];
@@ -262,6 +262,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.0', date:'2026-10-24',
+  title:'MS2 新增 Clean & Vis：任意格式进，清洗、画图、11 种格式出',
+  note:'新增 tests/test_ms2_tools.py，解析器和 API 测试补充。',
+  state:[['能算的模块页','7 / 25'], ['Pipeline','4 条，未接'], ['测试','75 个通过']],
+  c:{
+   ms2:['feat','新增 Clean & Vis：识别格式、清洗（噪声 / 归一化 / 去前体 / 排序）、交互谱图、峰表、11 种格式可复制。相似度镜像图、MetFrag 图改用同一套画法，MetFrag 轴略细。',true,{w:'mzdesk/ms2/mirror_plot.py · mzdesk/ms2/metfrag_engine.py · mzdesk/api/runners/ms2.py'}],
+   other:['chg','解析器读 MS-DIAL / GNPS / matchms / HMDB / MassBank / MSP / MGF / SIRIUS / CSV / JSON，新增 detect_format；新增 ms2_formats（写出）、ms2_clean（清洗）、ms2_plot（共用谱图）。旧占位页“谱图清洗”并入 Clean & Vis，Pipeline 阶段指向 ms2_clean；去同位素、合并碰撞能量暂去掉。',true,{w:'mzdesk/shared/spectrum.py · mzdesk/shared/ms2_formats.py · mzdesk/shared/ms2_clean.py · mzdesk/shared/ms2_plot.py · mzdesk/spec.py'}],
+   app:['chg','新增 formats 输出块（标签页 + 复制）；上传可选 .csv / .json / .xml / .ms。',false,{w:'web/src/components/Outputs.tsx'}]
+  }},
  {id:'v0.1.0', date:'2026-10-24',
   title:'首版：25 个模块页，6 个能算',
   note:'其余页面只有格式；Pipeline 还不能运行。',

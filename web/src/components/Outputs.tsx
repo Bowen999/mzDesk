@@ -26,6 +26,23 @@ function CopyButton({ text }: { text: string }) {
   return <button type="button" className="copy" onClick={() => navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1200); })}>{done ? "Copied" : "Copy"}</button>;
 }
 
+/** 同一内容的多种格式：一排小标签 + 一个代码框；记住上次选的标签。 */
+function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const [tab, setTab] = useState("");
+  const names = Object.keys(data?.formats ?? {});
+  const cur = names.includes(tab) ? tab : names[0];
+  const text = cur ? data!.formats![cur] : undefined;
+  return (
+    <div className="out">
+      <h4 className="out-title">{block.title ?? block.label}{text !== undefined && <CopyButton text={text} />}</h4>
+      {names.length > 0 && (
+        <div className="tabs" role="tablist">
+          {names.map(n => <button key={n} type="button" role="tab" aria-selected={n === cur} className={"tab" + (n === cur ? " on" : "")} onClick={() => setTab(n)}>{n}</button>)}
+        </div>)}
+      <pre className="code">{text ?? `— ${block.label} (${empty}) —`}</pre>
+    </div>);
+}
+
 export function OutputBlock({ block, data, status }: { block: Block; data?: BlockData; status: Status }) {
   const empty = status === "none" ? "no result" : status === "off" ? "not connected yet" : "empty";
   switch (block.type) {
@@ -66,6 +83,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         <h4 className="out-title">{block.title ?? block.label}{data?.text && <CopyButton text={data.text} />}</h4>
         <pre className="code">{data?.text ?? `— ${block.label} (${empty}) —`}</pre>
       </div>);
+    case "formats": return <FormatsBlock block={block} data={data} empty={empty} />;
     case "notes": return (
       <div className="out">
         <Title block={block} status={data ? undefined : status} />

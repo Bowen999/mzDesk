@@ -5,14 +5,8 @@ import numpy as np
 import plotly.graph_objects as go
 
 from mzdesk.shared import colors as theme
+from mzdesk.shared import ms2_plot as base
 
-MATCH_COLOR = theme.PLOT_DARK
-UNMATCHED_COLOR = theme.PLOT_LIGHT
-GRID = theme.SURFACE_2
-FONT = theme.PLOT_FONT
-MONO = theme.PLOT_MONO
-
-STICK_PX = 2
 MIN_STICK = 1.6
 Y_TOP = 118.0
 LABELS_PER_HALF = 8
@@ -103,17 +97,6 @@ def _valid_precursor(value):
     return value if np.isfinite(value) and value > 0 else None
 
 
-def _sticks(mz, heights, color, name):
-    xs, ys = [], []
-    for mass, height in zip(mz, heights):
-        xs += [float(mass), float(mass), None]
-        ys += [0.0, float(height), None]
-    return go.Scatter(
-        x=xs, y=ys, mode="lines", line=dict(color=color, width=STICK_PX),
-        hoverinfo="skip", name=name, showlegend=False,
-    )
-
-
 def _tip_markers(mz, heights, rel, label, is_matched, precursor_mz, partners):
     customdata = []
     for mass, intensity, matched, partner in zip(mz, rel, is_matched, partners):
@@ -122,22 +105,15 @@ def _tip_markers(mz, heights, rel, label, is_matched, precursor_mz, partners):
             loss = f"<br>Neutral loss {precursor_mz - mass:.4f} Da"
         title = f"{label} · {'matched' if matched else 'unmatched'}"
         customdata.append([title, float(mass), round(float(intensity), 1), loss, partner])
-    return go.Scatter(
-        x=mz,
-        y=heights,
-        mode="markers",
-        marker=dict(size=10, color="rgba(0,0,0,0)"),
-        customdata=customdata,
+    return base.hover_markers(
+        mz, heights, name=f"{label} peaks", customdata=customdata,
         hovertemplate=(
             "<b>%{customdata[0]}</b><br>"
             "m/z %{customdata[1]:.4f}<br>"
             "Rel. intensity %{customdata[2]:.1f}%"
             "%{customdata[3]}%{customdata[4]}"
             "<extra></extra>"
-        ),
-        name=f"{label} peaks",
-        showlegend=False,
-    )
+        ))
 
 
 def _label_indices(mz, rel, x_span):
@@ -149,11 +125,6 @@ def _label_indices(mz, rel, x_span):
         if all(abs(mz[index] - mz[selected]) >= min_separation for selected in chosen):
             chosen.append(int(index))
     return chosen
-
-
-def _anchor(x, x_range):
-    fraction = (x - x_range[0]) / (x_range[1] - x_range[0])
-    return "right" if fraction > 0.8 else ("left" if fraction < 0.2 else "center")
 
 
 def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None,
@@ -171,10 +142,7 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
     partner_a = {i: j for i, j in matches}
     partner_b = {j: i for i, j in matches}
 
-    xs = np.concatenate([mz1, mz2, [p for p in (precursor_a, precursor_b) if p is not None]])
-    lo, hi = float(xs.min()), float(xs.max())
-    padding = max((hi - lo) * 0.05, 5.0)
-    x_range = [max(0.0, lo - padding), hi + padding]
+    x_range = base.mz_range(np.concatenate([mz1, mz2, [p for p in (precursor_a, precursor_b) if p is not None]]))
     x_span = x_range[1] - x_range[0]
 
     figure = go.Figure()
@@ -193,17 +161,16 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
             f"(Δ {other_mz[partner[index]] - mz[index]:+.4f} Da)" if index in partner else ""
             for index in range(mz.size)
         ]
-        for mask, color, suffix in ((~is_matched, UNMATCHED_COLOR, "unmatched"),
-                                    (is_matched, MATCH_COLOR, "matched")):
+        for mask, color, suffix in ((~is_matched, base.LIGHT, "unmatched"), (is_matched, base.DARK, "matched")):
             if mask.any():
-                figure.add_trace(_sticks(mz[mask], heights[mask], color, f"{label} · {suffix}"))
+                figure.add_trace(base.stick_trace(mz[mask], heights[mask], color, f"{label} · {suffix}"))
         figure.add_trace(_tip_markers(mz, heights, rel, label, is_matched, precursor, partners))
 
         for index in _label_indices(mz, rel, x_span):
             annotations.append(dict(
                 x=float(mz[index]), y=float(heights[index]), xref="x", yref="y",
                 yanchor="bottom" if sign > 0 else "top", yshift=3 * sign, showarrow=False,
-                text=f"{mz[index]:.4f}", font=dict(family=MONO, size=10, color=theme.INK),
+                text=f"{mz[index]:.4f}", font=dict(family=base.MONO, size=10, color=theme.INK),
             ))
 
     shapes = []
@@ -215,20 +182,15 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
         if precursor is None:
             continue
         y0, y1 = (-100.0, 100.0) if same_precursor else (0.0, sign * 100.0)
-        shapes.append(dict(
-            type="line", xref="x", yref="y", x0=precursor, x1=precursor, y0=y0, y1=y1,
-            layer="below", line=dict(color=theme.MUTED, width=1, dash="dot"),
-        ))
-        annotations.append(dict(
-            x=precursor, y=sign * Y_TOP, xref="x", yref="y", showarrow=False,
-            yanchor="top" if sign > 0 else "bottom", xanchor=_anchor(precursor, x_range),
-            text=f"{text} {precursor:.4f}", font=dict(family=MONO, size=10, color=theme.MUTED),
-        ))
+        shapes.append(base.precursor_line(precursor, y0, y1))
+        annotations.append(base.precursor_label(
+            precursor, f"{text} {precursor:.4f}", x_range, y=sign * Y_TOP, yref="y",
+            yanchor="top" if sign > 0 else "bottom", yshift=0))
 
     half_label = dict(
         xref="paper", yref="paper", x=0, xanchor="right", xshift=-44,
         yanchor="middle", textangle=-90, showarrow=False,
-        font=dict(family=FONT, color=theme.MUTED, size=12),
+        font=dict(family=base.FONT, color=theme.MUTED, size=12),
     )
     annotations += [
         dict(half_label, text=f"{label_a} · rel. intensity (%)", y=0.75),
@@ -236,38 +198,11 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
     ]
 
     ticks = [-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100]
-    axis = dict(
-        showline=True, linecolor=theme.INK, linewidth=1, ticks="outside",
-        tickcolor=theme.INK, ticklen=4, tickfont=dict(color=theme.MUTED, size=11),
-    )
-    figure.update_layout(
-        template="simple_white",
-        font=dict(family=FONT, color=theme.INK, size=12),
-        plot_bgcolor=theme.SURFACE,
-        paper_bgcolor=theme.SURFACE,
-        height=height,
+    figure.update_layout(**base.base_layout(
+        height, x_range=x_range, y_range=[-Y_TOP, Y_TOP], y_title=None, shapes=shapes, annotations=annotations,
         margin=dict(l=80, r=22, t=16, b=50),
-        showlegend=False,
-        hovermode="x",
-        hoverdistance=16,
-        dragmode="zoom",
-        hoverlabel=dict(
-            bgcolor=theme.SURFACE, bordercolor=theme.LINE,
-            font=dict(family=FONT, color=theme.INK, size=12), align="left",
-        ),
-        shapes=shapes,
-        annotations=annotations,
-        xaxis=dict(
-            axis, range=x_range, hoverformat=".4f",
-            title=dict(text="m/z", font=dict(color=theme.MUTED, size=12)),
-            showgrid=False, zeroline=False,
-        ),
-        yaxis=dict(
-            axis, range=[-Y_TOP, Y_TOP], tickvals=ticks, ticktext=[str(abs(tick)) for tick in ticks],
-            showgrid=True, gridcolor=GRID,
-            zeroline=True, zerolinecolor=theme.INK, zerolinewidth=1,
-        ),
-    )
+        yaxis=dict(tickvals=ticks, ticktext=[str(abs(tick)) for tick in ticks],
+                   zeroline=True, zerolinecolor=theme.INK, zerolinewidth=1)))
     return figure
 
 

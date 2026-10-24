@@ -21,7 +21,7 @@ export type Cell = string | { img: string };
 export type CardValue = string | { value: string; note?: string };
 export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string };
 export type BlockData = {
-  rows?: Cell[][]; values?: Record<string, CardValue>; text?: string; items?: string[];
+  rows?: Cell[][]; values?: Record<string, CardValue>; text?: string; formats?: Record<string, string>; items?: string[];
   plotly?: { data: any[]; layout: any }; peaks?: PeakCard[]; svg?: string; img?: string; mol3d?: string;
 };
 export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, BlockData>; warnings: string[] };

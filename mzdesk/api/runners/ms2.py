@@ -1,11 +1,12 @@
-"""MS2 小类：相似度 + 镜像图（matchms / ms_entropy / 自定义），碎片解释（MetFrag）。"""
+"""MS2 小类：清洗与可视化，相似度 + 镜像图（matchms / ms_entropy / 自定义），碎片解释（MetFrag）。"""
 import copy
 import math
 from functools import lru_cache
 
 from mzdesk.api import common
 from mzdesk.api.common import EngineError, InputError, fmt, signed
-from mzdesk.shared import colors
+from mzdesk.shared import ms2_clean, ms2_formats, ms2_plot
+from mzdesk.shared.spectrum import detect_format, first_record
 
 PRIMARY_METHOD = "SpectralEntropy (weighted)"
 FALLBACK_METHOD = "CosineGreedy"
@@ -13,6 +14,50 @@ FALLBACK_METHOD = "CosineGreedy"
 
 def _finite(score):
     return isinstance(score, (int, float)) and math.isfinite(score)
+
+
+_Y_TITLE = {"None": "Intensity", "Base peak = 100": "Relative intensity (%)"}
+
+
+def run_clean(inputs):
+    warnings = []
+    peaks, file_mz = common.spectrum(inputs, "spectrum", "MS2 spectrum", warnings)
+    raw = str((inputs.get("spectrum") or {}).get("value") or "")
+    precursor_mz = common.number(inputs, "precursor_mz", "Precursor m/z", positive=True)
+    if precursor_mz is None and file_mz:
+        precursor_mz = file_mz
+        warnings.append(f"Precursor m/z {file_mz:.4f} is read from the spectrum.")
+    ion_mode = "Negative" if inputs.get("ion_mode") == "Negative" else "Positive"
+    noise = common.number(inputs, "noise_pct", "Noise threshold", default=0.0, minimum=0, maximum=100)
+    tol = common.number(inputs, "precursor_tol", "Precursor tolerance", default=0.02, positive=True)
+    normalize = inputs.get("normalize") or "None"
+    sort_by = inputs.get("sort_by") or "m/z"
+    if normalize not in ms2_clean.NORMALIZE or sort_by not in ms2_clean.SORT_BY:
+        raise InputError("Unknown normalization or sort order.")
+    remove = bool(inputs.get("remove_precursor"))
+    if remove and precursor_mz is None:
+        warnings.append("Remove precursor is on but there is no precursor m/z; no peak was removed.")
+
+    res = ms2_clean.clean_spectrum(peaks, noise_pct=noise, normalize=normalize, precursor_mz=precursor_mz,
+                                   remove_precursor=remove, precursor_tol=tol, sort_by=sort_by)
+    rows = res["rows"]
+    n_noise = sum(r["reason"] == "noise" for r in rows)
+    n_prec = sum(r["reason"] == "precursor" for r in rows)
+    if not res["n_out"]:
+        warnings.append("Every peak was removed.")
+    fig, cards = ms2_plot.spectrum_figure(
+        [(r["mz"], r["intensity"]) for r in rows], precursor_mz=precursor_mz, y_title=_Y_TITLE.get(normalize, "Normalized intensity"),
+        dim={i: r["reason"] for i, r in enumerate(rows) if not r["kept"]})
+    return {"outputs": {
+        "summary": {"values": {
+            "Detected format": detect_format(raw), "Peaks in": str(res["n_in"]), "Peaks out": str(res["n_out"]),
+            "Removed": {"value": str(res["n_in"] - res["n_out"]), "note": f"{n_noise} noise · {n_prec} precursor"}}},
+        "spectrum": common.plotly(fig, peaks=cards),
+        "peaks": {"rows": [[fmt(r["mz"], 4), ms2_plot.fmt_intensity(r["intensity"]), fmt(r["rel"], 1),
+                            "yes" if r["kept"] else "no", r["reason"] or common.MISSING] for r in rows]},
+        "formats": {"formats": ms2_formats.all_formats(res["peaks"], precursor_mz=precursor_mz, ion_mode=ion_mode,
+                                                       name=first_record(raw)["name"])},
+    }, "warnings": warnings}
 
 
 def run_similarity(inputs):
@@ -87,7 +132,7 @@ def run_fragments(inputs):
     peaks, file_mz = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings)
     if precursor_mz is None and file_mz:
         precursor_mz = file_mz
-        warnings.append(f"Precursor m/z {file_mz:.4f} is taken from the file.")
+        warnings.append(f"Precursor m/z {file_mz:.4f} is read from the spectrum.")
     adduct = adduct or ("[M+H]+" if positive else "[M-H]-")
     if adduct not in mf.ADDUCTS:
         raise InputError(f"MetFrag does not support {adduct}. Supported: {', '.join(mf.ADDUCTS)}.")
@@ -119,8 +164,7 @@ def run_fragments(inputs):
         return {"mz": a["mz"], "rel": a["rel"], "on": a["annotated"], "kind": kind, "rows": rows,
                 "img": f"data:image/png;base64,{a['b64']}" if a["b64"] else ""}
 
-    fig = mf.build_figure(result, dark=colors.PLOT_DARK, light=colors.PLOT_LIGHT, ink=colors.INK,
-                          muted=colors.MUTED, grid=colors.SURFACE_2)
+    fig = mf.build_figure(result)
     return {"outputs": {
         "summary": {"values": {
             "Explained peaks": f"{len(explained)} / {len(ann)}",
@@ -134,4 +178,4 @@ def run_fragments(inputs):
     }, "warnings": warnings}
 
 
-RUNNERS = {"ms2_similarity": run_similarity, "ms2_fragments": run_fragments}
+RUNNERS = {"ms2_clean": run_clean, "ms2_similarity": run_similarity, "ms2_fragments": run_fragments}

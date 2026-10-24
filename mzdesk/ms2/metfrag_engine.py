@@ -5,8 +5,8 @@ candidate structure and maps MetFrag's explained peaks back onto the user's peak
 (ion formula, theoretical m/z, mass error, neutral loss, fragment structure).
 
 The shared peak-list parser ``parse_spectrum`` lives in mzdesk/shared/spectrum.py and is
-re-exported here. Also builds the stick-spectrum Plotly figure; the web page adds the hover card
-with the fragment structure (web/src/components/Figure.tsx).
+re-exported here. Also builds the stick-spectrum Plotly figure (on mzdesk/shared/ms2_plot.py); the web
+page adds the hover card with the fragment structure (web/src/components/Figure.tsx).
 """
 import base64
 import math
@@ -22,6 +22,7 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
+from mzdesk.shared import ms2_plot
 from mzdesk.shared.spectrum import parse_spectrum  # noqa: F401  re-exported for callers of the engine
 
 RDLogger.DisableLog('rdApp.*')
@@ -39,8 +40,6 @@ ATOMIC = {'C': 12.0, 'H': 1.00782503, 'O': 15.99491462, 'P': 30.97376199, 'N': 1
           'I': 126.904473, 'Na': 22.98976928, 'K': 38.96370649, 'Si': 27.9769265,
           'B': 11.0093054, 'Se': 79.9165218, 'D': 2.01410178}
 ELECTRON = 0.000548579909
-DARK = "#1B3A8F"
-LIGHT = "#A9BEEA"
 
 # PrecursorIonMode codes are MetFrag's adduct nominal masses (Constants.ADDUCT_NOMINAL_MASSES);
 # "shift" = m/z(ion) - M (electron mass included); "delta" = ion composition minus M.
@@ -441,20 +440,15 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
 # --------------------------------------------------------------------------
 # Stick spectrum (Plotly)
 # --------------------------------------------------------------------------
-FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif'   # same stack as theme.PLOT_FONT
-MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace'
-CHART_HEIGHT = 460
 Y_FLOOR = 1.6      # sticks start slightly below 0 % so even tiny peaks stay visible above the axis line
 Y_TOP = 116.0      # headroom for the m/z labels above the base peak
 
 
-def build_figure(result, dark=DARK, light=LIGHT, ink="#0A1633", muted="#5C6B8A",
-                 grid="#E9EDF7", font=FONT, mono=MONO, height=CHART_HEIGHT):
+def build_figure(result, height=ms2_plot.HEIGHT):
     """Stick spectrum: dark = annotated, light = unannotated, dotted line = theoretical precursor.
 
-    Sticks are drawn as lines (constant pixel width), so neighbouring peaks never merge when
-    zooming and every peak stays visible when zoomed out. An invisible marker per peak (trace
-    'peaks', customdata = peak index) drives the hover card in hovermode 'x'.
+    Built from the shared MS2 plot helpers (mzdesk/shared/ms2_plot.py); an invisible marker per peak
+    (trace 'peaks', customdata = peak index) drives the hover card in hovermode 'x'.
     """
     ann = result["annotation"]
     fig = go.Figure()
@@ -462,53 +456,26 @@ def build_figure(result, dark=DARK, light=LIGHT, ink="#0A1633", muted="#5C6B8A",
         return fig
     theo = result.get("theo_precursor_mz") or result.get("precursor_mz")
     xs = [a["mz"] for a in ann]
-    lo, hi = min(xs), max(xs)
-    if theo:
-        lo, hi = min(lo, theo), max(hi, theo)
-    pad = max((hi - lo) * 0.05, 5.0)
-    x0, x1 = max(0.0, lo - pad), hi + pad
+    x_range = ms2_plot.mz_range(xs + ([theo] if theo else []))
 
-    for name, color, rows in (("unannotated", light, [a for a in ann if not a["annotated"]]),
-                              ("annotated", dark, [a for a in ann if a["annotated"]])):
-        if not rows:
-            continue
-        sx, sy = [], []
-        for a in rows:
-            sx += [a["mz"], a["mz"], None]
-            sy += [-Y_FLOOR, a["rel"], None]
-        fig.add_trace(go.Scatter(x=sx, y=sy, mode="lines", name=name, hoverinfo="skip",
-                                 line=dict(color=color, width=2)))
-    fig.add_trace(go.Scatter(x=xs, y=[a["rel"] for a in ann], mode="markers", name="peaks",
-                             marker=dict(size=10, color="rgba(0,0,0,0)"),
-                             customdata=list(range(len(ann))), hoverinfo="none"))
+    for name, color, rows in (("unannotated", ms2_plot.LIGHT, [a for a in ann if not a["annotated"]]),
+                              ("annotated", ms2_plot.DARK, [a for a in ann if a["annotated"]])):
+        if rows:
+            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], color, name, y0=-Y_FLOOR))
+    fig.add_trace(ms2_plot.hover_markers(xs, [a["rel"] for a in ann]))
 
     shapes, annotations = [], []
-    if theo and x0 <= theo <= x1:
+    if theo and x_range[0] <= theo <= x_range[1]:
         # dotted marker above the precursor peak (and its m/z label) — or full height if absent
         prec_rel = max((a["rel"] for a in ann if a["kind"] == "precursor"), default=None)
         y_start = -Y_FLOOR if prec_rel is None else prec_rel + 9.0
         if y_start < Y_TOP:
-            shapes.append(dict(type="line", xref="x", yref="y", x0=theo, x1=theo, y0=y_start,
-                               y1=Y_TOP, layer="below", line=dict(color=muted, width=1, dash="dot")))
-        frac = (theo - x0) / (x1 - x0)
-        annotations.append(dict(
-            x=theo, y=1, xref="x", yref="paper", yanchor="bottom", yshift=4, showarrow=False,
-            xanchor="right" if frac > 0.8 else ("left" if frac < 0.2 else "center"),
-            text=f"precursor {result.get('adduct', '')} {theo:.4f}".replace("  ", " "),
-            font=dict(family=mono, size=10, color=muted)))
-    axis = dict(showline=True, linecolor=ink, linewidth=1.5, ticks="outside", tickcolor=ink,
-                ticklen=5, tickfont=dict(color=muted, size=11), zeroline=False)
-    fig.update_layout(
-        height=height, margin=dict(l=62, r=22, t=30, b=50),
-        paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
-        font=dict(family=font, color=ink, size=12),
-        showlegend=False, hovermode="x", hoverdistance=16, dragmode="zoom",
-        shapes=shapes, annotations=annotations,
-        xaxis=dict(axis, title=dict(text="m/z", font=dict(color=muted, size=12)),
-                   range=[x0, x1], showgrid=False),
-        yaxis=dict(axis, title=dict(text="Relative intensity (%)", font=dict(color=muted, size=12)),
-                   range=[-Y_FLOOR, Y_TOP], tickvals=[0, 20, 40, 60, 80, 100],
-                   showgrid=True, gridcolor=grid))
+            shapes.append(ms2_plot.precursor_line(theo, y_start, Y_TOP))
+        annotations.append(ms2_plot.precursor_label(
+            theo, f"precursor {result.get('adduct', '')} {theo:.4f}".replace("  ", " "), x_range))
+    fig.update_layout(**ms2_plot.base_layout(
+        height, x_range=x_range, y_range=[-Y_FLOOR, Y_TOP], y_title="Relative intensity (%)",
+        shapes=shapes, annotations=annotations, yaxis=dict(tickvals=[0, 20, 40, 60, 80, 100])))
     return fig
 
 

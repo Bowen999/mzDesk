@@ -6,6 +6,7 @@
   cards   {"values": {label: 字符串}}
   figure  {"plotly": {data, layout}, "peaks": [...]?} | {"svg": "..."} | {"mol3d": molblock}
   code    {"text": "..."}
+  formats {"formats": {format label: text}}
   notes   {"items": ["...", ...]}
 """
 import json
@@ -120,7 +121,11 @@ def precursor(inputs, key="precursor", label="Precursor m/z", *, required=False)
 
 
 def spectrum(inputs, key, label, warnings, *, required=True):
-    """Spectrum field -> (peaks [(mz, intensity)], precursor m/z read from an MGF / MSP file or None)."""
+    """Spectrum field -> (peaks [(mz, intensity)], precursor m/z read from the text or None).
+
+    The text may be any format parse_spectrum reads; MGF / MSP / MassBank / SIRIUS headers give the
+    precursor (and only the first spectrum of an MGF / MSP file is used).
+    """
     value = inputs.get(key) or {}
     source = value.get("source") or "Paste"
     raw = str(value.get("value") or "")
@@ -129,10 +134,10 @@ def spectrum(inputs, key, label, warnings, *, required=True):
             raise InputError(f"{label}: USI lookup is not connected yet. Paste the peak list or upload an MGF / MSP file.")
         raw = ""
     file_precursor = None
-    if source == "MGF / MSP file" and raw.strip():
+    if raw.strip():
         rec = first_record(raw)
         if rec["n_records"] > 1:
-            warnings.append(f"{label}: the file holds {rec['n_records']} spectra; only the first"
+            warnings.append(f"{label}: the input holds {rec['n_records']} spectra; only the first"
                             + (f" ({rec['name']})" if rec["name"] else "") + " is used.")
         raw, file_precursor = rec["peaks_text"], rec["precursor_mz"]
     peaks = parse_spectrum(raw)
