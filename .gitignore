@@ -6,3 +6,11 @@ mzdesk/lib/*.jar
 
 # Obsidian personal config
 .obsidian/
+
+# setuptools editable install
+*.egg-info/
+
+# frontend
+web/node_modules/
+web/dist/
+mzdesk/static/

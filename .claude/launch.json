@@ -4,7 +4,12 @@
     {
       "name": "mzdesk",
       "runtimeExecutable": "/opt/anaconda3/bin/python3",
-      "runtimeArgs": ["-m", "streamlit", "run", "mzdesk/app.py", "--server.port", "8599", "--server.headless", "true"],
+      "runtimeArgs": [
+        "-m",
+        "mzdesk",
+        "--port",
+        "8599"
+      ],
       "port": 8599
     }
   ]

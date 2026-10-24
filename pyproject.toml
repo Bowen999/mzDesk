@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mzdesk"
+version = "0.1.1"
+description = "mzDesk: one-stop small-molecule mass spectrometry workbench"
+readme = "admin/README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dynamic = ["dependencies"]
+
+[project.scripts]
+mzdesk = "mzdesk.cli:main"
+
+[tool.setuptools]
+packages = { find = { include = ["mzdesk", "mzdesk.*"] } }
+
+[tool.setuptools.package-data]
+mzdesk = ["lib/*.js", "lib/*.jar", "static/**/*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
