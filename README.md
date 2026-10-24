@@ -1,4 +1,4 @@
-# Metabolomics Workbench
+# mzDesk
 
 An integrated Streamlit app for small-molecule annotation, unified under a single
 **neo-brutalist × minimalist, cool-white + indigo** design system.
@@ -16,8 +16,7 @@ An integrated Streamlit app for small-molecule annotation, unified under a singl
 ## Run
 
 ```bash
-cd "~/Documents/reasearch/01_Core_Projects/metabolite"
-python3 -m streamlit run 05_Code/app.py
+python3 -m streamlit run mzdesk/app.py   # from the repository root
 ```
 
 Then open the URL Streamlit prints (default http://localhost:8501).
@@ -31,7 +30,7 @@ pip install -r requirements.txt
 Plus:
 
 - **Java 8+** on `PATH` — the MS² Interpretation tab shells out to the bundled
-  `05_Code/lib/MetFragCommandLine-2.5.2.jar`.
+  `mzdesk/lib/MetFragCommandLine-2.5.2.jar`.
 - *Optional:* the **SIRIUS 6** CLI for the Structure Annotation tab. It is looked up via
   `$SIRIUS_EXE`, then `PATH`, then the usual macOS app-bundle locations. SIRIUS 6 needs a
   signed-in SIRIUS account (`sirius login`); if the CLI cannot run, the tab shows a warning
@@ -43,13 +42,8 @@ Plus:
 ## Layout
 
 ```
-metabolite/
-├── 00_Admin/                         # intentionally empty
-├── 01_Notes/
-├── 02_Literature/
-├── 03_Raw_Data/
-├── 04_Processed_Data/
-├── 05_Code/
+mzDesk/
+├── mzdesk/                           # application source
 │   ├── app.py                        # entry: page config, global CSS, hero, st.tabs wiring
 │   ├── theme.py                      # unified design system (CSS tokens + render helpers)
 │   ├── tabs/
@@ -71,17 +65,25 @@ metabolite/
 │   └── lib/
 │       ├── 3Dmol-min.js              # bundled 3Dmol.js for the structure viewer
 │       └── MetFragCommandLine-2.5.2.jar
-├── 06_Results/
-├── 07_Figures/
-├── 08_Manuscript/
+├── tests/                            # unit tests (all modules) + equivalence tests (evidence modules)
+├── examples/                         # bundled example spectra / queries used by the tutorial
+├── validation/                       # benchmarks for the paper: equivalence, integration gain, case studies
+├── paper/
+│   ├── manuscript/
+│   ├── figures/
+│   └── literature/
+├── admin/                            # internal docs (Chinese)
+│   ├── README.md                     # project plan: goals, six-question protocol, scope, target journals
+│   ├── version_change.html           # version history page
+│   └── notes/
 ├── requirements.txt
-└── .streamlit/config.toml            # Streamlit base theme matching 05_Code/theme.py
+└── .streamlit/config.toml            # Streamlit base theme matching mzdesk/theme.py
 ```
 
-`05_Code/app.py` puts `05_Code/` and `05_Code/core/` on `sys.path`, so tab modules use flat
+`mzdesk/app.py` puts `mzdesk/` and `mzdesk/core/` on `sys.path`, so tab modules use flat
 imports (`import theme`, `import metfrag_engine as engine`, `from lipid_metabolite_classifier import ...`).
 
-## Design system (`05_Code/theme.py`)
+## Design system (`mzdesk/theme.py`)
 
 Thick navy-ink borders, hard offset shadows, near-square corners, uppercase mono
 labels, a restrained indigo palette. Two things sit on top of that look and are

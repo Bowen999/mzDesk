@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "metabolite-workbench",
+      "name": "mzdesk",
       "runtimeExecutable": "/opt/anaconda3/bin/python3",
-      "runtimeArgs": ["-m", "streamlit", "run", "05_Code/app.py", "--server.port", "8599", "--server.headless", "true"],
+      "runtimeArgs": ["-m", "streamlit", "run", "mzdesk/app.py", "--server.port", "8599", "--server.headless", "true"],
       "port": 8599
     }
   ]

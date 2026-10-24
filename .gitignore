@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 .DS_Store
 # large vendored binary (unchanged; kept out of the local history)
-05_Code/lib/*.jar
+mzdesk/lib/*.jar
 
 # Obsidian personal config
 .obsidian/

@@ -1,5 +1,5 @@
 # Cool-white + indigo light base for the neo-brutalist / minimalist blue theme.
-# Values mirror the colour tokens in 05_Code/theme.py; its GLOBAL_CSS adds the thick
+# Values mirror the colour tokens in mzdesk/theme.py; its GLOBAL_CSS adds the thick
 # ink borders and hard shadows on top of this base.
 [theme]
 base = "light"

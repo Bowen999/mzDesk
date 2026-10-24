@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>mzDesk 版本变化</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#f5f6f8; --card:#ffffff; --ink:#1a1e26; --sub:#5d6573; --faint:#9aa1ad; --line:#e2e5eb;
+  --hover:#eef1f6; --sel:#e3ebff; --accent:#2f6fed;
+  --data:#2f6fed; --code:#7a55d6; --run:#17935a; --new:#c27a06; --drv:#7b8190;
+  --shadow:0 1px 2px rgba(20,28,45,.05),0 4px 16px rgba(20,28,45,.05);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12151b; --card:#1a1e26; --ink:#e8ebf0; --sub:#a0a8b6; --faint:#667082; --line:#2b313c;
+    --hover:#222833; --sel:#22304f; --accent:#6c97ff;
+    --data:#6c97ff; --code:#a58cf0; --run:#45c58b; --new:#e3a63c; --drv:#8f97a6;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.55 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+button:disabled{cursor:default;opacity:.35}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1320px;margin:0 auto;padding:22px 16px 40px}
+
+/* 顶部 */
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:14px}
+header.top h1{margin:0;font-size:21px;letter-spacing:.2px}
+header.top p{margin:0;color:var(--sub)}
+
+/* 图例 / 过滤 / 跳转 */
+.legend{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:99px;
+  border:1px solid var(--line);background:var(--card);font-size:12.5px;transition:opacity .15s,background .15s}
+.chip i{width:10px;height:10px;border-radius:3px;background:var(--kc)}
+.chip:hover{background:var(--hover)}
+.chip.off{opacity:.42}
+.chip.off i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--kc)}
+.legend .hint{font-size:12.5px;color:var(--sub);margin-left:4px}
+.legend .sp{flex:1}
+#jump{width:190px;max-width:100%;padding:4px 11px;border:1px solid var(--line);border-radius:99px;background:var(--card);
+  color:var(--ink);font:inherit;font-size:12.5px;transition:border-color .15s,box-shadow .15s}
+#jump::placeholder{color:var(--faint)}
+#jump.bad{border-color:#d9534f;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+.k-feat{--kc:var(--run)} .k-chg{--kc:var(--data)} .k-fix{--kc:var(--new)} .k-doc{--kc:var(--code)} .k-stub{--kc:var(--drv)}
+
+/* 布局 */
+.layout{display:grid;gap:16px;align-items:start}
+@media (min-width:1100px){
+  .layout{grid-template-columns:minmax(0,690px) minmax(0,1fr)}
+  .detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+
+/* 矩阵：固定列宽，版本多了就在容器里横向滚；表头、首列固定 */
+.mwrap{overflow:auto;overscroll-behavior:contain;max-height:calc(100vh - 150px);min-height:300px;position:relative}
+table.m{--cf:176px;--no:6;--nc:0;border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;
+  min-width:calc(var(--cf) + var(--no)*76px + var(--nc)*60px)}
+table.m th,table.m td{padding:0;border-bottom:1px solid var(--line);transition:background .12s}
+table.m tbody tr:last-child th,table.m tbody tr:last-child td{border-bottom:0}
+col.cf{width:var(--cf)} col.gcol{width:60px}
+thead th{position:sticky;background:var(--card);z-index:3}
+th.grp{top:0;height:27px}
+th.vcol{top:27px}
+th.corner{top:0;left:0;z-index:5;border-right:1px solid var(--line)}
+th.frow{position:sticky;left:0;z-index:2;background:var(--card);text-align:left;border-right:1px solid var(--line)}
+.gs{border-left:1px solid var(--line)}
+/* 分组标题 */
+.gb{display:flex;align-items:center;width:100%;height:26px;padding:0 8px;font:600 12px var(--mono);color:var(--sub);text-align:left}
+.gb .lab{position:sticky;left:calc(var(--cf) + 8px);display:inline-flex;gap:5px;align-items:center;white-space:nowrap}
+.gb i{font-style:normal;font-size:10px;color:var(--faint)}
+.gb small{font:400 11px var(--mono);color:var(--faint)}
+.gb:hover{color:var(--accent)}
+th.gc .gb{justify-content:center;padding:0}
+/* 版本列头 */
+.vh{display:flex;flex-direction:column;align-items:center;gap:1px;width:100%;padding:7px 2px 7px}
+.vh b{font:600 13px var(--mono)}
+.vh i{font-style:normal;font-size:11px;color:var(--faint);white-space:nowrap}
+.vh em{font-style:normal;font-size:11px;color:var(--sub);background:var(--hover);border-radius:99px;padding:0 7px;margin-top:2px}
+.vh:hover b{color:var(--accent)}
+th.gc .vh b{font-size:11.5px}
+/* 行头 */
+.fh{display:flex;flex-direction:column;width:100%;padding:6px 12px;min-height:44px;justify-content:center}
+.fh b{font:600 13px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fh small{font-size:11.5px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fh:hover b{color:var(--accent)}
+td.c{text-align:center;padding:5px 6px}
+td.gc{padding:5px 6px}
+.cell{display:flex;align-items:center;justify-content:center;gap:1px;width:100%;height:32px;border-radius:8px;
+  font-weight:600;font-size:13px;color:var(--kc);
+  background:color-mix(in srgb,var(--kc) 15%,var(--card));
+  transition:transform .12s,box-shadow .12s,opacity .15s,background .15s}
+.cell:hover{transform:translateY(-1px);box-shadow:0 2px 8px color-mix(in srgb,var(--kc) 35%,transparent)}
+.cell sup{font-size:10px;font-weight:500;opacity:.85}
+.cell.k-stub{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--kc) 16%,var(--card)) 0 5px,color-mix(in srgb,var(--kc) 6%,var(--card)) 5px 10px)}
+.cell.dim{opacity:.16}
+.sum{display:flex;align-items:center;justify-content:center;width:100%;height:28px;border-radius:99px;font-size:12px;font-weight:600;
+  color:var(--kc);background:color-mix(in srgb,var(--kc) 15%,var(--card));transition:transform .12s}
+.sum:hover{transform:scale(1.06)}
+.dot{color:var(--line);font-size:16px;line-height:32px;display:block;user-select:none;text-align:center}
+/* 选中 / 悬停十字 */
+th.vcol.sel,td.sel{background:var(--sel)}
+tr.rsel th.frow,tr.rsel td{background:var(--sel)}
+tr.rsel td.sel .cell,td.sel .cell.pick{box-shadow:0 0 0 2px var(--kc)}
+.hv{background:var(--hover)}
+th.frow.hv,th.vcol.hv{background:var(--hover)}
+th.vcol.sel.hv,td.sel.hv{background:var(--sel)}
+
+/* 详情 */
+.detail{padding:18px 20px 20px}
+.detail .swap{animation:rise .22s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.dh{margin-bottom:14px}
+.dtop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.dv{font:700 26px/1.2 var(--mono);letter-spacing:-.3px;overflow-wrap:anywhere}
+.nav{display:flex;gap:6px;flex:none}
+.nav button{min-width:30px;height:28px;padding:0 9px;border:1px solid var(--line);border-radius:8px;text-align:center;
+  font-size:15px;line-height:26px;color:var(--sub);transition:background .12s,color .12s}
+.nav button.lt{font-size:12.5px}
+.nav button:not(:disabled):hover{background:var(--hover);color:var(--accent)}
+.dmeta{margin-top:3px;font-size:12.5px;color:var(--sub);display:flex;flex-wrap:wrap;gap:2px 10px}
+.dmeta .tag{background:var(--hover);border-radius:6px;padding:0 7px;font-family:var(--mono);font-size:12px}
+.dmeta .warn{color:var(--new)}
+.dtitle{margin:10px 0 0;font-size:15.5px;font-weight:600}
+.note{margin:10px 0 0;padding:7px 11px;border-left:3px solid var(--new);background:color-mix(in srgb,var(--new) 9%,var(--card));
+  border-radius:0 8px 8px 0;color:var(--sub);font-size:13px}
+h3.sec{margin:18px 0 6px;font-size:12.5px;font-weight:600;color:var(--sub);letter-spacing:.4px}
+ul.items{list-style:none;margin:0;padding:0}
+.it{display:grid;grid-template-columns:158px minmax(0,1fr);gap:2px 12px;padding:9px 10px;margin:0 -10px;border-radius:9px;
+  border-top:1px solid var(--line);animation:rise .24s ease both;animation-delay:calc(min(var(--i),10)*22ms)}
+.it:first-child{border-top:0}
+.it.pick{background:var(--sel);border-top-color:transparent}
+.it.pick + .it{border-top-color:transparent}
+.who{font:600 13px var(--mono);color:var(--ink);overflow-wrap:anywhere;align-self:start;padding-top:1px}
+.who:hover{color:var(--accent)}
+.tx{margin:0;min-width:0}
+.kb{display:inline-block;margin-right:7px;padding:0 7px;border-radius:5px;font-size:11.5px;font-weight:600;line-height:19px;
+  color:var(--kc);background:color-mix(in srgb,var(--kc) 14%,var(--card));vertical-align:1px}
+.inf{margin-left:4px;color:var(--faint);cursor:help;font-size:12px}
+.none{margin:16px 0 0;font-size:12.5px;color:var(--faint)}
+.none button{color:var(--sub);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.none button:hover{color:var(--accent)}
+.more{display:block;margin:6px 0 0;padding:6px 0;width:100%;border-top:1px dashed var(--line);text-align:center;font-size:12.5px;color:var(--sub)}
+.more:hover{color:var(--accent)}
+.vb{display:flex;align-items:baseline;gap:6px;color:var(--ink);flex-wrap:wrap}
+.vb b{font:600 13px var(--mono)}
+.vb i{font-style:normal;font-size:11.5px;color:var(--faint)}
+.vb:hover b{color:var(--accent)}
+.empty{color:var(--sub);padding:20px 0}
+/* 这一版的状态：一张卡 */
+.stats{display:grid;gap:10px;margin:8px 0 0}
+.trk{--tc:var(--accent);position:relative;overflow:hidden;padding:10px 14px 10px 18px;border-radius:10px;
+  border:1px solid color-mix(in srgb,var(--tc) 24%,var(--line));background:color-mix(in srgb,var(--tc) 5%,var(--card))}
+.trk::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tc)}
+.trh{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;margin-bottom:8px}
+.trh b{font-size:13.5px;font-weight:700;color:var(--tc);letter-spacing:.2px}
+.trh span{font-size:12px;color:var(--sub)}
+.sc{display:flex;flex-wrap:wrap;gap:6px 22px}
+.sc div{display:flex;flex-direction:column;line-height:1.3}
+.sc b{font:600 13.5px var(--mono);font-variant-numeric:tabular-nums}
+.sc span{font-size:11.5px;color:var(--faint)}
+@media (max-width:560px){
+  table.m{--cf:112px}
+  .fh{padding:6px 8px} .fh small{display:none}
+  .it{grid-template-columns:1fr;margin:0 -6px;padding:9px 6px}
+  .detail{padding:16px 14px 18px}
+  #jump{width:100%}
+}
+
+/* 提示 */
+#tip{position:fixed;z-index:20;max-width:300px;padding:7px 10px;border-radius:9px;background:var(--ink);color:var(--bg);
+  font-size:12.5px;line-height:1.5;pointer-events:none;opacity:0;transform:translateY(3px);transition:opacity .12s,transform .12s;box-shadow:var(--shadow)}
+#tip.on{opacity:1;transform:none}
+#tip b{font-family:var(--mono);font-weight:600}
+
+/* 行分组、首列加宽、格子限宽、变动下面的标签 */
+table.m{--cf:236px}
+td.c .cell{max-width:104px;margin:0 auto}
+tr.rg th{background:var(--bg);text-align:left}
+tr.rg span{position:sticky;left:12px;display:inline-block;padding:4px 0;font:600 11.5px var(--mono);color:var(--faint);letter-spacing:.3px}
+.tgs{display:block;margin-top:5px}
+.tg{display:inline-block;margin:0 6px 4px 0;padding:0 7px;border-radius:5px;font:11.5px/19px var(--mono);color:var(--sub);background:var(--hover)}
+.tg.tk{color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+@media (max-width:560px){table.m{--cf:128px}}
+
+/* 页脚 */
+footer{margin-top:18px;color:var(--sub);font-size:12.5px}
+footer details{margin-top:8px}
+footer summary{cursor:pointer;color:var(--sub)}
+footer summary:hover{color:var(--accent)}
+footer ul{margin:8px 0 0;padding-left:18px}
+footer li{margin:2px 0}
+footer code{font-family:var(--mono);font-size:12px;background:var(--hover);border-radius:4px;padding:0 5px}
+kbd{font:11.5px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--card)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>mzDesk 版本变化</h1>
+    <p id="sub"></p>
+  </header>
+
+  <div class="legend" id="legend"></div>
+
+  <div class="layout">
+    <section class="card mwrap" aria-label="版本 × 模块 变动矩阵"><table class="m" id="m"></table></section>
+    <aside class="card detail" id="detail" aria-live="polite"></aside>
+  </div>
+
+  <footer>
+    <div><kbd>←</kbd> <kbd>→</kbd> 切换版本　<kbd>↑</kbd> <kbd>↓</kbd> 切换行　<kbd>/</kbd> 跳转　<kbd>Esc</kbd> 回到最新版本　·　点图例隐藏某一类，点分组标题折叠 / 展开</div>
+    <details>
+      <summary>说明与更新方法</summary>
+      <ul>
+        <li><b>怎么看</b>：行 = 模块（功能页 / 框架 / 横切，名字下面写对应说明；文件见详情）；列 = 版本，越靠右越新；格子颜色 = 变动类型，点图例可隐藏某一类。</li>
+        <li><b>Δ</b>：这一条会改变输出，前后两版的结果不能直接比。</li>
+        <li><b>骨架</b>：文件在，但还不做事。第一次能用时记“新功能”。</li>
+        <li>版本号 <code>主.次.修</code>，0.1.0 是初始版（第一条记录）；每个版本在 git 里打同名标签（如 <code>v0.1.0</code>）。</li>
+        <li>版本按“主.次”分组（如 <code>v2.0.x</code>）；总数超过 16 版时只展开最新两组，其余折叠成一列，数字是该组内的变动次数。</li>
+        <li>追加新版本：在下面 <code>&lt;script&gt;</code> 里 <code>VERSIONS</code> 数组<b>最前面</b>加一项（新→旧）；<code>c</code> 里只写有变动的行，格式 <code>[类型, 一句话, 是否改变输出, {w:'文件'}]</code>，类型见 <code>KINDS</code>；提交后打 git 标签。</li>
+      </ul>
+    </details>
+  </footer>
+</div>
+<div id="tip" role="tooltip"></div>
+<datalist id="jumplist"></datalist>
+
+<script>
+/* ============ 数据（只改这里） ============ */
+const KINDS = {
+  feat:{n:'新功能',    g:'新'},   // 这一行开始能做一件新的事
+  chg: {n:'改动',      g:'改'},   // 已有的行为变了
+  fix: {n:'修正',      g:'修'},   // 改正一个错误
+  doc: {n:'文档·决定', g:'文'},   // 计划、说明、决定
+  stub:{n:'骨架',      g:'架'}    // 只有空壳：文件在，还不做事
+};
+
+const ROW_GROUPS = {tab:'功能页', shell:'框架', cross:'横切'};
+
+// 行 = 模块。d = 一句话说明；w = 对应的文件 / 文件夹（用 " · " 分开）
+const SECTIONS = [
+  {id:'basic',  grp:'tab',   name:'基础',       d:'脂质/代谢物分类 · 分子属性',  w:'tabs/tab_classifier.py · core/lipid_metabolite_classifier.py · core/lipid_metabolite_viz.py · core/molecular_properties.py'},
+  {id:'ms2',    grp:'tab',   name:'MS² 解析',   d:'MetFrag 碎片注释',            w:'tabs/tab_ms2.py · core/metfrag_engine.py · lib/MetFragCommandLine-2.5.2.jar'},
+  {id:'sim',    grp:'tab',   name:'MS² 相似性', d:'多种相似度 · 镜像图',          w:'tabs/tab_ms2_similarity.py · tabs/_ms2_mirror.py · core/ms2_similarity.py'},
+  {id:'formula',grp:'tab',   name:'分子式注释', d:'BUDDY · SIRIUS',              w:'tabs/tab_structure.py · core/msbuddy_engine.py · core/sirius_engine.py'},
+  {id:'sub',    grp:'tab',   name:'子结构搜索', d:'占位页',                      w:'tabs/tab_placeholders.py'},
+  {id:'shell',  grp:'shell', name:'App 框架',   d:'入口 · 主题 · 显示文案',       w:'app.py · theme.py · core/display_en.py · .streamlit/ · lib/3Dmol-min.js'},
+  {id:'docs',   grp:'cross', name:'计划与文档', d:'计划 · README · 本页',         w:'admin/README.md · admin/version_change.html · README.md · requirements.txt'}
+];
+
+// 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
+// state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
+const VERSIONS = [
+ {id:'v0.1.1', date:'2026-10-23',
+  title:'目录重排：按用途命名，去掉编号目录',
+  note:'通用科研模板（01_Notes … 08_Manuscript）不适合软件论文项目，改为 mzdesk/ · tests/ · examples/ · validation/ · paper/ · admin/。功能不变。',
+  state:[['代码目录','mzdesk/'], ['新增空目录','tests · examples · validation · paper'], ['功能','与 v0.1.0 相同']],
+  c:{
+   shell:['chg','代码目录 05_Code/ 改名 mzdesk/，启动命令改为 streamlit run mzdesk/app.py；导入方式不变。', false, {w:'mzdesk/ · .claude/launch.json · .gitignore'}],
+   docs:['doc','计划移到 admin/README.md，版本页移到 admin/；建立 tests/、examples/、validation/、paper/{manuscript,figures,literature}/、admin/notes/；README 改名 mzDesk 并更新目录树。', false, {w:'admin/ · README.md'}]
+  }},
+ {id:'v0.1.0', date:'2026-10-23',
+  title:'初始版：四个功能页 + 一个占位页',
+  note:'由原 Metabolomics Workbench 整理而来，项目更名 mzDesk，代码移入 05_Code/，建立 git 与本页。',
+  state:[['功能页','4 个可用 + 1 个占位'], ['引擎','RDKit · MetFrag · msbuddy · SIRIUS（可选）'], ['相似度','经典 / 熵 / 自定义 / 深度学习（可选）']],
+  c:{
+   basic:['feat','脂质组/代谢组分类（logP、酰基链、类异戊二烯/甾醇骨架、极性头基、糖环、分子量检测窗口），2D/3D 结构与子结构高亮，基础属性与 ESI± 加合物 m/z 表。', false, {w:'tabs/tab_classifier.py · core/lipid_metabolite_classifier.py'}],
+   ms2:['feat','MetFrag 体外碎片注释，交互式棒状谱图，8 种加合物，盐 / 混合物取最大片段。', false, {w:'tabs/tab_ms2.py · core/metfrag_engine.py'}],
+   sim:['feat','两张 MS/MS 谱图的多指标相似度（经典匹配、谱熵、自定义、可选深度学习）和镜像图。', false, {w:'tabs/tab_ms2_similarity.py · core/ms2_similarity.py'}],
+   formula:['feat','BUDDY 分子式注释（最多 5 个候选，带概率和 FDR）；SIRIUS 6 CLI 可选，有 MS¹ 同位素或 MS² 时才运行。', false, {w:'tabs/tab_structure.py · core/msbuddy_engine.py · core/sirius_engine.py'}],
+   sub:['stub','子结构搜索页只有占位，尚不做事。', false, {w:'tabs/tab_placeholders.py'}],
+   shell:['feat','Streamlit 入口、新粗野主义 × 极简的主题、英文显示文案；代码整理到 05_Code/。', false, {w:'app.py · theme.py · core/display_en.py'}],
+   docs:['doc','建立 Plan（目标、六问协议、功能范围、目标期刊）、README、版本记录页；git 初始化并打 v0.1.0 标签。', false, {w:'00_Admin/ · README.md'}]
+  }}
+];
+
+/* ============ 以下是渲染逻辑，一般不用改 ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const secName = s => s.name || s.id;
+const VMAP = new Map(), SMAP = new Map();
+const verById = id => VMAP.get(id);
+const secById = id => SMAP.get(id);
+const hidden = new Set();            // 被图例隐藏的类型
+const collapsed = new Set();         // 被折叠的分组
+const LIMIT = 12;                    // 一行的时间线默认显示条数
+const AUTO_COLLAPSE_OVER = 16;       // 版本总数超过它，旧分组自动折叠（只留最新两组）
+let S = {v:null, f:null};
+let userNav = false, first = true, moreFor = null;
+let COLS = [], GROUPS = [];
+
+const cellOf = (v, f) => { const a = v.c[f]; return a ? {k:a[0], t:a[1], out:!!a[2], x:a[3] || null} : null; };
+const shown = (v, f) => { const c = cellOf(v, f); return c && !hidden.has(c.k) ? c : null; };
+const gitText = v => v.git ? '提交 ' + v.git : '';
+const shortDate = d => d.slice(2);
+const groupKey = id => { const p = id.replace(/^v/i, '').split('.'); return p.length >= 3 ? 'v' + p[0] + '.' + p[1] + '.x' : id; };
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+/* ---------- 数据索引、分组 ---------- */
+function initData(){
+  VMAP.clear(); SMAP.clear();
+  VERSIONS.forEach(v => VMAP.set(v.id, v));
+  SECTIONS.forEach(s => SMAP.set(s.id, s));
+  COLS = [...VERSIONS].reverse();                      // 矩阵列：旧 → 新，越靠右越新
+  GROUPS = [];
+  COLS.forEach(v => {
+    const k = groupKey(v.id); let g = GROUPS[GROUPS.length - 1];
+    if (!g || g.key !== k) { g = {key:k, vers:[]}; GROUPS.push(g); }
+    g.vers.push(v);
+  });
+  collapsed.clear();
+  if (COLS.length > AUTO_COLLAPSE_OVER) GROUPS.slice(0, -2).forEach(g => collapsed.add(g.key));
+  $('#sub').textContent = `${VERSIONS.length} 个版本 · ${SECTIONS.length} 个模块 · 点格子看详情`;
+  $('#jumplist').innerHTML = VERSIONS.map(v => `<option value="${v.id}">${esc(v.title)}</option>`).join('') +
+    SECTIONS.map(s => `<option value="${esc(secName(s))}">${esc(s.d)}</option>`).join('');
+}
+
+/* ---------- 图例 ---------- */
+$('#legend').innerHTML =
+  Object.entries(KINDS).map(([k,o]) => `<button class="chip k-${k}" data-act="filter" data-k="${k}" aria-pressed="true"><i></i>${o.n}</button>`).join('') +
+  `<span class="hint">Δ 会改变输出结果</span><span class="sp"></span>` +
+  `<input id="jump" list="jumplist" placeholder="跳转：版本 / 模块（按 /）" aria-label="跳转到版本或模块" autocomplete="off">`;
+
+/* ---------- 矩阵 ---------- */
+const KIND_PRIORITY = ['feat','chg','fix','doc','stub'];
+function summary(g, s){
+  const cnt = {}; let n = 0;
+  g.vers.forEach(v => { const c = shown(v, s.id); if (c) { cnt[c.k] = (cnt[c.k] || 0) + 1; n++; } });
+  if (!n) return '<span class="dot">·</span>';
+  const top = KIND_PRIORITY.find(k => cnt[k]);
+  return `<button class="sum k-${top}" data-act="grp" data-g="${g.key}" title="${g.key} 内变动 ${n} 次，点击展开">${n}</button>`;
+}
+
+function buildMatrix(){
+  const m = $('#m');
+  const nOpen = GROUPS.filter(g => !collapsed.has(g.key)).reduce((n, g) => n + g.vers.length, 0);
+  m.style.setProperty('--no', nOpen);
+  m.style.setProperty('--nc', GROUPS.filter(g => collapsed.has(g.key)).length);
+  let cols = '<col class="cf">', r1 = '<th class="corner" rowspan="2"></th>', r2 = '';
+  GROUPS.forEach((g, gi) => {
+    const isC = collapsed.has(g.key), gs = gi ? ' gs' : '';
+    if (isC) {
+      cols += '<col class="gcol">';
+      r1 += `<th class="grp gc${gs}" data-gc="${g.key}"><button class="gb" data-act="grp" data-g="${g.key}" title="展开 ${g.key}（${g.vers.length} 版）"><i>▸</i></button></th>`;
+      r2 += `<th class="vcol gc${gs}" data-gc="${g.key}"><button class="vh" data-act="grp" data-g="${g.key}" title="展开 ${g.key}（${g.vers.length} 版）"><b>${g.key}</b><i>${g.vers.length} 版</i></button></th>`;
+    } else {
+      cols += g.vers.map(() => '<col>').join('');
+      r1 += `<th class="grp${gs}" colspan="${g.vers.length}"><button class="gb" data-act="grp" data-g="${g.key}" title="折叠 ${g.key}"><span class="lab"><i>▾</i>${g.key}<small>${g.vers.length} 版</small></span></button></th>`;
+      g.vers.forEach((v, i) => {
+        r2 += `<th class="vcol${i ? '' : gs}" data-vc="${v.id}"><button class="vh" data-act="ver" data-v="${v.id}" title="${esc(v.title)}"><b>${v.id}</b><i>${shortDate(v.date)}</i><em data-cnt="${v.id}"></em></button></th>`;
+      });
+    }
+  });
+  let h = `<colgroup>${cols}</colgroup><thead><tr>${r1}</tr><tr>${r2}</tr></thead><tbody>`;
+  const nCols = GROUPS.reduce((n, g) => n + (collapsed.has(g.key) ? 1 : g.vers.length), 0);
+  let lastGrp = null;
+  SECTIONS.forEach(s => {
+    if (s.grp !== lastGrp) { lastGrp = s.grp; h += `<tr class="rg"><th colspan="${1 + nCols}"><span>${esc(ROW_GROUPS[s.grp])}</span></th></tr>`; }
+    h += `<tr data-fr="${s.id}"><th class="frow"><button class="fh" data-act="fold" data-f="${s.id}"><b>${esc(secName(s))}</b><small>${esc(s.d)}</small></button></th>`;
+    GROUPS.forEach((g, gi) => {
+      const gs = gi ? ' gs' : '';
+      if (collapsed.has(g.key)) { h += `<td class="gc${gs}" data-gc="${g.key}">${summary(g, s)}</td>`; return; }
+      g.vers.forEach((v, i) => {
+        const c = cellOf(v, s.id);
+        h += `<td class="c${i ? '' : gs}" data-vc="${v.id}">` + (c
+          ? `<button class="cell k-${c.k}" data-act="cell" data-v="${v.id}" data-f="${s.id}" aria-label="${esc(secName(s))} ${v.id}：${KINDS[c.k].n}，${esc(c.t)}">${KINDS[c.k].g}${c.out ? '<sup>Δ</sup>' : ''}</button>`
+          : '<span class="dot">·</span>') + '</td>';
+      });
+    });
+    h += '</tr>';
+  });
+  m.innerHTML = h + '</tbody>';
+}
+
+function paintMatrix(){
+  const m = $('#m');
+  m.querySelectorAll('[data-vc]').forEach(el => el.classList.toggle('sel', el.dataset.vc === S.v));
+  m.querySelectorAll('tr[data-fr]').forEach(tr => tr.classList.toggle('rsel', tr.dataset.fr === S.f));
+  m.querySelectorAll('.cell').forEach(b => {
+    const c = cellOf(verById(b.dataset.v), b.dataset.f);
+    b.classList.toggle('dim', hidden.has(c.k));
+    b.classList.toggle('pick', b.dataset.v === S.v && b.dataset.f === S.f);
+  });
+  m.querySelectorAll('[data-cnt]').forEach(em => {
+    const v = verById(em.dataset.cnt), n = SECTIONS.filter(s => shown(v, s.id)).length;
+    em.textContent = n ? `改 ${n}` : '无';
+  });
+  document.querySelectorAll('.chip').forEach(c => { const off = hidden.has(c.dataset.k); c.classList.toggle('off', off); c.setAttribute('aria-pressed', String(!off)); });
+}
+
+/* ---------- 详情 ---------- */
+const kb = c => `<span class="kb k-${c.k}">${KINDS[c.k].n}</span>`;
+const infMark = c => c.out ? '<span class="inf" title="这一条会改变输出结果：前后两版的结果不能直接比">Δ</span>' : '';
+// 变动下面的标签：动了哪些文件（w，用 " · " 分开）、相关任务号（t，可省）
+const tags = c => !c.x ? '' : '<span class="tgs">' +
+  (c.x.w ? c.x.w.split(' · ').map(w => `<span class="tg">${esc(w)}</span>`).join('') : '') +
+  (c.x.t ? `<span class="tg tk">任务 ${esc(c.x.t)}</span>` : '') + '</span>';
+const navHtml = (i, n, latest) =>
+  `<div class="nav"><button data-act="step" data-d="-1" ${i <= 0 ? 'disabled' : ''} aria-label="${latest ? '更旧一版' : '上一行'}" title="${latest ? '更旧一版（←）' : '上一行（↑）'}">‹</button>` +
+  `<button data-act="step" data-d="1" ${i >= n - 1 ? 'disabled' : ''} aria-label="${latest ? '更新一版' : '下一行'}" title="${latest ? '更新一版（→）' : '下一行（↓）'}">›</button>` +
+  (latest ? `<button class="lt" data-act="latest" ${i >= n - 1 ? 'disabled' : ''} title="回到最新版本（Esc）">最新</button>` : '') + '</div>';
+
+// 这一版的状态：几个要点排成一张卡。state = [[标签, 值], …]
+function stateHtml(v){
+  if (!v.state || !v.state.length) return '';
+  return '<h3 class="sec">这一版的状态</h3><div class="stats"><section class="trk"><div class="sc">' +
+    v.state.map(([lab, val]) => `<div><b>${esc(val)}</b><span>${esc(lab)}</span></div>`).join('') + '</div></section></div>';
+}
+
+function versionDetail(v){
+  const rows = SECTIONS.filter(s => shown(v, s.id));
+  const none = SECTIONS.filter(s => !shown(v, s.id));
+  let h = `<div class="swap"><div class="dh"><div class="dtop"><div class="dv">${v.id}</div>${navHtml(COLS.indexOf(v), COLS.length, true)}</div>
+    <div class="dmeta"><span>${v.date}</span>${v.git ? `<span>${gitText(v)}</span>` : ''}</div>
+    <p class="dtitle">${esc(v.title)}</p>${v.note ? `<p class="note">${esc(v.note)}</p>` : ''}</div>`;
+  h += stateHtml(v);
+  h += `<h3 class="sec">变动 · ${rows.length} 行</h3>`;
+  h += rows.length ? '<ul class="items">' + rows.map((s,i) => {
+      const c = cellOf(v, s.id);
+      return `<li class="it${S.f === s.id ? ' pick' : ''}" style="--i:${i}">
+        <button class="who" data-act="fold" data-f="${s.id}">${esc(secName(s))}</button>
+        <p class="tx">${kb(c)}${esc(c.t)}${infMark(c)}${tags(c)}</p></li>`;
+    }).join('') + '</ul>' : '<p class="empty">这一类没有变动（图例里被隐藏的类型不计）。</p>';
+  if (none.length) h += `<p class="none">无变动：${none.map(s => `<button data-act="fold" data-f="${s.id}">${esc(secName(s))}</button>`).join('、')}</p>`;
+  return h + '</div>';
+}
+
+function folderDetail(s){
+  const all = [...COLS].reverse().filter(v => shown(v, s.id));          // 新 → 旧
+  const none = [...COLS].reverse().filter(v => !shown(v, s.id));
+  const lim = moreFor === s.id ? Infinity : LIMIT;
+  const rows = all.slice(0, lim);
+  let h = `<div class="swap"><div class="dh"><div class="dtop"><div class="dv">${esc(secName(s))}</div>${navHtml(SECTIONS.indexOf(s), SECTIONS.length, false)}</div>
+    <div class="dmeta"><span>${esc(s.d)}</span>${s.w ? s.w.split(' · ').map(w => `<span class="tag">${esc(w)}</span>`).join('') : ''}</div>
+    <p class="dtitle">${all.length ? `${VERSIONS.length} 个版本里变动 ${all.length} 次` : `${VERSIONS.length} 个版本里都没有变动`}</p></div>`;
+  if (rows.length) h += '<h3 class="sec">时间线 · 新→旧</h3><ul class="items">' + rows.map((v,i) => {
+      const c = cellOf(v, s.id);
+      return `<li class="it" style="--i:${i}">
+        <button class="vb" data-act="cell" data-v="${v.id}" data-f="${s.id}"><b>${v.id}</b><i>${shortDate(v.date)}</i></button>
+        <p class="tx">${kb(c)}${esc(c.t)}${infMark(c)}${tags(c)}</p></li>`;
+    }).join('') + '</ul>';
+  if (all.length > rows.length) h += `<button class="more" data-act="more">展开更早的 ${all.length - rows.length} 条</button>`;
+  if (none.length) h += `<p class="none">无变动（${none.length} 版）：${none.slice(0, 30).map(v => `<button data-act="ver" data-v="${v.id}">${v.id}</button>`).join('、')}${none.length > 30 ? ' …' : ''}</p>`;
+  return h + '</div>';
+}
+
+const stacked = () => matchMedia('(max-width:1099px)').matches;
+
+function render(){
+  // 选中的版本在折叠分组里：自动展开
+  if (S.v && collapsed.has(groupKey(S.v))) { collapsed.delete(groupKey(S.v)); buildMatrix(); }
+  paintMatrix();
+  const d = $('#detail');
+  d.innerHTML = S.v ? versionDetail(verById(S.v)) : folderDetail(secById(S.f));
+  d.scrollTop = 0;
+  const pick = d.querySelector('.it.pick');
+  if (pick && !stacked()) {                           // 选中项在可视区外才滚，尽量保持标题可见
+    const need = pick.offsetTop + pick.offsetHeight + 16 - d.clientHeight;
+    if (need > 0) d.scrollTo({top: need, behavior: first ? 'auto' : 'smooth'});
+  }
+  // 矩阵只在自己的容器里滚动，不带动整页
+  const mw = $('.mwrap'), col = $('#m').querySelector(`th.vcol[data-vc="${S.v}"]`);
+  if (col) {
+    const stick = $('#m th.corner').offsetWidth, l = col.offsetLeft, r = l + col.offsetWidth, b = first ? 'auto' : 'smooth';
+    if (l < mw.scrollLeft + stick) mw.scrollTo({left: l - stick, behavior: b});
+    else if (r > mw.scrollLeft + mw.clientWidth) mw.scrollTo({left: r - mw.clientWidth, behavior: b});
+  }
+  const row = S.f && $('#m').querySelector(`tr[data-fr="${S.f}"]`);
+  if (row) {                                          // 行也一样：只在矩阵容器内滚
+    const head = $('#m thead').offsetHeight, t = row.offsetTop, bt = t + row.offsetHeight;
+    if (t < mw.scrollTop + head) mw.scrollTo({top: t - head, behavior: first ? 'auto' : 'smooth'});
+    else if (bt > mw.scrollTop + mw.clientHeight) mw.scrollTo({top: bt - mw.clientHeight, behavior: first ? 'auto' : 'smooth'});
+  }
+  // 单栏（窄屏）时详情在矩阵下面：点完把详情带到眼前
+  if (!first && stacked() && userNav) {
+    const top = d.getBoundingClientRect().top + scrollY - 12;
+    if (d.getBoundingClientRect().top > innerHeight * .55) scrollTo({top, behavior:'smooth'});
+  }
+  first = false; userNav = false;
+}
+
+function rebuild(){ buildMatrix(); render(); }
+
+/* ---------- 状态 ↔ 地址栏 hash ---------- */
+const toHash = st => { const p = new URLSearchParams(); if (st.v) p.set('v', st.v); if (st.f) p.set('f', st.f); return '#' + p.toString(); };
+function fromHash(){
+  const p = new URLSearchParams(location.hash.slice(1));
+  let v = p.get('v'), f = p.get('f');
+  if (v && !verById(v)) v = null;
+  if (f && !secById(f)) f = null;
+  if (!v && !f) v = VERSIONS[0].id;
+  S = {v, f};
+}
+let selfHash = null;                                  // 自己写入的 hash，hashchange 时不再重复渲染
+function go(st, replace){
+  S = st; render();                                   // 先渲染，hash 写不进去（沙箱 / 预览）也照常工作
+  const h = toHash(st);
+  if (h === location.hash) return;
+  selfHash = h; setTimeout(() => { selfHash = null; }, 400);
+  try { replace ? location.replace(h) : (location.hash = h); } catch (e) {}
+}
+window.addEventListener('hashchange', () => {
+  if (location.hash === selfHash) { selfHash = null; return; }
+  fromHash(); render();                               // 浏览器前进 / 后退
+});
+
+/* ---------- 交互 ---------- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const {act, v, f, k, g, d} = b.dataset;
+  userNav = act !== 'filter' && act !== 'grp';
+  if (act === 'ver') go({v, f:null});
+  else if (act === 'fold') go({v:null, f});
+  else if (act === 'cell') go({v, f});
+  else if (act === 'filter') { hidden.has(k) ? hidden.delete(k) : hidden.add(k); rebuild(); }
+  else if (act === 'grp') {
+    if (collapsed.has(g)) collapsed.delete(g);
+    else if (S.v && groupKey(S.v) === g) return;      // 当前选中的版本在这一组，不折叠
+    else collapsed.add(g);
+    rebuild();
+  }
+  else if (act === 'step') {
+    if (S.v) go({v:COLS[clamp(COLS.findIndex(x => x.id === S.v) + +d, 0, COLS.length - 1)].id, f:S.f});
+    else go({v:null, f:SECTIONS[clamp(SECTIONS.findIndex(x => x.id === S.f) + +d, 0, SECTIONS.length - 1)].id});
+  }
+  else if (act === 'latest') go({v:COLS[COLS.length - 1].id, f:null});
+  else if (act === 'more') { moreFor = S.f; render(); }
+});
+
+document.addEventListener('keydown', e => {
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) { if (e.key === 'Escape') e.target.blur(); return; }
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const vi = S.v ? COLS.findIndex(v => v.id === S.v) : -1;
+  const fi = S.f ? SECTIONS.findIndex(s => s.id === S.f) : -1;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    const d = e.key === 'ArrowLeft' ? -1 : 1;                 // 矩阵里最新在右：← 旧，→ 新
+    const n = vi < 0 ? COLS.length - 1 : clamp(vi + d, 0, COLS.length - 1);
+    go({v:COLS[n].id, f:S.f}, true);
+  } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    const d = e.key === 'ArrowUp' ? -1 : 1;
+    const n = fi < 0 ? (d > 0 ? 0 : SECTIONS.length - 1) : clamp(fi + d, 0, SECTIONS.length - 1);
+    go({v:S.v, f:SECTIONS[n].id}, true);
+  } else if (e.key === 'Escape') go({v:COLS[COLS.length - 1].id, f:null}, true);
+  else if (e.key === '/') $('#jump').focus();
+  else return;
+  e.preventDefault();
+});
+
+/* 跳转：输入版本号（带不带 v 都行）或行名 */
+$('#jump').addEventListener('change', e => {
+  const inp = e.target, q = inp.value.trim();
+  if (!q) return;
+  const ver = verById(q) || verById('v' + q.replace(/^v/i, ''));
+  const sec = SECTIONS.find(s => s.id.toLowerCase() === q.toLowerCase() || secName(s) === q);
+  if (ver) go({v:ver.id, f:null});
+  else if (sec) go({v:null, f:sec.id});
+  else { inp.classList.add('bad'); setTimeout(() => inp.classList.remove('bad'), 500); return; }
+  inp.value = ''; inp.blur();
+});
+
+/* 悬停：十字高亮 + 提示 */
+const tip = $('#tip'), m = $('#m');
+function clearHv(){ m.querySelectorAll('.hv').forEach(x => x.classList.remove('hv')); }
+m.addEventListener('mouseover', e => {
+  const cell = e.target.closest('td, th.vcol, th.frow'); if (!cell) return;
+  clearHv();
+  const tr = cell.closest('tbody tr');
+  const sel = cell.dataset.vc ? `[data-vc="${cell.dataset.vc}"]` : cell.dataset.gc ? `[data-gc="${cell.dataset.gc}"]` : null;
+  if (sel) m.querySelectorAll(sel).forEach(x => { if (x.tagName !== 'TH' || x.classList.contains('vcol')) x.classList.add('hv'); });
+  if (tr) tr.querySelectorAll('th,td').forEach(x => x.classList.add('hv'));
+  const b = e.target.closest('.cell');
+  if (!b) { tip.classList.remove('on'); return; }
+  const s = secById(b.dataset.f), v = verById(b.dataset.v), c = cellOf(v, s.id);
+  tip.innerHTML = `<b>${esc(secName(s))}</b> · ${v.id}<br>${esc(c.t)}${c.out ? ' Δ' : ''}`;
+  const r = b.getBoundingClientRect();
+  tip.classList.add('on');
+  const tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = Math.min(Math.max(8, r.left + r.width/2 - tw/2), innerWidth - tw - 8);
+  let y = r.top - th - 8; if (y < 8) y = r.bottom + 8;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+});
+m.addEventListener('mouseleave', () => { clearHv(); tip.classList.remove('on'); });
+$('.mwrap').addEventListener('scroll', () => tip.classList.remove('on'), {passive:true});
+
+/* ---------- 启动 ---------- */
+initData();
+buildMatrix();
+fromHash();
+render();
+</script>
+</body>
+</html>

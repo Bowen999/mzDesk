@@ -1,6 +1,6 @@
 """MetFrag engine for the MS² Interpretation tab.
 
-Runs the bundled MetFrag CLI (05_Code/lib/MetFragCommandLine-2.5.2.jar) on ONE user-supplied
+Runs the bundled MetFrag CLI (mzdesk/lib/MetFragCommandLine-2.5.2.jar) on ONE user-supplied
 candidate structure and maps MetFrag's explained peaks back onto the user's peak list
 (ion formula, theoretical m/z, mass error, neutral loss, fragment structure).
 

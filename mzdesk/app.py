@@ -70,6 +70,6 @@ def main():
         render_substructure()
 
 
-# `streamlit run 05_Code/app.py` executes the script with __name__ == "__main__".
+# `streamlit run mzdesk/app.py` executes the script with __name__ == "__main__".
 if __name__ == "__main__":
     main()
