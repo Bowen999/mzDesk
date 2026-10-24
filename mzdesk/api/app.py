@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from mzdesk import __version__
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
 from mzdesk.spec import MODULES, PIPELINES, spec
@@ -18,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
 LIB_FILES = {"3Dmol-min.js": ROOT / "lib" / "3Dmol-min.js"}   # 前端按需加载的第三方脚本
 log = logging.getLogger("mzdesk.api")
-app = FastAPI(title="mzDesk API", version="0.2.0")
+app = FastAPI(title="mzDesk API", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
 _modules = {m["id"]: m for m in MODULES}
 _pipelines = {p["id"]: p for p in PIPELINES}

@@ -4,12 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mzdesk"
-version = "0.2.0"
 description = "mzDesk: one-stop small-molecule mass spectrometry workbench"
 readme = "admin/README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-dynamic = ["dependencies"]
+dynamic = ["version", "dependencies"]
 
 [project.optional-dependencies]
 test = ["pytest>=7", "httpx>=0.24"]   # httpx: FastAPI TestClient
@@ -24,4 +23,5 @@ packages = { find = { include = ["mzdesk", "mzdesk.*"] } }
 mzdesk = ["lib/*.js", "lib/*.jar", "static/**/*"]
 
 [tool.setuptools.dynamic]
+version = { attr = "mzdesk.__version__" }
 dependencies = { file = ["requirements.txt"] }
