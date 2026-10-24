@@ -1,11 +1,14 @@
 """Metabolomics Workbench — integrated Streamlit app.
 
 Five tabs under one neo-brutalist / minimalist blue design system:
-  1. Basic                   — SMILES classifier + basic properties (core/lipid_metabolite_*)
-  2. MS² Interpretation       — MetFrag fragment annotation (core/metfrag_engine)
-  3. MS2 Similarity           — multi-metric MS² comparison + interactive mirror plot
-  4. Structure Annotation     — BUDDY molecular formula annotation (core/msbuddy_engine)
-  5. Substructure Search      — under construction
+  1. Basic                 — SMILES classifier + basic properties
+                             (core/lipid_metabolite_*, core/molecular_properties)
+  2. MS² Interpretation    — MetFrag fragment annotation (core/metfrag_engine)
+  3. MS² Similarity        — multi-metric MS² comparison + interactive mirror plot
+                             (core/ms2_similarity)
+  4. Structure Annotation  — molecular formula annotation with BUDDY (core/msbuddy_engine),
+                             plus the SIRIUS CLI when installed (core/sirius_engine)
+  5. Substructure Search   — under construction
 
 This shell owns the single set_page_config, the global CSS, the app hero, and the
 tab wiring. Each tab module exposes a render function and never calls set_page_config.
@@ -15,7 +18,7 @@ from pathlib import Path
 
 import streamlit as st
 
-# Make the project root and core/ importable with flat names, so the copied core
+# Make the app root and core/ importable with flat names, so the copied core
 # modules (which import each other flatly) and the tab modules resolve cleanly.
 ROOT = Path(__file__).parent.resolve()
 CORE = ROOT / "core"
@@ -42,15 +45,15 @@ def main():
     theme.hero(
         'Metabolomics <span class="accent">Workbench</span>',
         subtitle="An integrated bench for small-molecule annotation — classify lipids vs "
-                 "metabolites, interpret MS² spectra with MetFrag, compare spectra, and "
-                 "annotate molecular formulas with BUDDY.",
+                 "metabolites, interpret MS² spectra with MetFrag, compare MS² spectra, and "
+                 "annotate molecular formulas with BUDDY (plus SIRIUS when installed).",
         kicker="lipidomics · metabolomics · ms² · structure",
     )
 
     tab_clf, tab_ms2, tab_sim, tab_struct, tab_sub = st.tabs([
         "Basic",
         "MS² Interpretation",
-        "MS2 Similarity",
+        "MS² Similarity",
         "Structure Annotation",
         "Substructure Search",
     ])
@@ -67,6 +70,6 @@ def main():
         render_substructure()
 
 
-# `streamlit run app.py` executes the script with __name__ == "__main__".
+# `streamlit run 05_Code/app.py` executes the script with __name__ == "__main__".
 if __name__ == "__main__":
     main()

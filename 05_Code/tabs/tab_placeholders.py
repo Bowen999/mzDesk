@@ -1,4 +1,3 @@
-import streamlit as st
 import theme
 
 
@@ -9,8 +8,8 @@ def render_substructure():
         kicker="search · SMARTS",
     )
     theme.under_construction(
-        "Substructure Search",
-        note="This module will let you draw or type a substructure / SMARTS query and screen "
-             "a compound set for matches, with highlighted hits.",
+        "Coming soon",
+        note="Draw or type a substructure / SMARTS query, screen a compound set for matches "
+             "and see the hits highlighted.",
         eta="Planned — next milestone",
     )

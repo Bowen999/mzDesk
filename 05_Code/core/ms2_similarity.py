@@ -150,28 +150,43 @@ def _nist_weights(mz, intensities, mz_power=3.0, int_power=0.6):
 
 
 def nist_dot_product(mz1, i1, mz2, i2, tolerance):
-    """NIST 加权点积（归一化到两张谱全部峰）。"""
+    """Stein & Scott (1994) 复合点积：(Σ W₁W₂)² / (ΣW₁²·ΣW₂²)，W = mz³·I⁰·⁶。
+
+    分子只累加匹配上的峰对，分母用两张谱的全部峰，未匹配的峰因此会拉低得分。
+    """
     w1 = _nist_weights(mz1, i1)
     w2 = _nist_weights(mz2, i2)
     matches = _greedy_match(mz1, w1, mz2, w2, tolerance)
-    num = sum(np.sqrt(w1[i] * w2[j]) for i, j in matches)
-    den = np.sqrt(w1.sum() * w2.sum())
-    return (float(num / den) if den > 0 else 0.0), len(matches)
+    num = sum(w1[i] * w2[j] for i, j in matches)
+    den = float(np.dot(w1, w1) * np.dot(w2, w2))
+    return (float(num * num / den) if den > 0 else 0.0), len(matches)
 
 
 def reverse_dot_product(mz1, i1, mz2, i2, tolerance):
-    """Reverse dot product：spec1 为查询谱（只用匹配上的峰归一化），spec2 为库谱（用全部峰归一化）。"""
+    """Reverse dot product：同样的 Stein & Scott 复合点积，但查询谱只用匹配上的峰归一化
+    （spec1 = 查询谱，spec2 = 库谱），所以查询谱里多出来的峰不扣分。
+    """
     w1 = _nist_weights(mz1, i1)
     w2 = _nist_weights(mz2, i2)
     matches = _greedy_match(mz1, w1, mz2, w2, tolerance)
-    num = sum(np.sqrt(w1[i] * w2[j]) for i, j in matches)
-    den = np.sqrt(sum(w1[i] for i, _ in matches) * w2.sum())
-    return (float(num / den) if den > 0 else 0.0), len(matches)
+    num = sum(w1[i] * w2[j] for i, j in matches)
+    den = float(sum(w1[i] * w1[i] for i, _ in matches) * np.dot(w2, w2))
+    return (float(num * num / den) if den > 0 else 0.0), len(matches)
+
+
+# 分箱向量长度上限（约 40 MB/向量），防止极小 bin 宽度导致内存爆炸
+MAX_BINS = 5_000_000
 
 
 def _binned_vectors(mz1, i1, mz2, i2, bin_width):
+    if not (np.isfinite(bin_width) and bin_width > 0):
+        raise ValueError("bin width must be a positive number")
     lo = np.floor(min(mz1.min(), mz2.min()) / bin_width) * bin_width
     hi = max(mz1.max(), mz2.max()) + 2 * bin_width
+    n_bins = int(np.ceil((hi - lo) / bin_width))
+    if n_bins > MAX_BINS:
+        raise ValueError(f"{n_bins:,} bins would be needed at {bin_width:g} Da; "
+                         "use a larger tolerance")
     edges = np.arange(lo, hi, bin_width)
     v1, _ = np.histogram(mz1, bins=edges, weights=i1)
     v2, _ = np.histogram(mz2, bins=edges, weights=i2)
@@ -185,8 +200,17 @@ def binned_cosine(mz1, i1, mz2, i2, bin_width):
 
 
 def binned_correlation(mz1, i1, mz2, i2, bin_width, method="pearson"):
+    """两张谱分箱后的相关系数，只统计至少一方有信号的 bin。
+
+    整段 m/z 范围里绝大多数 bin 是空的（默认例子有几千个），把它们算进去会让
+    相关系数趋近 1（Spearman 因大量并列的 0 甚至正好是 1.0000）。
+    """
     from scipy import stats
     v1, v2 = _binned_vectors(mz1, i1, mz2, i2, bin_width)
+    used = (v1 > 0) | (v2 > 0)
+    v1, v2 = v1[used], v2[used]
+    if v1.size < 3:
+        return None
     if method == "pearson":
         r = stats.pearsonr(v1, v2).statistic
     else:
@@ -239,7 +263,12 @@ def _matchms_scores(spec1, spec2, tolerance, results):
             continue
         try:
             score, matches = _unpack_matchms_score(cls(tolerance=tolerance).pair(spec1, spec2))
-            _add_result(results, cat, name, score=score, matches=matches)
+            note = ""
+            if name == "BlinkCosine":
+                # BLINK 默认预过滤：去掉 <1% 基峰及高于 precursor 的峰；matches 为窗口内近似计数
+                note = ("BLINK approximation: drops peaks <1% of base peak and above the "
+                        "precursor; match count is approximate")
+            _add_result(results, cat, name, score=score, matches=matches, note=note)
         except Exception as exc:  # noqa: BLE001
             _add_result(results, cat, name, note=f"Failed: {exc}")
 
@@ -271,7 +300,8 @@ def _custom_scores(mz1, i1, mz2, i2, tolerance, results):
     cat = "Custom (numpy/scipy)"
     try:
         score, n = nist_dot_product(mz1, i1, mz2, i2, tolerance)
-        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", score=score, matches=n)
+        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", score=score, matches=n,
+                    note="Stein & Scott (1994) composite dot product")
     except Exception as exc:  # noqa: BLE001
         _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", note=f"Failed: {exc}")
     try:
@@ -284,7 +314,11 @@ def _custom_scores(mz1, i1, mz2, i2, tolerance, results):
                      ("Binned Pearson correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "pearson")),
                      ("Binned Spearman correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "spearman"))]:
         try:
-            _add_result(results, cat, name, score=fn(), note=f"bin width = {tolerance} Da")
+            score = fn()
+            note = f"bin width = {tolerance:g} Da"
+            if score is None:
+                note += "; correlation undefined for these binned vectors"
+            _add_result(results, cat, name, score=score, note=note)
         except Exception as exc:  # noqa: BLE001
             _add_result(results, cat, name, note=f"Failed: {exc}")
 
@@ -293,8 +327,13 @@ def _download_file(url, dest):
     """下载单个文件，成功返回 True。"""
     try:
         print(f"  Downloading: {url}", file=sys.stderr)
-        urllib.request.urlretrieve(url, dest)
-        return os.path.getsize(dest) > 0
+        part = dest + ".part"
+        urllib.request.urlretrieve(url, part)
+        if os.path.getsize(part) == 0:
+            os.remove(part)
+            return False
+        os.replace(part, dest)   # a partial download must never become the cached model
+        return True
     except Exception as exc:  # noqa: BLE001
         print(f"  Download failed: {exc}", file=sys.stderr)
         return False
@@ -427,9 +466,14 @@ def _load_spec2vec_model(model_path: str):
     return Word2Vec.load(model_path)
 
 
-def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results):
+def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results, ionmode=None):
     """基于 gensim Word2Vec 模型直接计算 Spec2Vec 嵌入余弦（无需 spec2vec 包）。"""
     cat, name = "Deep learning", "Spec2Vec"
+    if ionmode == "negative":
+        _add_result(results, cat, name,
+                    note="N/A: the pretrained model is GNPS AllPositive, i.e. positive-mode "
+                         "spectra only, so a negative-mode score would be meaningless")
+        return
     try:
         import gensim  # noqa: F401
     except ImportError:
@@ -454,25 +498,40 @@ def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results):
                 best_nd, best_cov = nd, cov
 
         def embedding(mz, ii, pmz):
+            """返回 (嵌入向量, 峰词权重的词表覆盖率)；词表外的词被忽略。"""
             words, weights = _spectrum_to_words(mz, ii, pmz, best_nd)
             vecs, ws = [], []
+            peak_total = peak_found = 0.0
             for w, wt in zip(words, weights):
+                is_peak = w.startswith("peak@")
+                if is_peak:
+                    peak_total += wt
                 if w in wv:
                     vecs.append(wv[w] * wt)
                     ws.append(wt)
+                    if is_peak:
+                        peak_found += wt
             if not vecs:
-                return None
-            return np.sum(vecs, axis=0) / sum(ws)
+                return None, 0.0
+            coverage = peak_found / peak_total if peak_total > 0 else 0.0
+            return np.sum(vecs, axis=0) / sum(ws), coverage
 
-        v1 = embedding(mz1, i1, pmz1)
-        v2 = embedding(mz2, i2, pmz2)
+        # neutral-loss words only when BOTH spectra have a precursor m/z: adding them on one
+        # side only compares different word sets and depresses the score
+        use_losses = pmz1 is not None and pmz2 is not None
+        v1, cov1 = embedding(mz1, i1, pmz1 if use_losses else None)
+        v2, cov2 = embedding(mz2, i2, pmz2 if use_losses else None)
         if v1 is None or v2 is None:
             _add_result(results, cat, name, note="Failed: spectrum words are not in the model vocabulary")
             return
         den = np.linalg.norm(v1) * np.linalg.norm(v2)
         score = float(np.dot(v1, v2) / den) if den > 0 else 0.0
-        _add_result(results, cat, name, score=score,
-                    note=f"GNPS AllPositive pretrained model, n_decimals={best_nd}")
+        note = (f"GNPS AllPositive pretrained model, n_decimals={best_nd}; vocabulary covers "
+                f"{cov1:.0%} / {cov2:.0%} of query / ref peak weight")
+        if (pmz1 is None) != (pmz2 is None):
+            note += ("; only one spectrum has a precursor m/z, so neutral-loss words are "
+                     "left out on both sides")
+        _add_result(results, cat, name, score=score, note=note)
     except Exception as exc:  # noqa: BLE001
         _add_result(results, cat, name, note=f"Failed: {exc}")
 
@@ -498,6 +557,12 @@ def compute_all_similarities(peaks1, peaks2, precursor_mz1=None, precursor_mz2=N
     ----
     list[dict]，字段：category, method, score, matches, note
     """
+    tolerance = float(tolerance)
+    if not (np.isfinite(tolerance) and tolerance > 0):
+        raise ValueError("tolerance must be a positive number (Da)")
+    precursor_mz1 = _check_precursor(precursor_mz1, "precursor m/z of spectrum 1")
+    precursor_mz2 = _check_precursor(precursor_mz2, "precursor m/z of spectrum 2")
+
     mz1, i1 = clean_peaks(*normalize_peaks_input(peaks1))
     mz2, i2 = clean_peaks(*normalize_peaks_input(peaks2))
 
@@ -513,9 +578,19 @@ def compute_all_similarities(peaks1, peaks2, precursor_mz1=None, precursor_mz2=N
     if use_deep:
         _ms2deepscore_score(spec1, spec2, ms2deepscore_model_path, results)
         _spec2vec_score(mz1, i1, precursor_mz1, mz2, i2, precursor_mz2,
-                        spec2vec_model_path, results)
+                        spec2vec_model_path, results, ionmode=ionmode)
 
     return results
+
+
+def _check_precursor(value, label):
+    """None 保持 None；否则必须是有限正数（NaN/负数会让 matchms 静默给出 0 分）。"""
+    if value is None:
+        return None
+    value = float(value)
+    if not (np.isfinite(value) and value > 0):
+        raise ValueError(f"{label} must be a positive number")
+    return value
 
 
 def print_results(results, info_lines=None):

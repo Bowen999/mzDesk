@@ -162,6 +162,21 @@ def draw_structure_highlight(result: Result, size=(560, 420)):
                     highlight_bonds.append(bidx)
                 highlight_bond_colors[bidx] = color
 
+    return _render(mol, size, highlight_atoms, highlight_atom_colors,
+                   highlight_bonds, highlight_bond_colors)
+
+
+def draw_structure(smiles: str, size=(560, 420)):
+    """Plain 2D depiction without substructure highlights (RGB uint8 array)."""
+    mol = Chem.MolFromSmiles(smiles) if smiles else None
+    if mol is None:
+        return np.full((size[1] // 2, size[0] // 2, 3), 255, dtype=np.uint8)
+    return _render(mol, size, [], {}, [], {})
+
+
+def _render(mol, size, highlight_atoms, highlight_atom_colors,
+            highlight_bonds, highlight_bond_colors):
+    """Draw `mol` with RDKit's Cairo backend and return an RGB uint8 array."""
     w, h = int(size[0]), int(size[1])
     drawer = rdMolDraw2D.MolDraw2DCairo(w, h)
     opts = drawer.drawOptions()

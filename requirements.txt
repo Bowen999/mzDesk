@@ -11,7 +11,7 @@ scipy>=1.10
 # Optional: enable MS2DeepScore / Spec2Vec deep-learning scores
 gensim>=4.3
 ms2deepscore>=2.0
-# MS² tab shells out to MetFrag (bundled JAR in lib/); requires a Java 8+ runtime on PATH.
+# MS² tab shells out to MetFrag (bundled JAR in 05_Code/lib/); requires a Java 8+ runtime on PATH.
 # Structure Annotation tab — BUDDY molecular formula annotation
 msbuddy>=0.3
 # Optional second engine: SIRIUS 6 CLI (https://v6.docs.sirius-ms.io) — auto-detected on PATH
