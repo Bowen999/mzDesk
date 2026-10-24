@@ -4,6 +4,7 @@
 MetFrag 需要 Java；没有 Java 时相关测试跳过。
 """
 import shutil
+import types
 
 import pytest
 from fastapi.testclient import TestClient
@@ -144,7 +145,7 @@ def test_theory_handles_permanent_cation():
 # ---------------------------------------------------------------- bad input
 @pytest.mark.parametrize("module_id,inputs", [
     ("properties", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}}),
-    ("properties", {"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}}),
+    ("properties", {"structure": {"mode": "Name / ID / Formula", "value": ""}}),
     ("ms1_formula", {"precursor": {"precursor_mz": "2000", "ion_mode": "Positive", "adduct": "Auto"}}),
     ("ms2_similarity", {"query": _paste("100 1"), "reference": _paste("not a spectrum")}),
     ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
@@ -164,3 +165,74 @@ def test_bad_input_is_400(module_id, inputs):
 
 def test_unknown_module_is_404():
     assert _run("nope", {}).status_code == 404
+
+
+# ---------------------------------------------------------------- identity / name resolver
+def _fake_resolved(**kw):
+    base = dict(query="caffeine", kind="Name", smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+                inchi="InChI=1S/C8H10N4O2/c1-10-4-9-6-5(10)7(13)12(3)8(14)11(6)2/h4H,1-3H3",
+                inchikey="RYYVLZVUVIJVGH-UHFFFAOYSA-N", cid=2519, name="caffeine", iupac="1,3,7-trimethylpurine-2,6-dione",
+                ids={"CAS": ["58-08-2"], "HMDB": ["HMDB0001847"], "KEGG": ["C07481"]},
+                synonyms=["caffeine", "1,3,7-trimethylxanthine"], candidates=[(2519, "Caffeine"), (1, "Other")],
+                stereo_fallback=False, warnings=[],
+                links={"PubChem": "https://pubchem.ncbi.nlm.nih.gov/compound/2519",
+                       "HMDB": "https://hmdb.ca/metabolites/HMDB0001847", "CAS": "https://commonchemistry.cas.org/detail?cas_rn=58-08-2"})
+    base.update(kw)
+    return types.SimpleNamespace(**base)
+
+
+def test_identity_runner_offline(monkeypatch):
+    from mzdesk.identity import resolve
+    monkeypatch.setattr(resolve, "resolve", lambda q, kind="Auto", **kw: _fake_resolved(query=q))
+    body = _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}).json()
+    assert body["status"] == "ok"
+    out = body["outputs"]
+    rows = out["identifiers"]["rows"]
+    assert len(rows) == 14
+    hmdb = next(r for r in rows if r[0] == "HMDB")
+    assert hmdb[1] == "HMDB0001847" and hmdb[2] == {"text": "HMDB0001847", "href": "https://hmdb.ca/metabolites/HMDB0001847"}
+    pc = next(r for r in rows if r[0] == "PubChem CID")
+    assert pc[2] == {"text": "2519", "href": "https://pubchem.ncbi.nlm.nih.gov/compound/2519"}
+    assert next(r for r in rows if r[0] == "ChEMBL")[1:] == ["—", "—"]
+    assert out["resolved"]["values"] == {"Input read as": "Name", "Name": "caffeine", "PubChem CID": "2519", "Formula": "C8H10N4O2"}
+    assert out["candidates"]["rows"] == [["1", "Other"]]
+    assert out["depiction"]["svg"]
+
+
+def test_identity_runner_empty_and_resolver_error_are_400(monkeypatch):
+    from mzdesk.identity import resolve
+    assert _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": " "}}).status_code == 400
+
+    def boom(*a, **k):
+        raise resolve.ResolveError("No compound found for 'zzz'.")
+    monkeypatch.setattr(resolve, "resolve", boom)
+    r = _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": "zzz"}})
+    assert r.status_code == 400 and "zzz" in r.json()["detail"]
+
+
+def test_structure_name_mode_uses_resolver(monkeypatch):
+    from mzdesk.api import common
+    from mzdesk.identity import resolve
+    monkeypatch.setattr(resolve, "to_smiles", lambda q, kind="Auto": "CCO")
+    got = common.structure({"structure": {"mode": "Name / ID / Formula", "value": "ethanol"}})
+    assert got == {"kind": "smiles", "smiles": "CCO"}
+
+
+def test_structure_kegg_id_not_treated_as_formula(monkeypatch):
+    from mzdesk.api import common
+    from mzdesk.identity import resolve
+    calls = []
+    monkeypatch.setattr(resolve, "to_smiles", lambda q, kind="Auto": calls.append(q) or "OC(=O)CC(O)=O")
+    f = lambda v: common.structure({"structure": {"mode": "Name / ID / Formula", "value": v}}, allow_formula=True)
+    assert f("C00001")["kind"] == "smiles" and calls == ["C00001"]
+    assert f("C8H10N4O2") == {"kind": "formula", "formula": "C8H10N4O2"} and calls == ["C00001"]
+
+
+def test_resolver_input_error_is_400(monkeypatch):
+    from mzdesk.identity import resolve
+
+    def boom(q, kind="Auto"):
+        raise resolve.ResolveError("not found")
+    monkeypatch.setattr(resolve, "to_smiles", boom)
+    r = _run("properties", {"structure": {"mode": "Name / ID / Formula", "value": "zzz"}})
+    assert r.status_code == 400 and r.json()["detail"] == "Structure: not found"

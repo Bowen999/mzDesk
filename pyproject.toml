@@ -25,3 +25,6 @@ mzdesk = ["lib/*.js", "lib/*.jar", "static/**/*"]
 [tool.setuptools.dynamic]
 version = { attr = "mzdesk.__version__" }
 dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+markers = ["network: real PubChem/UniChem calls (set MZDESK_NETWORK_TESTS=1)"]

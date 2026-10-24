@@ -262,6 +262,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.1', date:'2026-10-24',
+  title:'身份页接活：名字 / 各种 ID 互转，跨库链接；所有页面可用名字或 ID 输入结构',
+  note:'新增 tests/test_identity.py（离线回放 caffeine 响应）；需联网（PubChem、UniChem），结果缓存 30 天。',
+  state:[['能算的模块页','8 / 25'], ['Pipeline','4 条，未接'], ['测试','102 个通过']],
+  c:{
+   other:['feat','新增 mzdesk/identity/resolve.py：输入名字、IUPAC、CAS、SMILES、InChI、InChIKey、CID、HMDB、KEGG、ChEBI、LIPID MAPS、DrugBank 任一，自动识别类型，返回结构、全部 ID、同义词、链接。身份页输出 Resolved 卡片、2D 结构、Identifiers 表、同名其他匹配、Synonyms，带 Load example。',true,{w:'mzdesk/identity/resolve.py · mzdesk/api/runners/identity.py · mzdesk/spec.py'}],
+   prop:['chg','结构输入的 Name / ID / Formula 模式接上解析器：名字和数据库 ID 可直接用；C00001 之类 KEGG ID 不再误判为分子式。',false,{w:'mzdesk/api/common.py'}],
+   app:['chg','表格新增链接单元格；输入类型下拉；pytest 增加 network 标记。',false,{w:'web/src/components/Outputs.tsx · web/src/types.ts · pyproject.toml'}]
+  }},
  {id:'v0.2.0', date:'2026-10-24',
   title:'MS2 新增 Clean & Vis：任意格式进，清洗、画图、11 种格式出',
   note:'新增 tests/test_ms2_tools.py，解析器和 API 测试补充。',

@@ -12,6 +12,7 @@ function Title({ block, status }: { block: Block; status?: Status }) {
 }
 
 function CellView({ cell }: { cell: Cell }) {
+  if (cell && typeof cell === "object" && "href" in cell) return <a href={cell.href} target="_blank" rel="noopener">{cell.text}</a>;
   if (cell && typeof cell === "object") return <img className="cell-img" src={cell.img} alt="" />;
   return <>{cell}</>;
 }

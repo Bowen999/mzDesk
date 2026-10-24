@@ -2,7 +2,7 @@
 
 输入：前端按 spec 字段发来的 JSON（复合字段 structure / precursor / spectrum 是对象，数字可能是字符串）。
 输出：{块 id: 数据}。数据形状：
-  table   {"rows": [[cell, ...], ...]}；cell 是字符串，或 {"img": data-URL}
+  table   {"rows": [[cell, ...], ...]}；cell 是字符串，或 {"img": data-URL}，或 {"text": str, "href": URL}（链接）
   cards   {"values": {label: 字符串}}
   figure  {"plotly": {data, layout}, "peaks": [...]?} | {"svg": "..."} | {"mol3d": molblock}
   code    {"text": "..."}
@@ -82,7 +82,7 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
     """Structure field -> {"kind": "smiles", "smiles": ...} | {"kind": "formula", "formula": ...} | None.
 
     SMILES / InChI mode accepts SMILES or an InChI string. Name / ID / Formula mode accepts a formula
-    where the page allows one; name and database-ID lookup is not connected yet.
+    where the page allows one; anything else is resolved to a SMILES by mzdesk.identity.resolve.
     """
     value = inputs.get(key) or {}
     mode = value.get("mode") or "SMILES / InChI"
@@ -94,10 +94,14 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
             raise InputError(f"{label} is required.")
         return None
     if mode == "Name / ID / Formula":
-        if allow_formula and is_formula(s):
+        from mzdesk.identity import resolve
+        # C00001 之类的 KEGG ID 长得像分子式：只有识别为 Name 才当分子式
+        if allow_formula and is_formula(s) and resolve.detect(s) == "Name":
             return {"kind": "formula", "formula": s}
-        raise InputError("Name and database-ID lookup is not connected yet. Use SMILES / InChI"
-                         + (" or enter a formula such as C8H10N4O2." if allow_formula else "."))
+        try:
+            return {"kind": "smiles", "smiles": resolve.to_smiles(s)}
+        except resolve.ResolveError as exc:
+            raise InputError(f"{label}: {exc}") from None
     if s.startswith("InChI="):
         mol = Chem.MolFromInchi(s)
         if mol is None:
@@ -162,6 +166,11 @@ def signed(value, nd=1):
 
 def plotly(fig, **extra):
     return {"plotly": json.loads(fig.to_json()), **extra}
+
+
+def link(text, href):
+    """Link cell for a table; MISSING when there is no text."""
+    return {"text": str(text), "href": href} if text else MISSING
 
 
 def png(b64):

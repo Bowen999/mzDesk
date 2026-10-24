@@ -78,7 +78,7 @@ function StructureInput({ field, value, onChange }: P) {
       ) : value.mode === "SMILES / InChI" ? (
         <input type="text" placeholder="CN1C=NC2=C1C(=O)N(C(=O)N2C)C" value={value.value} onChange={e => set({ value: e.target.value })} />
       ) : (
-        <input type="text" placeholder="caffeine · HMDB0001847 · C8H10N4O2" value={value.value} onChange={e => set({ value: e.target.value })} />
+        <input type="text" placeholder="Name, IUPAC, CAS, InChIKey, PubChem CID, HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank ID" value={value.value} onChange={e => set({ value: e.target.value })} />
       )}
     </div>
   );

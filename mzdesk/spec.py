@@ -11,6 +11,8 @@ checkbox, slider, file, table, heading。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
 from mzdesk.shared.ms2_clean import NORMALIZE, SORT_BY
+# 注意：resolve.py 导入时不联网，所以这里可以直接导入 KINDS；不要在 spec 里导入任何联网代码
+from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
 
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
@@ -100,15 +102,18 @@ PG_36_2_MS2 = ("139.00977 3\n152.99622 24\n168.04965 3\n279.22757 48\n280.2258 2
 
 
 MODULES = [
-    module("identity", "Identity & background", "B", "Who is this compound, where does it come from, what is known about it.",
-        [structure()],
-        [head("Identifiers"),
-         table(["Name", "IUPAC", "CAS", "SMILES", "InChI", "InChIKey", "PubChem CID", "HMDB", "KEGG", "ChEBI", "LIPID MAPS", "DrugBank"]),
-         table(["Database", "ID", "Link", "Synonyms"], "Cross-links & synonyms"),
+    module("identity", "Identity & background", "B", "Who is this compound: resolve a name or database ID to structure and identifiers.",
+        [structure(), select("kind", "Input type", IDENTITY_KINDS)],
+        [cards([("Input read as", ""), ("Name", ""), ("PubChem CID", ""), ("Formula", "")], "Resolved", id="resolved"),
+         figure("2D depiction", id="depiction"),
+         table(["Identifier", "Value", "Link"], "Identifiers", id="identifiers"),
+         table(["PubChem CID", "Title"], "Other matches for this name", id="candidates"),
+         table(["Synonym"], "Synonyms", id="synonyms"),
          table(["System", "Level", "Term"], "Classification", "ClassyFire, NPClassifier, LIPID MAPS"),
          table(["Origin", "Evidence", "Source"], "Origin", "Endogenous / drug / food / pollutant / microbial / plant"),
          table(["Pathway", "Database", "Link"], "Biology"), table(["Biofluid", "Normal concentration", "Unit", "Source"]), table(["Species", "Source (LOTUS)"]),
-         table(["Vendor", "CAS", "Purity", "GHS hazard"], "Standard availability")]),
+         table(["Vendor", "CAS", "Purity", "GHS hazard"], "Standard availability")],
+        live=True, example={"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}),
 
     module("properties", "Molecular properties", "B", "Representation, descriptors, functional groups, structure formats.",
         [structure()],

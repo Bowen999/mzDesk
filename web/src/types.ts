@@ -17,7 +17,7 @@ export type Group = { id: string; title: string };
 export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[] };
 
 /** 后端结果：按输出块 id 填数据（形状见 mzdesk/api/common.py）。 */
-export type Cell = string | { img: string };
+export type Cell = string | { img: string } | { text: string; href: string };
 export type CardValue = string | { value: string; note?: string };
 export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string };
 export type BlockData = {
