@@ -6,7 +6,7 @@ checkbox, slider, file, table, heading。
   formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：pipeline 的 stage 用 exclude 按 key 过滤块。
-模块：group 是侧栏大类（pipelines / modules）；subgroup 是 Modules 下的小类（ms1 / ms2 / orthogonal / dmpk），
+模块：group 是侧栏大类（pipelines / modules）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk），
   None = 直接列在 Modules 下。live=True 表示已接引擎（后端 mzdesk/api/runners.py 里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
@@ -102,28 +102,34 @@ PG_36_2_MS2 = ("139.00977 3\n152.99622 24\n168.04965 3\n279.22757 48\n280.2258 2
 
 
 MODULES = [
-    module("identity", "Identity & background", "B", "Who is this compound: resolve a name or database ID to structure and identifiers.",
+    module("identity", "Identity", "B", "Who is this compound: names, database IDs, synonyms, classification and background (online lookup).",
         [structure(), select("kind", "Input type", IDENTITY_KINDS)],
-        [cards([("Input read as", ""), ("Name", ""), ("PubChem CID", ""), ("Formula", "")], "Resolved", id="resolved"),
+        [cards([("Name", ""), ("Formula", ""), ("PubChem CID", "")], "Resolved", id="resolved"),
          figure("2D depiction", id="depiction"),
-         table(["Identifier", "Value", "Link"], "Identifiers", id="identifiers"),
+         table(["Name type", "Value"], "Names", id="names"),
+         table(["Database", "ID"], "Database IDs", id="database_ids"),
          table(["PubChem CID", "Title"], "Other matches for this name", id="candidates"),
          table(["Synonym"], "Synonyms", id="synonyms"),
          table(["System", "Level", "Term"], "Classification", "ClassyFire, NPClassifier, LIPID MAPS"),
          table(["Origin", "Evidence", "Source"], "Origin", "Endogenous / drug / food / pollutant / microbial / plant"),
-         table(["Pathway", "Database", "Link"], "Biology"), table(["Biofluid", "Normal concentration", "Unit", "Source"]), table(["Species", "Source (LOTUS)"]),
-         table(["Vendor", "CAS", "Purity", "GHS hazard"], "Standard availability")],
-        live=True, example={"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}),
+         table(["Pathway", "Database", "Link"], "Pathways"),
+         table(["Biofluid", "Normal concentration", "Unit", "Source"], "Biofluid concentrations"),
+         table(["Species", "Source"], "Species", "LOTUS"),
+         table(["Vendor", "CAS", "Purity", "GHS hazard"], "Standards & safety")],
+        subgroup="molecular", live=True, example={"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}),
 
-    module("properties", "Molecular properties", "B", "Representation, descriptors, functional groups, structure formats.",
+    module("structure_formats", "Structure & formats", "B", "Draw the structure in 2D / 3D and export it as SMILES, InChI, InChIKey or MOL.",
         [structure()],
         [figure("2D depiction", id="depiction"), figure("3D viewer", id="viewer3d"),
-         cards([("Formula", ""), ("Exact mass", "Da"), ("logP", "Crippen"), ("Charge", "net formal")], "Properties", id="summary"),
-         table(["Descriptor", "Value"], caption="MW, HBD, HBA, TPSA, rotatable bonds, rings", id="descriptors"),
-         table(["Group", "Count", "Atoms", "SMARTS"], "Functional groups (substructure search)"),
-         table(["Format", "Value"], "Structure format conversion", "SMILES, InChI, InChIKey; MOL block below", id="formats"),
-         code("MOL block", id="molblock")],
-        live=True, example={"structure": _smiles(CAFFEINE)}),
+         formats("Structure in every format", "Structure formats", id="formats")],
+        subgroup="molecular", live=True, example={"structure": _smiles(CAFFEINE)}),
+
+    module("properties", "Properties & groups", "B", "Formula, masses, physicochemical descriptors and functional groups.",
+        [structure()],
+        [cards([("Formula", ""), ("Monoisotopic mass", "Da"), ("Average MW", "Da"), ("Net charge", "formal")], "Composition", id="summary"),
+         table(["Group", "Descriptor", "Value"], "Descriptors", id="descriptors"),
+         table(["Group", "Count", "Atoms", "SMARTS"], "Functional groups", "Substructure search")],
+        subgroup="molecular", live=True, example={"structure": _smiles(CAFFEINE)}),
 
     module("platform_fit", "Platform fit", "A", "Can my platform see it: pH behaviour, column choice, ionization, lipidomics vs metabolomics.",
         [structure(), slider("ph", "pH", 1, 13, 0.1, 7.4), radio("ion_mode", "Ion mode", ["Positive", "Negative"])],
@@ -132,15 +138,16 @@ MODULES = [
          table(["Column", "Recommendation", "Reason"], "Column", "RP / HILIC", key="column"),
          cards([("ESI preference", "+ / − / both"), ("GC volatile", "yes / no / after derivatization")], "Ionization", key="ion"),
          table(["Adduct", "m/z", "Likelihood"], caption="Dominant adducts for the chosen ion mode", key="ion"),
-         cards([("Detectability", "Lipidome / Metabolome / Both / Neither")], "Detectability", key="detect", id="detect"),
+         cards([("Best platform", "Lipidome / Metabolome / Both / Neither")], "Lipidomics vs metabolomics", key="detect", id="detect"),
          figure("Structure with lipid features highlighted (indigo: acyl chain, teal: isoprenoid / sterol, periwinkle: polar head, amber: sugar)", key="detect", id="detect_structure"),
          table(["Feature", "Value"], key="detect", id="detect_features"),
          notes("Rule hits", key="detect", id="detect_reasons")],
-        live=True, example={"structure": _smiles("CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC")}),
+        subgroup="detectability", live=True, example={"structure": _smiles("CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC")}),
 
     module("gc_deriv", "GC derivatization", "B", "Mass and formula of the derivatized molecule.",
         [structure(), multiselect("reagents", "Reagents", ["TMS (MSTFA / BSTFA)", "MeOx + TMS", "TBDMS (MTBSTFA)", "Acylation (TFAA / PFPA)"], ["TMS (MSTFA / BSTFA)", "MeOx + TMS"])],
-        [table(["Reagent", "Derivative", "Formula", "MW", "Derivatized groups", "Monoisotopic mass", "Key EI ions"], caption="One row per reagent")]),
+        [table(["Reagent", "Derivative", "Formula", "MW", "Derivatized groups", "Monoisotopic mass", "Key EI ions"], caption="One row per reagent")],
+        subgroup="detectability"),
 
     # ---- MS1 ----
     module("ms1_theory", "Theoretical m/z", "A", "Precursor m/z of a structure or formula for an adduct, and its isotope pattern.",
@@ -333,13 +340,13 @@ PIPELINES = [
     {"id": "verify", "title": "Result verification", "one_liner": "I have a candidate structure. Does every piece of evidence support it?",
      "inputs": [structure(label="Candidate structure"), precursor(), ms1(), spectrum(),
                 number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1)],
-     "stages": [stage("Molecular properties", "properties"), stage("Platform fit", "platform_fit"), stage("MS1", ["ms1_theory", "ms1_match"]),
+     "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Platform fit", "platform_fit"), stage("MS1", ["ms1_theory", "ms1_match"]),
                 stage("MS2", ["ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments"]),
                 stage("Exclusivity", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
     {"id": "feature_prediction", "title": "MS feature prediction", "one_liner": "I have a structure and no spectrum. Predict what the instrument will see: adducts, precursor m/z, isotope pattern, MS2.",
      "inputs": [structure(), radio("ion_mode", "Ion mode", ["Positive", "Negative", "Both"]), multiselect("adducts", "Adducts", ["Auto"] + ADDUCTS_POS[1:] + ADDUCTS_NEG[1:], ["Auto"]),
                 select("instrument", "Instrument / CE", ["Q-TOF 20 eV", "Q-TOF 40 eV", "Orbitrap HCD NCE 30", "Triple quadrupole"]), select("out_format", "Export format", ["MSP", "MGF", "MassBank record", "JSON"])],
-     "stages": [stage("Molecular properties", "properties"), stage("Adduct prediction", "platform_fit", ["ph", "column", "detect"]),
+     "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Adduct prediction", "platform_fit", ["ph", "column", "detect"]),
                 stage("MS1 theory: precursor m/z and isotope pattern", "ms1_theory"),
                 stage("MS2 prediction", "ms2_predicted"),
                 stage("Export", "ms2_clean")]},
@@ -347,7 +354,8 @@ PIPELINES = [
 
 GROUPS = [{"id": "pipelines", "title": "Pipelines"}, {"id": "modules", "title": "Modules"}]
 # Modules 下的小类，侧栏在该小类第一个模块的位置展开
-SUBGROUPS = [{"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "MS2"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"}]
+SUBGROUPS = [{"id": "molecular", "title": "Molecular"}, {"id": "detectability", "title": "Detectability"},
+             {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "MS2"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"}]
 
 
 def spec():

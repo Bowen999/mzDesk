@@ -262,6 +262,17 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.2', date:'2026-10-24',
+  title:'侧栏整理：Molecular（身份 / 结构与格式 / 属性与官能团）和 Detectability（平台适配 / GC 衍生化）两个小类',
+  note:'去掉身份页与属性页的重复内容；新增结构与格式页能算，能算的模块页 +1。',
+  state:[['能算的模块页','9 / 26'], ['Pipeline','4 条，未接'], ['测试','107 个通过']],
+  c:{
+   prop:['chg','属性页拆成两页：Structure & formats（2D / 3D、SMILES / InChI / InChIKey / MOL 标签页）和 Properties & groups（成分卡片、按 Polarity / Size & topology 分组的描述符表，官能团仍是占位）；质量和 logP 不再在卡片与表里各出现一次。Platform fit 里的 Detectability 小节改名 Lipidomics vs metabolomics，结果项改名 Best platform。',true,{w:'mzdesk/api/runners/structure.py · mzdesk/spec.py'}],
+   other:['chg','身份页去重：Input read as 并入 Name 卡片备注，Resolved 卡片只留 Name、Formula、PubChem CID；输出改为 Names、Database IDs 两张表（不再有重复的 Link 列；InChIKey 是 Database IDs 第一行），去掉 SMILES / InChI 行（在 Structure & formats 页）；占位表都补了标题。',true,{w:'mzdesk/api/runners/identity.py · mzdesk/spec.py'}],
+   pipe:['chg','结果验证、特征预测的 “Molecular properties” 阶段改为 Molecular（Structure & formats + Properties & groups）。',true,{w:'mzdesk/spec.py'}],
+   docs:['doc','README 的身份、分子属性合并为 Molecular（三页），平台适配、GC 衍生化合并为 Detectability（两页）。',false,{w:'admin/README.md'}],
+   app:['chg','侧栏 Modules 下新增 Molecular、Detectability 两个小类，排在 MS1 之前。',false,{w:'mzdesk/spec.py'}]
+  }},
  {id:'v0.2.1', date:'2026-10-24',
   title:'身份页接活：名字 / 各种 ID 互转，跨库链接；所有页面可用名字或 ID 输入结构',
   note:'新增 tests/test_identity.py（离线回放 caffeine 响应）；需联网（PubChem、UniChem），结果缓存 30 天。',

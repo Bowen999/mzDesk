@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import Callable, Dict, Optional, Tuple, TypeVar
 
 from rdkit import Chem
 from rdkit.Chem import AllChem, Crippen, Descriptors, rdMolDescriptors
@@ -162,32 +162,6 @@ def adduct_exact_mz(exact_mass: Optional[float], label: str) -> Optional[float]:
     if exact_mass is None:
         return None
     return (exact_mass + delta) / (abs(charge) or 1)
-
-
-def property_rows(props: MolecularProperties) -> List[Tuple[str, str]]:
-    """Format the descriptor grid for `theme.stat_grid`, tolerating None.
-
-    Ten rows in two groups of five: size & polarity, then counts.
-    """
-
-    def _fmt(value: Optional[float], fmt: str) -> str:
-        return "N/A" if value is None else fmt.format(value)
-
-    def _int(value: Optional[int], fmt: str = "{:d}") -> str:
-        return "N/A" if value is None else fmt.format(value)
-
-    return [
-        ("Exact mass (Da)", _fmt(props.exact_mass, "{:.4f}")),
-        ("Average MW (Da)", _fmt(props.mw, "{:.4f}")),
-        ("Heavy atoms", _int(props.heavy_atoms)),
-        ("logP", _fmt(props.logp, "{:.2f}")),
-        ("TPSA (Å²)", _fmt(props.tpsa, "{:.1f}")),
-        ("H-bond donors", _int(props.hbd)),
-        ("H-bond acceptors", _int(props.hba)),
-        ("Rotatable bonds", _int(props.rotatable_bonds)),
-        ("Rings", _int(props.rings)),
-        ("Aromatic rings", _int(props.aromatic_rings)),
-    ]
 
 
 def _spread_fragments(mol: Chem.Mol, gap: float = 3.0) -> None:

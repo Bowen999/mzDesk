@@ -26,25 +26,27 @@ def run_identity(inputs):
         formula = rdMolDescriptors.CalcMolFormula(mol)
 
     def row(label, values):
-        """[label, value(s) joined by "; ", link cell or MISSING]"""
+        """[label, value(s) joined by "; "]；有链接时值格就是链接格"""
         if values is None or isinstance(values, str):
             values = [values] if values else []
         text = "; ".join(str(v) for v in values)
         href = r.links.get("PubChem" if label == "PubChem CID" else label)  # resolver keys the link "PubChem"
-        return [label, text or MISSING, common.link(text, href) if href else MISSING]
+        if not text:
+            return [label, MISSING]
+        return [label, common.link(text, href) if href else text]
 
     cid = str(r.cid) if r.cid is not None else None
-    rows = [row("Name", r.name), row("IUPAC", r.iupac), row("CAS", r.ids.get("CAS")), row("SMILES", r.smiles),
-            row("InChI", r.inchi), row("InChIKey", r.inchikey), row("PubChem CID", cid)]
-    rows += [row(label, r.ids.get(label)) for label in ID_ROWS]
+    names = [row("Name", r.name), row("IUPAC", r.iupac), row("CAS", r.ids.get("CAS"))]
+    db_rows = [["InChIKey", r.inchikey or MISSING], row("PubChem CID", cid)] + [row(label, r.ids.get(label)) for label in ID_ROWS]
 
     warnings = list(r.warnings)
     if r.stereo_fallback:
         warnings.append("No exact stereoisomer match; the result is the flat (stereo-agnostic) structure.")
     outputs = {
-        "resolved": {"values": {"Input read as": r.kind, "Name": r.name or MISSING,
-                                "PubChem CID": cid or MISSING, "Formula": formula}},
-        "identifiers": {"rows": rows},
+        "resolved": {"values": {"Name": {"value": r.name or MISSING, "note": f"read as {r.kind}"}, "Formula": formula,
+                                "PubChem CID": cid or MISSING}},
+        "names": {"rows": names},
+        "database_ids": {"rows": db_rows},
         "candidates": {"rows": [[str(cid), title] for cid, title in r.candidates[1:]]},
         "synonyms": {"rows": [[s] for s in r.synonyms]},
     }

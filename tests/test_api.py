@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
-from mzdesk.spec import MODULES, PIPELINES, SUBGROUPS
+from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
 
 client = TestClient(app)
 LIVE = [m for m in MODULES if m["live"]]
@@ -43,6 +43,12 @@ def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
     assert ms2 == ["ms2_clean", "ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
     assert "ms2" not in {m["id"] for m in MODULES}
+
+
+def test_molecular_and_detectability_subgroups():
+    assert [m["id"] for m in MODULES if m["subgroup"] == "molecular"] == ["identity", "structure_formats", "properties"]
+    assert [m["id"] for m in MODULES if m["subgroup"] == "detectability"] == ["platform_fit", "gc_deriv"]
+    assert [s["id"] for s in SUBGROUPS][:2] == ["molecular", "detectability"]
 
 
 def test_pipeline_stages_point_to_existing_modules():
@@ -187,16 +193,46 @@ def test_identity_runner_offline(monkeypatch):
     body = _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}).json()
     assert body["status"] == "ok"
     out = body["outputs"]
-    rows = out["identifiers"]["rows"]
-    assert len(rows) == 14
-    hmdb = next(r for r in rows if r[0] == "HMDB")
-    assert hmdb[1] == "HMDB0001847" and hmdb[2] == {"text": "HMDB0001847", "href": "https://hmdb.ca/metabolites/HMDB0001847"}
-    pc = next(r for r in rows if r[0] == "PubChem CID")
-    assert pc[2] == {"text": "2519", "href": "https://pubchem.ncbi.nlm.nih.gov/compound/2519"}
-    assert next(r for r in rows if r[0] == "ChEMBL")[1:] == ["—", "—"]
-    assert out["resolved"]["values"] == {"Input read as": "Name", "Name": "caffeine", "PubChem CID": "2519", "Formula": "C8H10N4O2"}
+    names, ids = out["names"]["rows"], out["database_ids"]["rows"]
+    assert [r[0] for r in names] == ["Name", "IUPAC", "CAS"]
+    assert names[2][1] == {"text": "58-08-2", "href": "https://commonchemistry.cas.org/detail?cas_rn=58-08-2"}
+    assert names[0][1] == "caffeine"
+    assert len(ids) == 9 and all(len(r) == 2 for r in ids)          # no separate Link column
+    assert ids[2] == ["HMDB", {"text": "HMDB0001847", "href": "https://hmdb.ca/metabolites/HMDB0001847"}]
+    assert ids[1] == ["PubChem CID", {"text": "2519", "href": "https://pubchem.ncbi.nlm.nih.gov/compound/2519"}]
+    assert next(r for r in ids if r[0] == "ChEMBL")[1] == "—"
+    # SMILES / InChI live on the Structure page; InChIKey is the first Database IDs row
+    assert not {"SMILES", "InChI"} & {r[0] for r in names + ids}
+    assert ids[0] == ["InChIKey", "RYYVLZVUVIJVGH-UHFFFAOYSA-N"]
+    assert out["resolved"]["values"] == {"Name": {"value": "caffeine", "note": "read as Name"}, "Formula": "C8H10N4O2",
+                                         "PubChem CID": "2519"}
     assert out["candidates"]["rows"] == [["1", "Other"]]
     assert out["depiction"]["svg"]
+
+
+def test_structure_formats_has_four_tabs():
+    body = _run("structure_formats", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}}).json()
+    fm = body["outputs"]["formats"]["formats"]
+    assert list(fm) == ["SMILES", "InChI", "InChIKey", "MOL block"]
+    assert fm["InChIKey"] == "RYYVLZVUVIJVGH-UHFFFAOYSA-N" and fm["InChI"].startswith("InChI=1S/C8H10N4O2")
+    assert body["outputs"]["depiction"]["svg"] and "viewer3d" in body["outputs"]
+
+
+def test_properties_page_has_no_duplicates():
+    body = _run("properties", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}}).json()
+    out = body["outputs"]
+    assert set(out) == {"summary", "descriptors"}
+    assert out["summary"]["values"]["Monoisotopic mass"] == "194.0804"
+    rows = out["descriptors"]["rows"]
+    assert all(len(r) == 3 for r in rows) and not any("mass" in r[1].lower() or "MW" in r[1] for r in rows)
+    assert [r[0] for r in rows] == ["Polarity", "", "", "", "Size & topology", "", "", ""]
+
+
+def test_platform_fit_section_is_renamed():
+    mod = next(m for m in MODULES if m["id"] == "platform_fit")
+    detect = next(b for b in mod["outputs"] if b.get("id") == "detect")
+    assert detect["title"] == "Lipidomics vs metabolomics" and detect["items"][0]["label"] == "Best platform"
+    assert detect["items"][0]["unit"] == "Lipidome / Metabolome / Both / Neither"
 
 
 def test_identity_runner_empty_and_resolver_error_are_400(monkeypatch):
