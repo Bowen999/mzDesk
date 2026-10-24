@@ -19,14 +19,16 @@ msbuddy 0.3.9 behaviour relied upon (checked against the installed source):
     empty), so peaks at the precursor m/z are matched here directly;
   - `Msbuddy` is a process-wide singleton that holds the query data, so runs are serialised.
 
-The heavy msbuddy calls are Streamlit-cached and only re-run when their inputs change.
+The heavy msbuddy calls are cached (functools.lru_cache, so their arguments must be hashable:
+peak lists as tuples of (mz, intensity) tuples); callers get a copy they may change.
 """
+import copy
 import math
 import threading
+from functools import lru_cache
 
 import numpy as np
 import plotly.graph_objects as go
-import streamlit as st
 from mzdesk.shared.spectrum import parse_spectrum  # shared peak-list parser
 from msbuddy import Msbuddy, MsbuddyConfig, assign_subformula, form_arr_to_str, read_formula
 from msbuddy.base import Adduct, MetaFeature, Spectrum, check_adduct
@@ -154,7 +156,6 @@ def _with_mass_error(candidates, precursor_mz, adduct):
     return candidates
 
 
-@st.cache_data(show_spinner=False)
 def annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
                      ms2_peaks, ms1_peaks, ms_instr="orbitrap", halogen=False):
     """Run BUDDY annotation for one query.
@@ -173,6 +174,14 @@ def annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
                     None = not applicable)
     Raises ValueError for precursors outside msbuddy's supported m/z range.
     """
+    return copy.deepcopy(_annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
+                                           tuple(map(tuple, ms2_peaks)), tuple(map(tuple, ms1_peaks)),
+                                           ms_instr, halogen))
+
+
+@lru_cache(maxsize=32)
+def _annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
+                      ms2_peaks, ms1_peaks, ms_instr, halogen):
     adduct_used = adduct or default_adduct(positive)
     if formula_input:
         cands = [{"rank": 1, "formula": formula_input, "prob": None,
@@ -232,7 +241,7 @@ def annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
     }
 
 
-@st.cache_data(show_spinner=False)
+@lru_cache(maxsize=1024)
 def _counts_from_formula(formula):
     """{'C': 8, 'H': 10, ...} from a Hill-style formula string (charge signs ignored)."""
     counts, el, num = {}, "", ""
@@ -261,7 +270,6 @@ def _is_even_electron(ion_formula):
             + c.get("N", 0) + c.get("P", 0)) % 2 == 1
 
 
-@st.cache_data(show_spinner=False)
 def explain_fragments(ms2_mz_tuple, precursor_formula, adduct, ms2_tol_ppm=10.0,
                       dbe_cutoff=0.0):
     """Assign fragment-ion formulas to raw MS² peaks for one precursor formula.
@@ -273,6 +281,12 @@ def explain_fragments(ms2_mz_tuple, precursor_formula, adduct, ms2_tol_ppm=10.0,
     among them; the rest are listed as alternatives. Peaks at the precursor m/z are
     matched to the intact precursor ion.
     """
+    return copy.deepcopy(_explain_fragments(tuple(ms2_mz_tuple), precursor_formula, adduct,
+                                            float(ms2_tol_ppm), float(dbe_cutoff)))
+
+
+@lru_cache(maxsize=32)
+def _explain_fragments(ms2_mz_tuple, precursor_formula, adduct, ms2_tol_ppm, dbe_cutoff):
     mzs = [float(m) for m in ms2_mz_tuple]
     counts, charge = ion_composition(precursor_formula, adduct)
     if not mzs or counts is None:

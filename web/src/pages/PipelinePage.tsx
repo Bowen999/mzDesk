@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { runPipeline } from "../api";
 import { FieldInput, initialValues } from "../components/Fields";
 import { OutputList } from "../components/Outputs";
-import type { Spec } from "../types";
+import type { Module, Spec } from "../types";
 
 export function PipelinePage({ spec }: { spec: Spec }) {
   const { id } = useParams();
@@ -16,7 +16,7 @@ export function PipelinePage({ spec }: { spec: Spec }) {
 
   const run = async () => {
     setMsg("running…");
-    try { const r = await runPipeline(pipe.id, values); setStages(r.stages); setMsg("placeholder — nothing runs yet"); }
+    try { const r = await runPipeline(pipe.id, values); setStages(r.stages); setMsg("placeholder: the pipeline does not run yet; run each module from its own page"); }
     catch (e: any) { setMsg("error: " + e.message); }
   };
   return (
@@ -32,11 +32,16 @@ export function PipelinePage({ spec }: { spec: Spec }) {
         <details><summary>Query object (shared by every stage)</summary><pre className="code">{JSON.stringify(values, null, 2)}</pre></details>
       </div>
       {pipe.stages.map((s, i) => {
-        const mod = spec.modules.find(m => m.id === s.module);
+        const mods = s.modules.map(id => spec.modules.find(m => m.id === id)).filter(m => m !== undefined);
+        const name = (m: Module) => { const g = spec.subgroups.find(x => x.id === m.subgroup)?.title; return g ? `${g} · ${m.title}` : m.title; };
         return (
           <details className="stage" key={s.title} open={i === 0}>
-            <summary>{i + 1}. {s.title} <span className="meta">module: {mod?.title}</span></summary>
-            {mod && <OutputList blocks={mod.outputs} exclude={s.exclude} />}
+            <summary>{i + 1}. {s.title} <span className="meta">{mods.length > 1 ? "modules" : "module"}: {mods.map(name).join(", ")}</span></summary>
+            {mods.map(m => (
+              <div key={m.id}>
+                {mods.length > 1 && <h4 className="stage-module">{name(m)}</h4>}
+                <OutputList blocks={m.outputs} exclude={s.exclude} />
+              </div>))}
           </details>
         );
       })}

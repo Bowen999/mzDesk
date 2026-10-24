@@ -1,9 +1,11 @@
 import type { Field } from "../types";
 
-const ADDUCTS: Record<string, string[]> = {
-  Positive: ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"],
-  Negative: ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"],
-};
+/** 读上传文件的文本内容（多个文件用空行连接）。 */
+async function readFiles(files: FileList | null): Promise<{ name: string; text: string }> {
+  const list = Array.from(files ?? []);
+  const texts = await Promise.all(list.map(f => f.text()));
+  return { name: list.map(f => f.name).join(", "), text: texts.join("\n\n") };
+}
 
 /** 每个字段的初值。复合字段（structure / precursor / spectrum）是对象。 */
 export function initialValues(fields: Field[]): Record<string, any> {
@@ -50,7 +52,7 @@ export function FieldInput({ field, value, onChange }: P) {
       </div></div>);
     case "checkbox": return <label className="field check"><input type="checkbox" checked={!!value} onChange={e => onChange(e.target.checked)} /> {f.label}</label>;
     case "slider": return <label className="field">{f.label}: <b>{value}</b><input type="range" min={f.min} max={f.max} step={f.step ?? 1} value={value} onChange={e => onChange(Number(e.target.value))} /></label>;
-    case "file": return <label className="field">{f.label}<input type="file" accept={f.accept} onChange={e => onChange(e.target.files?.[0]?.name ?? "")} /></label>;
+    case "file": return <label className="field">{f.label}<input type="file" accept={f.accept} onChange={async e => onChange(await readFiles(e.target.files))} /></label>;
     case "table": return (
       <label className="field wide">{f.label}
         <div className="grid-head">{f.columns!.join("  |  ")}</div>
@@ -84,10 +86,11 @@ function StructureInput({ field, value, onChange }: P) {
 
 function PrecursorInput({ field, value, onChange }: P) {
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
-  const adducts = ADDUCTS[value.ion_mode] ?? ADDUCTS.Positive;
+  const lists = field.adducts ?? { Positive: ["Auto"], Negative: ["Auto"] };
+  const adducts = lists[value.ion_mode] ?? lists.Positive;
   return (
     <div className="field wide composite row3">
-      <label className="field">Precursor m/z<input type="number" step="0.0001" placeholder="195.0877" value={value.precursor_mz} onChange={e => set({ precursor_mz: e.target.value })} /></label>
+      <label className="field">{field.label ?? "Precursor m/z"}<input type="number" step="0.0001" placeholder="195.0877" value={value.precursor_mz} onChange={e => set({ precursor_mz: e.target.value })} /></label>
       <div className="field"><span>Ion mode</span><div className="radio-row">
         {["Positive", "Negative"].map(m => <label key={m}><input type="radio" checked={value.ion_mode === m} onChange={() => set({ ion_mode: m, adduct: "Auto" })} /> {m}</label>)}
       </div></div>
@@ -102,9 +105,14 @@ function SpectrumInput({ field, value, onChange }: P) {
   return (
     <div className="field wide composite">
       <span>{field.label}</span>
-      <div className="radio-row">{sources.map(s => <label key={s}><input type="radio" checked={value.source === s} onChange={() => set({ source: s, value: "" })} /> {s}</label>)}</div>
+      <div className="radio-row">{sources.map(s => <label key={s}><input type="radio" checked={value.source === s} onChange={() => set({ source: s, value: "", filename: "" })} /> {s}</label>)}</div>
       {value.source === "Paste" && <textarea rows={5} placeholder="m/z intensity per line" value={value.value} onChange={e => set({ value: e.target.value })} />}
-      {value.source === "MGF / MSP file" && <input type="file" accept=".mgf,.msp" multiple={!!field.multi} onChange={e => set({ value: Array.from(e.target.files ?? []).map(f => f.name).join(", ") })} />}
+      {value.source === "MGF / MSP file" && (
+        <div className="file-row">
+          <input type="file" accept=".mgf,.msp,.txt" multiple={!!field.multi}
+            onChange={async e => { const r = await readFiles(e.target.files); set({ value: r.text, filename: r.name }); }} />
+          {value.filename && <small>{value.filename}</small>}
+        </div>)}
       {value.source === "USI" && <input type="text" placeholder="mzspec:GNPS:..." value={value.value} onChange={e => set({ value: e.target.value })} />}
     </div>
   );

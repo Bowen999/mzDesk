@@ -1,10 +1,10 @@
+"""MS2 镜像图（Plotly）：上半为 query，下半为 reference；深色 = 按 CosineGreedy 规则匹配上的峰。"""
 from __future__ import annotations
 
 import numpy as np
 import plotly.graph_objects as go
-import streamlit as st
 
-from mzdesk.shared import theme
+from mzdesk.shared import colors as theme
 
 MATCH_COLOR = theme.PLOT_DARK
 UNMATCHED_COLOR = theme.PLOT_LIGHT
@@ -18,13 +18,6 @@ Y_TOP = 118.0
 LABELS_PER_HALF = 8
 LABEL_MIN_REL = 5.0
 LABEL_SEP = 0.085
-
-_PLOT_CONFIG = {
-    "displaylogo": False,
-    "doubleClick": "reset",
-    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
-    "toImageButtonOptions": {"format": "png", "filename": "mirror_ms2", "scale": 2},
-}
 
 
 def _as_peaks(peaks):
@@ -276,27 +269,6 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
         ),
     )
     return figure
-
-
-def render_mirror(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None,
-                  tolerance=0.02, height=520, labels=("Query", "Reference")):
-    try:
-        figure = build_mirror_figure(
-            peaks_a, peaks_b,
-            precursor_mz1=precursor_mz1,
-            precursor_mz2=precursor_mz2,
-            tolerance=tolerance,
-            labels=labels,
-            height=height,
-        )
-    except ValueError as exc:
-        st.warning(str(exc))
-        return
-
-    if not figure.data:
-        st.info("Add a valid peak to display the mirror plot.")
-        return
-    st.plotly_chart(figure, width="stretch", height=height, theme=None, config=_PLOT_CONFIG)
 
 
 if __name__ == "__main__":

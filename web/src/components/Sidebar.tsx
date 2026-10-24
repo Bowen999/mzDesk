@@ -1,22 +1,63 @@
-import { NavLink } from "react-router-dom";
-import type { Spec } from "../types";
+import { useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import type { Module, Spec } from "../types";
+
+type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
+
+/** 两大类：Pipelines、Modules。Modules 按 spec 顺序列出；有小类的模块收进小类，小类出现在它第一个模块的位置。 */
+function moduleEntries(spec: Spec): Entry[] {
+  const titles = Object.fromEntries(spec.subgroups.map(s => [s.id, s.title]));
+  const mods = spec.modules.filter(m => m.group === "modules");
+  const seen = new Set<string>();
+  const out: Entry[] = [];
+  for (const m of mods) {
+    if (!m.subgroup) out.push({ kind: "link", m });
+    else if (!seen.has(m.subgroup)) {
+      seen.add(m.subgroup);
+      out.push({ kind: "sub", id: m.subgroup, title: titles[m.subgroup] ?? m.subgroup, mods: mods.filter(x => x.subgroup === m.subgroup) });
+    }
+  }
+  return out;
+}
+
+function ModuleLink({ m, sub }: { m: Module; sub?: boolean }) {
+  return (
+    <NavLink to={`/modules/${m.id}`} title={m.live ? undefined : "placeholder: format only"}
+      className={({ isActive }) => "nav-link" + (sub ? " sub" : "") + (m.live ? "" : " placeholder") + (isActive ? " active" : "")}>
+      {m.title}
+    </NavLink>
+  );
+}
 
 export function Sidebar({ spec }: { spec: Spec }) {
-  const groups = [
-    { title: "Pipelines", items: spec.pipelines.map(p => ({ to: `/pipelines/${p.id}`, title: p.title })) },
-    { title: "Modules", items: spec.modules.filter(m => m.group === "modules").map(m => ({ to: `/modules/${m.id}`, title: m.title })) },
-    { title: "DMPK", items: spec.modules.filter(m => m.group === "dmpk").map(m => ({ to: `/modules/${m.id}`, title: m.title })) },
-  ];
+  const { pathname } = useLocation();
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   return (
     <aside className="sidebar">
       <div className="brand">mzDesk</div>
-      <div className="brand-note">Placeholder UI: navigation, inputs and output formats only. Nothing computes.</div>
-      {groups.map(g => (
-        <div className="nav-group" key={g.title}>
-          <div className="nav-title">{g.title}</div>
-          {g.items.map(it => <NavLink key={it.to} to={it.to} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>{it.title}</NavLink>)}
-        </div>
-      ))}
+      <div className="nav-group">
+        <div className="nav-title">Pipelines</div>
+        {spec.pipelines.map(p => (
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>{p.title}</NavLink>
+        ))}
+      </div>
+      <div className="nav-group">
+        <div className="nav-title">Modules</div>
+        {moduleEntries(spec).map(e => {
+          if (e.kind === "link") return <ModuleLink key={e.m.id} m={e.m} />;
+          const hasActive = e.mods.some(m => pathname === `/modules/${m.id}`);
+          const isOpen = open[e.id] ?? hasActive;
+          return (
+            <div key={e.id} className="nav-sub">
+              <button type="button" className={"nav-sub-title" + (hasActive ? " has-active" : "")} aria-expanded={isOpen}
+                onClick={() => setOpen({ ...open, [e.id]: !isOpen })}>
+                <span className={"caret" + (isOpen ? " open" : "")} aria-hidden="true">›</span>{e.title}
+              </button>
+              {isOpen && e.mods.map(m => <ModuleLink key={m.id} m={m} sub />)}
+            </div>
+          );
+        })}
+      </div>
     </aside>
   );
 }

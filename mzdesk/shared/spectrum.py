@@ -55,3 +55,54 @@ def parse_spectrum(text):
         if inten > agg.get(key, 0.0):
             agg[key] = inten
     return sorted(agg.items())
+
+
+_MGF_BEGIN = re.compile(r"^\s*BEGIN\s+IONS\s*$", re.I)
+_MGF_END = re.compile(r"^\s*END\s+IONS\s*$", re.I)
+_MSP_NAME = re.compile(r"^\s*NAME\s*:", re.I)
+_NAME = re.compile(r"^\s*(?:TITLE|NAME)\s*[=:]\s*(.+?)\s*$", re.I)
+_PRECURSOR = re.compile(r"^\s*(?:PEPMASS|PRECURSORMZ|PRECURSOR_MZ|PRECURSOR\s+M/Z)\s*[=:]\s*([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)", re.I)
+
+
+def first_record(text):
+    """First spectrum of an MGF (BEGIN IONS … END IONS) or MSP (records start with 'Name:') text.
+
+    Returns {"peaks_text", "precursor_mz" (float or None), "name" (str or None), "n_records"}.
+    Text without record markers is one record. ``peaks_text`` still holds the header lines;
+    parse_spectrum skips them.
+    """
+    lines = (text or "").splitlines()
+    records = []
+    if any(_MGF_BEGIN.match(ln) for ln in lines):
+        cur = None
+        for ln in lines:
+            if _MGF_BEGIN.match(ln):
+                cur = []
+            elif _MGF_END.match(ln):
+                if cur is not None:
+                    records.append(cur)
+                cur = None
+            elif cur is not None:
+                cur.append(ln)
+        if cur:                                  # unterminated last record
+            records.append(cur)
+    else:
+        cur = []
+        for ln in lines:
+            if _MSP_NAME.match(ln) and any(x.strip() for x in cur):
+                records.append(cur)
+                cur = []
+            cur.append(ln)
+        if any(x.strip() for x in cur):
+            records.append(cur)
+    rec = records[0] if records else []
+    name = precursor = None
+    for ln in rec:
+        m = _NAME.match(ln)
+        if m and name is None:
+            name = m.group(1)
+        m = _PRECURSOR.match(ln)
+        if m and precursor is None:
+            value = _finite(m.group(1))
+            precursor = value if value and value > 0 else None
+    return {"peaks_text": "\n".join(rec), "precursor_mz": precursor, "name": name, "n_records": max(len(records), 1)}

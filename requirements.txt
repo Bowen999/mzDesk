@@ -1,11 +1,8 @@
 # backend
 fastapi>=0.110
 uvicorn>=0.27
-# legacy Streamlit UI (mzdesk/*/ui.py); remove once engines are rewired to the API
-streamlit>=1.53
 rdkit>=2023.9
 plotly>=5.18
-pandas>=2.0
 matplotlib>=3.7
 numpy>=1.24
 # mzdesk/ms2: MS2 similarity

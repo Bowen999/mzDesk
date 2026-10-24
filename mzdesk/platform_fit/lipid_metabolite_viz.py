@@ -105,14 +105,37 @@ def draw_structure_highlight(result: Result, size=(560, 420)):
         RGB numpy array and return it. (Use io.BytesIO + plt.imread; take [:,:,:3];
         if float in 0..1, scale to 0..255 uint8.)
     """
+    mol, hl = _highlights(result)
+    if mol is None:
+        return np.full((size[1] // 2, size[0] // 2, 3), 255, dtype=np.uint8)
+    return _render(mol, size, *hl)
+
+
+def highlight_svg(result: Result, size=(560, 420)) -> Optional[str]:
+    """Same highlighted depiction as draw_structure_highlight, as an SVG string (None if invalid)."""
+    mol, hl = _highlights(result)
+    if mol is None:
+        return None
+    atoms, atom_colors, bonds, bond_colors = hl
+    drawer = rdMolDraw2D.MolDraw2DSVG(int(size[0]), int(size[1]))
+    drawer.drawOptions().addStereoAnnotation = False
+    drawer.drawOptions().clearBackground = False
+    drawer.DrawMolecule(mol, highlightAtoms=atoms, highlightAtomColors=atom_colors,
+                        highlightBonds=bonds, highlightBondColors=bond_colors)
+    drawer.FinishDrawing()
+    return drawer.GetDrawingText()
+
+
+def _highlights(result: Result):
+    """(mol, (atoms, atom_colors, bonds, bond_colors)) for the highlighted depiction; (None, None) if invalid."""
     features = getattr(result, "features", None)
     if features is None or not getattr(features, "valid", False):
-        return np.full((size[1] // 2, size[0] // 2, 3), 255, dtype=np.uint8)
+        return None, None
 
     smi = getattr(features, "smiles", None)
     mol = Chem.MolFromSmiles(smi) if smi else None
     if mol is None:
-        return np.full((size[1] // 2, size[0] // 2, 3), 255, dtype=np.uint8)
+        return None, None
 
     highlight = getattr(features, "highlight", None) or {}
     if not isinstance(highlight, dict):
@@ -161,8 +184,7 @@ def draw_structure_highlight(result: Result, size=(560, 420)):
                     highlight_bonds.append(bidx)
                 highlight_bond_colors[bidx] = color
 
-    return _render(mol, size, highlight_atoms, highlight_atom_colors,
-                   highlight_bonds, highlight_bond_colors)
+    return mol, (highlight_atoms, highlight_atom_colors, highlight_bonds, highlight_bond_colors)
 
 
 def draw_structure(smiles: str, size=(560, 420)):

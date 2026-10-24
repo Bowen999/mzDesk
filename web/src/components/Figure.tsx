@@ -1,0 +1,146 @@
+import { useEffect, useRef, useState } from "react";
+import type { BlockData, PeakCard } from "../types";
+
+const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
+const INK = "#1F2937", MUTED = "#667085";
+const MAX_LABELS = 40;
+const CONFIG = {
+  responsive: true, displaylogo: false, displayModeBar: "hover",
+  modeBarButtonsToRemove: ["select2d", "lasso2d", "autoScale2d"],
+  toImageButtonOptions: { format: "svg", filename: "mzdesk_figure" },
+};
+
+// plotly.js（约 1.4 MB gzip）和 3Dmol.js 只在第一次画图时加载
+let plotlyPromise: Promise<any> | null = null;
+const loadPlotly = () => (plotlyPromise ??= import("plotly.js-dist-min").then(m => m.default ?? m));
+let mol3dPromise: Promise<any> | null = null;
+function load3Dmol(): Promise<any> {
+  return (mol3dPromise ??= new Promise((resolve, reject) => {
+    const w = window as any;
+    if (w.$3Dmol) return resolve(w.$3Dmol);
+    const s = document.createElement("script");
+    s.src = "/lib/3Dmol-min.js";
+    s.onload = () => resolve(w.$3Dmol);
+    s.onerror = () => { mol3dPromise = null; reject(new Error("3Dmol.js failed to load")); };
+    document.head.appendChild(s);
+  }));
+}
+
+export function FigureView({ data }: { data: BlockData }) {
+  if (data.plotly) return <PlotlyFigure fig={data.plotly} peaks={data.peaks} />;
+  if (data.svg) return <img className="fig-img" alt="" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(data.svg)}`} />;
+  if (data.img) return <img className="fig-img" alt="" src={data.img} />;
+  if (data.mol3d) return <Mol3D molblock={data.mol3d} />;
+  return null;
+}
+
+/** m/z 标签：重要的峰优先（已解释，再按强度）；标签不与别的标签重叠，也不压住别的峰。缩放后重算。 */
+function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: number) {
+  const { xaxis: xa, yaxis: ya } = gd._fullLayout;
+  const x0 = Math.min(...xa.range), x1 = Math.max(...xa.range), yTop = ya.range[1];
+  const vis = peaks.map((_, i) => i).filter(i => peaks[i].mz >= x0 && peaks[i].mz <= x1);
+  const sticks = vis.map(i => ({ i, x: xa.l2p(peaks[i].mz), top: ya.l2p(Math.min(peaks[i].rel, yTop)) }));
+  if (precursor !== undefined && precursor >= x0 && precursor <= x1) sticks.push({ i: -1, x: xa.l2p(precursor), top: 0 });
+  const order = [...vis].sort((a, b) => (Number(peaks[b].on) - Number(peaks[a].on)) || (peaks[b].rel - peaks[a].rel));
+  const boxes: { l: number; r: number; t: number; b: number }[] = [];
+  const anns: any[] = [];
+  for (const i of order) {
+    if (anns.length >= MAX_LABELS) break;
+    const p = peaks[i];
+    if (p.rel > yTop) continue;
+    const txt = p.mz.toFixed(4), w = txt.length * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
+    const b = { l: px - w / 2, r: px + w / 2, t: py - 16, b: py - 2 };
+    if (b.l < 0 || b.r > xa._length || b.t < 0) continue;
+    const isPrecursor = p.kind.startsWith("Precursor");
+    const hit = boxes.some(o => b.l < o.r + 4 && b.r > o.l - 4 && b.t < o.b + 1 && b.b > o.t - 1)
+      || sticks.some(s => s.i !== i && !(s.i === -1 && isPrecursor) && s.x > b.l - 1 && s.x < b.r + 1 && s.top < b.b);
+    if (hit) continue;
+    boxes.push(b);
+    anns.push({ x: p.mz, y: p.rel, xref: "x", yref: "y", text: txt, showarrow: false, xanchor: "center", yanchor: "bottom",
+                yshift: 2, font: { family: MONO, size: 10, color: p.on ? INK : MUTED } });
+  }
+  return staticAnn.concat(anns);
+}
+
+function PlotlyFigure({ fig, peaks }: { fig: { data: any[]; layout: any }; peaks?: PeakCard[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<{ p: PeakCard; x: number; y: number } | null>(null);
+  const [err, setErr] = useState("");
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const el = ref.current as any;
+    if (!el) return;
+    let Plotly: any = null, alive = true, busy = false;
+    loadPlotly().then(P => {
+      if (!alive) return;
+      Plotly = P;
+      const layout = { ...fig.layout, autosize: true };
+      delete layout.width;
+      const staticAnn = [...(layout.annotations ?? [])];
+      const precursor = (layout.shapes ?? []).find((s: any) => s.line?.dash === "dot")?.x0;
+      return Plotly.newPlot(el, fig.data, layout, CONFIG).then(() => {
+        if (alive) setReady(true);
+        if (!alive || !peaks?.length) return;
+        const relabel = () => {
+          busy = true;
+          Plotly.relayout(el, { annotations: peakLabels(el, peaks, staticAnn, precursor) }).finally(() => { busy = false; });
+        };
+        relabel();
+        el.on("plotly_hover", (ev: any) => {
+          const pt = (ev.points ?? []).find((q: any) => q.data.name === "peaks");
+          if (pt) setHover({ p: peaks[pt.customdata], x: ev.event?.clientX ?? 0, y: ev.event?.clientY ?? 0 });
+        });
+        el.on("plotly_unhover", () => setHover(null));
+        el.on("plotly_relayout", (e: any) => {
+          const keys = Object.keys(e ?? {});
+          if (busy || (keys.length && keys.every(k => k.startsWith("annotations")))) return;
+          setHover(null);
+          relabel();
+        });
+      });
+    }).catch(e => alive && setErr(String(e)));
+    return () => { alive = false; if (Plotly) Plotly.purge(el); };
+  }, [fig, peaks]);
+  if (err) return <div className="out placeholder-box">Figure failed: {err}</div>;
+  return (
+    <div className="fig" onMouseLeave={() => setHover(null)}>
+      {!ready && <div className="fig-loading">Loading figure…</div>}
+      <div ref={ref} />
+      {hover && <HoverCard {...hover} />}
+    </div>
+  );
+}
+
+function HoverCard({ p, x, y }: { p: PeakCard; x: number; y: number }) {
+  const W = 250, H = p.img ? 330 : 170;
+  const left = x + 18 + W > window.innerWidth - 6 ? Math.max(6, x - 18 - W) : x + 18;
+  const top = Math.max(6, Math.min(y - H / 2, window.innerHeight - H - 6));
+  return (
+    <div className="hover-card" style={{ left, top, width: W }}>
+      <div className={"hc-kind" + (p.on ? "" : " off")}>{p.kind}</div>
+      <div className="hc-mz">m/z {p.mz.toFixed(4)}</div>
+      <table><tbody>{p.rows.map(([l, v]) => <tr key={l}><td className="l">{l}</td><td className="v">{v}</td></tr>)}</tbody></table>
+      {p.img && <img src={p.img} alt="fragment structure" />}
+    </div>
+  );
+}
+
+function Mol3D({ molblock }: { molblock: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let viewer: any = null, alive = true;
+    load3Dmol().then($3Dmol => {
+      if (!alive || !ref.current) return;
+      ref.current.innerHTML = "";
+      viewer = $3Dmol.createViewer(ref.current, { backgroundColor: "white" });
+      viewer.addModel(molblock, "mol");
+      viewer.setStyle({}, { stick: { radius: 0.14 }, sphere: { scale: 0.22 } });
+      viewer.zoomTo();
+      viewer.render();
+    }).catch(e => alive && setErr(String(e)));
+    return () => { alive = false; viewer?.clear?.(); };
+  }, [molblock]);
+  if (err) return <div className="out placeholder-box">3D viewer failed: {err}</div>;
+  return <div ref={ref} className="mol3d" />;
+}
