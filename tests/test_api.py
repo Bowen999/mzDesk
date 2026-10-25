@@ -75,7 +75,7 @@ def test_pipelines_use_the_spectrum_prediction_pages():
 
 def test_molecular_and_detectability_subgroups():
     assert [m["id"] for m in MODULES if m["subgroup"] == "molecular"] == ["identity", "structure_formats", "properties"]
-    assert [m["id"] for m in MODULES if m["subgroup"] == "detectability"] == ["platform_fit", "gc_deriv"]
+    assert [m["id"] for m in MODULES if m["subgroup"] == "detectability"] == ["platform_fit", "separation", "ionization", "adducts", "non_ms", "derivatization", "known_methods"]
     assert [s["id"] for s in SUBGROUPS][:2] == ["molecular", "detectability"]
 
 

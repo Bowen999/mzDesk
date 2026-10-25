@@ -60,7 +60,7 @@ def run_properties(inputs):
 
 
 def run_platform_fit(inputs):
-    """只接了可检测性分类；pH、色谱柱、电离、加合物预测还是占位。"""
+    """Platform 页：只接了脂质组 / 代谢组分类；CIL、GC-MS 两节还是占位。"""
     from mzdesk.platform_fit import display_en as en
     from mzdesk.platform_fit import lipid_metabolite_classifier as clf
     from mzdesk.platform_fit import lipid_metabolite_viz as viz
