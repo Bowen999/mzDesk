@@ -385,7 +385,7 @@ def test_spec_page_is_live_with_the_agreed_blocks():
     assert [i["label"] for i in summary["items"]] == ["Match", "Methods found", "Sources"] and all(i["help"] for i in summary["items"])
     assert (exact["type"], exact["title"], exact["row_help"], exact["columns"]) == ("table", "Exact matches", True, COLUMNS)
     assert (similar["type"], similar["title"], similar["row_help"], similar["columns"]) == ("grouptable", "Similar compounds", True, COLUMNS)
-    assert mod["example"]["structure"]["value"] == CAPTOPRIL
+    assert mod["example"]["structure"]["value"] == "captopril"
 
 
 def test_page_for_captopril_jp_only():
@@ -399,7 +399,7 @@ def test_page_for_captopril_jp_only():
     assert out["exact"]["count"] == len(out["exact"]["rows"]) == 1
     row = out["exact"]["rows"][0]
     assert row["cells"][:2] == [{"badge": "JP18", "tone": "jp"}, {"text": "Purity (4) · p. 623", "url": "https://www.mhlw.go.jp/content/11120000/000904440.pdf#page=225"}]
-    assert row["cells"][2:] == ["C18, 3.9 × 300 mm, 10 µm, 25 °C", "isocratic; methanol", "UV 220 nm", "—"]
+    assert row["cells"][2:] == ["C18, 3.9 × 300 mm, 10 µm, 25 °C", "isocratic · methanol", "UV 220 nm", "—"]
     help_ = _lines(row["help"])                                                                           # match details, test, reference, printed conditions
     assert help_[0] == f"Monograph substance: the test measures {DISULFIDE}."
     assert "Reference: JP18 p. 623 (Official Monographs A–L), block JP18-ML-0211" in help_
@@ -524,3 +524,11 @@ def test_real_report_similar_list_obeys_the_caps():
         for m in s.methods:
             per_dataset[m.test] = per_dataset.get(m.test, 0) + 1
     assert max(per_dataset.values()) <= 2
+
+
+def test_mobile_phase_cell_has_one_line_per_eluent():
+    from mzdesk.methods.known_methods import _phase_cell
+    assert _phase_cell("A: water + 0.1% formic (pH 3); B: ACN + 0.1% formic (pH 3); 5→95% B in 20 min; 0.4 mL/min") == \
+        "A: water + 0.1% formic (pH 3)\nB: ACN + 0.1% formic (pH 3)\n5→95% B in 20 min · 0.4 mL/min"
+    assert _phase_cell("isocratic; acetonitrile; pH 3.0") == "isocratic · acetonitrile · pH 3.0"
+    assert _phase_cell("—") == "—"

@@ -335,13 +335,25 @@ def _match_notes(m):
     return notes
 
 
+_ELUENT = re.compile(r"^[A-D]: ")
+
+
+def _phase_cell(mobile):
+    """Mobile phase for the table: one line per eluent ("A: …", "B: …"), then the rest (gradient · flow, or JP18's
+    "isocratic · methanol · pH 3.0") on one line. The page shows each line separately."""
+    parts = [p.strip() for p in mobile.split("; ") if p.strip()]
+    eluents = [p for p in parts if _ELUENT.match(p)]
+    rest = " · ".join(p for p in parts if not _ELUENT.match(p))
+    return "\n".join(eluents + ([rest] if rest else [])) or mobile
+
+
 def _method_row(m, compound):
     """Source badge, Test / dataset (linked to the JP page or the DOI), Column, Mobile phase, Detector, RT; the row's "?" has the rest."""
     text = m.label
     if m.monograph and m.monograph.strip().lower() != (compound or "").strip().lower():
         text = f"{m.monograph}: {text}"
     badge = bl.badge("JP18", "jp") if m.source == "JP18" else bl.badge(m.source, "report")
-    return bl.row([badge, bl.link(text, m.reference[1]), m.column, m.mobile, m.detector, m.rt or MISSING], help=_match_notes(m) + m.help)
+    return bl.row([badge, bl.link(text, m.reference[1]), m.column, _phase_cell(m.mobile), m.detector, m.rt or MISSING], help=_match_notes(m) + m.help)
 
 
 def _title(name):

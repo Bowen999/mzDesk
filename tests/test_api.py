@@ -15,6 +15,7 @@ from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
 from mzdesk.ms2 import cfmid_engine, neims_engine
 from mzdesk.platform_fit import pka_engine
+from mzdesk import spec
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
 
 
@@ -95,6 +96,9 @@ def test_block_ids_unique_and_examples_match_inputs():
         assert len(block_ids) == len(set(block_ids)), m["id"]
         if m["example"]:
             assert set(m["example"]) <= {f["id"] for f in m["inputs"] if f.get("id")}, m["id"]
+            for v in m["example"].values():   # structure examples are names (the first input mode) with a known structure
+                if isinstance(v, dict) and "mode" in v:
+                    assert v["mode"] == "Name / ID / Formula" and v["value"] in spec.EXAMPLE_STRUCTURES, m["id"]
 
 
 # ---------------------------------------------------------------- live modules
@@ -115,6 +119,8 @@ def test_example_runs_and_fills_every_block(mod):
     assert body["status"] == "ok"
     expected = {b["id"] for b in mod["outputs"] if b.get("id")} - OPTIONAL_BLOCKS
     assert expected <= set(body["outputs"]), expected - set(body["outputs"])
+    from mzdesk.api import verdicts
+    assert body["verdict"] or mod["id"] in verdicts.NO_VERDICT, "no one-line answer above the results"
 
 
 def test_clean_page_reads_any_format_and_removes_peaks():
@@ -204,10 +210,19 @@ def test_record_name_is_the_typed_name_else_the_formula():
     assert common.record_name({}, "CCO") == "C2H6O"
 
 
+def test_draw_mode_takes_the_editor_smiles():
+    from mzdesk.api import common
+    assert common.structure({"structure": {"mode": "Draw", "value": "C1C=CC=CC=1", "molfile": "x"}}) == {"kind": "smiles", "smiles": "C1C=CC=CC=1"}
+    assert common.structure({"structure": {"mode": "Draw", "value": ""}}, required=False) is None
+    r = _run("structure_formats", {"structure": {"mode": "Draw", "value": "C1C=CC=CC=1"}})
+    assert r.status_code == 200
+
+
 # ---------------------------------------------------------------- bad input
 @pytest.mark.parametrize("module_id,inputs", [
     ("properties", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}}),
     ("properties", {"structure": {"mode": "Name / ID / Formula", "value": ""}}),
+    ("properties", {"structure": {"mode": "Draw", "value": ""}}),
     ("ms1_formula", {"precursor": {"precursor_mz": "2000", "ion_mode": "Positive", "adduct": "Auto"}}),
     ("ms2_similarity", {"query": _paste("100 1"), "reference": _paste("not a spectrum")}),
     ("ms2_ei", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}}),
@@ -306,7 +321,7 @@ def test_platform_page_is_a_portal_and_a_reaction_block():
     tiles = {t["label"]: t for t in out["platform"]["tiles"]}
     assert list(tiles) == ["Lipidomics", "Metabolomics", "CIL LC-MS", "GC-MS"]
     # the example (tyrosine) shows everything: CIL chips, GC partial and the reaction block
-    assert mod["example"]["structure"]["value"] == "N[C@@H](Cc1ccc(O)cc1)C(=O)O"
+    assert mod["example"]["structure"] == {"mode": "Name / ID / Formula", "value": "L-tyrosine"}
     assert tiles["CIL LC-MS"]["status"] == "yes" and tiles["CIL LC-MS"]["chips"] and tiles["GC-MS"]["status"] == "partial"
     assert [o["label"] for o in out["reactions"]["options"]] == ["CIL · Dansyl chloride", "CIL · DmPA bromide", "GC · TMS"]
 
@@ -348,3 +363,17 @@ def test_resolver_input_error_is_400(monkeypatch):
     monkeypatch.setattr(resolve, "to_smiles", boom)
     r = _run("properties", {"structure": {"mode": "Name / ID / Formula", "value": "zzz"}})
     assert r.status_code == 400 and r.json()["detail"] == "Structure: not found"
+
+
+def test_verdict_never_breaks_a_run_and_reads_the_outputs():
+    from mzdesk.api import verdicts
+    assert verdicts.build("separation", {}, {"modes": "not a dict"}) is None            # a malformed block gives no verdict, no error
+    assert verdicts.build("unknown_module", {}, {}) is None
+    out = {"modes": {"chips": [{"label": "RP", "level": "good"}, {"label": "HILIC", "level": "poor"}]},
+           "ph_summary": {"values": {"Fraction neutral": {"value": "98.0 %"}, "logD at pH": {"value": "3.1"}}}}
+    assert verdicts.build("separation", {"ph": 2.7}, out) == "<b>RP</b> fits best at pH 2.7: mostly neutral (98.0 %), logD 3.1."
+
+
+def test_spec_carries_the_version():
+    from mzdesk import __version__
+    assert client.get("/api/spec").json()["version"] == __version__

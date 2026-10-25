@@ -324,7 +324,7 @@ def test_page_runs_without_molgpka_and_without_neims(monkeypatch):
 def test_spec_page_is_live_with_the_requested_inputs_and_outputs():
     m = next(m for m in MODULES if m["id"] == "ionization")
     assert m["live"] and m["subgroup"] == "detectability"
-    assert m["one_liner"] == "ESI polarity for LC-MS and EI usability for GC-MS."
+    assert m["one_liner"] == "<b>ESI polarity</b> for LC-MS and <b>EI usability</b> for GC-MS."
     ids = [f["id"] for f in m["inputs"]]
     assert ids == ["structure", "ph"] and "platform" not in ids
     ph = m["inputs"][1]
@@ -402,7 +402,12 @@ def test_polarity_chip_levels_and_help():
     assert (poor["level"], poor["value"]) == ("poor", "poor") and _help(poor) == ["both modes respond weakly"]
 
 
-ACID_HEX, BASE_HEX = "E3562D", "0E8E9F"                  # highlight colours of the figure (acid red, base teal)
+def _hex(rgb):
+    return "".join(f"{int(c * 255):02X}" for c in rgb)   # RDKit truncates
+
+
+from mzdesk.shared import colors as _theme  # noqa: E402
+ACID_HEX, BASE_HEX = _hex(_theme.HL_ACID), _hex(_theme.HL_BASE)   # highlight colours of the figure (acid coral, base teal), as RDKit writes them
 
 
 def test_figure_highlights_acid_and_base_sites_and_a_permanent_charge():

@@ -1,24 +1,23 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { isLockedModule, lock, useUnlocked } from "../lock";
+import { useTheme, type ThemePref } from "../themeMode";
 import type { Module, Spec } from "../types";
+import { Icon, moduleIcon } from "./Icon";
+import { Logo } from "./Logo";
 import { LockIcon } from "./LockGate";
 
 type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
 
-/** 两大类：Pipelines、Modules。Modules 按 spec 顺序列出；有小类的模块收进小类，小类出现在它第一个模块的位置。 */
+/** Modules first, then Pipelines. Modules: one entry per subgroup in spec.subgroups order (working pages before placeholders,
+ *  otherwise spec order); a module without a subgroup is listed on its own after them. */
 function moduleEntries(spec: Spec): Entry[] {
-  const titles = Object.fromEntries(spec.subgroups.map(s => [s.id, s.title]));
   const mods = spec.modules.filter(m => m.group === "modules");
-  const seen = new Set<string>();
-  const out: Entry[] = [];
-  for (const m of mods) {
-    if (!m.subgroup) out.push({ kind: "link", m });
-    else if (!seen.has(m.subgroup)) {
-      seen.add(m.subgroup);
-      out.push({ kind: "sub", id: m.subgroup, title: titles[m.subgroup] ?? m.subgroup, mods: mods.filter(x => x.subgroup === m.subgroup) });
-    }
-  }
+  const liveFirst = (ms: Module[]) => [...ms.filter(m => m.live), ...ms.filter(m => !m.live)];
+  const out: Entry[] = spec.subgroups
+    .map(s => ({ kind: "sub" as const, id: s.id, title: s.title, mods: liveFirst(mods.filter(m => m.subgroup === s.id)) }))
+    .filter(e => e.mods.length);
+  for (const m of mods) if (!m.subgroup || !spec.subgroups.some(s => s.id === m.subgroup)) out.push({ kind: "link", m });
   return out;
 }
 
@@ -28,30 +27,98 @@ function ModuleLink({ m, sub }: { m: Module; sub?: boolean }) {
   return (
     <NavLink to={`/modules/${m.id}`} title={m.live ? undefined : "placeholder: format only"}
       className={({ isActive }) => "nav-link" + (sub ? " sub" : "") + (m.live ? "" : " placeholder") + (isActive ? " active" : "")}>
-      {m.title}{showLock && <LockIcon />}
+      <Icon name={moduleIcon(m)} className="nav-icon" />
+      <span className="nav-link-label">{m.title}</span>
+      {showLock && <LockIcon />}
     </NavLink>
   );
 }
 
-export function Sidebar({ spec }: { spec: Spec }) {
+/** Wordmark: "mzDesk" with "Beta" over the version, stacked to its right. */
+export function Brand({ version, compact = false }: { version?: string; compact?: boolean }) {
+  if (compact) return <div className="brand compact" title={`mzDesk${version ? " V" + version : ""} Beta`}><Logo /></div>;
+  return (
+    <div className="brand">
+      <Logo />
+      <span className="brand-name">mzDesk</span>
+      <span className="brand-tag"><span>Beta</span>{version && <span>V{version}</span>}</span>
+    </div>
+  );
+}
+
+const THEMES: { id: ThemePref; label: string; icon: ReactNode }[] = [
+  { id: "light", label: "Light", icon: <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /> },
+  { id: "system", label: "System", icon: <><rect x="3" y="4" width="18" height="12" rx="2" /><path d="M8 20h8M12 16v4" /></> },
+  { id: "dark", label: "Dark", icon: <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /> },
+];
+const glyph = (body: ReactNode) => (
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{body}</svg>
+);
+
+/** Light / System / Dark. In the collapsed rail: one button that cycles. */
+function ThemeSwitch({ compact }: { compact: boolean }) {
+  const { pref, setPref } = useTheme();
+  if (compact) {
+    const i = THEMES.findIndex(t => t.id === pref), next = THEMES[(i + 1) % THEMES.length];
+    return <button type="button" className="rail-btn" title={`Theme: ${THEMES[i].label} (click for ${next.label})`} aria-label={`Theme: ${THEMES[i].label}`} onClick={() => setPref(next.id)}>{glyph(THEMES[i].icon)}</button>;
+  }
+  return (
+    <div className="theme-switch" role="radiogroup" aria-label="Theme">
+      {THEMES.map(t => (
+        <button key={t.id} type="button" role="radio" aria-checked={pref === t.id} title={t.label} className={pref === t.id ? "on" : ""} onClick={() => setPref(t.id)}>
+          {glyph(t.icon)}<span>{t.label}</span>
+        </button>))}
+    </div>
+  );
+}
+
+/** collapsed = icon rail: one icon per group (a click opens the sidebar on that group) and per pipeline. */
+export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; collapsed?: boolean; onCollapse?: (c: boolean) => void }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const unlocked = useUnlocked();
+  const entries = moduleEntries(spec);
+  const toggle = onCollapse && (
+    <button type="button" className="rail-btn collapse-btn" onClick={() => onCollapse(!collapsed)}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+      {glyph(<><rect x="3.5" y="4" width="17" height="16" rx="2.5" /><path d="M9.5 4v16" />{collapsed ? <path d="M13 10l2 2-2 2" /> : <path d="M15.5 10l-2 2 2 2" />}</>)}
+    </button>);
+
+  if (collapsed) return (
+    <aside className="sidebar rail">
+      <div className="rail-top"><Brand version={spec.version} compact />{toggle}</div>
+      <nav className="rail-nav" aria-label="Modules">
+        {entries.map(e => {
+          if (e.kind === "link") return <NavLink key={e.m.id} to={`/modules/${e.m.id}`} title={e.m.title} className={({ isActive }) => "rail-item" + (isActive ? " active" : "")}><Icon name={moduleIcon(e.m)} className="nav-icon" /></NavLink>;
+          const hasActive = e.mods.some(m => pathname === `/modules/${m.id}`);
+          return (
+            <button key={e.id} type="button" title={e.title} aria-label={e.title} className={"rail-item" + (hasActive ? " active" : "")}
+              onClick={() => { setOpen({ ...open, [e.id]: true }); onCollapse?.(false); }}>
+              <Icon name={e.id} className="nav-icon" />
+            </button>);
+        })}
+        <span className="rail-sep" aria-hidden="true" />
+        {spec.pipelines.map(p => (
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} title={p.title} className={({ isActive }) => "rail-item placeholder" + (isActive ? " active" : "")}>
+            <Icon name="pipeline" className="nav-icon" />
+          </NavLink>))}
+      </nav>
+      <div className="sidebar-foot"><ThemeSwitch compact /></div>
+    </aside>
+  );
+
   return (
     <aside className="sidebar">
       <div className="lock-brand-row">
-        <div className="brand">mzDesk</div>
-        {unlocked && <button type="button" className="lock-btn" onClick={lock} title="Lock the password-protected pages again"><LockIcon open />Lock</button>}
-      </div>
-      <div className="nav-group">
-        <div className="nav-title">Pipelines</div>
-        {spec.pipelines.map(p => (
-          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>{p.title}{!unlocked && <LockIcon />}</NavLink>
-        ))}
+        <Brand version={spec.version} />
+        <div className="brand-actions">
+          {unlocked && <button type="button" className="lock-btn" onClick={lock} title="Lock the password-protected pages again"><LockIcon open />Lock</button>}
+          {toggle}
+        </div>
       </div>
       <div className="nav-group">
         <div className="nav-title">Modules</div>
-        {moduleEntries(spec).map(e => {
+        {entries.map(e => {
           if (e.kind === "link") return <ModuleLink key={e.m.id} m={e.m} />;
           const hasActive = e.mods.some(m => pathname === `/modules/${m.id}`);
           const isOpen = open[e.id] ?? hasActive;
@@ -59,13 +126,27 @@ export function Sidebar({ spec }: { spec: Spec }) {
             <div key={e.id} className="nav-sub">
               <button type="button" className={"nav-sub-title" + (hasActive ? " has-active" : "")} aria-expanded={isOpen}
                 onClick={() => setOpen({ ...open, [e.id]: !isOpen })}>
-                <span className={"caret" + (isOpen ? " open" : "")} aria-hidden="true">›</span>{e.title}{!unlocked && !isOpen && e.mods.every(isLockedModule) && <LockIcon />}
+                <Icon name={e.id} className="nav-icon" />
+                <span className="nav-sub-label">{e.title}</span>
+                {!unlocked && !isOpen && e.mods.every(isLockedModule) && <LockIcon />}
+                <span className={"caret" + (isOpen ? " open" : "")} aria-hidden="true">›</span>
               </button>
-              {isOpen && e.mods.map(m => <ModuleLink key={m.id} m={m} sub />)}
+              {isOpen && <div className="nav-sub-links">{e.mods.map(m => <ModuleLink key={m.id} m={m} sub />)}</div>}
             </div>
           );
         })}
       </div>
+      <div className="nav-group">
+        <div className="nav-title">Pipelines</div>
+        {spec.pipelines.map(p => (
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>
+            <Icon name="pipeline" className="nav-icon" />
+            <span className="nav-link-label">{p.title}</span>
+            {!unlocked && <LockIcon />}
+          </NavLink>
+        ))}
+      </div>
+      <div className="sidebar-foot"><ThemeSwitch compact={false} /></div>
     </aside>
   );
 }

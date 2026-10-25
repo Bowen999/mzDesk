@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
 import type { Cell, Row, RowGroup, RxOption, StatusChip, Tile } from "../types";
+import { ThemedSvg } from "./Figure";
 import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
 
 /**
@@ -20,19 +21,36 @@ const safeUrl = (u: string) => (/^(https?:|mailto:|\/)/i.test(u) ? u : undefined
 const asText = (v: string | number | undefined) => (typeof v === "number" ? v.toFixed(4) : v);
 
 // ---------------------------------------------------------------- table cells and rows
+/** Cell text; "\n" splits it into stacked lines. A line like "A: water + 0.1% formic" gets its label set off;
+ *  other lines of a multi-line cell (e.g. "5→95% B in 20 min · 0.4 mL/min") are shown quieter. */
+function TextLines({ text }: { text: string }) {
+  if (!text.includes("\n")) return <RichText text={text} />;
+  return (
+    <span className="cell-lines">
+      {text.split("\n").map((line, i) => {
+        const m = /^([A-Z][\w ]{0,11}): (.*)$/.exec(line);
+        return m
+          ? <span key={i} className="cell-line"><span className="cell-line-key">{m[1]}</span><span><RichText text={m[2]} /></span></span>
+          : <span key={i} className="cell-line rest"><RichText text={line} /></span>;
+      })}
+    </span>);
+}
+
 export function CellView({ cell }: { cell: Cell }) {
   if (cell === null || cell === undefined) return null;
-  if (typeof cell !== "object") return <>{String(cell)}</>;
+  if (typeof cell !== "object") return typeof cell === "string" ? <TextLines text={cell} /> : <>{String(cell)}</>;
   if ("img" in cell) return <img className="cell-img" src={cell.img} alt="" />;
   const tone = String(cell.tone ?? "neutral").replace(/[^a-z0-9-]/gi, "").toLowerCase() || "neutral";
   const url = safeUrl(cell.url ?? cell.href ?? "");
-  let node: ReactNode = cell.badge !== undefined ? <span className={"badge tone-" + tone}>{cell.badge}</span> : <RichText text={cell.text ?? ""} />;
+  let node: ReactNode = cell.badge !== undefined ? <span className={"badge tone-" + tone}>{cell.badge}</span> : <TextLines text={cell.text ?? ""} />;
   if (url) node = <a href={url} target="_blank" rel="noopener noreferrer">{node}</a>;
   const lines = helpLines(cell.help);
   return <>{node}{lines.length > 0 && <HelpButton lines={lines} className="inline" label="Help" />}</>;
 }
 
-const isLong = (c: Cell) => (typeof c === "string" ? c : c && typeof c === "object" && "text" in c ? c.text ?? "" : "").length > 40;
+const cellText = (c: Cell) => (typeof c === "string" ? c : c && typeof c === "object" && "text" in c ? c.text ?? "" : "");
+const isLong = (c: Cell) => cellText(c).length > 40;
+const isMultiline = (c: Cell) => cellText(c).includes("\n");
 
 /** The shared table body: header + rows (+ trailing "?" column when `rowHelp`). */
 export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string }) {
@@ -47,7 +65,7 @@ export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: 
               const lines = helpLines(help);
               return (
                 <tr key={i}>
-                  {cells.map((c, j) => <td key={j} className={isLong(c) ? "long" : undefined}><CellView cell={c} /></td>)}
+                  {cells.map((c, j) => <td key={j} className={isMultiline(c) ? "long lines" : isLong(c) ? "long" : undefined}><CellView cell={c} /></td>)}
                   {rowHelp && <td className="help-col">{lines.length > 0 && <HelpButton lines={lines} label="Row help" />}</td>}
                 </tr>);
             })
@@ -142,7 +160,7 @@ export function Reaction({ svg, options }: { svg?: string; options: RxOption[] }
   const help = helpLines(cur.help);
   return (
     <div className={"rx" + (svg ? " with-parent" : "")}>
-      {svg && <div className="rx-parent"><img alt="Parent structure with the reactive groups highlighted" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`} /></div>}
+      {svg && <div className="rx-parent"><ThemedSvg svg={svg} className="" alt="Parent structure with the reactive groups highlighted" /></div>}
       <div className="rx-main">
         {options.length > 1 && (
           <div className="rx-opts" role="group" aria-label="Reaction options">

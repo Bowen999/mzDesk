@@ -61,6 +61,7 @@ textarea { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
 .card-unit { font-size: 11px; color: var(--muted); }
 .placeholder-box { border: 1px dashed var(--line); border-radius: 6px; padding: 24px; color: var(--muted); text-align: center; }
 .placeholder-box.editor { min-height: 160px; display: flex; align-items: center; justify-content: center; }
+.structure-editor { height: 480px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
 .code { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; font-size: 12px; overflow: auto; max-height: 360px; margin: 0; }
 .copy { margin-left: 8px; font: inherit; font-size: 11px; font-weight: 400; padding: 1px 8px; border: 1px solid var(--line); border-radius: 4px; background: #fff; cursor: pointer; }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }

@@ -14,6 +14,8 @@ from rdkit.Chem import Descriptors
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Draw import rdMolDraw2D
 
+from mzdesk.shared import colors as _theme, depict as _depict
+
 C13_SHIFT = 1.0033548          # 13C - 12C
 PT = Chem.GetPeriodicTable()
 
@@ -122,7 +124,7 @@ SCHEMES = {
 }
 assert set(SCHEMES) == {v[0] for v in REAGENTS.values()}
 
-HIGHLIGHT = (0.13, 0.62, 0.62)
+HIGHLIGHT = _theme.HL_REACTIVE
 
 
 # ---------------------------------------------------------------- 分子式 / 质量
@@ -216,9 +218,7 @@ def _labels(rule, groups):
 
 def highlight_svg(mol, groups, size=(560, 420)) -> Optional[str]:
     atoms = sorted({i for g in groups.values() for i in g["atoms"]})
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-    drawer.drawOptions().addStereoAnnotation = False
-    drawer.drawOptions().clearBackground = False
+    drawer = _depict.svg_drawer(*size)
     drawer.DrawMolecule(mol, highlightAtoms=atoms, highlightAtomColors={i: HIGHLIGHT for i in atoms})
     drawer.FinishDrawing()
     return drawer.GetDrawingText()

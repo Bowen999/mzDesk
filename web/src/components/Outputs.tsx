@@ -1,9 +1,10 @@
 import { useState } from "react";
+import type React from "react";
 import type { Block, BlockData, CardValue } from "../types";
 import "../outputs-v2.css";
 import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
 import { FigureView } from "./Figure";
-import { HelpButton, helpLines } from "./Help";
+import { HelpButton, RichText, emphasize, helpLines } from "./Help";
 
 /** 一个输出块。有数据就画结果；没数据时画格式（空表只有表头，卡片是 —，图是虚线框）。
  *  status：pending = 还没运行；none = 运行了但这个块没有结果；off = 这个块还没接引擎。
@@ -132,14 +133,14 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
           <div className="out">
             <details className="out-details">
               <summary>Details</summary>
-              <ul className="notes">{[...lines, ...items].map((t, i) => <li key={i}>{t}</li>)}</ul>
+              <ul className="notes">{[...lines, ...items].map((t, i) => <li key={i}><RichText text={emphasize(t)} /></li>)}</ul>
             </details>
           </div>);
       }
       return (
         <div className="out">
           <Title block={block} data={data} status={shown} />
-          {items.length ? <ul className="notes">{items.map((t, i) => <li key={i}>{t}</li>)}</ul> : <div className="placeholder-box">{empty}</div>}
+          {items.length ? <ul className="notes">{items.map((t, i) => <li key={i}><RichText text={emphasize(t)} /></li>)}</ul> : <div className="placeholder-box">{empty}</div>}
         </div>);
     }
     case "button": return <button className="btn secondary" disabled>{block.label}</button>;
@@ -147,16 +148,64 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
   }
 }
 
-/** 一组输出块。outputs 为 null = 还没运行。live = 模块已接引擎（没 id 的块标成 not connected yet）。 */
-export function OutputList({ blocks, exclude = [], outputs = null, live = false }:
-  { blocks: Block[]; exclude?: string[]; outputs?: Record<string, BlockData> | null; live?: boolean }) {
+/** Where a block sits in the results grid and how loud it is.
+ *  span: "full" = whole width; "half" = shares a row with another half block on wide screens (spec `span` wins).
+ *  tier: "hero" = metric cards, no frame (they sit right under the verdict); "card" = framed (figures, wide tables, tiles);
+ *        "quiet" = no frame, just a title and a hairline (chips, notes, short tables). */
+export function blockLayout(b: Block): { span: "half" | "full"; tier: "hero" | "card" | "quiet" } {
+  const narrowTable = (b.type === "table") && (b.columns?.length ?? 0) <= 3;
+  const tier = b.type === "cards" ? "hero" : narrowTable || b.type === "chips" || b.type === "notes" ? "quiet" : "card";
+  const span = b.span ?? (narrowTable || b.type === "chips" || b.type === "notes" ? "half" : "full");
+  return { span, tier };
+}
+
+/** No rows / chips / tiles / items: after a run such a block is hidden instead of showing an empty frame. */
+function isEmpty(b: Block, d: BlockData): boolean {
+  switch (b.type) {
+    case "table": return !(d.rows?.length);
+    case "grouptable": return !(d.groups?.length);
+    case "chips": return !(d.chips?.length);
+    case "portal": return !(d.tiles?.length);
+    case "reaction": return !(d.options?.length);
+    case "notes": return !(d.items?.length) && !helpLines(d.help).length;
+    case "formats": return !Object.keys(d.formats ?? {}).length;
+    case "code": return !d.text;
+    default: return false;
+  }
+}
+
+/** Grey stand-in for a block before the run (or while it runs): its title and the rough shape of its content. */
+function Skeleton({ block }: { block: Block }) {
+  const title = block.title ?? block.label;
+  const shape = block.type === "figure" ? <div className="sk sk-figure" />
+    : block.type === "cards" ? <div className="sk-cards">{(block.items ?? [1, 2, 3]).slice(0, 5).map((_, i) => <div key={i} className="sk sk-card" />)}</div>
+    : block.type === "chips" ? <div className="sk-row">{[56, 72, 64, 88].map((w, i) => <div key={i} className="sk sk-pill" style={{ width: w }} />)}</div>
+    : <div className="sk-lines"><div className="sk sk-line" /><div className="sk sk-line" /><div className="sk sk-line short" /></div>;
+  return <div className="out skeleton" aria-hidden="true">{title && <div className="out-title">{title}</div>}{shape}</div>;
+}
+
+/** 一组输出块。outputs 为 null = 还没运行。live = 模块已接引擎（没 id 的块标成 not connected yet）。
+ *  Live module: before the run every block is a skeleton (busy = shimmering); after it, blocks without results are hidden.
+ *  Placeholder module (live = false): the blocks show their format, as before. */
+export function OutputList({ blocks, exclude = [], outputs = null, live = false, busy = false }:
+  { blocks: Block[]; exclude?: string[]; outputs?: Record<string, BlockData> | null; live?: boolean; busy?: boolean }) {
   const shown = blocks.filter(b => !b.key || !exclude.includes(b.key));
+  const skeleton = live && (busy || !outputs);
+  let n = 0;
   return (
-    <div className="outputs">
+    <div className={"outputs" + (skeleton ? " is-skeleton" : "") + (busy ? " is-busy" : "") + (outputs && !busy ? " has-data" : "")}>
       {shown.map((b, i) => {
+        const { span, tier } = blockLayout(b);
+        const cls = `block span-${span} tier-${tier}`;
+        if (skeleton) {
+          if (b.type === "heading" || b.type === "button" || (b.type === "notes" && b.collapsed)) return null;
+          return <div key={b.id ?? i} className={cls}><Skeleton block={b} /></div>;
+        }
         const data = b.id && outputs ? outputs[b.id] : undefined;
         const status: Status = live && !b.id ? "off" : outputs ? "none" : "pending";
-        return <OutputBlock key={b.id ?? i} block={b} data={data} status={status} />;
+        if (live && outputs && (status === "none" && !data || data && isEmpty(b, data))) return null;
+        const el = <OutputBlock block={b} data={data} status={status} />;
+        return <div key={b.id ?? i} className={cls} style={{ "--i": n++ } as React.CSSProperties}>{el}</div>;
       })}
     </div>
   );

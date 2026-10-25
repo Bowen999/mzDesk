@@ -12,6 +12,7 @@ export type Block = {
   style?: string;           // cards: "metric" = compact metric cards
   row_help?: boolean;       // table / grouptable: trailing "?" column for per-row help
   collapsed?: boolean;      // notes: items live behind a "?" next to the title (or a "Details" disclosure without a title)
+  span?: "half" | "full";   // results grid on wide screens; default chosen by block type (Outputs.tsx blockLayout)
 };
 export type Module = {
   id: string; title: string; cls: string; group: string; subgroup: string | null; live: boolean;
@@ -20,7 +21,7 @@ export type Module = {
 export type Stage = { title: string; modules: string[]; exclude: string[] };
 export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[] };
 export type Group = { id: string; title: string };
-export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[] };
+export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string };
 
 /** 后端结果：按输出块 id 填数据（形状见 mzdesk/api/common.py）。 */
 /** Table cell: plain text, an image, or an object with text / badge, optional link (url, or href), optional help. */
@@ -43,4 +44,5 @@ export type BlockData = {
   help?: Help; count?: number | string;                       // any block: runtime "?" text; table / grouptable: count pill next to the title
   tiles?: Tile[]; chips?: StatusChip[]; options?: RxOption[]; groups?: RowGroup[];   // portal / chips / reaction (svg above) / grouptable
 };
-export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, BlockData>; warnings: string[] };
+/** verdict: the one-line answer shown above the results (may use <b>); none for pages whose output is the answer. */
+export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, BlockData>; warnings: string[]; verdict?: string | null };

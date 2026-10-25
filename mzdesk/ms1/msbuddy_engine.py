@@ -55,8 +55,7 @@ _ELECTRON = 0.00054857990946
 _BUDDY_LOCK = threading.Lock()
 
 # plot styling, shared with the MS² tab's spectrum (the tab passes the theme.py colours)
-_FONT = '"Helvetica Neue",Helvetica,Arial,sans-serif'   # same stack as theme.PLOT_FONT
-_MONO_FONT = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace'
+from mzdesk.shared.colors import PLOT_FONT as _FONT, PLOT_MONO as _MONO_FONT   # app fonts
 _Y_FLOOR = 1.6    # sticks start slightly below 0 % so even tiny peaks stay visible
 _Y_TOP = 116.0    # headroom for the peak labels above the base peak
 
@@ -458,7 +457,7 @@ def build_figure(rows, precursor_mz=None, adduct="", dark="#1B3A8F", light="#A9B
                 ticklen=5, tickfont=dict(color=muted, size=11), zeroline=False)
     fig.update_layout(
         height=height, margin=dict(l=62, r=22, t=30, b=50),
-        paper_bgcolor="#FFFFFF", plot_bgcolor="#FFFFFF",
+        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family=_FONT, color=ink, size=12),
         showlegend=False, hovermode="x", hoverdistance=16, dragmode="zoom",
         hoverlabel=dict(bgcolor="#FFFFFF", bordercolor=ink, align="left",

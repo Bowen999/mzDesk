@@ -22,7 +22,6 @@ export function PipelinePage({ spec }: { spec: Spec }) {
   return (
     <div className="page">
       <h1>{pipe.title}</h1>
-      <p className="one-liner">{pipe.one_liner}</p>
       <div className="meta">{pipe.stages.map(s => s.title).join("  →  ")}</div>
       <div className="panel">
         <h4 className="panel-title">Input (once)</h4>

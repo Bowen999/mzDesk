@@ -352,7 +352,7 @@ def test_figure_has_the_chromophore_atoms_highlighted():
 # ---------------------------------------------------------------- API
 def test_spec_matches_engine_and_runner():
     mod = next(m for m in MODULES if m["id"] == "non_ms")
-    assert mod["live"] and mod["example"]["structure"]["value"] == CAFFEINE
+    assert mod["live"] and mod["example"]["structure"]["value"] == "caffeine"
     phase = next(f for f in mod["inputs"] if f["id"] == "mobile_phase")
     assert phase["options"] == list(R.MOBILE_PHASES) and phase["value"] == R.DEFAULT_MOBILE_PHASE
     ids = {b["id"]: b for b in mod["outputs"]}

@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from mzdesk import __version__
+from mzdesk.api import verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
 from mzdesk.spec import MODULES, PIPELINES, spec
@@ -32,7 +33,7 @@ def health():
 
 @app.get("/api/spec")
 def get_spec():
-    return spec()
+    return {**spec(), "version": __version__}
 
 
 @app.post("/api/modules/{module_id}/run")
@@ -51,8 +52,9 @@ def run_module(module_id: str, inputs: dict):
     except Exception as exc:  # noqa: BLE001 — report engine bugs instead of a bare 500
         log.exception("module %s failed", module_id)
         raise HTTPException(500, f"{module_id} failed: {type(exc).__name__}: {exc}") from None
-    return {"status": "ok", "module": module_id, "outputs": clean(result.get("outputs", {})),
-            "warnings": result.get("warnings", [])}
+    outputs = clean(result.get("outputs", {}))
+    return {"status": "ok", "module": module_id, "outputs": outputs, "warnings": result.get("warnings", []),
+            "verdict": result.get("verdict") or verdicts.build(module_id, inputs, outputs)}
 
 
 @app.post("/api/pipelines/{pipeline_id}/run")

@@ -5,7 +5,8 @@ import type { Help } from "../types";
 /**
  * Help "?" popovers. Contract (any block, and any item inside cards / chips / portal tiles / table rows):
  *   help = string | string[]    static text from the spec (block.help) and/or runtime text (data.help, item.help); all sources are merged
- *   One line renders as a paragraph, several lines as bullets. Text may use <sub> <sup> <i> <b> (nothing else is interpreted).
+ *   One line renders as a paragraph, several lines as bullets. Text may use <sub> <sup> <i> <b> <code> (nothing else is interpreted).
+ *   Lines go through emphasize(): a short lead-in before a colon ("Yes: …", "Basic site (pKa ≥ 9): …") is bolded, ions like [M+H]+ become tags.
  * Behaviour: hover or keyboard focus shows the popover; click pins it until a click outside or Esc; only one popover stays pinned.
  * Accessibility: the trigger is a <button> with aria-expanded and (while open) aria-describedby -> the popover (role="tooltip").
  * The popover is portalled to <body> with fixed positioning, so scrolling table wrappers and collapsed groups never clip it.
@@ -18,16 +19,30 @@ export function helpLines(...parts: (Help | null | undefined)[]): string[] {
   return out;
 }
 
-/** Text with a small safe markup subset (<sub>, <sup>, <i>, <b>); everything else, including any other tag, stays literal text. */
+/** Mark the key words of a help / notes line: the lead-in before a colon at the start of the line or of a later sentence
+ *  ("Yes: expected …. Partial: only …") is bolded, and ion notations ([M+H]+, [M-2H]2-, [2M+Na]+) become small tags.
+ *  Text that already has its own <b> keeps it and only gets the ion tags. */
+export function emphasize(text: string): string {
+  let t = text;
+  if (!/<b>/.test(t)) {
+    const lead = /^([^:<>]{2,70}?):(\s)/.exec(t);
+    // a lead-in is one phrase: no sentence break outside brackets ("e.g. phenol" inside them is fine)
+    if (lead && !/[.!?]\s/.test(lead[1].replace(/\([^)]*\)/g, ""))) t = `<b>${lead[1]}</b>:${lead[2]}` + t.slice(lead[0].length);
+    t = t.replace(/([.;]\s+)([A-Z][\w/+\-]*(?: [\w/+\-]+){0,2}):(?=\s)/g, "$1<b>$2</b>:");
+  }
+  return t.replace(/(^|[\s(,/])(\[\d*M[^\]\s<>]*\]\d*[+\-]+(?:•)?)/g, "$1<code>$2</code>");
+}
+
+/** Text with a small safe markup subset (<sub>, <sup>, <i>, <b>, <code>); everything else, including any other tag, stays literal text. */
 export function RichText({ text }: { text: string }) {
-  const re = /<(sub|sup|i|b)>([\s\S]*?)<\/\1>/g;
+  const re = /<(sub|sup|i|b|code)>([\s\S]*?)<\/\1>/g;
   const parts: ReactNode[] = [];
   let last = 0, k = 0, m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     const inner = <RichText text={m[2]} />;
     parts.push(m[1] === "sub" ? <sub key={k++}>{inner}</sub> : m[1] === "sup" ? <sup key={k++}>{inner}</sup>
-      : m[1] === "i" ? <i key={k++}>{inner}</i> : <b key={k++}>{inner}</b>);
+      : m[1] === "i" ? <i key={k++}>{inner}</i> : m[1] === "code" ? <code key={k++} className="ion">{inner}</code> : <b key={k++}>{inner}</b>);
     last = m.index + m[0].length;
   }
   if (last === 0) return <>{text}</>;
@@ -117,8 +132,8 @@ export function useHelpPopover(lines: string[]) {
       style={{ left: pos?.left ?? 0, top: pos?.top ?? 0, maxHeight: pos?.maxH, visibility: pos ? "visible" : "hidden" }}
       onMouseEnter={enter} onMouseLeave={leave}>
       {lines.length === 1
-        ? <p><RichText text={lines[0]} /></p>
-        : <ul>{lines.map((l, i) => <li key={i}><RichText text={l} /></li>)}</ul>}
+        ? <p><RichText text={emphasize(lines[0])} /></p>
+        : <ul>{lines.map((l, i) => <li key={i}><RichText text={emphasize(l)} /></li>)}</ul>}
     </div>, document.body) : null;
 
   return { triggerProps, popover };

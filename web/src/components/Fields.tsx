@@ -1,4 +1,8 @@
+import { lazy, Suspense } from "react";
 import type { Field } from "../types";
+
+// Ketcher 很大，只在选 Draw 时才下载
+const StructureEditor = lazy(() => import("./StructureEditor"));
 
 /** 读上传文件的文本内容（多个文件用空行连接）。 */
 async function readFiles(files: FileList | null): Promise<{ name: string; text: string }> {
@@ -13,7 +17,7 @@ export function initialValues(fields: Field[]): Record<string, any> {
   for (const f of fields) {
     if (!f.id) continue;
     switch (f.type) {
-      case "structure": v[f.id] = { mode: "SMILES / InChI", value: "" }; break;
+      case "structure": v[f.id] = { mode: "Name / ID / Formula", value: "" }; break;
       case "precursor": v[f.id] = { precursor_mz: "", ion_mode: "Positive", adduct: "Auto" }; break;
       case "spectrum": v[f.id] = { source: "Paste", value: "" }; break;
       case "checkbox": v[f.id] = !!f.value; break;
@@ -51,7 +55,7 @@ export function FieldInput({ field, value, onChange }: P) {
         })}
       </div></div>);
     case "checkbox": return <label className="field check"><input type="checkbox" checked={!!value} onChange={e => onChange(e.target.checked)} /> {f.label}</label>;
-    case "slider": return <label className="field">{f.label}: <b>{value}</b><input type="range" min={f.min} max={f.max} step={f.step ?? 1} value={value} onChange={e => onChange(Number(e.target.value))} /></label>;
+    case "slider": return <label className="field"><span className="slider-label">{f.label}<b>{value}</b></span><input type="range" min={f.min} max={f.max} step={f.step ?? 1} value={value} onChange={e => onChange(Number(e.target.value))} /></label>;
     case "file": return <label className="field">{f.label}<input type="file" accept={f.accept} onChange={async e => onChange(await readFiles(e.target.files))} /></label>;
     case "table": return (
       <label className="field wide">{f.label}
@@ -64,21 +68,28 @@ export function FieldInput({ field, value, onChange }: P) {
 }
 
 function StructureInput({ field, value, onChange }: P) {
-  const modes = ["SMILES / InChI", "Draw", "Name / ID / Formula"];
+  const modes = ["Name / ID / Formula", "Draw", "SMILES / InChI"];
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
+  // 画布与 SMILES 框共用同一个 SMILES：Draw <-> SMILES 互转时保留，进出 Name 模式时清空
+  const switchMode = (m: string) => {
+    const keep = (m === "Draw" || m === "SMILES / InChI") && (value.mode === "Draw" || value.mode === "SMILES / InChI");
+    onChange({ ...value, mode: m, value: keep ? value.value : "", molfile: "" });
+  };
   return (
     <div className="field wide composite">
       <span>{field.label}{field.optional ? " (optional)" : ""}</span>
-      <div className="radio-row">{modes.map(m => <label key={m}><input type="radio" checked={value.mode === m} onChange={() => set({ mode: m })} /> {m}</label>)}</div>
+      <div className="radio-row">{modes.map(m => <label key={m}><input type="radio" checked={value.mode === m} onChange={() => switchMode(m)} /> {m}</label>)}</div>
       {value.mode === "Draw" ? (
         <>
-          <div className="placeholder-box editor">[structure editor placeholder] Ketcher goes here → SMILES appears below</div>
-          <input type="text" disabled placeholder="SMILES from editor" value={value.value} />
+          <Suspense fallback={<div className="placeholder-box editor">Loading structure editor…</div>}>
+            <StructureEditor smiles={value.value} molfile={value.molfile} onChange={v => set(v)} />
+          </Suspense>
+          <input type="text" className="mono" readOnly placeholder="SMILES from editor" value={value.value} />
         </>
       ) : value.mode === "SMILES / InChI" ? (
-        <input type="text" placeholder="CN1C=NC2=C1C(=O)N(C(=O)N2C)C" value={value.value} onChange={e => set({ value: e.target.value })} />
+        <input type="text" className="mono" placeholder="CN1C=NC2=C1C(=O)N(C(=O)N2C)C" value={value.value} onChange={e => set({ value: e.target.value })} />
       ) : (
-        <input type="text" placeholder="Name, IUPAC, CAS, InChIKey, PubChem CID, HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank ID" value={value.value} onChange={e => set({ value: e.target.value })} />
+        <input type="text" placeholder="Name, CAS, formula, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank ID — e.g. caffeine" value={value.value} onChange={e => set({ value: e.target.value })} />
       )}
     </div>
   );
@@ -116,4 +127,40 @@ function SpectrumInput({ field, value, onChange }: P) {
       {value.source === "USI" && <input type="text" placeholder="mzspec:GNPS:..." value={value.value} onChange={e => set({ value: e.target.value })} />}
     </div>
   );
+}
+
+/** Short text for the collapsed input bar: `lead` = the compound / spectrum / precursor, `items` = the other settings.
+ *  Defaults the user did not touch still appear (they shaped the result); empty optional fields are left out. */
+export function summarizeInputs(fields: Field[], values: Record<string, any>): { lead: string; items: string[] } {
+  const items: string[] = [];
+  let lead = "";
+  const short = (s: string, n = 48) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+  for (const f of fields) {
+    if (!f.id) continue;
+    const v = values[f.id] ?? initialValues([f])[f.id];
+    let text = "";
+    switch (f.type) {
+      case "structure":
+        text = v?.value ? (v.mode === "Draw" ? "drawn structure" : short(String(v.value))) : "";
+        if (text && !lead) { lead = text; continue; }
+        break;
+      case "precursor":
+        text = [v?.precursor_mz ? `m/z ${v.precursor_mz}` : "", v?.ion_mode, v?.adduct && v.adduct !== "Auto" ? v.adduct : ""].filter(Boolean).join(" · ");
+        break;
+      case "spectrum": {
+        const n = String(v?.value ?? "").split(/\n|(?<=\d)\s+(?=\d+(?:\.\d+)?[:\s])/).filter(l => l.trim()).length;
+        text = v?.source === "USI" ? short(String(v.value ?? "")) : v?.filename ? short(v.filename, 32) : v?.value ? `${f.label}: ${n} lines` : "";
+        if (text && !lead) { lead = text; continue; }
+        break;
+      }
+      case "ms1": text = v ? "MS1 isotopes given" : ""; break;
+      case "checkbox": text = v ? short(String(f.label).replace(/\s*\(.*\)$/, ""), 40) : ""; break;
+      case "multiselect": text = Array.isArray(v) && v.length ? `${f.label}: ${v.length <= 2 ? v.join(", ") : v.length + " selected"}` : ""; break;
+      case "file": text = v?.name ? short(v.name, 32) : ""; break;
+      case "table": text = v ? `${f.label}: given` : ""; break;
+      default: text = v !== "" && v !== null && v !== undefined ? `${String(f.label).replace(/\s*\(.*\)$/, "")}: ${short(String(v), 32)}` : "";
+    }
+    if (text) items.push(text);
+  }
+  return { lead, items };
 }

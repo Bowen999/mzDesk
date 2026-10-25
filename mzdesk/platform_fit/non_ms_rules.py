@@ -20,6 +20,8 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
+from mzdesk.shared import colors as _theme, depict as _depict
+
 from mzdesk.platform_fit import derivatization as deriv
 
 
@@ -903,8 +905,8 @@ def _notes(a: Analysis, top: str, reagents: dict, sugar: bool) -> List[str]:
 
 
 # ---------------------------------------------------------------- figure
-STRONG_COLOR = (0.30, 0.43, 0.88)    # indigo-blue
-WEAK_COLOR = (0.96, 0.66, 0.15)      # amber
+STRONG_COLOR = _theme.HL_STRONG      # blue tint
+WEAK_COLOR = _theme.HL_WEAK          # amber tint
 
 
 def highlight_svg(mol, chromophores: List[Chromophore], size=(560, 420)) -> Optional[str]:
@@ -913,10 +915,8 @@ def highlight_svg(mol, chromophores: List[Chromophore], size=(560, 420)) -> Opti
     for c in sorted(chromophores, key=lambda c: RANK[c.strength]):      # strong drawn last
         for i in c.atoms:
             colors[i] = STRONG_COLOR if c.strength == STRONG else WEAK_COLOR
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
+    drawer = _depict.svg_drawer(*size)
     opts = drawer.drawOptions()
-    opts.clearBackground = False
-    opts.addStereoAnnotation = False
     opts.annotationFontScale = 0.7
     m = Chem.Mol(mol)
     if colors and len(colors) <= TH.max_label_atoms:

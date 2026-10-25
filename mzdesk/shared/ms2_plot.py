@@ -38,7 +38,7 @@ def base_layout(height=HEIGHT, *, x_range, y_range, y_title, yaxis=None, margin=
         template="none", height=height, margin=margin or dict(l=62, r=22, t=30, b=50),
         paper_bgcolor=theme.SURFACE, plot_bgcolor=theme.SURFACE, font=dict(family=FONT, color=theme.INK, size=12),
         showlegend=False, hovermode="x", hoverdistance=16, dragmode="zoom",
-        hoverlabel=dict(bgcolor=theme.SURFACE, bordercolor=theme.LINE, font=dict(family=FONT, color=theme.INK, size=12), align="left"),
+        hoverlabel=dict(bgcolor=theme.PAPER, bordercolor=theme.LINE, font=dict(family=FONT, color=theme.INK, size=12), align="left"),
         shapes=list(shapes), annotations=list(annotations),
         xaxis=dict(axis_style(), title=axis_title("m/z"), range=x_range, showgrid=False, hoverformat=".4f"), yaxis=y)
 

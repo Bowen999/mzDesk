@@ -88,11 +88,9 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
     value = inputs.get(key) or {}
     mode = value.get("mode") or "SMILES / InChI"
     s = str(value.get("value") or "").strip()
-    if mode == "Draw" and not s:
-        raise InputError("The structure editor is not connected yet. Use SMILES / InChI.")
     if not s:
         if required:
-            raise InputError(f"{label} is required.")
+            raise InputError(f"{label}: draw a structure first." if mode == "Draw" else f"{label} is required.")
         return None
     if mode == "Name / ID / Formula":
         from mzdesk.identity import resolve
@@ -192,8 +190,8 @@ def depiction_svg(smiles, size=(420, 300)):
     mol = Chem.MolFromSmiles(smiles) if smiles else None
     if mol is None:
         return None
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
-    drawer.drawOptions().clearBackground = False
+    from mzdesk.shared import depict
+    drawer = depict.svg_drawer(*size)
     rdMolDraw2D.PrepareAndDrawMolecule(drawer, mol)
     drawer.FinishDrawing()
     return drawer.GetDrawingText()

@@ -7,14 +7,14 @@ from rdkit import Chem
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from mzdesk.platform_fit.separation_rules import MINUS, charge_text, logd_text
-from mzdesk.shared import colors as theme
+from mzdesk.shared import colors as theme, depict
 
-LOGD_COLOR = theme.BLUE
-CHARGE_COLOR = "#B45309"                       # amber-700
-ACID = (0.894, 0.341, 0.180)                   # vermilion
-BASE = (0.055, 0.557, 0.624)                   # teal
-BOTH = (0.549, 0.349, 0.749)                   # violet: the same atom is an acid and a base site
-LEGEND = "red: acid site, teal: base site, violet: both"
+LOGD_COLOR = theme.DATA_BLUE
+CHARGE_COLOR = theme.DATA_AMBER
+ACID = theme.HL_ACID                           # coral tint
+BASE = theme.HL_BASE                           # teal tint
+BOTH = theme.HL_BOTH                           # violet tint: the same atom is an acid and a base site
+LEGEND = "coral: acid site, teal: base site, violet: both"
 HEIGHT = 400
 
 
@@ -50,7 +50,7 @@ def ph_figure(a, ph, state) -> go.Figure:
         template="none", height=HEIGHT, margin=dict(l=62, r=66 if has_logd else 22, t=34, b=50), showlegend=False,
         paper_bgcolor=theme.SURFACE, plot_bgcolor=theme.SURFACE, font=dict(family=theme.PLOT_FONT, color=theme.INK, size=12),
         hovermode="closest", dragmode="zoom",
-        hoverlabel=dict(bgcolor=theme.SURFACE, bordercolor=theme.LINE, font=dict(family=theme.PLOT_FONT, color=theme.INK, size=12), align="left"),
+        hoverlabel=dict(bgcolor=theme.PAPER, bordercolor=theme.LINE, font=dict(family=theme.PLOT_FONT, color=theme.INK, size=12), align="left"),
         xaxis=dict(axis, title=dict(text="pH", font=dict(color=theme.MUTED, size=12)), range=[0, 14], dtick=2, showgrid=False),
         shapes=[dict(type="line", xref="x", yref="paper", x0=ph, x1=ph, y0=0, y1=1, layer="below", line=dict(color=theme.MUTED, width=1, dash="dot"))],
         annotations=[dict(x=ph, xref="x", y=1, yref="paper", yanchor="bottom", yshift=4, showarrow=False, text=f"pH {ph:g}",
@@ -81,10 +81,8 @@ def sites_svg(a, size=(560, 420)) -> Optional[str]:
         kinds = {s.kind for s in group}
         colors[idx] = BOTH if len(kinds) == 2 else (ACID if kinds == {"acid"} else BASE)
         mol.GetAtomWithIdx(idx).SetProp("atomNote", f"{group[0].label} " + "/".join(f"{s.pka:.1f}" for s in group))
-    drawer = rdMolDraw2D.MolDraw2DSVG(*size)
+    drawer = depict.svg_drawer(*size)
     opts = drawer.drawOptions()
-    opts.clearBackground = False
-    opts.addStereoAnnotation = False
     opts.annotationFontScale = 0.75
     rdMolDraw2D.PrepareAndDrawMolecule(drawer, mol, highlightAtoms=list(colors), highlightAtomColors=colors)
     drawer.FinishDrawing()

@@ -22,7 +22,7 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
-from mzdesk.shared import ms2_plot
+from mzdesk.shared import depict, ms2_plot
 from mzdesk.shared.spectrum import parse_spectrum  # noqa: F401  re-exported for callers of the engine
 
 RDLogger.DisableLog('rdApp.*')
@@ -150,7 +150,7 @@ def render_frag_png(smi, size=(240, 170)):
         except Exception:
             pass
     try:
-        d = rdMolDraw2D.MolDraw2DCairo(*size)
+        d = depict.style(rdMolDraw2D.MolDraw2DCairo(*size))
         rdMolDraw2D.PrepareAndDrawMolecule(d, m)
         d.FinishDrawing()
         return base64.b64encode(d.GetDrawingText()).decode()

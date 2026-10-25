@@ -262,6 +262,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.8', date:'2026-10-25',
+  title:'界面改版：白色主题 + IBM Plex、结论前置、两栏结果、黑暗模式、可折叠 / 拖动的侧边栏、新 logo',
+  note:'所有示例改为输入名字（PubChem 查询后本地缓存；测试用 spec.EXAMPLE_STRUCTURES 离线运行）。结构图与图表共用一套色板，黑暗模式下在前端重新着色；画结构的 Ketcher 编辑器保持白底。',
+  state:[['能算的模块页','17 / 32'], ['Pipeline','4 条，未接'], ['测试','848 个通过']],
+  c:{
+   app:['chg','白色主题 + IBM Plex Sans / Mono（本地打包）；结果顶部一行结论；数值卡片、卡片、轻量三级层次，宽屏两栏；运行后输入收成一行摘要；骨架屏、运行计时与进度条；侧边栏重新分组（Tools 组、Pipelines 放最后）、可拖动 200–380 px、可折叠成图标栏、蓝色底；窄屏抽屉菜单；浅色 / 跟随系统 / 深色三档主题；新 logo（桌洞立方体）与 favicon；品牌区 mzDesk + Beta / 版本号；输入方式顺序改为 Name → Draw → SMILES；Known methods 流动相分行显示；去掉 Class 和一句话描述。',false,{w:'web/src/ · web/public/favicon.svg · web/index.html · web/package.json'}],
+   other:['feat','每个模块的一行结论（verdict），由计算结果生成；/api/spec 返回版本号；示例改为名字并核对 InChIKey。',true,{w:'mzdesk/api/verdicts.py · mzdesk/api/app.py · mzdesk/spec.py · mzdesk/methods/known_methods.py · tests/conftest.py'}],
+   prop:['chg','结构图统一画法（细键线、柔和杂原子色、透明背景）与共用数据色板；Plotly 图字体与配色统一；长图标题改短，说明移入问号。',true,{w:'mzdesk/shared/colors.py · mzdesk/shared/depict.py · mzdesk/platform_fit/separation_viz.py · mzdesk/platform_fit/ionization_viz.py · mzdesk/platform_fit/non_ms_rules.py · mzdesk/platform_fit/derivatization.py · mzdesk/ms2/metfrag_engine.py · mzdesk/ms1/msbuddy_engine.py · mzdesk/shared/ms2_plot.py'}],
+   docs:['doc','本页加 v0.2.8。',false,{w:'admin/version_change.html'}]
+  }},
  {id:'v0.2.7', date:'2026-10-25',
   title:'Detectability 全部接活（新增 Ionization / Adducts / Non-MS detection）+ 七页统一改版；其他页面加密码锁',
   note:'改版：关键结果用颜色一眼看清，解释收进小问号（悬停显示、点击固定）。新组件：入口卡片、彩色标签、官能团反应式、折叠表格、富表格单元、指标卡片；隐藏页 /dev/blocks 演示全部组件。',

@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { darkColors } from "../darkColors";
+import { useTheme } from "../themeMode";
 import type { BlockData, PeakCard } from "../types";
 
-const MONO = 'ui-monospace,"SF Mono",Menlo,Consolas,monospace';
-const INK = "#1F2937", MUTED = "#667085";
+const MONO = '"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace';
+const SANS = '"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+const INK = "#161A23", MUTED = "#6A7180";     // peak labels; recoloured with the figure in the dark theme
 const MAX_LABELS = 40;
 const CONFIG = {
   responsive: true, displaylogo: false, displayModeBar: "hover",
@@ -26,9 +29,16 @@ function load3Dmol(): Promise<any> {
   }));
 }
 
+/** An SVG drawn for a white page (RDKit structures), recoloured in the dark theme. */
+export function ThemedSvg({ svg, className = "fig-img svg", alt = "" }: { svg: string; className?: string; alt?: string }) {
+  const { dark } = useTheme();
+  const src = useMemo(() => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(dark ? darkColors(svg) : svg)}`, [svg, dark]);
+  return <img className={className} alt={alt} src={src} />;
+}
+
 export function FigureView({ data }: { data: BlockData }) {
   if (data.plotly) return <PlotlyFigure fig={data.plotly} peaks={data.peaks} />;
-  if (data.svg) return <img className="fig-img" alt="" src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(data.svg)}`} />;
+  if (data.svg) return <ThemedSvg svg={data.svg} />;
   if (data.img) return <img className="fig-img" alt="" src={data.img} />;
   if (data.mol3d) return <Mol3D molblock={data.mol3d} />;
   return null;
@@ -66,28 +76,38 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
   return staticAnn.concat(anns);
 }
 
-function PlotlyFigure({ fig, peaks }: { fig: { data: any[]; layout: any }; peaks?: PeakCard[] }) {
+function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; peaks?: PeakCard[] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const { dark } = useTheme();
+  // the backend draws for a white page; in the dark theme every colour of the figure (and of the peak labels) is remapped
+  const fig = useMemo(() => (dark ? JSON.parse(darkColors(JSON.stringify(raw), true)) : raw), [raw, dark]);
   const [hover, setHover] = useState<{ p: PeakCard; x: number; y: number } | null>(null);
   const [err, setErr] = useState("");
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const el = ref.current as any;
     if (!el) return;
-    let Plotly: any = null, alive = true, busy = false;
+    let Plotly: any = null, alive = true, busy = false, ro: ResizeObserver | null = null;
     loadPlotly().then(P => {
       if (!alive) return;
       Plotly = P;
-      const layout = { ...fig.layout, autosize: true };
+      const layout = { ...fig.layout, autosize: true, font: { ...(fig.layout.font ?? {}), family: SANS } };
       delete layout.width;
       const staticAnn = [...(layout.annotations ?? [])];
       const precursor = (layout.shapes ?? []).find((s: any) => s.line?.dash === "dot")?.x0;
       return Plotly.newPlot(el, fig.data, layout, CONFIG).then(() => {
         if (alive) setReady(true);
+        // the plot follows its container (sidebar drag, drawer, window resize), not only the window
+        if (alive && typeof ResizeObserver !== "undefined") {
+          let frame = 0;
+          ro = new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => { if (alive) Plotly.Plots.resize(el); }); });
+          ro.observe(el);
+        }
         if (!alive || !peaks?.length) return;
         const relabel = () => {
           busy = true;
-          Plotly.relayout(el, { annotations: peakLabels(el, peaks, staticAnn, precursor) }).finally(() => { busy = false; });
+          const anns = peakLabels(el, peaks, staticAnn, precursor);
+          Plotly.relayout(el, { annotations: dark ? JSON.parse(darkColors(JSON.stringify(anns), true)) : anns }).finally(() => { busy = false; });
         };
         relabel();
         el.on("plotly_hover", (ev: any) => {
@@ -103,8 +123,8 @@ function PlotlyFigure({ fig, peaks }: { fig: { data: any[]; layout: any }; peaks
         });
       });
     }).catch(e => alive && setErr(String(e)));
-    return () => { alive = false; if (Plotly) Plotly.purge(el); };
-  }, [fig, peaks]);
+    return () => { alive = false; ro?.disconnect(); if (Plotly) Plotly.purge(el); };
+  }, [fig, peaks]);   // fig changes with the theme too
   if (err) return <div className="out placeholder-box">Figure failed: {err}</div>;
   return (
     <div className="fig" onMouseLeave={() => setHover(null)}>
@@ -132,19 +152,20 @@ function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: n
 function Mol3D({ molblock }: { molblock: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [err, setErr] = useState("");
+  const { dark } = useTheme();
   useEffect(() => {
     let viewer: any = null, alive = true;
     load3Dmol().then($3Dmol => {
       if (!alive || !ref.current) return;
       ref.current.innerHTML = "";
-      viewer = $3Dmol.createViewer(ref.current, { backgroundColor: "white" });
+      viewer = $3Dmol.createViewer(ref.current, { backgroundColor: dark ? "#181B21" : "white" });
       viewer.addModel(molblock, "mol");
       viewer.setStyle({}, { stick: { radius: 0.14 }, sphere: { scale: 0.22 } });
       viewer.zoomTo();
       viewer.render();
     }).catch(e => alive && setErr(String(e)));
     return () => { alive = false; viewer?.clear?.(); };
-  }, [molblock]);
+  }, [molblock, dark]);
   if (err) return <div className="out placeholder-box">3D viewer failed: {err}</div>;
   return <div ref={ref} className="mol3d" />;
 }
