@@ -297,11 +297,18 @@ def test_properties_page_has_no_duplicates():
     assert [r[0] for r in rows] == ["Polarity", "", "", "", "Size & topology", "", "", ""]
 
 
-def test_platform_fit_section_is_renamed():
+def test_platform_page_is_a_portal_and_a_reaction_block():
     mod = next(m for m in MODULES if m["id"] == "platform_fit")
-    detect = next(b for b in mod["outputs"] if b.get("id") == "detect")
-    assert detect["title"] == "Lipidomics vs metabolomics" and detect["items"][0]["label"] == "Best platform"
-    assert detect["items"][0]["unit"] == "Lipidome / Metabolome / Both / Neither"
+    portal, reaction = mod["outputs"]
+    assert (portal["type"], portal["id"], portal["title"]) == ("portal", "platform", "Platform") and portal["help"]
+    assert (reaction["type"], reaction["id"], reaction["title"]) == ("reaction", "reactions", "Why and how") and reaction["help"]
+    out = _run("platform_fit", mod["example"]).json()["outputs"]
+    tiles = {t["label"]: t for t in out["platform"]["tiles"]}
+    assert list(tiles) == ["Lipidomics", "Metabolomics", "CIL LC-MS", "GC-MS"]
+    # the example (tyrosine) shows everything: CIL chips, GC partial and the reaction block
+    assert mod["example"]["structure"]["value"] == "N[C@@H](Cc1ccc(O)cc1)C(=O)O"
+    assert tiles["CIL LC-MS"]["status"] == "yes" and tiles["CIL LC-MS"]["chips"] and tiles["GC-MS"]["status"] == "partial"
+    assert [o["label"] for o in out["reactions"]["options"]] == ["CIL · Dansyl chloride", "CIL · DmPA bromide", "GC · TMS"]
 
 
 def test_identity_runner_empty_and_resolver_error_are_400(monkeypatch):

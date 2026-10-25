@@ -2,7 +2,9 @@
 
 字段类型：structure, precursor, spectrum, ms1, number, text, select, multiselect, radio,
 checkbox, slider, file, table, heading。
-输出块类型：table, cards, figure, code, formats, notes, button, heading。
+输出块类型：table, cards, figure, code, formats, notes, button, heading, portal, chips, reaction, grouptable。
+  任何块都可带 help（"?" 弹窗，字符串或字符串列表；运行时数据里的 data.help 会并进去）。数据形状见各 helper 的 docstring，
+  运行时数据可用 mzdesk/api/blocks.py 里的 builder 生成。
   formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：pipeline 的 stage 用 exclude 按 key 过滤块。
@@ -60,22 +62,70 @@ def heading(label):
 
 
 # ---- 输出块 ----
-def table(columns, title=None, caption=None, key=None, id=None):
-    return {"type": "table", "title": title, "columns": columns, "caption": caption, "key": key, "id": id}
-def cards(items, title=None, key=None, id=None):
-    return {"type": "cards", "title": title, "items": [{"label": l, "unit": u} for l, u in items], "key": key, "id": id}
-def figure(label, key=None, id=None):
-    return {"type": "figure", "label": label, "key": key, "id": id}
-def code(label, title=None, key=None, id=None):
-    return {"type": "code", "title": title, "label": label, "key": key, "id": id}
-def formats(label, title=None, key=None, id=None):
-    return {"type": "formats", "title": title, "label": label, "key": key, "id": id}
-def notes(title, key=None, id=None):
-    return {"type": "notes", "title": title, "key": key, "id": id}
+def _extras(block, **extra):
+    """Add the optional keys that are set; a block that uses none of them serialises exactly as before."""
+    block.update({k: v for k, v in extra.items() if v})
+    return block
+
+
+# help (every block): string or list of strings, shown in a "?" popover after the block title (after the label for figure / code / formats).
+#   A list renders as bullets. The page may add runtime text in data["help"] (string or list); static and runtime text are merged.
+#   Text may use <sub> <sup> <i> <b>. Items inside cards / chips / portal tiles / table rows / groups take their own "help" in the data.
+def table(columns, title=None, caption=None, key=None, id=None, help=None, row_help=False):
+    """Table. data: {"rows": [row, ...], "count"?: int}   count -> small pill next to the title.
+    cell: "text" | {"text", "url"} link (new tab) | {"badge": text, "tone": jp|report|good|warn|bad|neutral} | {"text", "help"} inline "?"
+          | {"img": data-URL}; badge / text cells may also carry "url" and "help".   (the old {"text", "href"} link still works)
+    row:  [cell, ...] | {"cells": [cell, ...], "help": str|list}.  row_help=True adds a trailing "?" column that shows each row's help."""
+    return _extras({"type": "table", "title": title, "columns": columns, "caption": caption, "key": key, "id": id}, help=help, row_help=row_help)
+def cards(items, title=None, key=None, id=None, help=None, style=None):
+    """Cards. items: (label, unit) or (label, unit, help). data: {"values": {label: "value" | {"value", "note"?, "help"?}}}
+    style="metric": compact metric cards (muted label, 20px value, small note / unit line). The "?" sits after each label."""
+    its = []
+    for label, unit, *rest in items:
+        it = {"label": label, "unit": unit}
+        if rest and rest[0]:
+            it["help"] = rest[0]
+        its.append(it)
+    return _extras({"type": "cards", "title": title, "items": its, "key": key, "id": id}, help=help, style=style)
+def figure(label, key=None, id=None, help=None):
+    return _extras({"type": "figure", "label": label, "key": key, "id": id}, help=help)
+def code(label, title=None, key=None, id=None, help=None):
+    return _extras({"type": "code", "title": title, "label": label, "key": key, "id": id}, help=help)
+def formats(label, title=None, key=None, id=None, help=None):
+    return _extras({"type": "formats", "title": title, "label": label, "key": key, "id": id}, help=help)
+def notes(title, key=None, id=None, help=None, collapsed=False):
+    """Notes. data: {"items": [str, ...]}.  collapsed=True: no visible list; the items sit in a "?" next to the title
+    (a small "Details" disclosure when title is None)."""
+    return _extras({"type": "notes", "title": title, "key": key, "id": id}, help=help, collapsed=collapsed)
 def button(label, key=None):
     return {"type": "button", "label": label, "key": key}
-def head(title, key=None):
-    return {"type": "heading", "title": title, "key": key}
+def head(title, key=None, help=None):
+    return _extras({"type": "heading", "title": title, "key": key}, help=help)
+def portal(title=None, id=None, help=None, key=None):
+    """Grid of status tiles (2-4 per row, responsive).
+    data: {"tiles": [{"label", "status": "yes"|"partial"|"no", "value"?: short text, "chips"?: [str], "help"?: str|list}]}
+    yes = teal tint, partial = amber tint, no = quiet grey (no fill)."""
+    return _extras({"type": "portal", "title": title, "key": key, "id": id}, help=help)
+def chips(title=None, id=None, help=None, key=None):
+    """Row of coloured status pills.
+    data: {"chips": [{"label", "level": good|possible|poor, "value"?: str, "help"?: str|list}]}
+    level aliases: strong / yes = good, moderate / partial = possible, weak / no = poor (green / amber / grey).
+    A chip with help is clickable: hover or focus shows its popover, click pins it."""
+    return _extras({"type": "chips", "title": title, "key": key, "id": id}, help=help)
+def reaction(title=None, id=None, help=None, key=None):
+    """Functional-group reaction scheme (functional groups only, never full product structures) next to the parent structure.
+    data: {"svg"?: parent structure SVG with the reactive groups highlighted,
+           "options": [{"label": "CIL · dansyl", "steps": [{"from": "R–NH₂", "reagent": "Dns-Cl", "to": "R–NH–Dns", "count"?: 2}],
+                        "formula"?, "mass"?, "heavy"?, "help"?: str|list}]}
+    Options render as selectable pills (the first is selected); the selected option draws each step as  from —reagent→ to ×count
+    and a small line "formula · mass · heavy mass" + the option's "?". mass / heavy: bare value (a number is shown with 4 decimals),
+    the renderer adds the "mass" / "heavy mass" labels. Strings may use unicode subscripts or <sub> / <sup>."""
+    return _extras({"type": "reaction", "title": title, "key": key, "id": id}, help=help)
+def grouptable(columns, title=None, id=None, help=None, caption=None, key=None, row_help=False):
+    """Collapsible groups of rows that share the same columns (collapsed by default; chevron or header click toggles; keyboard accessible).
+    data: {"groups": [{"title", "meta"?: short text on the right e.g. "0.66 · 3 methods", "help"?: str|list, "rows": [row, ...]}], "count"?: int}
+    rows use the same cell / row formats as table (row_help=True adds the "?" column)."""
+    return _extras({"type": "grouptable", "title": title, "columns": columns, "caption": caption, "key": key, "id": id}, help=help, row_help=row_help)
 
 
 # ---- 模块 ----
@@ -136,46 +186,65 @@ MODULES = [
     # ---- Detectability：7 页。只有 Platform 的脂质组 / 代谢组部分接了引擎，其余都是占位 ----
     module("platform_fit", "Platform", "A", "Which workflow can measure it: lipidomics, metabolomics, CIL LC-MS or GC-MS (decided mainly by extraction and derivatization).",
         [structure()],
-        [cards([("Best platform", "Lipidome / Metabolome / Both / Neither")], "Lipidomics vs metabolomics", key="detect", id="detect"),
-         figure("Structure with lipid features highlighted (indigo: acyl chain, teal: isoprenoid / sterol, periwinkle: polar head, amber: sugar)", key="detect", id="detect_structure"),
-         table(["Feature", "Value"], key="detect", id="detect_features"),
-         notes("Rule hits", key="detect", id="detect_reasons"),
-         cards([("CIL LC-MS", "yes / no"), ("Labelable groups", "amine / phenol / carboxyl / carbonyl / hydroxyl")], "Chemical isotope labelling (CIL)", key="cil", id="cil"),
-         cards([("GC-MS", "yes / after derivatization / no"), ("Volatility", ""), ("Thermal stability", "")], "GC-MS", key="gc", id="gc"),
-         notes("CIL / GC-MS rule hits", key="gc", id="gc_cil_reasons")],
-        subgroup="detectability", live=True, example={"structure": _smiles("CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC")}),
+        [portal("Platform", id="platform",
+                help=["Rule-based screen of which workflow should work, not a measurement.",
+                      "Yes: expected to work. Partial: only after derivatization. No: not expected. The ? on a tile gives its rule hits."]),
+         reaction("Why and how", id="reactions",
+                  help=["Shown when CIL or GC-MS applies. The structure highlights the groups these reagents react with.",
+                        "Only functional groups are drawn, not the full products. Choose a reagent above the scheme; masses are monoisotopic."])],
+        subgroup="detectability", live=True, example={"structure": _smiles("N[C@@H](Cc1ccc(O)cc1)C(=O)O")}),
 
     module("separation", "Separation", "B", "Which column, and what charge the molecule carries at each pH (MolGpKa pKa prediction; needs a one-time weights download).",
         [structure(), slider("ph", "Mobile phase pH", 1, 13, 0.1, 2.7)],
-        [cards([("logD at pH", "logP + log10(fraction neutral)"), ("Dominant charge state", "net charge"), ("Fraction neutral", "fully uncharged")], "pH behaviour", key="ph", id="ph_summary"),
-         table(["Site", "pKa", "Type"], "Ionizable sites", "Site: element and atom number (as in the SMILES, from 1). Acid: loses H, base: takes H. Base sites on amide, sulfonamide and pyrrole-type N are ignored (listed in Rule hits)", key="ph", id="sites"),
-         figure("logD (left) and expected net charge (right) vs pH; dotted line = chosen pH", key="ph", id="ph_curves"),
-         figure("Structure with ionizable sites highlighted (red: acid, teal: base, violet: both; label = atom and pKa)", key="ph", id="sites_structure"),
-         table(["Mode", "Recommendation", "Reason"], "Separation mode", "Simple rules on logD, net charge, TPSA, MW and stereocentres; thresholds in mzdesk/platform_fit/separation_rules.py", key="column", id="modes"),
-         notes("Rule hits", key="column", id="rule_hits")],
+        [cards([("logD at pH", "", "logD = logP (Crippen) + log10(fraction of fully uncharged molecules). Ions are assumed not to partition and zwitterions count as charged, "
+                                   "so logD is a lower bound at low or high pH."),
+                ("Dominant charge state", "", "Most probable net charge at this pH, summed over the predicted sites (a zwitterion is net 0)."),
+                ("Fraction neutral", "", "Share of the molecules with no charge at all; a zwitterion counts as charged.")],
+               "pH behaviour", id="ph_summary", style="metric"),
+         figure("logD (left axis) and net charge (right axis) vs pH; dotted line = chosen pH", id="ph_curves"),
+         figure("Structure: red = acid site, teal = base site, violet = both; label = atom and pKa", id="sites_structure"),
+         chips("Separation mode", id="modes",
+               help=["Simple rules on logD, net charge, TPSA, MW and stereocentres (thresholds: mzdesk/platform_fit/separation_rules.py).",
+                     "Green: good. Amber: possible. Grey: poor or not needed. Hover or click a mode for its reason."]),
+         table(["Site", "pKa", "Type"], "Ionizable sites", id="sites",
+               help=["Site: element and atom number, counted from 1 as in the SMILES.", "Acid: loses H. Base: takes H.",
+                     "Base sites on amide, sulfonamide and pyrrole-type N are ignored (see Notes)."]),
+         notes("Notes", id="rule_hits", collapsed=True)],
         subgroup="detectability", live=True, example={"structure": _smiles("CC(C)Cc1ccc(cc1)C(C)C(=O)O"), "ph": 2.7}),
 
-    module("ionization", "Ionization", "B", "Which ion source and polarity: ESI + / −, APCI, APPI for LC; EI or CI for GC.",
-        [structure(), radio("platform", "Platform", ["LC-MS", "GC-MS"])],
-        [cards([("Best source", "ESI / APCI / APPI / EI / CI"), ("Polarity", "+ / − / both")], "Recommendation"),
-         table(["Source", "Polarity", "Suitability", "Reason"], "All sources"),
-         notes("Rule hits")],
-        subgroup="detectability"),
+    module("ionization", "Ionization", "B", "ESI polarity for LC-MS and EI usability for GC-MS.",
+        [structure(), slider("ph", "Mobile phase pH", 1, 13, 0.1, 2.7)],
+        [chips("Ionization", id="chips",
+               help=["Polarity: the better ESI mode (+, −, or both); poor = weak in both",
+                     "Simple rules at the chosen pH: pKa sites (MolGpKa; textbook group values without its weights), O/N counts, GC amenability and the NEIMS molecular ion",
+                     "Thresholds: mzdesk/platform_fit/ionization_rules.py"]),
+         figure("Ionizable sites", id="sites_structure", help=["red: acid, teal: base, violet: both", "label = atom and pKa", "acids above pKa 10 are left out"]),
+         notes("Rule hits", id="rule_hits", collapsed=True)],
+        subgroup="detectability", live=True, example={"structure": _smiles("CCN(CC)CC(=O)Nc1c(C)cccc1C"), "ph": 2.7}),
 
-    module("adducts", "Adducts", "B", "Which adducts appear for the chosen polarity and mobile phase additive, and which is strongest.",
+    module("adducts", "Adducts", "B", "Which ions appear (adducts, in-source losses, dimers) for the chosen polarity and mobile phase additive, and which is strongest. Rule-based: pKa sites (MolGpKa) and lipid class.",
         [structure(), radio("ion_mode", "Ion mode", ["Positive", "Negative"]),
-         select("additive", "Mobile phase additive", ["Formic acid", "Ammonium formate", "Ammonium acetate", "Acetic acid", "None"])],
-        [cards([("Dominant adduct", ""), ("m/z", "")], "Expected base ion"),
-         table(["Adduct", "Ion formula", "m/z", "Likelihood", "Reason"], "Adducts", "Ranked by expected intensity"),
-         notes("Rule hits")],
-        subgroup="detectability"),
+         select("additive", "Mobile phase additive", ["Formic acid", "Ammonium formate", "Ammonium acetate", "Acetic acid", "None"]),
+         checkbox("alkali", "Sodium / potassium present (glassware, salts, biological matrix)", True)],
+        [cards([("Dominant ion", ""), ("m/z", "")], "Expected base ion", id="base", style="metric"),
+         table(["Ion", "Formula", "m/z", "Likelihood"], "Ions", id="ions", row_help=True,
+               help=["Ranked by expected intensity: a rule score (high / medium / low), not a measured intensity.",
+                     "m/z computed as on the Theoretical m/z page."]),
+         notes("Rule hits", id="rule_hits", collapsed=True)],
+        subgroup="detectability", live=True,
+        example={"structure": _smiles(r"CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCC/C=C\CCCCCCCC"),
+                 "ion_mode": "Negative", "additive": "Ammonium formate", "alkali": True}),
 
-    module("non_ms", "Non-MS detection", "B", "Can it be measured without MS: UV chromophore, fluorescence, or universal detectors (CAD / ELSD / RI).",
-        [structure()],
-        [cards([("UV chromophore", "yes / no"), ("Estimated λmax", "nm"), ("Native fluorescence", "likely / unlikely")], "Optical detection"),
-         table(["Detector", "Suitability", "Reason"], "Detectors", "UV / PDA / FLD / CAD / ELSD / RI"),
-         figure("Structure with chromophore highlighted")],
-        subgroup="detectability"),
+    module("non_ms", "Non-MS detection", "B", "Can it be measured without MS: UV chromophore, fluorescence, or universal detectors (CAD / ELSD / RI). Rule-based.",
+        [structure(), select("mobile_phase", "Mobile phase (changes the low-UV advice)", ["Water/acetonitrile + phosphate", "Water/methanol + formic acid"])],
+        [portal("Detectors", id="detectors",
+                help=["yes = good, partial = possible, no = poor",
+                      "UV/PDA value: chromophore strength and estimated λmax. strong: aromatic or two or more conjugated π units; weak: one isolated C=O, C=C or amide; none: no π system",
+                      "FLD value: native fluorescence (likely / possible / unlikely)",
+                      "Rules and thresholds: mzdesk/platform_fit/non_ms_rules.py"]),
+         figure("Chromophores", id="chromophore_structure", help=["blue: strong, amber: weak", "numbers = atoms (as in the SMILES, from 1)"]),
+         notes("Rule hits", id="rule_hits", collapsed=True)],
+        subgroup="detectability", live=True, example={"structure": _smiles(CAFFEINE), "mobile_phase": "Water/acetonitrile + phosphate"}),
 
     module("derivatization", "Derivatization", "B", "Reactive groups and the derivatized molecule for GC-MS, CIL LC-MS or LC-UV / FLD.",
         [structure(),
@@ -186,20 +255,24 @@ MODULES = [
                       "UV/FLD · OPA + 2-mercaptoethanol (primary amine)", "UV/FLD · FMOC-Cl (amine)", "UV/FLD · DNPH (carbonyl)"],
                      ["GC · TMS (MSTFA / BSTFA)", "GC · MeOx + TMS", "CIL · Dansyl chloride (amine / phenol)",
                       "CIL · Dansyl chloride, base-activated (hydroxyl)", "CIL · DmPA bromide (carboxyl)", "CIL · Dansylhydrazine (carbonyl)"])],
-        [table(["Group", "Count", "Atoms"], "Reactive groups", id="deriv_groups"),
-         table(["Reagent", "Derivatized groups", "Labels", "Formula", "Monoisotopic mass", "Heavy (13C) mass", "Notes"], "Derivatives",
-               "Full derivatization; one row per reagent", id="deriv_rows"),
-         figure("Structure with reactive groups highlighted", id="deriv_structure")],
+        [table(["Reagent", "Labels", "Formula", "Mass", "Heavy mass"], "Derivatives", id="deriv_rows", row_help=True,
+               help=["Full derivatization, one row per selected reagent that has a reactive group. Labels: reagent groups added.",
+                     "Mass is monoisotopic; heavy mass (CIL only) is with a ¹³C₂-labelled reagent. The ? on a row lists the groups labelled, EI key ions and caveats."]),
+         reaction("Reactions", id="deriv_reactions",
+                  help=["Only functional groups are drawn, not the full products. The structure highlights the groups the selected reagents react with; ×n = number of groups.",
+                        "Choose a reagent above the scheme."])],
         subgroup="detectability", live=True, example={"structure": _smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O")}),
 
     module("known_methods", "Known methods", "B", "Is there a published method (pharmacopoeia, RepoRT)? If not, what do the most similar compounds use?",
         [structure(), multiselect("sources", "Sources", ["Japanese Pharmacopoeia", "RepoRT"])],
-        [cards([("Match", "exact / similar / none"), ("Methods found", ""), ("Sources searched", "")], "Summary", id="summary"),
-         table(["Source", "Compound", "Match", "Similarity", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)", "Reference"], "Methods",
-               "Exact hits first, then the methods of similar compounds (similarity score: see Why these compounds are similar). RepoRT is LC-MS; its RT is that compound's retention time in the dataset", id="methods"),
-         table(["Block", "Test", "Condition text"], "JP condition text", "Printed JP18 conditions of the JP methods above (cross-referenced blocks show the referenced text too)", id="jp_conditions"),
-         notes("Why these compounds are similar", id="similar_notes"),
-         notes("Sources & licence", id="sources_notes")],
+        [cards([("Match", "", "Exact: the compound itself has a published method. Similar: only similar compounds do. None: neither."),
+                ("Methods found", "", "Exact matches plus the methods listed under the similar compounds."),
+                ("Sources", "", "Which sources were searched; licence and citation.")], "Summary", id="summary", style="metric"),
+         table(["Source", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)"], "Exact matches", id="exact", row_help=True,
+               help=["The compound itself: same connectivity key (first 14 characters of the InChIKey after largest fragment and neutralisation); stereo is noted in the row's ?.",
+                     "The ? on a row gives match details, the reference and the printed JP conditions or the RepoRT gradient. RepoRT is LC-MS: RT is the compound's retention time in that dataset (min). JP18 has no RT."]),
+         grouptable(["Source", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)"], "Similar compounds", id="similar", row_help=True,
+                    help="Click a compound to see its methods. RT is that compound's retention time.")],
         subgroup="detectability", live=True, example={"structure": _smiles("C[C@H](CS)C(=O)N1CCC[C@H]1C(=O)O"), "sources": ["Japanese Pharmacopoeia", "RepoRT"]}),
 
     # ---- MS1 ----

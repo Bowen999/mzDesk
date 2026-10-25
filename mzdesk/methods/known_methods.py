@@ -1,14 +1,17 @@
-"""Known methods: published chromatography methods for a compound, else for the most similar compounds.
+"""Known methods: published chromatography methods for a compound, plus the methods of the most similar compounds.
 
 Sources: Japanese Pharmacopoeia 18 (bundled, jp18.py) and RepoRT (downloaded once, report.py / report_setup.py).
 1. Exact: same connectivity key (first 14 characters of the InChIKey after largest fragment + neutralisation).
 2. Similar (always computed, listed after the exact hits): score = w_structure * Tanimoto(Morgan r2, 2048 bits) + w_properties * mean(property terms);
    the property terms are exp(-|dlogP|/s), exp(-|dTPSA|/s), exp(-|dMW|/s) and the agreement of the charge class at pH 2.7 and 7.4
    (compound_index.Config holds every weight, scale and cut-off).
-``search`` returns the structured result; ``page_outputs`` turns it into the blocks of the page.
+``search`` returns the structured result; ``page_outputs`` turns it into the blocks of the page (summary cards, exact-match table, grouped table of
+the similar compounds; everything long sits behind "?" popovers, builders in mzdesk/api/blocks.py).
 """
+import re
 from dataclasses import dataclass, field
 
+from mzdesk.api import blocks as bl
 from mzdesk.methods import compound_index as ci
 from mzdesk.methods import jp18, report
 
@@ -28,7 +31,7 @@ class IndexProblem(RuntimeError):
 
 @dataclass
 class Method:
-    """One row of the Methods table."""
+    """One method (a row of the exact-match table or of a similar compound's group)."""
     source: str                    # "JP18" | "RepoRT"
     compound: str
     match: str                     # "exact · same stereo" | "exact · stereo differs / not specified" | "similar"
@@ -41,6 +44,9 @@ class Method:
     reference: tuple               # (text, href or None)
     block_id: str | None = None    # JP only
     condition: str | None = None   # JP only: printed conditions
+    label: str = ""                # text of the "Test / dataset" cell: JP "Purity (4) · p. 623", RepoRT "0382 AA_LC1 (RP)"
+    monograph: str | None = None   # JP only: shown before the label when it is not the compound's own monograph
+    help: list = field(default_factory=list)       # test, reference and conditions / gradient lines for the row's "?"
 
 
 @dataclass
@@ -95,18 +101,50 @@ def _jp_method(jp, group, name, match, similarity, stereo_block=None, ik2_of=Non
     if role_of and role_of(group[0]):
         head, _, tail = match.partition(" · ")
         match = f"{head} · monograph substance (test measures: {jp18.measures_text(r)})" + (f" · {tail}" if tail else "")
+    reference = jp18.reference(r)
+    more = f" (+{len(group) - 1})" if len(group) > 1 else ""
+    page = r.get("page_printed") or r.get("page")
+    label = _short_test(r) + (f" · p. {page}" if page else "") + more
+    block_id = r["block_id"] + more
+    condition = jp18.condition_text(r, jp.by_block)
     return Method(source="JP18", compound=name, match=match, similarity=similarity, test=text, column=jp18.column_text(r),
-                  mobile=jp18.mobile_phase_text(r), detector=jp18.detector_text(r), rt=None, reference=jp18.reference(r),
-                  block_id=r["block_id"] + (f" (+{len(group) - 1})" if len(group) > 1 else ""), condition=jp18.condition_text(r, jp.by_block))
+                  mobile=jp18.mobile_phase_text(r), detector=jp18.detector_text(r), rt=None, reference=reference, block_id=block_id, condition=condition,
+                  label=label, monograph=r.get("monograph") or None,
+                  help=[f"Test: {text}", f"Reference: {reference[0]}, block {block_id}", f"Printed conditions: {condition}"])
 
 
 def _report_method(rep, ds_idx, rts, name, match, similarity, stereo_block=None, ik2s=()):
     ds = rep.datasets[ds_idx]
     if stereo_block is not None:
         match = f"exact · {'same stereo' if stereo_block in ik2s else 'stereo differs / not specified'}"
+    reference = report.reference(ds)
+    gradient = _gradient_points(ds)
     return Method(source="RepoRT", compound=name, match=match, similarity=similarity, test=report.dataset_title(ds),
                   column=report.column_text(ds), mobile=report.mobile_phase_text(ds), detector="MS", rt=ci.rt_text(rts),
-                  reference=report.reference(ds))
+                  reference=reference, label=report.dataset_title(ds),
+                  help=[f"Reference: {reference[0]}"] + ([gradient] if gradient else []))
+
+
+def _short_test(r):
+    """"Purity (4)" from "Purity (4) 1,1′-[3,3′-dithiobis...]-L-diproline"; a short label is kept, a long one is cut."""
+    t = r.get("test_label") or r.get("entry") or "Operating conditions"
+    m = re.match(r"^(.*?\(\d+\))\s", t)
+    if m:
+        return m.group(1)
+    return t if len(t) <= 40 else t[:39].rstrip() + "…"
+
+
+def _gradient_points(ds):
+    """"Gradient, % B: 0 min 5, 2 min 5, 13 min 95" from the dataset's gradient table (the varying eluent; B alone when there are two); "" when there is none."""
+    g = ds.get("gradient") or {}
+    t = g.get("t") or []
+    letters = [L for L in "ABCD" if g.get(L)]
+    if len(t) < 2 or not letters:
+        return ""
+    varying = [L for L in letters if max(g[L]) - min(g[L]) > 1e-9]
+    show = "B" if varying in (["A", "B"], ["B"]) or not varying else varying[0]
+    pts = [f"{x:g} min {round(v, 1):g}" for x, v in zip(t, g[show])]
+    return f"Gradient, % {show}: " + ", ".join(pts[:12]) + (" …" if len(pts) > 12 else "")
 
 
 def _jp_groups(jp, comp):
@@ -251,7 +289,7 @@ def _similar(res, q, jp, rep):
             label = label or rep.index.smiles[comp]
             report_hits = sorted(((ds, rts) for ds, (rts, _k) in _report_datasets(rep, comp).items()),
                                  key=lambda h: (used.get(h[0], 0), report.metadata_gaps(rep.datasets[h[0]]), h[0]))
-        name = next((n for n in names if n), None) or label
+        name = next((n for n in names if n and not ci.is_id_like(n)), None) or next((n for n in names if n), None) or label
         for m in methods:
             m.compound = name
         methods = methods[:cfg.max_methods_per_similar]
@@ -281,18 +319,37 @@ def _signed(v, nd):
     return f"{'+' if r >= 0 else '−'}{abs(r):.{nd}f}"
 
 
-def _cell_ref(ref):
-    text, href = ref
-    return {"text": text, "href": href} if href else text
+def _where(sources):
+    return " + ".join("JP18" if x == SOURCE_JP else x for x in sources)
 
 
-def _method_row(m):
-    sim = "1.00" if m.match.startswith("exact") else f"{m.similarity:.2f}"
-    return [m.source, m.compound, m.match, sim, m.test, m.column, m.mobile, m.detector, m.rt or MISSING, _cell_ref(m.reference)]
+def _match_notes(m):
+    """The parts of the match string that matter in the row's "?": monograph substance and a stereo difference (same stereo is the default and not said)."""
+    notes = []
+    for part in m.match.split(" · ")[1:]:
+        if part == "same stereo":
+            continue
+        measures = re.search(r"\(test measures: (.*)\)$", part)
+        notes.append(f"Monograph substance: the test measures {measures.group(1)}." if part.startswith("monograph substance") and measures
+                     else part[:1].upper() + part[1:] + ".")
+    return notes
+
+
+def _method_row(m, compound):
+    """Source badge, Test / dataset (linked to the JP page or the DOI), Column, Mobile phase, Detector, RT; the row's "?" has the rest."""
+    text = m.label
+    if m.monograph and m.monograph.strip().lower() != (compound or "").strip().lower():
+        text = f"{m.monograph}: {text}"
+    badge = bl.badge("JP18", "jp") if m.source == "JP18" else bl.badge(m.source, "report")
+    return bl.row([badge, bl.link(text, m.reference[1]), m.column, m.mobile, m.detector, m.rt or MISSING], help=_match_notes(m) + m.help)
+
+
+def _title(name):
+    return name if len(name) <= 60 else name[:59] + "…"
 
 
 def page_outputs(res):
-    """Result -> {block id: data} for the Known methods page."""
+    """Result -> {block id: data} for the Known methods page: summary cards, the exact matches and the similar compounds (one collapsible group each)."""
     cfg = res.cfg
     methods = res.methods
     n_exact, n_sim = len(res.exact), len(methods) - len(res.exact)
@@ -309,25 +366,20 @@ def page_outputs(res):
         match = {"value": "none", "note": f"no compound with score ≥ {cfg.min_score:g} and Tanimoto ≥ {cfg.min_structure:g}"}
     searched = ", ".join(("JP18" if s == SOURCE_JP else s) for s in res.searched) or MISSING
     sources_note = f"RepoRT not installed: run {report.SETUP_COMMAND}" if res.report_installed is False else ""
-    outputs = {
+    groups = [bl.group(_title(s.name), [_method_row(m, s.name) for m in s.methods], meta=f"{s.score:.2f} · {len(s.methods)} method{'' if len(s.methods) == 1 else 's'}",
+                       help=_similar_help(s, res)) for s in res.similar]
+    return {
         "summary": {"values": {
             "Match": match,
             "Methods found": {"value": str(len(methods)), "note": f"{n_exact} exact · {n_sim} for {len(res.similar)} similar compounds"},
-            "Sources searched": {"value": searched, "note": sources_note or "; ".join(res.status[s] for s in res.searched if s in res.status)}}},
-        "methods": {"rows": [_method_row(m) for m in methods]},
+            "Sources": {"value": searched, **({"note": sources_note} if sources_note else {}), "help": _sources_help(res)}}},
+        "exact": bl.table_data([_method_row(m, m.compound) for m in res.exact], count=n_exact),
+        "similar": bl.grouptable_data(groups, count=len(res.similar), help=_score_help(res)),
     }
-    seen, jp_rows = set(), []
-    for m in methods:
-        if m.block_id and m.block_id not in seen:
-            seen.add(m.block_id)
-            jp_rows.append([m.block_id, m.test, m.condition])
-    outputs["jp_conditions"] = {"rows": jp_rows}
-    outputs["similar_notes"] = {"items": _similar_notes(res)}
-    outputs["sources_notes"] = {"items": _sources_notes(res)}
-    return outputs
 
 
-def _similar_notes(res):
+def _score_help(res):
+    """How the similarity score is made, the query's own properties and the cut-offs (the "?" of the Similar compounds block)."""
     q, cfg = res.query, res.cfg
     items = [
         f"Score = {cfg.w_structure:g} × Tanimoto (Morgan radius {cfg.fp_radius}, {cfg.fp_bits} bits) + {cfg.w_properties:g} × mean of five property terms: "
@@ -340,20 +392,27 @@ def _similar_notes(res):
     ]
     if not res.similar:
         items.append(f"No compound reached the score cut-off of {cfg.min_score:g} (with Tanimoto ≥ {cfg.min_structure:g}) in the sources searched.")
-    for s in res.similar:
-        where = " + ".join("JP18" if x == SOURCE_JP else x for x in s.sources)
-        items.append(f"{s.name} ({where}): score {s.score:.2f} = Tanimoto {s.tanimoto:.2f}; ΔlogP {_signed(s.d_logp, 1)}, ΔTPSA {_signed(s.d_tpsa, 0)} Å², "
-                     f"ΔMW {_signed(s.d_mw, 0)}; charge class at pH {cfg.ph_acidic:g}: {_q(q.q_low)} (query) vs {_q(s.q_low)}, "
-                     f"at pH {cfg.ph_neutral:g}: {_q(q.q_neutral)} vs {_q(s.q_neutral)}.")
     return items
 
 
-def _sources_notes(res):
-    items = [f"{jp18.LICENCE_NOTE} Page links open the MHLW PDFs."]
+def _similar_help(s, res):
+    """Why one compound is similar: Tanimoto, the property differences and the charge classes (the "?" of its group)."""
+    q, cfg = res.query, res.cfg
+    items = [f"Tanimoto {s.tanimoto:.2f}; ΔlogP {_signed(s.d_logp, 1)}, ΔTPSA {_signed(s.d_tpsa, 0)} Å², ΔMW {_signed(s.d_mw, 0)}.",
+             f"Charge class at pH {cfg.ph_acidic:g}: {_q(q.q_low)} (query) vs {_q(s.q_low)}; at pH {cfg.ph_neutral:g}: {_q(q.q_neutral)} vs {_q(s.q_neutral)}.",
+             f"In {_where(s.sources)}. SMILES: {s.smiles}"]
+    return items
+
+
+def _sources_help(res):
+    """What was searched (counts, commit) and the licence / citation of each source (the "?" of the Sources card)."""
+    items = [f"{'JP18' if s == SOURCE_JP else s}: {t}" for s, t in res.status.items()]
+    if SOURCE_JP in res.searched:
+        items.append(f"{jp18.LICENCE_NOTE} Page links open the MHLW PDFs.")
     if res.report_installed:
         items.append(f"RepoRT: {report.CITATION} Data {report.LICENCE} ({report.REPO_URL}, commit {res.report_commit[:10]}, {res.n_datasets} datasets); "
-                     "each dataset keeps its own origin, shown in the Reference column. Column, eluent and gradient texts are summaries of the dataset "
+                     "each dataset keeps its own origin (the link of its row). Column, eluent and gradient texts are summaries of the dataset "
                      "metadata; RepoRT is LC-MS, retention times are in minutes. Reuse of RepoRT-derived values requires attribution and the same licence.")
-    else:
+    elif res.report_installed is False:
         items.append(f"RepoRT ({report.CITATION}; data {report.LICENCE}) is not installed: run {report.SETUP_COMMAND} (one-time download of about 100 MB).")
     return items

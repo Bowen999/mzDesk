@@ -105,12 +105,8 @@ def _verdict_line(result: Result, thr: Thresholds) -> str:
     return f"{category_en(result.category)}."
 
 
-def english_reasons(result: Result, thr: Optional[Thresholds] = None) -> List[str]:
-    thr = thr or Thresholds()
+def _size_reasons(result: Result, thr: Thresholds) -> List[str]:
     features = result.features
-    if not features.valid:
-        return ["Invalid SMILES."]
-
     reasons = [f"logP {features.logp:.2f}; MW {features.mw:.1f} Da."]
     if features.n_fragments > 1:
         reasons.append(
@@ -122,7 +118,12 @@ def english_reasons(result: Result, thr: Optional[Thresholds] = None) -> List[st
         reasons.append(f"MW outside {window}.")
     else:
         reasons.append(f"MW within {window}.")
+    return reasons
 
+
+def _lipid_reasons(result: Result, thr: Thresholds) -> List[str]:
+    features = result.features
+    reasons = []
     if features.has_long_acyl:
         link = "acyl-linked" if features.is_acyl_linked else "no terminal carbonyl"
         reasons.append(
@@ -151,6 +152,21 @@ def english_reasons(result: Result, thr: Optional[Thresholds] = None) -> List[st
         reasons.append(f"Lipid backbone: {lipid_class_en(features)}.")
     else:
         reasons.append("No canonical lipid backbone.")
-
-    reasons.append(_verdict_line(result, thr))
     return reasons
+
+
+def english_reasons(result: Result, thr: Optional[Thresholds] = None) -> List[str]:
+    thr = thr or Thresholds()
+    if not result.features.valid:
+        return ["Invalid SMILES."]
+    return _size_reasons(result, thr) + _lipid_reasons(result, thr) + [_verdict_line(result, thr)]
+
+
+def tile_reasons_en(result: Result, thr: Optional[Thresholds] = None) -> tuple:
+    """(lipidomics lines, metabolomics lines) for the help of the two Platform tiles: the verdict first, then the evidence that belongs to the tile
+    (lipid features for lipidomics; logP, MW and the LC-MS window for metabolomics). Together they are the lines of english_reasons."""
+    thr = thr or Thresholds()
+    if not result.features.valid:
+        return ["Invalid SMILES."], ["Invalid SMILES."]
+    verdict = _verdict_line(result, thr)
+    return [verdict] + _lipid_reasons(result, thr), [verdict] + _size_reasons(result, thr)

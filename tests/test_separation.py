@@ -30,6 +30,15 @@ def _run(smiles, ph=2.7):
     return client.post("/api/modules/separation/run", json={"structure": {"mode": "SMILES / InChI", "value": smiles}, "ph": ph})
 
 
+def _modes(out):
+    """{chip label: chip} of the Separation mode chips."""
+    return {c["label"]: c for c in out["modes"]["chips"]}
+
+
+def _levels(out):
+    return {label: c["level"] for label, c in _modes(out).items()}
+
+
 def _site(kind, pka, atom=0, element="O"):
     return E.Site(atom=atom, element=element, kind=kind, pka=pka)
 
@@ -287,6 +296,17 @@ def test_sec_only_above_5000(mw, expected):
     assert _rules(mw=mw)["SEC"][1] == expected
 
 
+def test_mode_chips_map_recommendations_to_levels_and_short_labels():
+    rows = R.mode_rows(ph=2.7, logd=1.5, tpsa=50, mw=300, charge=0, f_neutral=1.0, permanent=False, fixed_charge=0, n_stereo=2, n_unassigned=1)
+    chips = R.mode_chips(rows)
+    assert [(c[0], c[1]) for c in chips] == [("RP", "good"), ("HILIC", "possible"), ("Ion-pair RP", "poor"), ("Mixed-mode / IEX", "poor"),
+                                             ("Chiral", "possible"), ("SEC", "poor")]
+    assert chips[0][2] == rows[0][2]                                              # the help is the reason
+    assert chips[4][2] == "Needed only for enantiomer separation: " + rows[4][2]
+    flat = R.mode_chips(R.mode_rows(ph=2.7, logd=1.5, tpsa=50, mw=300, charge=0, f_neutral=1.0, permanent=False, fixed_charge=0, n_stereo=0))
+    assert flat[4] == ("Chiral", "poor", "no stereocentre")
+
+
 def test_all_thresholds_live_in_one_dataclass():
     th = R.Thresholds(rp_good=2.0)
     assert _rules(logd=1.5)["RP"][1] == "good" and R.mode_rows(ph=2.7, logd=1.5, tpsa=50, mw=300, charge=0, f_neutral=1.0, permanent=False,
@@ -401,20 +421,18 @@ def test_ibuprofen_at_low_and_neutral_ph():
     v = out["ph_summary"]["values"]
     assert v["Dominant charge state"]["value"] == "0" and v["Fraction neutral"]["value"].endswith("%")
     assert 2.8 < float(v["logD at pH"]["value"]) < 3.3
-    assert [r[0] for r in out["sites"]["rows"]] == ["O15"] and out["sites"]["rows"][0][2] == "acid"
+    assert [r[0] for r in out["sites"]["rows"]] == ["O15"] and out["sites"]["rows"][0][2] == "acid" and out["sites"]["count"] == 1
     assert 3.9 < float(out["sites"]["rows"][0][1]) < 5.4
-    modes = {r[0]: r for r in out["modes"]["rows"]}
-    assert (modes["RP"][1], modes["HILIC"][1], modes["Ion-pair RP"][1], modes["Mixed-mode / ion exchange"][1], modes["SEC"][1]) == \
-        ("good", "poor", "poor", "poor", "poor")
-    assert modes["Chiral"][1] == "needed only for enantiomer separation"
+    assert _levels(out) == {"RP": "good", "HILIC": "poor", "Ion-pair RP": "poor", "Mixed-mode / IEX": "poor", "Chiral": "possible", "SEC": "poor"}
+    assert list(_modes(out)) == ["RP", "HILIC", "Ion-pair RP", "Mixed-mode / IEX", "Chiral", "SEC"]            # the order of the rules
+    assert "well retained" in _modes(out)["RP"]["help"] and _modes(out)["Chiral"]["help"].startswith("Needed only for enantiomer separation: 1 stereocentre")
     assert out["sites_structure"]["svg"].startswith("<?xml") or "<svg" in out["sites_structure"]["svg"]
     assert any(n.startswith("Robust mobile-phase pH") for n in out["rule_hits"]["items"])
-    assert any("ions are assumed not to partition" in n for n in out["rule_hits"]["items"])
 
     v = _run(IBUPROFEN, 7.4).json()["outputs"]
     assert v["ph_summary"]["values"]["Dominant charge state"]["value"] == "−1"
     assert float(v["ph_summary"]["values"]["logD at pH"]["value"]) < 1.0
-    assert {r[0]: r for r in v["modes"]["rows"]}["RP"][1] == "possible"
+    assert _levels(v)["RP"] == "possible"
 
 
 @needs_weights
@@ -424,6 +442,7 @@ def test_lidocaine_page_ignores_the_anilide_n_and_is_singly_charged():
     assert [(r[0], r[2]) for r in out["sites"]["rows"]] == [("N3", "base"), ("N9", "acid")]
     assert out["ph_summary"]["values"]["Dominant charge state"]["value"] == "+1"
     assert -2.6 < float(out["ph_summary"]["values"]["logD at pH"]["value"].replace("\u2212", "-")) < -2.0
+    assert out["ph_summary"]["values"]["logD at pH"]["note"].startswith("pH 2.7, logP ")
     assert out["rule_hits"]["items"][0] == "N9 amide N: not basic, base site ignored (MolGpKa predicted pKa 5.2)"
     assert out["sites_structure"]["svg"]
     assert R.ZWITTERION_NOTE not in out["rule_hits"]["items"]
@@ -447,7 +466,7 @@ def test_zwitterion_is_net_zero_but_charged():
     v = out["ph_summary"]["values"]
     assert v["Dominant charge state"]["value"] == "0" and "zwitterion" in v["Dominant charge state"]["note"]
     assert v["Fraction neutral"]["value"] == "< 0.1 %"
-    assert {r[0]: r for r in out["modes"]["rows"]}["Ion-pair RP"][1] == "possible"
+    assert _levels(out)["Ion-pair RP"] == "possible"
     assert R.ZWITTERION_NOTE in out["rule_hits"]["items"] and R.ZWITTERION_NOTE.startswith("zwitterion: logD likely strongly underestimated")
     assert R.ZWITTERION_NOTE not in _run(GLYCINE, 2.0).json()["outputs"]["rule_hits"]["items"]          # net +1 there, not a zwitterion
 
@@ -457,8 +476,8 @@ def test_permanently_charged_lipid_has_no_logd():
     body = _run(PC, 2.7).json()
     v = body["outputs"]["ph_summary"]["values"]
     assert v["logD at pH"]["value"] == "—" and "permanent charge" in v["logD at pH"]["note"] and v["Fraction neutral"]["value"] == "0 %"
-    modes = {r[0]: r for r in body["outputs"]["modes"]["rows"]}
-    assert modes["RP"][1] == "possible" and modes["HILIC"][1] == "good" and modes["Mixed-mode / ion exchange"][1] == "possible"
+    modes = _levels(body["outputs"])
+    assert modes["RP"] == "possible" and modes["HILIC"] == "good" and modes["Mixed-mode / IEX"] == "possible"
     assert any("Permanent charge" in w for w in body["warnings"])
     fig = body["outputs"]["ph_curves"]["plotly"]
     assert [t.get("name") for t in fig["data"]][:1] == ["Net charge"]               # logD curve omitted
@@ -472,7 +491,7 @@ def test_molecule_without_sites_has_flat_curves_and_no_structure_block():
     v = out["ph_summary"]["values"]
     assert v["Dominant charge state"]["value"] == "0" and v["Fraction neutral"]["value"] == "100.0 %"
     assert any("No ionizable site" in n for n in out["rule_hits"]["items"])
-    assert {r[0]: r for r in out["modes"]["rows"]}["Chiral"][1] == "not needed"
+    assert _levels(out)["Chiral"] == "poor" and _modes(out)["Chiral"]["help"] == "no stereocentre"
     assert out["ph_summary"]["values"]["logD at pH"]["value"] == f"{E.crippen_logp(Chem.MolFromSmiles('CCCCCC')):.1f}"       # logD = logP when nothing ionizes
 
 
@@ -510,7 +529,7 @@ def test_page_with_mocked_sites_needs_no_weights(monkeypatch):
     body = _run(IBUPROFEN, 2.7).json()
     assert body["status"] == "ok"
     assert set(body["outputs"]) == {"ph_summary", "sites", "ph_curves", "modes", "rule_hits", "sites_structure"}
-    assert body["outputs"]["sites"]["rows"] == [["O15", "4.4", "acid"]]
+    assert body["outputs"]["sites"] == {"rows": [["O15", "4.4", "acid"]], "count": 1}
     assert body["outputs"]["ph_summary"]["values"]["Dominant charge state"]["value"] == "0"
 
 
@@ -519,11 +538,14 @@ def test_spec_block_ids_match_the_runner():
     mod = next(m for m in MODULES if m["id"] == "separation")
     assert mod["live"] and mod["subgroup"] == "detectability"
     assert [f["id"] for f in mod["inputs"]] == ["structure", "ph"] and mod["inputs"][1]["value"] == 2.7
-    ids = {b["id"] for b in mod["outputs"] if b.get("id")}
-    assert ids == {"ph_summary", "sites", "ph_curves", "sites_structure", "modes", "rule_hits"}
-    assert next(b for b in mod["outputs"] if b.get("id") == "modes")["columns"] == ["Mode", "Recommendation", "Reason"]
-    assert [i["label"] for i in next(b for b in mod["outputs"] if b.get("id") == "ph_summary")["items"]] == \
-        ["logD at pH", "Dominant charge state", "Fraction neutral"]
+    assert [(b["type"], b["id"]) for b in mod["outputs"]] == [("cards", "ph_summary"), ("figure", "ph_curves"), ("figure", "sites_structure"),
+                                                              ("chips", "modes"), ("table", "sites"), ("notes", "rule_hits")]
+    blocks = {b["id"]: b for b in mod["outputs"]}
+    assert blocks["modes"]["title"] == "Separation mode" and blocks["sites"]["columns"] == ["Site", "pKa", "Type"]
+    assert blocks["ph_summary"]["style"] == "metric" and blocks["rule_hits"]["collapsed"]
+    items = blocks["ph_summary"]["items"]
+    assert [i["label"] for i in items] == ["logD at pH", "Dominant charge state", "Fraction neutral"] and all(i["help"] for i in items)
+    assert "Ions are assumed not to partition" in items[0]["help"] and "log10(fraction" in items[0]["help"]          # the logD assumption lives in the card's ?
 
 
 # ---------------------------------------------------------------- errors
@@ -558,7 +580,7 @@ def test_blank_ph_uses_the_default(monkeypatch):
     monkeypatch.setattr(E, "predict_sites", lambda mol: [_site("acid", 4.4, atom=14)])
     r = client.post("/api/modules/separation/run", json={"structure": {"mode": "SMILES / InChI", "value": IBUPROFEN}, "ph": ""})
     assert r.status_code == 200
-    assert "pH 2.7" in r.json()["outputs"]["modes"]["rows"][0][2]
+    assert "pH 2.7" in _modes(r.json()["outputs"])["RP"]["help"]
 
 
 # ---------------------------------------------------------------- setup

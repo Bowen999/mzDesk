@@ -119,6 +119,20 @@ def mode_rows(*, ph, logd, tpsa, mw, charge, f_neutral, permanent, fixed_charge,
     return rows
 
 
+# the page shows the modes as coloured chips: label, and recommendation -> chip level (good / possible / poor = green / amber / grey)
+MODE_LABELS = {"Mixed-mode / ion exchange": "Mixed-mode / IEX"}
+MODE_LEVELS = {"good": "good", "possible": "possible", "poor": "poor", "needed only for enantiomer separation": "possible", "not needed": "poor"}
+
+
+def mode_chips(rows):
+    """mode_rows -> [(chip label, chip level, help)]. The help is the reason; the chiral recommendation (a sentence, not a level) leads its help."""
+    out = []
+    for mode, rec, reason in rows:
+        said = rec in ("good", "possible", "poor", "not needed")          # the chip colour already says it
+        out.append((MODE_LABELS.get(mode, mode), MODE_LEVELS[rec], reason if said else f"{rec[:1].upper()}{rec[1:]}: {reason}"))
+    return out
+
+
 def _intervals(mask, ph):
     """Consecutive True runs of ``mask`` on the pH grid -> [(lo, hi), ...]."""
     out, start = [], None

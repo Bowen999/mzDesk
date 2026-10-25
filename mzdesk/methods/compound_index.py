@@ -273,6 +273,11 @@ def describe_many(smiles_list, method, workers=1, progress=None):
 _ID_LIKE = re.compile(r"^(HMDB\d+|CHEBI:\d+|C\d{5}|LM[A-Z]{2}\d+|[A-Z]{2,}\d{4,}|\d{2,7}-\d\d-\d|\d+)$", re.I)
 
 
+def is_id_like(name):
+    """True for a name that is just a database ID (HMDB0000123, CHEBI:1234, C00031, LMFA..., a CAS number, digits)."""
+    return bool(_ID_LIKE.match(name))
+
+
 def best_name(counter):
     """Display name of a compound from the names its entries carry: the most common one that is not just a database ID; ALL-CAPS words are lower-cased."""
     names = [n for n, _ in counter.most_common()]

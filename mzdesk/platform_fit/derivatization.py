@@ -1,6 +1,7 @@
 """Derivatization：找反应基团，按试剂算衍生物的分子式和单同位素质量，并给 Platform 页判断 CIL / GC-MS 适用性。
 
 母体取画出来的中性分子。质量全部用精确同位素质量（不用平均质量）。
+每个试剂还带一份官能团反应式（SCHEMES，只画官能团不画完整产物），Platform 和 Derivatization 两页的 reaction 块共用。
 """
 from __future__ import annotations
 
@@ -69,6 +70,58 @@ REAGENTS = {
 }
 DEFAULT_REAGENTS = [k for k in REAGENTS if k.startswith("CIL")] + list(REAGENTS)[:2]
 
+
+def platform_of(option: str) -> str:
+    """"GC" / "CIL" / "UV/FLD": the part of the reagent key before the first " · "."""
+    return option.split(" · ", 1)[0]
+
+
+def reagent_label(option: str) -> str:
+    """Short label of a reagent, shared by the Derivatization table and the reaction options: "GC · MeOx + TMS", "CIL · Dansyl chloride (base)"."""
+    return f"{platform_of(option)} · {REAGENTS[option][0]}"
+
+
+# ---------------------------------------------------------------- functional-group reaction schemes
+# SCHEMES[reagent name] = {"abbr": what the abbreviations on the right stand for, "steps": [(group key, reagent label, from, to), ...]} in display order.
+# Functional groups only, never full product structures. Group keys are the GROUPS keys plus "carbonyl" (aldehyde + ketone + aromatic ketone
+# together) and "hemiacetal" (cyclic hemiacetal of a reducing sugar, opened by MeOx). reaction_steps() keeps the steps whose group the reagent
+# labels (the REAGENTS rule) and attaches the group counts; one step = one group type. Counts are numbers of groups, not of labels
+# (a primary amine counts once but takes two TMS: "R–NH₂ → R–N(TMS)₂").
+def _silyl(tag):
+    return [("acid", "R–COOH", f"R–COO–{tag}"), ("phenol", "Ar–OH", f"Ar–O–{tag}"), ("alcohol", "R–OH", f"R–O–{tag}"),
+            ("enol", "C=C–OH", f"C=C–O–{tag}"), ("amine1", "R–NH₂", f"R–N({tag})₂"), ("amine2", "R₂NH", f"R₂N–{tag}"),
+            ("amide", "R–CO–NH–", f"R–CO–N({tag})–"), ("arom_nh", "Ar–NH", f"Ar–N–{tag}"), ("thiol", "R–SH", f"R–S–{tag}")]
+
+
+def _with(reagent, rows):
+    return [(key, reagent, frm, to) for key, frm, to in rows]
+
+
+_DNS = [("amine1", "R–NH₂", "R–NH–Dns"), ("amine2", "R₂NH", "R₂N–Dns"), ("phenol", "Ar–OH", "Ar–O–Dns"), ("arom_nh_cil", "Ar–NH", "Ar–N–Dns")]
+_DNS_BASE = [("alcohol", "R–OH", "R–O–Dns"), ("enol", "C=C–OH", "C=C–O–Dns"), ("thiol", "R–SH", "R–S–Dns")] + _DNS
+_DNS_DEF = "Dns = dansyl, 5-(dimethylamino)naphthalene-1-sulfonyl"
+_MEOX = [("carbonyl", "MeOx", "R₂C=O", "R₂C=N–OCH₃"), ("hemiacetal", "MeOx", "ring hemiacetal", "R–CH=N–OCH₃")]
+
+SCHEMES = {
+    "TMS": {"abbr": "TMS = –Si(CH₃)₃", "steps": _with("MSTFA / BSTFA", _silyl("TMS"))},
+    "MeOx + TMS": {"abbr": "MeOx = methoxyamine (CH₃O–NH₂), TMS = –Si(CH₃)₃; a reducing sugar's ring opens",
+                   "steps": _MEOX + _with("MSTFA / BSTFA", _silyl("TMS"))},
+    "TBDMS": {"abbr": "TBDMS = –Si(CH₃)₂C(CH₃)₃", "steps": _with("MTBSTFA", _silyl("TBDMS"))},
+    "TFAA": {"abbr": "COCF₃ = trifluoroacetyl",
+             "steps": _with("TFAA", [("phenol", "Ar–OH", "Ar–O–COCF₃"), ("alcohol", "R–OH", "R–O–COCF₃"), ("amine1", "R–NH₂", "R–NH–COCF₃"),
+                                     ("amine2", "R₂NH", "R₂N–COCF₃"), ("thiol", "R–SH", "R–S–COCF₃")])},
+    "Dansyl chloride": {"abbr": _DNS_DEF, "steps": _with("Dns-Cl", _DNS)},
+    "Dansyl chloride (base)": {"abbr": _DNS_DEF + "; the base also lets it label amines and phenols", "steps": _with("Dns-Cl + base", _DNS_BASE)},
+    "DmPA bromide": {"abbr": "DmPA = –CH₂–CO–C₆H₄–N(CH₃)₂ (4-dimethylaminophenacyl ester)", "steps": _with("DmPA-Br", [("acid", "R–COOH", "R–COO–DmPA")])},
+    "Dansylhydrazine": {"abbr": _DNS_DEF, "steps": _with("Dns-NHNH₂", [("carbonyl", "R₂C=O", "R₂C=N–NH–Dns")])},
+    "OPA + 2-ME": {"abbr": "OPA = o-phthalaldehyde, 2-ME = 2-mercaptoethanol; the product is a fluorescent isoindole",
+                   "steps": _with("OPA + 2-ME", [("amine1", "R–NH₂", "R–N–isoindole")])},
+    "FMOC-Cl": {"abbr": "Fmoc = 9-fluorenylmethoxycarbonyl",
+                "steps": _with("FMOC-Cl", [("amine1", "R–NH₂", "R–NH–Fmoc"), ("amine2", "R₂NH", "R₂N–Fmoc"), ("phenol", "Ar–OH", "Ar–O–Fmoc")])},
+    "DNPH": {"abbr": "DNP = 2,4-dinitrophenyl", "steps": _with("DNPH", [("carbonyl", "R₂C=O", "R₂C=N–NH–DNP")])},
+}
+assert set(SCHEMES) == {v[0] for v in REAGENTS.values()}
+
 HIGHLIGHT = (0.13, 0.62, 0.62)
 
 
@@ -121,13 +174,33 @@ def find_groups(mol) -> Dict[str, dict]:
     return found
 
 
-def group_rows(groups) -> List[list]:
-    rows = []
-    for key in _HEAD:
-        if key in groups:
-            g = groups[key]
-            rows.append([GROUPS[key][0], str(len(g["atoms"])), ", ".join(str(i + 1) for i in g["atoms"])])
-    return rows
+def group_text(groups) -> List[str]:
+    """["alcohol OH ×5", "primary amine ×1", ...] in display order: every reactive group found."""
+    return [f"{GROUPS[key][0]} ×{len(groups[key]['atoms'])}" for key in _HEAD if key in groups]
+
+
+def reacting_groups(results, groups) -> Dict[str, dict]:
+    """The part of ``groups`` that at least one of the derivatization ``results`` labels: what a structure picture should highlight."""
+    used = set()
+    for r in results:
+        if r["n"]:
+            used.update(r["labels"])
+            if r["name"] == "MeOx + TMS":
+                used.update(CARBONYL)
+    return {k: g for k, g in groups.items() if k in used}
+
+
+def reaction_steps(name, rule, groups, n_hemi=0) -> List[tuple]:
+    """[(from, reagent, to, count)]: the functional-group scheme of reagent ``name`` for the groups it labels (``rule`` = its REAGENTS rule)."""
+    counts = {}
+    for key, g in groups.items():
+        if key in rule:
+            sk = "carbonyl" if key in CARBONYL else key
+            counts[sk] = counts.get(sk, 0) + len(g["atoms"])
+    if name == "MeOx + TMS":                      # MeOx takes the carbonyls (not part of the TMS rule) and opens ring hemiacetals
+        counts["carbonyl"] = sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups)
+        counts["hemiacetal"] = n_hemi
+    return [(frm, reagent, to, counts[key]) for key, reagent, frm, to in SCHEMES[name]["steps"] if counts.get(key)]
 
 
 def _labels(rule, groups):
@@ -158,6 +231,7 @@ def count_hemiacetal(mol) -> int:
 
 
 def _notes(name, labels, groups, mol, n_carbonyl, n_h_labels):
+    """-> (key EI ions, caveats), each a list of short strings."""
     n, notes = [], []
     if name in ("TMS", "MeOx + TMS", "TBDMS"):
         if name == "TBDMS":
@@ -187,11 +261,13 @@ def _notes(name, labels, groups, mol, n_carbonyl, n_h_labels):
     sugar = (n_carbonyl and n_oh >= 3) or mol.HasSubstructMatch(_HEMIACETAL)
     if sugar and name in ("TMS", "MeOx + TMS", "TBDMS"):
         notes.append("reducing sugar: ring / open-chain forms give several peaks")
-    return "; ".join(n + notes)
+    return n, notes
 
 
 def derive(smiles, reagents=None) -> dict:
-    """-> {"groups", "group_rows", "rows", "n", "results", "svg"}。n 与 rows 一一对应。"""
+    """-> {"groups", "results", "n", "neutralized", "mol"}. ``results`` has one dict per known reagent, in order (``n`` is the list of their label counts):
+    reagent (key), name, platform, n (labels), labels, formula / mass / heavy (None when n = 0), text (groups labelled), ions (EI key ions),
+    warns (caveats), steps (functional-group scheme, reaction_steps)."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("RDKit could not parse the structure.")
@@ -200,14 +276,15 @@ def derive(smiles, reagents=None) -> dict:
     base = parent_formula(mol)
     n_carbonyl = sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups)
     n_hemi = count_hemiacetal(mol)
-    rows, ns, results = [], [], []
+    ns, results = [], []
     for option in (reagents if reagents is not None else DEFAULT_REAGENTS):
         if option not in REAGENTS:
             continue
         name, rule, delta, cil = REAGENTS[option]
         labels = _labels(rule, groups)
         n = sum(labels.values())
-        res = {"reagent": option, "name": name, "n": n, "labels": labels, "formula": None, "mass": None, "heavy": None}
+        res = {"reagent": option, "name": name, "platform": platform_of(option), "n": n, "labels": labels, "formula": None, "mass": None, "heavy": None,
+               "text": "", "ions": [], "warns": [], "steps": []}
         text = "; ".join(f"{GROUPS[k][0]} ×{v}" for k, v in labels.items())
         if name == "MeOx + TMS":
             n_meox = n_carbonyl + n_hemi        # 开环后的活泼氢数不变：异头 OH 变 C=O，环 O 变 OH
@@ -220,33 +297,37 @@ def derive(smiles, reagents=None) -> dict:
             res["n"] = n = n_total
         else:
             f = _add(base, delta, n)
-        if n == 0:
-            row = [name, "—", "0", "—", "—", "—", "no reactive group"]
-        else:
+        if n:
             m = formula_mass(f)
             heavy = m + 2 * C13_SHIFT * n if cil else None
-            res.update(formula=formula_string(f), mass=m, heavy=heavy)
-            note = _notes(name, labels, groups, mol, n_carbonyl + (n_hemi if name == "MeOx + TMS" else 0), res.get("n_tms", n))
-            row = [name, text, str(n), res["formula"], f"{m:.4f}", f"{heavy:.4f}" if heavy else "—", note]
-        rows.append(row)
+            res.update(formula=formula_string(f), mass=m, heavy=heavy, text=text,
+                       steps=reaction_steps(name, rule, groups, n_hemi if name == "MeOx + TMS" else 0))
+            res["ions"], res["warns"] = _notes(name, labels, groups, mol, n_carbonyl + (n_hemi if name == "MeOx + TMS" else 0), res.get("n_tms", n))
         ns.append(res["n"])
         results.append(res)
-    return {"groups": groups, "group_rows": group_rows(groups), "rows": rows, "n": ns, "results": results,
-            "neutralized": neutralized, "svg": highlight_svg(mol, groups)}
+    return {"groups": groups, "results": results, "n": ns, "neutralized": neutralized, "mol": mol}
 
 
 # ---------------------------------------------------------------- Platform 页：CIL / GC-MS
+# CIL channels (Zhao 2019): key, short name, long name (reagent in brackets), reagent key, the group keys that open the channel
+CHANNELS = [
+    ("amine_phenol", "amine / phenol", "amine / phenol (dansyl)", "CIL · Dansyl chloride (amine / phenol)", ("amine1", "amine2", "phenol", "arom_nh_cil")),
+    ("hydroxyl", "hydroxyl", "hydroxyl (base-activated dansyl)", "CIL · Dansyl chloride, base-activated (hydroxyl)", ("alcohol", "enol", "thiol")),   # 论文把硫醇归入羟基
+    ("carboxyl", "carboxyl", "carboxyl (DmPA)", "CIL · DmPA bromide (carboxyl)", ("acid",)),
+    ("carbonyl", "carbonyl", "carbonyl (dansylhydrazine)", "CIL · Dansylhydrazine (carbonyl)", CARBONYL),
+]
+
+
 def cil_assess(groups) -> dict:
-    channels = []
-    if any(k in groups for k in ("amine1", "amine2", "phenol", "arom_nh_cil")):
-        channels.append("amine / phenol (dansyl)")
-    if any(k in groups for k in ("alcohol", "enol", "thiol")):      # 论文把硫醇归入羟基
-        channels.append("hydroxyl (base-activated dansyl)")
-    if "acid" in groups:
-        channels.append("carboxyl (DmPA)")
-    if any(k in groups for k in CARBONYL):
-        channels.append("carbonyl (dansylhydrazine)")
-    return {"cil": bool(channels), "channels": channels}
+    """-> {"cil": bool, "channels": [long names], "short": [short names], "options": [reagent keys]}, the three lists aligned (one entry per channel that applies)."""
+    open_ = [c for c in CHANNELS if any(k in groups for k in c[4])]
+    return {"cil": bool(open_), "channels": [c[2] for c in open_], "short": [c[1] for c in open_], "options": [c[3] for c in open_]}
+
+
+def gc_option(mol, groups) -> str:
+    """The GC reagent whose product the Platform page shows: MeOx + TMS when there is a carbonyl or a reducing-sugar ring, else TMS."""
+    n_meox = sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups) + count_hemiacetal(mol)
+    return "GC · MeOx + TMS" if n_meox else "GC · TMS (MSTFA / BSTFA)"
 
 
 _CHARGED_OK = Chem.MolFromSmarts("[$([N+](=O)[O-]),$([O-][N+]=O)]")      # 硝基不算离子

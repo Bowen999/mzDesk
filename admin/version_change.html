@@ -262,6 +262,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.7', date:'2026-10-25',
+  title:'Detectability 全部接活（新增 Ionization / Adducts / Non-MS detection）+ 七页统一改版；其他页面加密码锁',
+  note:'改版：关键结果用颜色一眼看清，解释收进小问号（悬停显示、点击固定）。新组件：入口卡片、彩色标签、官能团反应式、折叠表格、富表格单元、指标卡片；隐藏页 /dev/blocks 演示全部组件。',
+  state:[['能算的模块页','17 / 32'], ['Pipeline','4 条，未接'], ['测试','843 个通过']],
+  c:{
+   prop:['feat','Ionization：ESI 正 / 负与响应强弱（MolGpKa 位点）、EI 可用性与分子离子峰（NEIMS）。Adducts：离子排序规则引擎（小分子按 pKa，脂质按类别），m/z 与 MS1 页一致。Non-MS detection：发色团、λmax（Woodward–Fieser / Scott / 类别表）、荧光、CAD / ELSD / RI，用 JP18 验证。',true,{w:'mzdesk/platform_fit/ionization_rules.py · mzdesk/platform_fit/ionization_viz.py · mzdesk/platform_fit/adduct_rules.py · mzdesk/platform_fit/non_ms_rules.py · mzdesk/api/runners/ionization.py · mzdesk/api/runners/adducts.py · mzdesk/api/runners/non_ms.py · validation/non_ms/'}],
+   other:['chg','Known methods：精确匹配和相似化合物分开（相似化合物按化合物折叠），来源只留徽标、页码 / DOI 并入检验列，原文条件进问号。Platform 改为四入口卡片 + 反应式；Separation、Derivatization 同步改版。',true,{w:'mzdesk/methods/known_methods.py · mzdesk/methods/compound_index.py · mzdesk/platform_fit/derivatization.py · mzdesk/platform_fit/separation_rules.py · mzdesk/platform_fit/display_en.py · mzdesk/api/runners/structure.py'}],
+   app:['feat','新输出组件与问号提示；Detectability 以外的页面加前端密码锁（虚化 + 密码框，PBKDF2-SHA256 加盐哈希，关闭浏览器前有效）。',false,{w:'web/src/components/Blocks.tsx · web/src/components/Help.tsx · web/src/components/Outputs.tsx · web/src/components/LockGate.tsx · web/src/lock.ts · web/src/lock.css · web/src/outputs-v2.css · web/src/pages/DevBlocks.tsx · web/src/App.tsx · web/src/components/Sidebar.tsx · web/src/types.ts · mzdesk/api/blocks.py · mzdesk/spec.py'}],
+   docs:['doc','README：可检测性七页全部能算、新增界面锁说明。',false,{w:'admin/README.md · admin/version_change.html'}]
+  }},
  {id:'v0.2.6', date:'2026-10-25',
   title:'可检测性：Platform 补上 CIL / GC-MS，Derivatization、Separation（MolGpKa）、Known methods（JP18 + RepoRT）接活',
   note:'v0.2.5 未单独发布，内容并入本版。Separation 需一次性安装 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Known methods 的 RepoRT 需一次性下载（python -m mzdesk.methods.report_setup），JP18 数据随包。新增 tests/test_derivatization.py、test_separation.py、test_jp_build.py、test_known_methods.py。',

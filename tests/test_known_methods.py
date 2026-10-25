@@ -240,7 +240,7 @@ def test_structure_floor_keeps_out_hits_that_only_match_in_properties(jp_dir):
     no_floor = km.search(HEPTYL_CAPTOPRIL, JP_ONLY, cfg=ci.Config(min_structure=0.0), jp_dir=jp_dir)
     weak = [s for s in no_floor.similar if s.tanimoto < 0.25]
     assert any("mitiglinide" in s.name.lower() for s in weak)                              # property agreement alone carried it over the cut-off
-    notes = km.page_outputs(default)["similar_notes"]["items"]
+    notes = km.page_outputs(default)["similar"]["help"]
     assert "Tanimoto ≥ 0.25" in notes[0]
 
 
@@ -350,11 +350,13 @@ def test_both_sources_together(fake_report, jp_dir):
     assert {m.source for m in res.exact} == {"JP18", "RepoRT"}
     assert [m.source for m in res.exact] == sorted((m.source for m in res.exact), key=("JP18", "RepoRT").index)
     out = km.page_outputs(res)
-    assert out["summary"]["values"]["Sources searched"]["value"] == "JP18, RepoRT"
+    assert out["summary"]["values"]["Sources"]["value"] == "JP18, RepoRT"
+    assert {_cells(r)[0]["badge"] for r in out["exact"]["rows"]} == {"JP18", "RepoRT"}
 
 
 # ---------------------------------------------------------------- the page
-BLOCKS = {"summary", "methods", "jp_conditions", "similar_notes", "sources_notes"}
+BLOCKS = {"summary", "exact", "similar"}
+COLUMNS = ["Source", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)"]
 
 
 def _run(inputs):
@@ -365,16 +367,24 @@ def _inputs(smiles, sources):
     return {"structure": {"mode": "SMILES / InChI", "value": smiles}, "sources": sources}
 
 
+def _lines(help_):
+    return [help_] if isinstance(help_, str) else list(help_ or [])
+
+
+def _cells(row):
+    return row["cells"] if isinstance(row, dict) else row
+
+
 def test_spec_page_is_live_with_the_agreed_blocks():
     mod = next(m for m in MODULES if m["id"] == "known_methods")
     assert mod["live"] and {b["id"] for b in mod["outputs"] if b.get("id")} == BLOCKS
     sources = next(f for f in mod["inputs"] if f["id"] == "sources")
     assert sources["options"] == ["Japanese Pharmacopoeia", "RepoRT"]
-    methods = next(b for b in mod["outputs"] if b.get("id") == "methods")
-    assert methods["columns"] == ["Source", "Compound", "Match", "Similarity", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)", "Reference"]
-    assert next(b for b in mod["outputs"] if b.get("id") == "jp_conditions")["columns"] == ["Block", "Test", "Condition text"]
-    assert [b["title"] for b in mod["outputs"] if b["type"] in ("cards", "table", "notes")] == [
-        "Summary", "Methods", "JP condition text", "Why these compounds are similar", "Sources & licence"]
+    summary, exact, similar = mod["outputs"]
+    assert (summary["type"], summary["style"], summary["title"]) == ("cards", "metric", "Summary")
+    assert [i["label"] for i in summary["items"]] == ["Match", "Methods found", "Sources"] and all(i["help"] for i in summary["items"])
+    assert (exact["type"], exact["title"], exact["row_help"], exact["columns"]) == ("table", "Exact matches", True, COLUMNS)
+    assert (similar["type"], similar["title"], similar["row_help"], similar["columns"]) == ("grouptable", "Similar compounds", True, COLUMNS)
     assert mod["example"]["structure"]["value"] == CAPTOPRIL
 
 
@@ -383,48 +393,101 @@ def test_page_for_captopril_jp_only():
     out = body["outputs"]
     assert set(out) == BLOCKS
     cards = out["summary"]["values"]
-    assert cards["Match"]["value"] == "exact" and cards["Methods found"]["value"] == str(len(out["methods"]["rows"]))
-    assert cards["Sources searched"]["value"] == "JP18"
-    row = out["methods"]["rows"][0]
-    assert len(row) == 10 and row[:4] == ["JP18", "Captopril", f"exact · {SUBSTANCE_ONLY} · same stereo", "1.00"] and row[8] == "—"
-    assert cards["Match"] == {"value": "exact", "note": "monograph substance only; same stereo"}
-    assert row[9] == {"text": "JP18 p. 623 (Official Monographs A–L)", "href": "https://www.mhlw.go.jp/content/11120000/000904440.pdf#page=225"}
-    cond = out["jp_conditions"]["rows"]
-    assert cond[0][0] == "JP18-ML-0211" and cond[0][2].startswith("Detector: An ultraviolet absorption photometer (wavelength: 220 nm). Column:")
-    notes = out["similar_notes"]["items"]
-    assert notes[0].startswith("Score = 0.6 × Tanimoto") and any("Tanimoto" in n and "ΔlogP" in n and "charge class" in n for n in notes[2:])
-    licence = " ".join(out["sources_notes"]["items"])
-    assert "Ministerial Notification" in licence and "Kretschmer" in licence and "CC BY-SA 4.0" in licence
-    sim_rows = [r for r in out["methods"]["rows"] if r[2] == "similar"]
-    assert all(0.5 <= float(r[3]) <= 1 for r in sim_rows)
-    assert [float(r[3]) for r in sim_rows] == sorted((float(r[3]) for r in sim_rows), reverse=True)
+    n_methods = len(out["exact"]["rows"]) + sum(len(g["rows"]) for g in out["similar"]["groups"])
+    assert cards["Match"] == {"value": "exact", "note": "monograph substance only; same stereo"} and cards["Methods found"]["value"] == str(n_methods)
+    assert cards["Sources"]["value"] == "JP18" and "note" not in cards["Sources"]
+    assert out["exact"]["count"] == len(out["exact"]["rows"]) == 1
+    row = out["exact"]["rows"][0]
+    assert row["cells"][:2] == [{"badge": "JP18", "tone": "jp"}, {"text": "Purity (4) · p. 623", "url": "https://www.mhlw.go.jp/content/11120000/000904440.pdf#page=225"}]
+    assert row["cells"][2:] == ["C18, 3.9 × 300 mm, 10 µm, 25 °C", "isocratic; methanol", "UV 220 nm", "—"]
+    help_ = _lines(row["help"])                                                                           # match details, test, reference, printed conditions
+    assert help_[0] == f"Monograph substance: the test measures {DISULFIDE}."
+    assert "Reference: JP18 p. 623 (Official Monographs A–L), block JP18-ML-0211" in help_
+    assert any(h.startswith("Printed conditions: Detector: An ultraviolet absorption photometer (wavelength: 220 nm). Column:") for h in help_)
+    assert out["similar"]["count"] == len(out["similar"]["groups"]) and out["similar"]["groups"]
+    notes = _lines(out["similar"]["help"])                                                               # the score formula and the query, behind the block's ?
+    assert notes[0].startswith("Score = 0.6 × Tanimoto") and notes[1].startswith("Query: logP")
+    scores = []
+    for g in out["similar"]["groups"]:
+        assert set(g) == {"title", "rows", "meta", "help"} and g["rows"]
+        score, _, count = g["meta"].partition(" · ")
+        assert count == f"{len(g['rows'])} method{'' if len(g['rows']) == 1 else 's'}" and 0.5 <= float(score) <= 1
+        scores.append(float(score))
+        gh = " ".join(_lines(g["help"]))
+        assert "Tanimoto" in gh and "ΔlogP" in gh and "charge class" in gh.lower() and "In JP18" in gh and "SMILES: " in gh
+        assert all(len(_cells(r)) == 6 and _cells(r)[0] == {"badge": "JP18", "tone": "jp"} for r in g["rows"])
+    assert scores == sorted(scores, reverse=True)
+    licence = " ".join(_lines(cards["Sources"]["help"]))
+    assert "1924 LC / GC methods" in licence and "Ministerial Notification" in licence
+
+
+def test_jp_test_cell_names_the_monograph_only_when_it_is_not_the_compound(jp_dir):
+    jp = jp18.load(cache_dir=jp_dir)
+    paeoniflorin = next(r for r in jp.records if r["block_id"] == "JP18-CD-0126")["analyte_structures"][0]["smiles"]       # the marker of Peony Root and 16 more
+    res = km.search(paeoniflorin, JP_ONLY, jp_dir=jp_dir)
+    texts = [_cells(r)[1]["text"] for r in km.page_outputs(res)["exact"]["rows"]]
+    assert any(t.startswith("Peony Root: Assay · p. ") for t in texts)                                               # monograph differs from the compound: it is named
+    assert any("(+" in t for t in texts)                                                                             # merged identical conditions: (+n)
+    own = km.page_outputs(_jp(CAPTOPRIL, jp_dir))["exact"]["rows"][0]
+    assert _cells(own)[1]["text"] == "Purity (4) · p. 623"                                                           # captopril's own monograph: just the test and the page
 
 
 def test_page_reports_a_missing_report_install(tmp_path, monkeypatch):
     monkeypatch.setenv("MZDESK_REPORT_DIR", str(tmp_path / "empty"))
     body = _run(_inputs(CAPTOPRIL, ["Japanese Pharmacopoeia", "RepoRT"])).json()
-    card = body["outputs"]["summary"]["values"]["Sources searched"]
+    card = body["outputs"]["summary"]["values"]["Sources"]
     assert card["value"] == "JP18" and "python -m mzdesk.methods.report_setup" in card["note"]
-    assert any("python -m mzdesk.methods.report_setup" in n for n in body["outputs"]["sources_notes"]["items"])
+    assert any("python -m mzdesk.methods.report_setup" in h for h in card["help"])
     assert body["outputs"]["summary"]["values"]["Match"]["value"] == "exact"
 
 
 def test_page_with_the_fake_report(fake_report, monkeypatch):
     monkeypatch.setenv("MZDESK_REPORT_DIR", str(fake_report))
     out = _run(_inputs(CAFFEINE, ["RepoRT"])).json()["outputs"]
-    assert out["summary"]["values"]["Match"]["value"] == "exact" and out["summary"]["values"]["Sources searched"]["value"] == "RepoRT"
-    exact = [r for r in out["methods"]["rows"] if r[2].startswith("exact")]
-    assert [r[4].split()[0] for r in exact] == ["0901", "0902"] and exact[0][7] == "MS" and exact[0][8] == "3.2" and exact[1][8] == "1.1 / 1.4"
-    assert exact[0][9] == {"text": "RepoRT 0901 · 10.1000/fake.rp", "href": "https://doi.org/10.1000/fake.rp"}
-    assert out["jp_conditions"]["rows"] == []
-    assert any("commit ffffffffff" in n for n in out["sources_notes"]["items"])
+    assert out["summary"]["values"]["Match"]["value"] == "exact" and out["summary"]["values"]["Sources"]["value"] == "RepoRT"
+    exact = out["exact"]["rows"]
+    assert out["exact"]["count"] == 2 and [_cells(r)[1]["text"].split()[0] for r in exact] == ["0901", "0902"]
+    c0, c1 = _cells(exact[0]), _cells(exact[1])
+    assert c0[0] == {"badge": "RepoRT", "tone": "report"} and c0[1] == {"text": "0901 FAKE_RP (RP)", "url": "https://doi.org/10.1000/fake.rp"}
+    assert c0[4] == "MS" and c0[5] == "3.2" and c1[5] == "1.1 / 1.4"
+    help0 = _lines(exact[0]["help"])
+    assert "Reference: RepoRT 0901 · 10.1000/fake.rp" in help0 and "Gradient, % B: 0 min 5, 20 min 95, 25 min 95" in help0       # the gradient behind the row's ?
+    assert any("commit ffffffffff" in h for h in out["summary"]["values"]["Sources"]["help"])
+    assert not any("Monograph" in h for h in help0)                       # same-stereo hit: no match note
+
+
+def test_exact_row_help_says_when_the_stereo_differs(fake_report, monkeypatch):
+    monkeypatch.setenv("MZDESK_REPORT_DIR", str(fake_report))
+    out = _run(_inputs(IBUPROFEN, ["RepoRT"])).json()["outputs"]
+    assert "Stereo differs / not specified." in _lines(out["exact"]["rows"][0]["help"])
+    same = _run(_inputs(S_IBUPROFEN, ["RepoRT"])).json()["outputs"]
+    assert "Stereo differs / not specified." not in _lines(same["exact"]["rows"][0]["help"])
+
+
+def test_similar_groups_with_the_fake_report(fake_report, monkeypatch):
+    monkeypatch.setenv("MZDESK_REPORT_DIR", str(fake_report))
+    out = _run(_inputs(CAFFEINE, ["RepoRT"])).json()["outputs"]
+    groups = out["similar"]["groups"]
+    assert out["similar"]["count"] == len(groups) and groups
+    titles = [g["title"] for g in groups]
+    assert "theophylline" in titles and "caffeine" not in titles                                                # the query itself is not listed
+    for g in groups:
+        assert all(_cells(r)[0] == {"badge": "RepoRT", "tone": "report"} and _cells(r)[5] for r in g["rows"])
+        assert "In RepoRT" in " ".join(_lines(g["help"]))
 
 
 def test_page_with_no_match_says_none(monkeypatch, fake_report):
     monkeypatch.setenv("MZDESK_REPORT_DIR", str(fake_report))
     body = _run(_inputs("C" * 40, ["RepoRT"])).json()
-    assert body["outputs"]["summary"]["values"]["Match"]["value"] == "none" and body["outputs"]["methods"]["rows"] == []
-    assert body["outputs"]["similar_notes"]["items"][-1].startswith("No compound reached the score cut-off")
+    out = body["outputs"]
+    assert out["summary"]["values"]["Match"]["value"] == "none" and out["exact"] == {"rows": [], "count": 0}
+    assert out["similar"]["groups"] == [] and out["similar"]["count"] == 0
+    assert _lines(out["similar"]["help"])[-1].startswith("No compound reached the score cut-off")
+
+
+def test_group_title_prefers_a_readable_name_and_cuts_a_smiles_name():
+    assert ci.is_id_like("HMDB0034131") and ci.is_id_like("CHEBI:1234") and ci.is_id_like("62571-86-2") and not ci.is_id_like("caffeine")
+    assert km._title("caffeine") == "caffeine" and len(km._title("C" * 100)) == 60 and km._title("C" * 100).endswith("…")
 
 
 def test_page_errors():

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { isLockedModule, lock, useUnlocked } from "../lock";
 import type { Module, Spec } from "../types";
+import { LockIcon } from "./LockGate";
 
 type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
 
@@ -21,10 +23,12 @@ function moduleEntries(spec: Spec): Entry[] {
 }
 
 function ModuleLink({ m, sub }: { m: Module; sub?: boolean }) {
+  const unlocked = useUnlocked();
+  const showLock = isLockedModule(m) && !unlocked;
   return (
     <NavLink to={`/modules/${m.id}`} title={m.live ? undefined : "placeholder: format only"}
       className={({ isActive }) => "nav-link" + (sub ? " sub" : "") + (m.live ? "" : " placeholder") + (isActive ? " active" : "")}>
-      {m.title}
+      {m.title}{showLock && <LockIcon />}
     </NavLink>
   );
 }
@@ -32,13 +36,17 @@ function ModuleLink({ m, sub }: { m: Module; sub?: boolean }) {
 export function Sidebar({ spec }: { spec: Spec }) {
   const { pathname } = useLocation();
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const unlocked = useUnlocked();
   return (
     <aside className="sidebar">
-      <div className="brand">mzDesk</div>
+      <div className="lock-brand-row">
+        <div className="brand">mzDesk</div>
+        {unlocked && <button type="button" className="lock-btn" onClick={lock} title="Lock the password-protected pages again"><LockIcon open />Lock</button>}
+      </div>
       <div className="nav-group">
         <div className="nav-title">Pipelines</div>
         {spec.pipelines.map(p => (
-          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>{p.title}</NavLink>
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>{p.title}{!unlocked && <LockIcon />}</NavLink>
         ))}
       </div>
       <div className="nav-group">
@@ -51,7 +59,7 @@ export function Sidebar({ spec }: { spec: Spec }) {
             <div key={e.id} className="nav-sub">
               <button type="button" className={"nav-sub-title" + (hasActive ? " has-active" : "")} aria-expanded={isOpen}
                 onClick={() => setOpen({ ...open, [e.id]: !isOpen })}>
-                <span className={"caret" + (isOpen ? " open" : "")} aria-hidden="true">›</span>{e.title}
+                <span className={"caret" + (isOpen ? " open" : "")} aria-hidden="true">›</span>{e.title}{!unlocked && !isOpen && e.mods.every(isLockedModule) && <LockIcon />}
               </button>
               {isOpen && e.mods.map(m => <ModuleLink key={m.id} m={m} sub />)}
             </div>
