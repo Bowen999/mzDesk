@@ -156,6 +156,39 @@ def ion_mz_and_formula(formula, adduct):
     return _mz_from_counts(counts, charge), form_arr_to_str(counts.astype(np.int16)) + ("+" if charge > 0 else "-")
 
 
+@lru_cache(maxsize=None)
+def _adduct_terms(adduct):
+    """(M 的个数, 加合物净增质量 Da, 电荷)；认不出的加合物返回 None。[M]+ / [M]- 在这里单独处理（msbuddy 会把 [M]+ 读成 [M+H]+）。"""
+    if adduct in ("[M]+", "[M]-"):
+        return 1, 0.0, (1 if adduct == "[M]+" else -1)
+    ion = _parse_adduct(adduct)
+    if ion is None:
+        return None
+    return int(ion.m), float(np.dot(np.asarray(ion.net_formula.array, dtype=float), _MONO)), int(ion.charge)
+
+
+def ion_mz_from_mass(mass, adduct):
+    """m/z of the ion that the species of monoisotopic `mass` (Da) forms as `adduct`; None for an unknown adduct.
+
+    Same arithmetic as ion_mz, so a mass taken from a database (PubChem sums the atom masses and never subtracts the electron,
+    also for a permanent cation like choline) gives the very m/z the Theoretical m/z page shows for that formula.
+    """
+    terms = _adduct_terms(adduct)
+    if terms is None:
+        return None
+    m, delta, charge = terms
+    return (m * mass + delta - charge * _ELECTRON) / abs(charge)
+
+
+def mass_from_ion_mz(mz, adduct):
+    """Inverse of ion_mz_from_mass: monoisotopic mass (Da) whose `adduct` ion has m/z `mz`; None for an unknown adduct."""
+    terms = _adduct_terms(adduct)
+    if terms is None:
+        return None
+    m, delta, charge = terms
+    return (mz * abs(charge) + charge * _ELECTRON - delta) / m
+
+
 def ppm_error(observed, theoretical):
     """Conventional mass error (observed - theoretical) / theoretical, in ppm."""
     return (observed - theoretical) / theoretical * 1e6

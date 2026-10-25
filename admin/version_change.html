@@ -262,6 +262,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.9', date:'2026-10-25',
+  title:'MS1 精确质量检索（PubChem 在线）+ Spectrum 库检索（MassBank / GNPS 本地索引）上线',
+  note:'精确质量检索联网即用。库检索需一次性安装本地库：python -m mzdesk.ms2.library_setup MassBank GNPS。新增 tests/test_exact_mass.py、test_library_search.py（离线：fake_pubchem 回放 + 小型库样例）。',
+  state:[['能算的模块页','19 / 32'], ['Pipeline','4 条，未接'], ['测试','983 个通过']],
+  c:{
+   ms1:['feat','Exact-mass search：观测 m/z + 加合物（Auto = 该极性全部加合物）+ ppm → 化合物列表，按分子式 + 加合物分组。7 个库全部在线走 PubChem（Entrez 按 [SourceName] 过滤：HMDB、DrugBank、ChEBI、KEGG、LIPID MAPS、NORMAN Suspect List Exchange；HMDB / DrugBank 拒绝脚本下载）。[M]+ 按 PubChem 质量不扣电子处理（胆碱 Δ≈0）；永久带电化合物只配 [M]+ / [M]-。每库最多列 100 个，超过时按 DepositorCount 分档、档内取最小 CID。原生 ID 从 PubChem xrefs 取（10 秒预算）。',false,{w:'mzdesk/ms1/exact_mass.py · mzdesk/ms1/msbuddy_engine.py · mzdesk/api/runners/ms1.py · tests/test_exact_mass.py · tests/fake_pubchem.py'}],
+   ms2:['feat','Library search：MassBank（2026.03，12.7 万条）+ GNPS（ALL_GNPS_NO_PROPOGATED，2026-03-29，95.5 万条）本地索引；一次性安装 python -m mzdesk.ms2.library_setup MassBank GNPS（下载约 2.3 GB，索引约 1.25 GB，放 ~/.mzdesk/data/libraries/，MZDESK_LIBRARY_DIR 可改）。MS/MS：precursor 必填，按 ppm 窗口 + 离子模式 + 加合物筛候选，每个候选逐条打分，不预筛（窗口内超过 2000 个时只打分前体偏差最近的 2000 个并警告）；EI：不用 precursor，0.5 Da 单位质量，先用加权谱熵给全部 EI 谱排序取前 5000，再算所选指标。相似度多选 = Similarity & mirror 页全部 16 种（名单唯一来源 metric_names.py）；任一所选指标 ≥ 阈值即保留，按所选指标里最靠前且可用的那个排序。两库都选时去掉 GNPS 里的 MassBank 副本。镜像图画第 1 名。MoNA 不接（多数谱来自 MassBank / GNPS，在线检索超时）。只算所选指标：14 个经典指标约 0.6 ms/对（原来 5.2 ms）；Similarity 页改用同一份名单，结果不变。',false,{w:'mzdesk/ms2/library_*.py · mzdesk/ms2/metric_names.py · mzdesk/ms2/ms2_similarity.py · mzdesk/api/runners/ms2.py · requirements.txt · tests/test_library_search.py'}],
+   app:['chg','两个新页面的结论行（verdict）；表格数据可带自己的 columns，覆盖 spec 里的列（库检索的列随所选指标变化）。',false,{w:'mzdesk/api/verdicts.py · web/src/components/Outputs.tsx · web/src/types.ts · mzdesk/spec.py · tests/conftest.py · tests/test_api.py'}],
+   docs:['doc','README：MS1 写入精确质量检索，Spectrum 写入库检索与一次性安装；候选软件表更新 MassBank / MoNA / GNPS / PubChem / HMDB 五行。版本号 0.2.9，本页加 v0.2.9。',false,{w:'admin/README.md · admin/version_change.html · mzdesk/__init__.py'}]
+  }},
  {id:'v0.2.8', date:'2026-10-25',
   title:'界面改版：白色主题 + IBM Plex、结论前置、两栏结果、黑暗模式、可折叠 / 拖动的侧边栏、新 logo',
   note:'所有示例改为输入名字（PubChem 查询后本地缓存；测试用 spec.EXAMPLE_STRUCTURES 离线运行）。结构图与图表共用一套色板，黑暗模式下在前端重新着色；画结构的 Ketcher 编辑器保持白底。',

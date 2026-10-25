@@ -42,6 +42,7 @@ export type BlockData = {
   rows?: Row[]; values?: Record<string, CardValue>; text?: string; formats?: Record<string, string>; items?: string[];
   plotly?: { data: any[]; layout: any }; peaks?: PeakCard[]; svg?: string; img?: string; mol3d?: string;
   help?: Help; count?: number | string;                       // any block: runtime "?" text; table / grouptable: count pill next to the title
+  columns?: string[];                                          // table: replaces the spec columns for this run (rows then have one cell per data column)
   tiles?: Tile[]; chips?: StatusChip[]; options?: RxOption[]; groups?: RowGroup[];   // portal / chips / reaction (svg above) / grouptable
 };
 /** verdict: the one-line answer shown above the results (may use <b>); none for pages whose output is the answer. */

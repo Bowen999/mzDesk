@@ -11,7 +11,7 @@ import { HelpButton, RichText, emphasize, helpLines } from "./Help";
  *
  *  Generic blocks (data contracts: components/Blocks.tsx header, spec helpers in mzdesk/spec.py):
  *  every block takes `help` (spec) + data.help (runtime) -> a "?" popover after its title; new types: portal, chips, reaction, grouptable;
- *  extended: table (rich cells, row help, count pill), cards (style "metric", per-item help), notes (collapsed). */
+ *  extended: table (rich cells, row help, count pill, data.columns overriding the spec columns), cards (style "metric", per-item help), notes (collapsed). */
 type Status = "pending" | "none" | "off";
 
 /** Block title row: title, optional count pill, "?" (help from spec + runtime + `extra`), optional "not connected yet" tag.
@@ -65,7 +65,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
     case "table": return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
-        <RowsTable columns={block.columns!} rows={data?.rows ?? []} rowHelp={block.row_help} empty={empty} />
+        <RowsTable columns={data?.columns ?? block.columns!} rows={data?.rows ?? []} rowHelp={block.row_help} empty={empty} />
         {block.caption && <small>{block.caption}</small>}
       </div>);
     case "grouptable": return (

@@ -1,4 +1,4 @@
-"""MS2 小类：清洗与可视化，相似度 + 镜像图（matchms / ms_entropy / 自定义），碎片解释（MetFrag）。"""
+"""MS2 小类：清洗与可视化，库检索（MassBank / GNPS 本地索引），相似度 + 镜像图（matchms / ms_entropy / 自定义），碎片解释（MetFrag）。"""
 import copy
 import math
 from functools import lru_cache
@@ -178,4 +178,123 @@ def run_fragments(inputs):
     }, "warnings": warnings}
 
 
-RUNNERS = {"ms2_clean": run_clean, "ms2_similarity": run_similarity, "ms2_fragments": run_fragments}
+# 库谱的网页：MassBank 官方记录页；GNPS 用经典库页面（外部 gnps2 的 /gnpslibraryspectrum 地址现在返回 404）
+RECORD_URL = {"MassBank": "https://massbank.eu/MassBank/RecordDisplay?id={}",
+              "GNPS": "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID={}"}
+SHORT_METRIC = {"SpectralEntropy (weighted)": "entropy", "SpectralEntropy (unweighted)": "unweighted entropy"}
+LIBRARY_PAGE_SIZE = 100
+
+
+def _names(inputs, key, label, allowed, default):
+    value = inputs.get(key)
+    if value is None:
+        return list(default)
+    if isinstance(value, str):
+        value = [value]
+    if not isinstance(value, (list, tuple)) or not value:
+        raise InputError(f"Select at least one {label}.")
+    bad = [v for v in value if v not in allowed]
+    if bad:
+        raise InputError(f"Unknown {label}: {', '.join(map(str, bad))}.")
+    return list(value)
+
+
+def run_library(inputs):
+    from urllib.parse import quote
+
+    from mzdesk.ms2 import library_index as lx
+    from mzdesk.ms2 import library_search as ls
+    from mzdesk.ms2 import metric_names as mn
+    from mzdesk.ms2 import mirror_plot
+    from mzdesk.spec import LIBRARIES, LIBRARY_DEFAULT_METRICS
+
+    warnings = []
+    spectrum_type = inputs.get("spectrum_type") or "MS/MS"
+    if spectrum_type not in ls.SPECTRUM_TYPES:
+        raise InputError("Spectrum type must be MS/MS or EI.")
+    ei = spectrum_type == "EI"
+    peaks, file_mz = common.spectrum(inputs, "ms2", "Query spectrum", warnings)
+    field_mz, positive, adduct = common.precursor(inputs)
+    libraries = _names(inputs, "libraries", "library", LIBRARIES, LIBRARIES)
+    metrics = _names(inputs, "metrics", "metric", mn.LIBRARY_ORDER, LIBRARY_DEFAULT_METRICS)
+    threshold = common.number(inputs, "threshold", "Score threshold", default=0.7, minimum=-1, maximum=1)
+    tol_ppm = common.number(inputs, "tol_ppm", "Precursor tolerance", default=10.0, positive=True, maximum=1000)
+    tol_da = common.number(inputs, "tol_da", "Fragment tolerance", default=0.02, positive=True, maximum=5)
+
+    precursor_mz = field_mz or file_mz
+    if ei:
+        if precursor_mz is not None:
+            warnings.append("The precursor m/z is not used for EI spectra; it was ignored.")
+        precursor_mz = None
+    elif precursor_mz is None:
+        raise InputError("Precursor m/z is required for an MS/MS library search. Enter it, or use a spectrum whose MGF / MSP header has it "
+                         "(for an EI spectrum, set the spectrum type to EI).")
+    elif field_mz is None:
+        warnings.append(f"Precursor m/z {file_mz:.4f} is read from the spectrum.")
+
+    try:
+        res = ls.search(peaks, spectrum_type, libraries, metrics, threshold, precursor_mz=precursor_mz, positive=positive, adduct=adduct,
+                        precursor_tol_ppm=tol_ppm, tolerance=tol_da, top_n=LIBRARY_PAGE_SIZE)
+    except lx.LibraryMissing as exc:
+        raise EngineError(str(exc)) from None
+    except ValueError as exc:
+        raise InputError(str(exc)) from None
+    except ImportError as exc:
+        raise EngineError(f"{exc.name or 'A required package'} is not installed on this server, so the library search cannot run.") from None
+    warnings += res["warnings"]
+    warnings += [f"{name}: {text}" for name, text in res["notes"].items()]
+
+    used, tol = res["metrics"], res["tolerance"]
+    hits = res["hits"]
+    rank = res["rank_metric"] or used[0]               # 第一个对命中有分数的所选指标（第一个若全是 N/A 就跳过）
+    if hits and rank != used[0]:
+        skipped = used[:used.index(rank)]
+        warnings.append(f"Ranked by {rank}, the first selected metric that applies ({', '.join(skipped)} "
+                        f"{'is' if len(skipped) == 1 else 'are'} N/A for every hit).")
+    ms_cols = ["Rank", "Library", "Accession", "Name"] + ([] if ei else ["Adduct", "Precursor m/z", "Δ ppm"]) + ["Matched peaks"]
+    columns = ms_cols + used + ["Instrument / CE"]
+
+    def score_cell(v):
+        if v is None:
+            return common.MISSING
+        return {"badge": f"{v:.4f}", "tone": "good"} if v >= threshold else f"{v:.4f}"
+
+    rows = []
+    for h in hits:
+        acc = h["accession"]
+        cells = [str(h["rank"]), h["library"], {"text": acc, "url": RECORD_URL[h["library"]].format(quote(acc, safe=""))} if acc else common.MISSING,
+                 h["name"] or common.MISSING]
+        if not ei:
+            cells += [h["adduct"] or common.MISSING, fmt(h["precursor_mz"], 4), signed(h["ppm"], 1)]
+        cells += [str(h["matches"])] + [score_cell(h["scores"][m]) for m in used]
+        cells.append(" · ".join(x for x in (h["instrument"], h["collision_energy"]) if x) or common.MISSING)
+        rows.append(cells)
+
+    libs = res["libraries"]
+    pre = res["prefilter"]
+    n_scored = res["n_candidates"]
+    if ei:
+        scored_note = (f"top {pre['kept']:,} of {pre['total']:,} EI spectra by entropy" if pre and pre["dropped"]
+                       else (f"all {pre['total']:,} EI spectra" if pre else "no EI spectra in the libraries"))
+    else:
+        scored_note = (f"within {tol_ppm:g} ppm" + (f", {adduct}" if adduct else "")) if n_scored else "no spectrum within the precursor window"
+        if res["hidden_copies"]:
+            scored_note += f" · {res['hidden_copies']:,} GNPS copies of MassBank spectra hidden"
+    summary = {
+        "Best hit": ({"value": hits[0]["name"] or hits[0]["accession"], "note": f"{hits[0]['library']} {hits[0]['accession']}"} if hits else common.MISSING),
+        "Rank score": ({"value": fmt(hits[0]["scores"][rank], 4), "note": rank} if hits and hits[0]["scores"][rank] is not None else common.MISSING),
+        "Hits ≥ threshold": {"value": str(res["n_kept"]), "note": f"any of {len(used)} metric{'s' if len(used) != 1 else ''} ≥ {threshold:g}"},
+        "Candidates scored": {"value": f"{n_scored:,}", "note": scored_note},
+        "Libraries": {"value": " · ".join(l["name"] for l in libs), "note": " · ".join(l["version"] or "unknown version" for l in libs)},
+    }
+    outputs = {"summary": {"values": summary}, "hits": {"rows": rows, "columns": columns, "count": res["n_kept"]}}
+    if hits and res["top_peaks"] is not None:
+        top_mz, top_rel = res["top_peaks"]
+        label = f"{hits[0]['library']} {hits[0]['accession']}"
+        fig = mirror_plot.build_mirror_figure(peaks, list(zip(top_mz.tolist(), top_rel.tolist())), precursor_mz, res["top_precursor"],
+                                              tolerance=tol, labels=("Query", label), height=480)
+        outputs["mirror"] = common.plotly(fig)
+    return {"outputs": outputs, "warnings": warnings}
+
+
+RUNNERS = {"ms2_clean": run_clean, "ms2_library": run_library, "ms2_similarity": run_similarity, "ms2_fragments": run_fragments}

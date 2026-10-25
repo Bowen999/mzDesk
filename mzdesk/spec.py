@@ -17,6 +17,8 @@ from mzdesk.shared.ms2_clean import NORMALIZE, SORT_BY
 from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
 # cfmid_engine 顶层只用标准库，导入它不会拉进 rdkit / Docker
 from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
+# 指标名字只用标准库（和 ms2_similarity.py 共用一份），所以这里可以直接导入
+from mzdesk.ms2 import metric_names as METRIC_NAMES
 
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
@@ -25,7 +27,9 @@ METFRAG_ADDUCTS = {"Positive": ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+
                    "Negative": ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-"]}
 BUDDY_ADDUCTS = {"Positive": ["Auto", "[M+H]+", "[M+Na]+", "[M+NH4]+", "[M+K]+", "[M+H-H2O]+"],
                  "Negative": ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M+Br]-"]}
-LIBRARIES = ["MassBank", "MoNA", "GNPS"]
+LIBRARIES = ["MassBank", "GNPS"]            # 本地索引见 mzdesk/ms2/library_setup.py
+LIBRARY_METRICS = METRIC_NAMES.LIBRARY_ORDER    # Library search 页的指标多选 = Similarity 页得分表里的全部 16 项（同一份名字，谱熵排第一）
+LIBRARY_DEFAULT_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.COSINE_GREEDY]
 DATABASES = ["HMDB", "PubChem", "LIPID MAPS", "KEGG", "ChEBI", "DrugBank", "NORMAN SusDat"]
 
 
@@ -72,7 +76,8 @@ def _extras(block, **extra):
 #   A list renders as bullets. The page may add runtime text in data["help"] (string or list); static and runtime text are merged.
 #   Text may use <sub> <sup> <i> <b>. Items inside cards / chips / portal tiles / table rows / groups take their own "help" in the data.
 def table(columns, title=None, caption=None, key=None, id=None, help=None, row_help=False):
-    """Table. data: {"rows": [row, ...], "count"?: int}   count -> small pill next to the title.
+    """Table. data: {"rows": [row, ...], "count"?: int, "columns"?: [str, ...]}   count -> small pill next to the title.
+    data["columns"] replaces the spec columns for that run (the spec columns are what the page shows before a run); each row then has one cell per data column.
     cell: "text" | {"text", "url"} link (new tab) | {"badge": text, "tone": jp|report|good|warn|bad|neutral} | {"text", "help"} inline "?"
           | {"img": data-URL}; badge / text cells may also carry "url" and "help".   (the old {"text", "href"} link still works)
     row:  [cell, ...] | {"cells": [cell, ...], "help": str|list}.  row_help=True adds a trailing "?" column that shows each row's help."""
@@ -151,6 +156,9 @@ def _paste(peaks):
 CAFFEINE = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
 CAFFEINE_MS2 = "42.0338 5\n56.0495 4\n69.0447 6\n83.0604 9\n110.0713 18\n138.0662 100\n195.0877 32"
 CAFFEINE_MS1 = "195.0877 100\n196.0902 10.3\n197.0922 0.9"
+# MassBank 里的真实咖啡因 [M+H]+ MS/MS（MSBNK-LCSB-LU119903，Q Exactive，CE 45；NIST 格式的 0-999 强度）：Library search 页的示例
+CAFFEINE_MASSBANK_MS2 = ("56.0496 2\n69.0447 18\n83.0603 10\n97.0076 2\n97.0395 1\n109.0397 3\n110.0713 101\n111.0554 5\n112.0873 1\n122.0711 1\n"
+                         "123.0428 3\n135.0668 1\n136.0747 1\n138.0663 999\n151.0978 5\n156.0768 2\n180.0642 2\n181.0719 3\n195.0878 847")
 # Example names and the structure PubChem gives for each (checked by InChIKey). Tests use this table to run the examples offline.
 EXAMPLE_STRUCTURES = {
     "caffeine": CAFFEINE,
@@ -306,8 +314,23 @@ MODULES = [
 
     module("ms1_search", "Exact-mass search", "A", "Which <b>database compounds</b> match the precursor m/z.",
         [precursor(), number("tol_ppm", "Mass tolerance (ppm)", 5.0, 0.1), multiselect("databases", "Exact-mass databases", DATABASES, ["HMDB", "PubChem"])],
-        [table(["Formula", "Database", "ID", "Name", "Δ ppm"], "Exact-mass hits")],
-        subgroup="ms1"),
+        [cards([("Compounds", "", "One row per PubChem compound (CID). Stereoisomers and salts have their own CIDs, so they count separately."),
+                ("Formulas", "", "Different molecular formulas among the hits."),
+                ("Closest hit", "", "The compound with the smallest |Δ ppm|; among equals, one listed in a chosen database comes first."),
+                ("Databases searched", "", "Compounds PubChem finds in the mass window, per database (before the 100-per-database limit).")],
+               id="summary", style="metric"),
+         grouptable(["Name", "IDs", "PubChem CID"], "Exact-mass hits", id="hits",
+                    help=["Every database is searched online through PubChem, so hits come from PubChem's copy of each database "
+                          "(HMDB, DrugBank, ChEBI, KEGG, LIPID MAPS; NORMAN is its Suspect List Exchange, which includes SusDat).",
+                          "One group per formula and adduct, closest first. Δ ppm = (observed m/z − theoretical m/z) / theoretical m/z × 10<sup>6</sup>; "
+                          "the theoretical m/z comes from the compound's monoisotopic mass and the adduct, as on the Theoretical m/z page.",
+                          "Auto tries every adduct of the ion mode. A compound is listed once, under its best-fitting adduct. "
+                          "Permanently charged compounds (e.g. choline) only match [M]+.",
+                          "At most 100 compounds are listed per database. PubChem alone can have thousands: compounds deposited by more "
+                          "PubChem sources come first (depositor count), then lower CIDs (older, usually better known).",
+                          "IDs are the databases' own IDs, taken from PubChem cross-references; PubChem has no ID for NORMAN."])],
+        subgroup="ms1", live=True,
+        example={"precursor": _prec("195.0877"), "tol_ppm": "5", "databases": ["HMDB", "PubChem"]}),
 
     module("ms1_formula", "Formula (BUDDY)", "A", "<b>Rank molecular formulas</b> for the precursor from its MS1 isotopes and MS2 (BUDDY).",
         [precursor(adducts=BUDDY_ADDUCTS), ms1(), spectrum(label="MS2 spectrum (optional)"),
@@ -352,13 +375,30 @@ MODULES = [
          formats("Predicted spectra (one record per energy)", "Formats", id="formats")],
         subgroup="ms2", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+"}),
 
-    module("ms2_library", "Library search", "A", "Find the spectrum in <b>MassBank / MoNA / GNPS</b> and check the <b>best hit</b>.",
-        [spectrum(), precursor(), number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001), multiselect("libraries", "Libraries", LIBRARIES)],
-        [table(["Library", "Accession", "Name", "Score", "Matched peaks", "Precursor Δ", "Instrument / CE"], "Library hits"),
-         figure("Mirror: observed vs best hit")],
-        subgroup="ms2"),
+    module("ms2_library", "Library search", "A", "Search a spectrum against <b>MassBank</b> and <b>GNPS</b> with the similarity metrics you choose.",
+        [radio("spectrum_type", "Spectrum type", ["MS/MS", "EI"]), spectrum(label="Query spectrum"),
+         precursor(label="Precursor m/z (MS/MS only)"),
+         number("tol_ppm", "Precursor tolerance (ppm, MS/MS only)", 10.0, 0.1),
+         number("tol_da", "Fragment tolerance (Da; EI: 0.5)", 0.02, 0.001),
+         multiselect("libraries", "Libraries", LIBRARIES), multiselect("metrics", "Metrics", LIBRARY_METRICS, LIBRARY_DEFAULT_METRICS),
+         number("threshold", "Score threshold", 0.7, 0.05)],
+        [cards([("Best hit", "name", "The first row of the table: the hit with the highest score on the ranking metric."),
+                ("Rank score", "ranking metric"), ("Hits ≥ threshold", "n"),
+                ("Candidates scored", "n"), ("Libraries", "version")], id="summary", style="metric"),
+         table(["Rank", "Library", "Accession", "Name", "Adduct", "Precursor m/z", "Δ ppm", "Matched peaks"] + LIBRARY_DEFAULT_METRICS + ["Instrument / CE"],
+               "Library hits", id="hits",
+               help=["A spectrum is a hit when ANY selected metric is at or above the threshold (N/A scores are ignored). The table shows the best 100.",
+                     "Hits are ranked by the first selected metric that applies, in the order of the Metrics list (not the order you clicked them); a metric that is N/A for every hit is skipped. Ties: more matched peaks first.",
+                     "Matched peaks: peak pairs matched one-to-one within the fragment tolerance (greedy, as in CosineGreedy). Δ ppm: query minus library precursor.",
+                     "MS/MS: the precursor m/z is required (a header in an MGF / MSP spectrum counts). Candidates are the library MS/MS spectra within the precursor tolerance, in the same ion mode "
+                     "(and with the chosen adduct, unless Auto); every candidate is scored with every selected metric. With both libraries selected, GNPS copies of MassBank spectra are hidden when the MassBank original is also a candidate.",
+                     "EI: the precursor is not used. Fragments are matched at unit mass (0.5 Da). Candidates = top 5000 by entropy similarity; a spectrum with low entropy but high other scores can be missed.",
+                     "Deep-learning scores need torch / gensim and a one-time model download; they are N/A where those are missing."]),
+         figure("Mirror: query vs top hit", id="mirror", help=["Up: query. Down: the top-ranked hit.", "Dark: matched peaks."])],
+        subgroup="ms2", live=True,
+        example={"spectrum_type": "MS/MS", "ms2": _paste(CAFFEINE_MASSBANK_MS2), "precursor": _prec("195.0877")}),
 
-    module("ms2_similarity", "Similarity & mirror", "A", "How alike are <b>two spectra</b>: 12 classic scores, optional deep-learning scores, <b>mirror plot</b>.",
+    module("ms2_similarity", "Similarity & mirror", "A", "How alike are <b>two spectra</b>: 14 classic scores, optional deep-learning scores, <b>mirror plot</b>.",
         [spectrum("query", "Query spectrum"), number("query_precursor", "Query precursor m/z (optional)", step=0.0001),
          spectrum("reference", "Reference spectrum"), number("reference_precursor", "Reference precursor m/z (optional)", step=0.0001),
          number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001), number("threshold", "Score threshold", 0.7, 0.05),

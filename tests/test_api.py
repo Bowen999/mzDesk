@@ -2,7 +2,7 @@
 
 运行：python -m pytest tests
 MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）；
-Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）。没有时相关测试跳过。
+Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Library search 的示例需要 MassBank 索引（python -m mzdesk.ms2.library_setup MassBank）。没有时相关测试跳过。
 """
 import shutil
 import types
@@ -13,7 +13,7 @@ from fastapi.testclient import TestClient
 
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
-from mzdesk.ms2 import cfmid_engine, neims_engine
+from mzdesk.ms2 import cfmid_engine, library_index, neims_engine
 from mzdesk.platform_fit import pka_engine
 from mzdesk import spec
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
@@ -34,6 +34,7 @@ HAS_JAVA = shutil.which("java") is not None
 NO_DOCKER = _docker_unavailable()
 NO_NEIMS = not Path(neims_engine.weights_path()).is_file()
 NO_MOLGPKA = not Path(pka_engine.weights_path()).is_file()
+NO_MASSBANK = not library_index.is_installed("MassBank")
 needs_docker = [pytest.mark.docker, pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")]
 OPTIONAL_BLOCKS = {"viewer3d"}          # 3D embedding can fail for some structures
 
@@ -110,6 +111,8 @@ def test_example_runs_and_fills_every_block(mod):
         pytest.skip(f"CFM-ID needs Docker: {NO_DOCKER}")
     if mod["id"] == "ms2_ei" and NO_NEIMS:
         pytest.skip("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup)")
+    if mod["id"] == "ms2_library" and NO_MASSBANK:
+        pytest.skip("MassBank index not installed (python -m mzdesk.ms2.library_setup MassBank)")
     if mod["id"] == "separation" and NO_MOLGPKA:
         pytest.skip("MolGpKa weights not installed (python -m mzdesk.platform_fit.pka_setup)")
     assert mod["example"], f"{mod['id']} has no example"
@@ -140,7 +143,7 @@ def test_clean_page_reads_precursor_from_pasted_record():
 
 
 def test_placeholder_module_answers_placeholder():
-    body = _run("ms2_library", {}).json()
+    body = _run("ms2_denovo", {}).json()
     assert body["status"] == "placeholder" and body["outputs"] == {}
 
 

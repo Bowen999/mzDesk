@@ -191,6 +191,28 @@ def ms1_formula(i, o):
             + (f"; {len(rows)} candidates." if len(rows) > 1 else "."))
 
 
+def ms1_search(i, o):
+    n = _card(o, "summary", "Compounds")
+    if n is None:
+        return None
+    try:
+        tol = f"{float(i.get('tol_ppm') or 5):g}"
+    except (TypeError, ValueError):
+        tol = "5"
+    if n == "0":
+        dbs = _card(o, "summary", "Databases searched")
+        return f"Nothing matched within {tol} ppm" + (f" in {_join(dbs.split(', '))}." if dbs else ".")
+    name, note = _card(o, "summary", "Closest hit"), _note(o, "summary", "Closest hit")
+    formulas = _card(o, "summary", "Formulas")
+    capped = "capped" in (_note(o, "summary", "Compounds") or "")
+    text = _b(f"{n} compound{'s' if n != '1' else ''}") + (f" ({formulas} formula{'s' if formulas != '1' else ''})" if formulas else "") + f" within {tol} ppm"
+    text += ", list capped" if capped else ""
+    if name and note:
+        ion, _, ppm = note.partition(" · ")
+        text += f"; closest: {_b(name)} {ion}" + (f" ({ppm})" if ppm else "")
+    return text + "."
+
+
 def ms2_clean(i, o):
     n_in, n_out = _card(o, "summary", "Peaks in"), _card(o, "summary", "Peaks out")
     if not n_in:
@@ -219,6 +241,29 @@ def ms2_esi(i, o):
             + (f" ({engine})." if engine else "."))
 
 
+_SHORT_METRIC = {"SpectralEntropy (weighted)": "entropy", "SpectralEntropy (unweighted)": "unweighted entropy"}
+
+
+def ms2_library(i, o):
+    n, scored = _card(o, "summary", "Hits ≥ threshold"), _card(o, "summary", "Candidates scored")
+    if n is None or scored is None:
+        return None
+    if scored == "0":
+        if i.get("spectrum_type") == "EI":
+            return "The selected libraries have no EI spectra."
+        return "No library spectrum has a matching precursor m/z, so nothing was scored."
+    m = re.search(r"≥ ([\d.\-]+)$", _note(o, "summary", "Hits ≥ threshold") or "")
+    thr = m.group(1) if m else (f"{float(i.get('threshold') or 0.7):g}")
+    if n == "0":
+        return f"No hit: none of the {scored} candidates reaches {thr} on any selected metric."
+    name, note = _card(o, "summary", "Best hit"), _note(o, "summary", "Best hit")
+    score, metric = _card(o, "summary", "Rank score"), _note(o, "summary", "Rank score")
+    parts = [f"Best hit {_b(name)}" + (f" ({note})" if note else "") if name else None,
+             f"{_SHORT_METRIC.get(metric, metric)} {score}" if score and metric else None,
+             f"{n} hit{'s' if n != '1' else ''} ≥ {thr}"]
+    return " · ".join(p for p in parts if p) + "."
+
+
 def ms2_similarity(i, o):
     score = _card(o, "summary", "Primary score")
     try:
@@ -239,7 +284,7 @@ def ms2_fragments(i, o):
 
 
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
-                                    ms1_theory, ms1_formula, ms2_clean, ms2_ei, ms2_esi, ms2_similarity, ms2_fragments)}
+                                    ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 

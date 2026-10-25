@@ -48,6 +48,8 @@ from functools import lru_cache
 
 import numpy as np
 
+from mzdesk.ms2 import metric_names as mn   # 指标名字与类别（与 spec.py 共用）
+
 # --------------------------------------------------------------------------- #
 # 模型下载地址（首次使用时自动下载并缓存到 ~/.cache/ms2_similarity/）
 # --------------------------------------------------------------------------- #
@@ -239,19 +241,11 @@ def _unpack_matchms_score(out):
 def _matchms_scores(spec1, spec2, tolerance, results):
     from matchms import similarity
 
-    cat = "Classic peak matching (matchms)"
+    cat = mn.CAT_MATCHMS
     has_precursor = (spec1.get("precursor_mz") is not None
                      and spec2.get("precursor_mz") is not None)
 
-    entries = [
-        ("CosineGreedy", "CosineGreedy", False),
-        ("CosineHungarian", "CosineHungarian", False),
-        ("CosineLinear", "CosineLinear", False),
-        ("ModifiedCosineGreedy", "ModifiedCosineGreedy", True),
-        ("ModifiedCosineHungarian", "ModifiedCosineHungarian", True),
-        ("NeutralLossesCosine", "NeutralLossesCosine", True),
-        ("BlinkCosine", "BlinkCosine", False),
-    ]
+    entries = [(name, name, name in mn.NEEDS_PRECURSOR) for name in mn.MATCHMS]   # 名字 = matchms 类名
     for name, cls_name, needs_precursor in entries:
         cls = getattr(similarity, cls_name, None)
         if cls is None:
@@ -264,7 +258,7 @@ def _matchms_scores(spec1, spec2, tolerance, results):
         try:
             score, matches = _unpack_matchms_score(cls(tolerance=tolerance).pair(spec1, spec2))
             note = ""
-            if name == "BlinkCosine":
+            if name == mn.BLINK:
                 # BLINK 默认预过滤：去掉 <1% 基峰及高于 precursor 的峰；matches 为窗口内近似计数
                 note = ("BLINK approximation: drops peaks <1% of base peak and above the "
                         "precursor; match count is approximate")
@@ -274,7 +268,7 @@ def _matchms_scores(spec1, spec2, tolerance, results):
 
 
 def _entropy_scores(mz1, i1, mz2, i2, tolerance, results):
-    cat = "Spectral entropy (ms_entropy)"
+    cat = mn.CAT_ENTROPY
     try:
         import ms_entropy as me
     except ImportError:
@@ -283,8 +277,8 @@ def _entropy_scores(mz1, i1, mz2, i2, tolerance, results):
 
     peaks1 = np.column_stack([mz1, i1])
     peaks2 = np.column_stack([mz2, i2])
-    for name, fn_name in [("SpectralEntropy (weighted)", "calculate_entropy_similarity"),
-                          ("SpectralEntropy (unweighted)", "calculate_unweighted_entropy_similarity")]:
+    for name, fn_name in [(mn.ENTROPY_WEIGHTED, "calculate_entropy_similarity"),
+                          (mn.ENTROPY_UNWEIGHTED, "calculate_unweighted_entropy_similarity")]:
         fn = getattr(me, fn_name, None)
         if fn is None:
             _add_result(results, cat, name, note="skipped: ms_entropy does not provide this function")
@@ -297,22 +291,22 @@ def _entropy_scores(mz1, i1, mz2, i2, tolerance, results):
 
 
 def _custom_scores(mz1, i1, mz2, i2, tolerance, results):
-    cat = "Custom (numpy/scipy)"
+    cat = mn.CAT_CUSTOM
     try:
         score, n = nist_dot_product(mz1, i1, mz2, i2, tolerance)
-        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", score=score, matches=n,
+        _add_result(results, cat, mn.NIST_DOT, score=score, matches=n,
                     note="Stein & Scott (1994) composite dot product")
     except Exception as exc:  # noqa: BLE001
-        _add_result(results, cat, "NIST weighted dot product (mz^3*I^0.6)", note=f"Failed: {exc}")
+        _add_result(results, cat, mn.NIST_DOT, note=f"Failed: {exc}")
     try:
         score, n = reverse_dot_product(mz1, i1, mz2, i2, tolerance)
-        _add_result(results, cat, "Reverse dot product", score=score, matches=n,
+        _add_result(results, cat, mn.REVERSE_DOT, score=score, matches=n,
                     note="Directional: query spectrum vs. reference library")
     except Exception as exc:  # noqa: BLE001
-        _add_result(results, cat, "Reverse dot product", note=f"Failed: {exc}")
-    for name, fn in [("Binned cosine", lambda: binned_cosine(mz1, i1, mz2, i2, tolerance)),
-                     ("Binned Pearson correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "pearson")),
-                     ("Binned Spearman correlation", lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "spearman"))]:
+        _add_result(results, cat, mn.REVERSE_DOT, note=f"Failed: {exc}")
+    for name, fn in [(mn.BINNED_COSINE, lambda: binned_cosine(mz1, i1, mz2, i2, tolerance)),
+                     (mn.BINNED_PEARSON, lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "pearson")),
+                     (mn.BINNED_SPEARMAN, lambda: binned_correlation(mz1, i1, mz2, i2, tolerance, "spearman"))]:
         try:
             score = fn()
             note = f"bin width = {tolerance:g} Da"
@@ -370,7 +364,7 @@ def _load_ms2deepscore_model(model_path: str):
 
 
 def _ms2deepscore_score(spec1, spec2, model_path, results):
-    cat, name = "Deep learning", "MS2DeepScore"
+    cat, name = mn.CAT_DEEP, mn.MS2DEEPSCORE
     if spec1.get("precursor_mz") is None or spec2.get("precursor_mz") is None:
         _add_result(results, cat, name, note="N/A: missing precursor m/z")
         return
@@ -466,9 +460,40 @@ def _load_spec2vec_model(model_path: str):
     return Word2Vec.load(model_path)
 
 
+def spec2vec_decimals(wv, mz, intensities):
+    """根据（查询谱前 20 个峰的）词表覆盖率自动选择 n_decimals（1 或 2）。"""
+    best_nd, best_cov = 2, -1.0
+    for nd in (2, 1):
+        words, _ = _spectrum_to_words(mz[:20], intensities[:20], None, nd)
+        cov = float(np.mean([w in wv for w in words])) if words else 0.0
+        if cov > best_cov:
+            best_nd, best_cov = nd, cov
+    return best_nd
+
+
+def spec2vec_embedding(wv, mz, intensities, precursor_mz, n_decimals):
+    """返回 (嵌入向量, 峰词权重的词表覆盖率)；词表外的词被忽略，一个词都没命中返回 (None, 0.0)。"""
+    words, weights = _spectrum_to_words(mz, intensities, precursor_mz, n_decimals)
+    vecs, ws = [], []
+    peak_total = peak_found = 0.0
+    for w, wt in zip(words, weights):
+        is_peak = w.startswith("peak@")
+        if is_peak:
+            peak_total += wt
+        if w in wv:
+            vecs.append(wv[w] * wt)
+            ws.append(wt)
+            if is_peak:
+                peak_found += wt
+    if not vecs:
+        return None, 0.0
+    coverage = peak_found / peak_total if peak_total > 0 else 0.0
+    return np.sum(vecs, axis=0) / sum(ws), coverage
+
+
 def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results, ionmode=None):
     """基于 gensim Word2Vec 模型直接计算 Spec2Vec 嵌入余弦（无需 spec2vec 包）。"""
-    cat, name = "Deep learning", "Spec2Vec"
+    cat, name = mn.CAT_DEEP, mn.SPEC2VEC
     if ionmode == "negative":
         _add_result(results, cat, name,
                     note="N/A: the pretrained model is GNPS AllPositive, i.e. positive-mode "
@@ -489,32 +514,10 @@ def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results, ionmode=N
         model = _load_spec2vec_model(model_path)
         wv = model.wv
 
-        # 根据词表覆盖率自动选择 n_decimals（1 或 2）
-        best_nd, best_cov = 2, -1.0
-        for nd in (2, 1):
-            words, _ = _spectrum_to_words(mz1[:20], i1[:20], None, nd)
-            cov = float(np.mean([w in wv for w in words])) if words else 0.0
-            if cov > best_cov:
-                best_nd, best_cov = nd, cov
+        best_nd = spec2vec_decimals(wv, mz1, i1)
 
         def embedding(mz, ii, pmz):
-            """返回 (嵌入向量, 峰词权重的词表覆盖率)；词表外的词被忽略。"""
-            words, weights = _spectrum_to_words(mz, ii, pmz, best_nd)
-            vecs, ws = [], []
-            peak_total = peak_found = 0.0
-            for w, wt in zip(words, weights):
-                is_peak = w.startswith("peak@")
-                if is_peak:
-                    peak_total += wt
-                if w in wv:
-                    vecs.append(wv[w] * wt)
-                    ws.append(wt)
-                    if is_peak:
-                        peak_found += wt
-            if not vecs:
-                return None, 0.0
-            coverage = peak_found / peak_total if peak_total > 0 else 0.0
-            return np.sum(vecs, axis=0) / sum(ws), coverage
+            return spec2vec_embedding(wv, mz, ii, pmz, best_nd)
 
         # neutral-loss words only when BOTH spectra have a precursor m/z: adding them on one
         # side only compares different word sets and depresses the score

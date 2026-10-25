@@ -1,18 +1,19 @@
-"""MS1 小类：理论 m/z（分子式 + 加合物）、BUDDY 分子式推断。"""
+"""MS1 小类：理论 m/z（分子式 + 加合物）、精确质量检索（PubChem）、BUDDY 分子式推断。"""
 import re
 
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
-from mzdesk.api import common
-from mzdesk.api.common import InputError, fmt, signed
+from mzdesk.api import blocks, common
+from mzdesk.api.common import EngineError, InputError, fmt, signed
 from mzdesk.shared import colors
 from mzdesk.shared.spectrum import parse_spectrum
-from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS
+from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, DATABASES
 
 INSTRUMENTS = {"Orbitrap": "orbitrap", "Q-TOF": "qtof", "FT-ICR": "fticr"}
 ELEMENTS_NOTE = "Supported elements: C H N O P S F Cl Br I Na K."
 ADDUCT_TABLE_PPM = 100      # the all-adducts table shows Δ ppm only this close to the observed m/z
+SEARCH_MAX_PPM = 100        # exact-mass search: widest tolerance
 
 
 def _neutral_formula(struct, warnings):
@@ -155,4 +156,65 @@ def run_formula(inputs):
     return {"outputs": outputs, "warnings": warnings}
 
 
-RUNNERS = {"ms1_theory": run_theory, "ms1_formula": run_formula}
+def _id_cell(hit, em):
+    """IDs of the databases that list the compound (the database name where PubChem gives no ID); links to the first database page."""
+    tokens, url = [], None
+    for db in em.SOURCES:
+        if db not in hit.dbs:
+            continue
+        native = hit.ids.get(db)
+        tokens.append(f"KEGG {native}" if db == "KEGG" and native else native or db)
+        if native and url is None:
+            url = em.DB_URL[db].format(native)
+    return blocks.link(" · ".join(tokens), url or em.PUBCHEM_URL.format(hit.cid)) if tokens else common.MISSING
+
+
+def run_search(inputs):
+    from mzdesk.ms1 import exact_mass as em
+
+    mz, positive, adduct = common.precursor(inputs, required=True)
+    tol = common.number(inputs, "tol_ppm", "Mass tolerance", default=5.0, positive=True, maximum=SEARCH_MAX_PPM)
+    dbs = inputs.get("databases")
+    dbs = ["HMDB", "PubChem"] if dbs is None else [dbs] if isinstance(dbs, str) else list(dbs)
+    if not dbs:
+        raise InputError("Choose at least one database.")
+    if any(d not in DATABASES for d in dbs):
+        raise InputError(f"Unknown database: {', '.join(d for d in dbs if d not in DATABASES)}.")
+    pool = (ADDUCTS_POS if positive else ADDUCTS_NEG)[1:]
+    if adduct is not None and adduct not in pool:
+        raise InputError(f"{adduct} is not a {'positive' if positive else 'negative'}-mode adduct.")
+    adducts = pool if adduct is None else [adduct]
+    if not em.mass_windows(mz, adducts, tol):
+        raise InputError("The precursor m/z is too small for the chosen adduct.")
+    try:
+        res = em.search(mz, adducts, tol, dbs)
+    except em.ExactMassError as exc:
+        raise EngineError(str(exc)) from None
+
+    groups = {}         # (formula, adduct) -> hits; the engine's order is closest first
+    for h in res.hits:
+        groups.setdefault((h.formula, h.adduct), []).append(h)
+    table = []
+    for (formula, ad), hs in groups.items():
+        hs.sort(key=lambda h: h.order)
+        n = len(hs)
+        table.append(blocks.group(
+            f"{formula} · {ad}",
+            [[h.name, _id_cell(h, em), blocks.link(str(h.cid), em.PUBCHEM_URL.format(h.cid))] for h in hs],
+            meta=f"m/z {hs[0].mz:.4f} · Δ {signed(hs[0].ppm, 1)} ppm · {n} compound{'s' if n != 1 else ''}"))
+
+    chosen = [d for d in em.SOURCES if d in dbs]
+    per_db = " · ".join(f"{d} {res.totals[d]:,}" + (f" ({res.shown[d]} listed)" if res.totals[d] > res.shown[d] else "") for d in chosen)
+    capped = any(res.totals[d] > res.shown[d] for d in chosen)
+    top = res.hits[0] if res.hits else None
+    summary = {
+        "Compounds": {"value": str(len(res.hits)), "note": f"capped at {em.MAX_PER_DB} per database"} if capped else str(len(res.hits)),
+        "Formulas": str(len({h.formula for h in res.hits})),
+        "Closest hit": {"value": top.name, "note": f"{top.formula} {top.adduct} · {signed(top.ppm, 1)} ppm"} if top else common.MISSING,
+        "Databases searched": {"value": ", ".join(chosen), "note": per_db},
+    }
+    return {"outputs": {"summary": {"values": summary}, "hits": blocks.grouptable_data(table, count=len(res.hits))},
+            "warnings": res.warnings}
+
+
+RUNNERS = {"ms1_theory": run_theory, "ms1_search": run_search, "ms1_formula": run_formula}
