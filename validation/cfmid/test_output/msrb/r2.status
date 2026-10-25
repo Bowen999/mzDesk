@@ -1,0 +1,7 @@
+STATUS REPORT = 3
+The following adducts are not covered for the class of CARDIOLIPINS: [[M-H]-]
+Next Step: Predicting MS spectra for covered adduct types: [[M-2H](2H)-]
+
+STATUS REPORT = 0
+Predicting spectra for all covered adduct types.
+Saving spectrum to r2.txt_[M-2H](2H)-.log

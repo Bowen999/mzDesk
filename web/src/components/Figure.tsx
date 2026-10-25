@@ -34,6 +34,9 @@ export function FigureView({ data }: { data: BlockData }) {
   return null;
 }
 
+/** 小数位：全是整数 m/z（EI 单位质量谱）就不写 .0000，否则 4 位。 */
+const mzDecimals = (peaks: PeakCard[]) => (peaks.every(p => Number.isInteger(p.mz)) ? 0 : 4);
+
 /** m/z 标签：重要的峰优先（已解释，再按强度）；标签不与别的标签重叠，也不压住别的峰。缩放后重算。 */
 function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: number) {
   const { xaxis: xa, yaxis: ya } = gd._fullLayout;
@@ -41,6 +44,7 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
   const vis = peaks.map((_, i) => i).filter(i => peaks[i].mz >= x0 && peaks[i].mz <= x1);
   const sticks = vis.map(i => ({ i, x: xa.l2p(peaks[i].mz), top: ya.l2p(Math.min(peaks[i].rel, yTop)) }));
   if (precursor !== undefined && precursor >= x0 && precursor <= x1) sticks.push({ i: -1, x: xa.l2p(precursor), top: 0 });
+  const dec = mzDecimals(peaks);
   const order = [...vis].sort((a, b) => (Number(peaks[b].on) - Number(peaks[a].on)) || (peaks[b].rel - peaks[a].rel));
   const boxes: { l: number; r: number; t: number; b: number }[] = [];
   const anns: any[] = [];
@@ -48,7 +52,7 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
     if (anns.length >= MAX_LABELS) break;
     const p = peaks[i];
     if (p.rel > yTop) continue;
-    const txt = p.mz.toFixed(4), w = txt.length * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
+    const txt = p.mz.toFixed(dec), w = txt.length * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
     const b = { l: px - w / 2, r: px + w / 2, t: py - 16, b: py - 2 };
     if (b.l < 0 || b.r > xa._length || b.t < 0) continue;
     const isPrecursor = /precursor/i.test(p.kind);
@@ -106,19 +110,19 @@ function PlotlyFigure({ fig, peaks }: { fig: { data: any[]; layout: any }; peaks
     <div className="fig" onMouseLeave={() => setHover(null)}>
       {!ready && <div className="fig-loading">Loading figure…</div>}
       <div ref={ref} />
-      {hover && <HoverCard {...hover} />}
+      {hover && <HoverCard {...hover} dec={mzDecimals(peaks ?? [])} />}
     </div>
   );
 }
 
-function HoverCard({ p, x, y }: { p: PeakCard; x: number; y: number }) {
+function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: number }) {
   const W = 250, H = p.img ? 330 : 170;
   const left = x + 18 + W > window.innerWidth - 6 ? Math.max(6, x - 18 - W) : x + 18;
   const top = Math.max(6, Math.min(y - H / 2, window.innerHeight - H - 6));
   return (
     <div className="hover-card" style={{ left, top, width: W }}>
       <div className={"hc-kind" + (p.on ? "" : " off")}>{p.kind}</div>
-      <div className="hc-mz">m/z {p.mz.toFixed(4)}</div>
+      <div className="hc-mz">m/z {p.mz.toFixed(dec)}</div>
       <table><tbody>{p.rows.map(([l, v]) => <tr key={l}><td className="l">{l}</td><td className="v">{v}</td></tr>)}</tbody></table>
       {p.img && <img src={p.img} alt="fragment structure" />}
     </div>

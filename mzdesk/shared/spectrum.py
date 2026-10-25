@@ -190,14 +190,15 @@ def parse_spectrum(text):
 
 _MGF_BEGIN = re.compile(r"^\s*BEGIN\s+IONS\s*$", re.I)
 _MGF_END = re.compile(r"^\s*END\s+IONS\s*$", re.I)
-_MSP_NAME = re.compile(r"^\s*NAME\s*:", re.I)
+_MSP_NAME = re.compile(r"^\s*(?:NAME\s*:|>compound\b)", re.I)       # an MSP record starts at NAME:, a SIRIUS one at >compound
+_MB_END = re.compile(r"^\s*//\s*$")                                 # a MassBank record ends at //
 _NAME = re.compile(r"^\s*(?:(?:TITLE|NAME|CH\$NAME)\s*[=:]|>compound\s)\s*(.+?)\s*$", re.I)
 _PRECURSOR = re.compile(r"^\s*(?:(?:PEPMASS|PRECURSORMZ|PRECURSOR_MZ|PRECURSOR\s+M/Z)\s*[=:]|MS\$FOCUSED_ION:\s*PRECURSOR_M/Z|>parentmass)\s*"
                         r"([-+]?\d+\.?\d*(?:[eE][-+]?\d+)?)", re.I)
 
 
 def first_record(text):
-    """First spectrum of an MGF (BEGIN IONS … END IONS) or MSP (records start with 'Name:') text.
+    """First spectrum of an MGF (BEGIN IONS … END IONS), MSP ('Name:'), SIRIUS ('>compound') or MassBank (ends with '//') text.
 
     The precursor is also read from MassBank ``MS$FOCUSED_ION: PRECURSOR_M/Z`` and SIRIUS ``>parentmass``.
 
@@ -227,6 +228,9 @@ def first_record(text):
                 records.append(cur)
                 cur = []
             cur.append(ln)
+            if _MB_END.match(ln):
+                records.append(cur)
+                cur = []
         if any(x.strip() for x in cur):
             records.append(cur)
     rec = records[0] if records else []

@@ -15,3 +15,5 @@ ms2deepscore>=2.0
 # mzdesk/ms2: MetFrag fragment annotation shells out to the bundled JAR in mzdesk/lib/; requires a Java 8+ runtime on PATH.
 # mzdesk/ms1: BUDDY molecular formula annotation
 msbuddy>=0.3
+# mzdesk/ms2: EI MS (NEIMS) runs on numpy + rdkit only (already above). TensorFlow is needed once, only by `python -m mzdesk.ms2.neims_setup`, which converts the official weights; it is not a runtime dependency.
+# mzdesk/ms2: ESI MS/MS (CFM-ID 4 + MSRB) runs the wishartlab/cfmid image in Docker: needs Docker Desktop and `docker pull --platform linux/amd64 wishartlab/cfmid:msml4.4.10_msrb1.1.15`; no Python dependency.

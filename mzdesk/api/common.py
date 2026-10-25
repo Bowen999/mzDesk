@@ -14,6 +14,7 @@ import math
 import re
 
 from rdkit import Chem, RDLogger
+from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
 from mzdesk.shared.spectrum import first_record, parse_spectrum
@@ -113,6 +114,15 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
         hint = " For a formula, choose Name / ID / Formula." if allow_formula and is_formula(s) else ""
         raise InputError(f"{label}: invalid SMILES. {err}{hint}")
     return {"kind": "smiles", "smiles": s}
+
+
+def record_name(inputs, smiles, key="structure"):
+    """Compound name for exported spectrum records: what the user typed in Name / ID mode, else the molecular formula of ``smiles``."""
+    value = inputs.get(key) or {}
+    typed = str(value.get("value") or "").strip()
+    if value.get("mode") == "Name / ID / Formula" and typed:
+        return typed
+    return rdMolDescriptors.CalcMolFormula(Chem.MolFromSmiles(smiles))
 
 
 def precursor(inputs, key="precursor", label="Precursor m/z", *, required=False):

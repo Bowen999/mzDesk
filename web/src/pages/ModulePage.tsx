@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ApiError, runModule } from "../api";
 import { FieldInput, initialValues } from "../components/Fields";
@@ -13,19 +13,20 @@ export function ModulePage({ spec }: { spec: Spec }) {
   const mod = spec.modules.find(m => m.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(mod ? mod.inputs : []));
   const [run, setRun] = useState<Run>(IDLE);
-  useEffect(() => { if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); } }, [id]);
+  const ticket = useRef(0);       // a slow run (ESI MS/MS takes up to minutes) must not land on the page the user has moved to
+  useEffect(() => { ticket.current++; if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); } }, [id]);
   if (!mod) return <p className="page">Unknown module.</p>;
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
   const signature = JSON.stringify(values);
   const go = async () => {
-    const t0 = performance.now();
+    const t0 = performance.now(), mine = ++ticket.current;
     setRun({ ...IDLE, busy: true });
     try {
       const result = await runModule(mod.id, values);
-      setRun({ ...IDLE, result, seconds: (performance.now() - t0) / 1000, signature });
+      if (ticket.current === mine) setRun({ ...IDLE, result, seconds: (performance.now() - t0) / 1000, signature });
     } catch (e: any) {
-      setRun({ ...IDLE, error: e.message ?? String(e), log: e instanceof ApiError ? e.log : "", signature });
+      if (ticket.current === mine) setRun({ ...IDLE, error: e.message ?? String(e), log: e instanceof ApiError ? e.log : "", signature });
     }
   };
   const ok = run.result?.status === "ok";

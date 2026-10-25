@@ -250,7 +250,7 @@ const ROW_GROUPS = {};   // 行不分组
 // 行 = 模块。d = 一句话说明；w = 对应的文件 / 文件夹（用 " · " 分开）
 const SECTIONS = [
   {id:'ms1',   name:'MS1',        d:'理论 m/z · 同位素 · 分子式',        w:'mzdesk/ms1/ · mzdesk/api/runners/ms1.py'},
-  {id:'ms2',   name:'MS2',        d:'理论谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/shared/ms2_*.py'},
+  {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/spec.py'},
   {id:'pipe',  name:'Pipeline',   d:'4 条鉴定流程',                    w:'mzdesk/spec.py'},
@@ -262,6 +262,18 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.3', date:'2026-10-24',
+  title:'Spectrum 小类：新增 EI MS（NEIMS）和 ESI MS/MS（CFM-ID 4 + MSRB）两个预测谱页，去掉 Predicted spectrum',
+  note:'侧栏 MS2 小类改名 Spectrum。ESI MS/MS 需要 Docker Desktop 和镜像；EI MS 需要一次性安装权重（python -m mzdesk.ms2.neims_setup）。新增 tests/test_neims.py、tests/test_cfmid.py。',
+  state:[['能算的模块页','11 / 27'], ['Pipeline','4 条，未接'], ['测试','190 个通过']],
+  c:{
+   ms2:['feat','EI MS：NEIMS 官方权重，用 numpy 重写（运行只要 numpy + RDKit），70 eV 单位质量谱，只有 [M]+•；和原 TF1 代码逐分子对照过（335 个分子，999 刻度最大差 0.0016）。ESI MS/MS：CFM-ID 4 + MSRB，7 个加合物，10 / 20 / 40 eV 三张谱；旧的 CFM-ID 脚本整理到 validation/cfmid。去掉占位的 Predicted spectrum；小类改名 Spectrum。',false,{w:'mzdesk/ms2/neims_engine.py · mzdesk/ms2/neims_setup.py · mzdesk/ms2/cfmid_engine.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · validation/neims/ · validation/cfmid/'}],
+   ms1:['chg','离子 m/z 和离子式的计算（含 [M]+ / [M]−）从 MS1 runner 挪到 msbuddy_engine（ion_mz_and_formula），MS1 理论页和 ESI 页共用；结果不变。',false,{w:'mzdesk/ms1/msbuddy_engine.py · mzdesk/api/runners/ms1.py'}],
+   pipe:['chg','结果验证的 MS2 阶段用 ESI MS/MS 代替 Predicted spectrum；特征预测的 “MS2 prediction” 阶段改为 Spectrum prediction（ESI MS/MS、EI MS）。',false,{w:'mzdesk/spec.py'}],
+   other:['fix','粘贴多条记录的 MassBank（以 // 结束）或 SIRIUS（>compound）文本时，原来所有记录的峰混成一条谱；现在只取第一条，并提示共几条。',true,{w:'mzdesk/shared/spectrum.py'}],
+   docs:['doc','README：MS2 改为 Spectrum，写入 EI MS / ESI MS/MS 的使用条件（权重安装、Docker 镜像、耗时）；工具表更新 CFM-ID、新增 NEIMS；requirements.txt 加注释。',false,{w:'admin/README.md · requirements.txt'}],
+   app:['chg','侧栏 MS2 小类显示为 Spectrum；ESI MS/MS 页有三张谱图（低 / 中 / 高能量）；运行中切到别的页面时，慢请求的结果不再落到新页面上；全是整数 m/z 的谱（EI）不再写 .0000。',false,{w:'mzdesk/spec.py · web/src/pages/ModulePage.tsx · web/src/components/Figure.tsx'}]
+  }},
  {id:'v0.2.2', date:'2026-10-24',
   title:'侧栏整理：Molecular（身份 / 结构与格式 / 属性与官能团）和 Detectability（平台适配 / GC 衍生化）两个小类',
   note:'去掉身份页与属性页的重复内容；新增结构与格式页能算，能算的模块页 +1。',

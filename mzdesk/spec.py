@@ -6,13 +6,15 @@ checkbox, slider, file, table, heading。
   formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：pipeline 的 stage 用 exclude 按 key 过滤块。
-模块：group 是侧栏大类（pipelines / modules）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk），
+模块：group 是侧栏大类（pipelines / modules）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk；ms2 的显示名是 Spectrum），
   None = 直接列在 Modules 下。live=True 表示已接引擎（后端 mzdesk/api/runners.py 里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
 from mzdesk.shared.ms2_clean import NORMALIZE, SORT_BY
 # 注意：resolve.py 导入时不联网，所以这里可以直接导入 KINDS；不要在 spec 里导入任何联网代码
 from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
+# cfmid_engine 顶层只用标准库，导入它不会拉进 rdkit / Docker
+from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
 
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
@@ -180,7 +182,7 @@ MODULES = [
         subgroup="ms1", live=True,
         example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
 
-    # ---- MS2 ----
+    # ---- Spectrum（subgroup id 仍是 ms2）----
     module("ms2_clean", "Clean & Vis", "B", "Clean an MS2 spectrum, see it, and get it in every common format (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).",
         [spectrum("spectrum", "MS2 spectrum (any common format)"), number("precursor_mz", "Precursor m/z (optional)", step=0.0001),
          radio("ion_mode", "Ion mode (for MSP / MGF headers)", ["Positive", "Negative"]),
@@ -195,11 +197,22 @@ MODULES = [
         example={"spectrum": _paste("42.0338:5 56.0495:4 61.0012:0.3 69.0447:6 83.0604:9 97.5521:0.6 110.0713:18 138.0662:100 195.0877:32"),
                  "precursor_mz": "195.0877", "noise_pct": "1", "normalize": "Base peak = 100", "remove_precursor": True}),
 
-    module("ms2_predicted", "Predicted spectrum", "A", "Predict the MS2 spectrum of a structure.",
-        [structure(), precursor(label="Precursor m/z (optional)"), text("ce", "Collision energy", placeholder="20 eV or NCE 30")],
-        [table(["m/z", "Fragment formula", "Relative intensity", "Structure"], "Predicted spectrum"), figure("Predicted spectrum"),
-         button("Download predicted spectrum (MSP)")],
-        subgroup="ms2"),
+    module("ms2_ei", "EI MS", "A", "Predict the 70 eV electron-ionization spectrum of a structure (NEIMS). One ion type: [M]+•.",
+        [structure()],
+        [cards([("Ion", ""), ("Formula", ""), ("Molecular ion m/z", ""), ("Base peak m/z", "")], id="summary"),
+         figure("Predicted EI spectrum, unit mass (hover a peak for details)", id="spectrum"),
+         table(["m/z", "Rel. intensity (%)"], "Peaks", id="peaks"),
+         formats("Predicted spectrum in every format", "Formats", id="formats")],
+        subgroup="ms2", live=True, example={"structure": _smiles(CAFFEINE)}),
+
+    module("ms2_esi", "ESI MS/MS", "A", "Predict the ESI MS/MS spectrum of a structure at 10 / 20 / 40 eV (CFM-ID 4; MSRB rules for lipids). Needs Docker.",
+        [structure(), select("adduct", "Adduct", ESI_ADDUCTS, "[M+H]+")],
+        [cards([("Engine", ""), ("Precursor m/z", ""), ("Ion formula", ""), ("Peaks", "")], id="summary"),
+         figure("Low energy (10 eV)", id="spectrum_low"), figure("Medium energy (20 eV)", id="spectrum_medium"),
+         figure("High energy (40 eV)", id="spectrum_high"),
+         table(["Energy", "m/z", "Rel. intensity (%)", "Fragment"], "Peaks", "Fragment: formula · SMILES from the engine", id="peaks"),
+         formats("Predicted spectra (one record per energy)", "Formats", id="formats")],
+        subgroup="ms2", live=True, example={"structure": _smiles(CAFFEINE), "adduct": "[M+H]+"}),
 
     module("ms2_library", "Library search", "A", "Find the spectrum in MassBank / MoNA / GNPS and check the best hit.",
         [spectrum(), precursor(), number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001), multiselect("libraries", "Libraries", LIBRARIES)],
@@ -341,21 +354,21 @@ PIPELINES = [
      "inputs": [structure(label="Candidate structure"), precursor(), ms1(), spectrum(),
                 number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1)],
      "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Platform fit", "platform_fit"), stage("MS1", ["ms1_theory", "ms1_match"]),
-                stage("MS2", ["ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments"]),
+                stage("MS2", ["ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments"]),
                 stage("Exclusivity", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
     {"id": "feature_prediction", "title": "MS feature prediction", "one_liner": "I have a structure and no spectrum. Predict what the instrument will see: adducts, precursor m/z, isotope pattern, MS2.",
      "inputs": [structure(), radio("ion_mode", "Ion mode", ["Positive", "Negative", "Both"]), multiselect("adducts", "Adducts", ["Auto"] + ADDUCTS_POS[1:] + ADDUCTS_NEG[1:], ["Auto"]),
                 select("instrument", "Instrument / CE", ["Q-TOF 20 eV", "Q-TOF 40 eV", "Orbitrap HCD NCE 30", "Triple quadrupole"]), select("out_format", "Export format", ["MSP", "MGF", "MassBank record", "JSON"])],
      "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Adduct prediction", "platform_fit", ["ph", "column", "detect"]),
                 stage("MS1 theory: precursor m/z and isotope pattern", "ms1_theory"),
-                stage("MS2 prediction", "ms2_predicted"),
+                stage("Spectrum prediction (ESI MS/MS, EI MS)", ["ms2_esi", "ms2_ei"]),
                 stage("Export", "ms2_clean")]},
 ]
 
 GROUPS = [{"id": "pipelines", "title": "Pipelines"}, {"id": "modules", "title": "Modules"}]
 # Modules 下的小类，侧栏在该小类第一个模块的位置展开
 SUBGROUPS = [{"id": "molecular", "title": "Molecular"}, {"id": "detectability", "title": "Detectability"},
-             {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "MS2"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"}]
+             {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "Spectrum"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"}]
 
 
 def spec():

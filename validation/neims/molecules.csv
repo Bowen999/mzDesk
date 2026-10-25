@@ -1,0 +1,36 @@
+name,smiles,note
+caffeine,CN1C=NC2=C1C(=O)N(C(=O)N2C)C,N4 purine; real EI base peak 194
+benzene,c1ccccc1,aromatic
+toluene,Cc1ccccc1,aromatic
+naphthalene,c1ccc2ccccc2c1,PAH
+triphenylphosphine,c1ccc(cc1)P(c1ccccc1)c1ccccc1,P
+n-hexane,CCCCCC,aliphatic
+n-hexadecane,CCCCCCCCCCCCCCCC,long aliphatic
+ethanol,CCO,tiny
+isopropanol,CC(C)O,alcohol
+ethyl acetate,CCOC(=O)C,ester
+methyl palmitate,CCCCCCCCCCCCCCCC(=O)OC,FAME
+ibuprofen,CC(C)Cc1ccc(cc1)C(C)C(=O)O,acid
+chlorobenzene,Clc1ccccc1,Cl
+bromobenzene,Brc1ccccc1,Br
+iodobenzene,Ic1ccccc1,I
+benzotrifluoride,FC(F)(F)c1ccccc1,F
+pentachlorobenzene,Clc1cc(Cl)c(Cl)c(Cl)c1Cl,the original repo example
+DDT,ClC(Cl)(Cl)C(c1ccc(Cl)cc1)c1ccc(Cl)cc1,polychlorinated
+aniline,Nc1ccccc1,N
+pyridine,c1ccncc1,N heteroaromatic
+nitrobenzene,[O-][N+](=O)c1ccccc1,nitro (formal charges)
+nicotine,CN1CCCC1c1cccnc1,alkaloid
+amphetamine,CC(N)Cc1ccccc1,amine
+paracetamol,CC(=O)Nc1ccc(O)cc1,amide
+diazepam,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc21,drug with Cl and N
+thioanisole,CSc1ccccc1,S
+dimethyl disulfide,CSSC,S-S
+malathion,CCOC(=O)CC(SP(=S)(OC)OC)C(=O)OCC,P and S
+trimethyl phosphate,COP(=O)(OC)OC,P
+TMS benzoate,C[Si](C)(C)OC(=O)c1ccccc1,Si (derivatized)
+dimethyl selenide,C[Se]C,Se (rare element)
+testosterone,CC12CCC3C(CCC4=CC(=O)CCC34C)C1CCC2O,steroid
+cholesterol,CC(C)CCCC(C)C1CCC2C1(CCC3C2CC=C4C3(CCC(C4)O)C)C,steroid (M 386)
+glucose,OCC1OC(O)C(O)C(O)C1O,sugar
+tristearin,CCCCCCCCCCCCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCCCCCCCC)OC(=O)CCCCCCCCCCCCCCCCC,M near 890

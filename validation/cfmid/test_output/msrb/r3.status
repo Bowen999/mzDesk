@@ -1,0 +1,9 @@
+STATUS REPORT = 3
+The following adducts are not covered for the class of TRIACYLGLYCEROLS: [[M+H]+]
+Next Step: Predicting MS spectra for covered adduct types: [[M+Na]+, [M+NH4]+, [M+Li]+]
+
+STATUS REPORT = 0
+Predicting spectra for all covered adduct types.
+Saving spectrum to r3.txt_[M+Na]+.log
+Saving spectrum to r3.txt_[M+NH4]+.log
+Saving spectrum to r3.txt_[M+Li]+.log

@@ -27,4 +27,5 @@ version = { attr = "mzdesk.__version__" }
 dependencies = { file = ["requirements.txt"] }
 
 [tool.pytest.ini_options]
-markers = ["network: real PubChem/UniChem calls (set MZDESK_NETWORK_TESTS=1)"]
+markers = ["network: real PubChem/UniChem calls (set MZDESK_NETWORK_TESTS=1)",
+           "docker: real CFM-ID / MSRB runs in Docker (skipped when Docker or the image is missing)"]

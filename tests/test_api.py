@@ -1,21 +1,36 @@
 """API 与页面定义的测试：spec 与 runner 对得上、示例能跑、封装结果与直接调引擎一致、错误输入返回 400。
 
 运行：python -m pytest tests
-MetFrag 需要 Java；没有 Java 时相关测试跳过。
+MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）。没有时相关测试跳过。
 """
 import shutil
 import types
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
+from mzdesk.ms2 import cfmid_engine, neims_engine
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
+
+
+def _docker_unavailable():
+    """Why the CFM-ID image cannot run here (same check as tests/test_cfmid.py), or None."""
+    try:
+        cfmid_engine.check_docker()
+    except cfmid_engine.CFMIDError as exc:
+        return str(exc)
+    return None
+
 
 client = TestClient(app)
 LIVE = [m for m in MODULES if m["live"]]
 HAS_JAVA = shutil.which("java") is not None
+NO_DOCKER = _docker_unavailable()
+NO_NEIMS = not Path(neims_engine.weights_path()).is_file()
+needs_docker = [pytest.mark.docker, pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")]
 OPTIONAL_BLOCKS = {"viewer3d"}          # 3D embedding can fail for some structures
 
 
@@ -41,8 +56,21 @@ def test_module_ids_unique_and_subgroups_known():
 
 def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
-    assert ms2 == ["ms2_clean", "ms2_predicted", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
+    assert ms2 == ["ms2_clean", "ms2_ei", "ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
     assert "ms2" not in {m["id"] for m in MODULES}
+    assert next(s["title"] for s in SUBGROUPS if s["id"] == "ms2") == "Spectrum"
+
+
+def test_predicted_spectrum_page_is_gone():
+    assert "ms2_predicted" not in {m["id"] for m in MODULES} | set(RUNNERS)
+    assert _run("ms2_predicted", {}).status_code == 404
+    assert "ms2_predicted" not in {mid for p in PIPELINES for s in p["stages"] for mid in s["modules"]}
+
+
+def test_pipelines_use_the_spectrum_prediction_pages():
+    stages = {(p["id"], s["title"]): s["modules"] for p in PIPELINES for s in p["stages"]}
+    assert stages[("verify", "MS2")][0] == "ms2_esi"
+    assert stages[("feature_prediction", "Spectrum prediction (ESI MS/MS, EI MS)")] == ["ms2_esi", "ms2_ei"]
 
 
 def test_molecular_and_detectability_subgroups():
@@ -67,10 +95,14 @@ def test_block_ids_unique_and_examples_match_inputs():
 
 
 # ---------------------------------------------------------------- live modules
-@pytest.mark.parametrize("mod", LIVE, ids=[m["id"] for m in LIVE])
+@pytest.mark.parametrize("mod", [pytest.param(m, id=m["id"], marks=needs_docker if m["id"] == "ms2_esi" else []) for m in LIVE])
 def test_example_runs_and_fills_every_block(mod):
     if mod["id"] == "ms2_fragments" and not HAS_JAVA:
         pytest.skip("MetFrag needs Java")
+    if mod["id"] == "ms2_esi" and NO_DOCKER:
+        pytest.skip(f"CFM-ID needs Docker: {NO_DOCKER}")
+    if mod["id"] == "ms2_ei" and NO_NEIMS:
+        pytest.skip("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup)")
     assert mod["example"], f"{mod['id']} has no example"
     r = _run(mod["id"], mod["example"])
     assert r.status_code == 200, r.text
@@ -97,7 +129,7 @@ def test_clean_page_reads_precursor_from_pasted_record():
 
 
 def test_placeholder_module_answers_placeholder():
-    body = _run("ms2_predicted", {}).json()
+    body = _run("ms2_library", {}).json()
     assert body["status"] == "placeholder" and body["outputs"] == {}
 
 
@@ -148,12 +180,35 @@ def test_theory_handles_permanent_cation():
     assert body["outputs"]["theory"]["values"]["Precursor m/z"]["value"] == "104.1070"
 
 
+def test_ion_mz_and_formula_is_the_shared_ion_calculation():
+    from mzdesk.ms1 import msbuddy_engine as bd
+    mz, ion = bd.ion_mz_and_formula("C8H10N4O2", "[M+H]+")
+    assert mz == pytest.approx(195.0877, abs=1e-4) and ion == "C8H11N4O2+"
+    assert bd.ion_mz_and_formula("C8H10N4O2", "[M+H]+")[0] == pytest.approx(bd.ion_mz("C8H10N4O2", "[M+H]+"))
+    mz, ion = bd.ion_mz_and_formula("C5H14NO", "[M]+")                    # choline: permanent cation, no H added
+    assert mz == pytest.approx(104.1070, abs=1e-4) and ion == "C5H14NO+"
+    assert bd.ion_mz_and_formula("CH4", "[M-2H2O+H]+") == (None, None)      # the adduct removes atoms the formula lacks
+    assert bd.ion_mz_and_formula("not a formula", "[M+H]+") == (None, None)
+
+
+def test_record_name_is_the_typed_name_else_the_formula():
+    from mzdesk.api import common
+    assert common.record_name({"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}}, CAFFEINE) == "C8H10N4O2"
+    assert common.record_name({"structure": {"mode": "Name / ID / Formula", "value": " caffeine "}}, CAFFEINE) == "caffeine"
+    assert common.record_name({"structure": {"mode": "Name / ID / Formula", "value": ""}}, CAFFEINE) == "C8H10N4O2"
+    assert common.record_name({}, "CCO") == "C2H6O"
+
+
 # ---------------------------------------------------------------- bad input
 @pytest.mark.parametrize("module_id,inputs", [
     ("properties", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}}),
     ("properties", {"structure": {"mode": "Name / ID / Formula", "value": ""}}),
     ("ms1_formula", {"precursor": {"precursor_mz": "2000", "ion_mode": "Positive", "adduct": "Auto"}}),
     ("ms2_similarity", {"query": _paste("100 1"), "reference": _paste("not a spectrum")}),
+    ("ms2_ei", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}}),
+    ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}, "adduct": "[M+H]+"}),
+    ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}, "adduct": "[M+K]+"}),
+    ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": "C[Si](C)C"}, "adduct": "[M+H]+"}),
     ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "noise_pct": "150"}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "normalize": "Everything = 7"}),
@@ -171,6 +226,15 @@ def test_bad_input_is_400(module_id, inputs):
 
 def test_unknown_module_is_404():
     assert _run("nope", {}).status_code == 404
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")
+def test_esi_msrb_only_adduct_on_caffeine_is_400_with_a_clear_message():
+    r = _run("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}, "adduct": "[M+Na]+"})
+    assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert "[M+Na]+" in detail and "MSRB rules do not cover this structure" in detail and "[M+H]+ and [M-H]-" in detail
 
 
 # ---------------------------------------------------------------- identity / name resolver

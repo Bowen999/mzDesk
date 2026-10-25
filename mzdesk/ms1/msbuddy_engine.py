@@ -139,6 +139,24 @@ def ion_mz(formula, adduct):
     return None if counts is None else _mz_from_counts(counts, charge)
 
 
+def ion_mz_and_formula(formula, adduct):
+    """(theoretical m/z, ion formula with the charge sign) of neutral `formula` as `adduct`; (None, None) if the adduct does not apply.
+
+    Unlike ion_mz this also handles [M]+ / [M]-: msbuddy reads [M]+ as [M+H]+, so the radical / permanent ion is done here.
+    The ion formula carries only the sign (a doubly charged adduct is still written "+" / "-").
+    """
+    if adduct in ("[M]+", "[M]-"):
+        arr = _safe_read_formula(formula)
+        if arr is None:
+            return None, None
+        charge = 1 if adduct == "[M]+" else -1
+        return _mz_from_counts(arr, charge), form_arr_to_str(np.asarray(arr, dtype=np.int16)) + adduct[-1]
+    counts, charge = ion_composition(formula, adduct)
+    if counts is None:
+        return None, None
+    return _mz_from_counts(counts, charge), form_arr_to_str(counts.astype(np.int16)) + ("+" if charge > 0 else "-")
+
+
 def ppm_error(observed, theoretical):
     """Conventional mass error (observed - theoretical) / theoretical, in ppm."""
     return (observed - theoretical) / theoretical * 1e6

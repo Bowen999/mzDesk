@@ -1,7 +1,6 @@
 """MS1 小类：理论 m/z（分子式 + 加合物）、BUDDY 分子式推断。"""
 import re
 
-import numpy as np
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
@@ -30,20 +29,6 @@ def _neutral_formula(struct, warnings):
     return re.sub(r"[+-]\d*$", "", rdMolDescriptors.CalcMolFormula(mol))
 
 
-def _ion(bd, formula, adduct):
-    """(theoretical m/z, ion formula with charge sign) or (None, None) when the adduct does not apply."""
-    if adduct in ("[M]+", "[M]-"):      # msbuddy reads [M]+ as [M+H]+, so the radical / permanent ion is done here
-        arr = bd._safe_read_formula(formula)
-        if arr is None:
-            return None, None
-        charge = 1 if adduct == "[M]+" else -1
-        return bd._mz_from_counts(arr, charge), bd.form_arr_to_str(np.asarray(arr, dtype=np.int16)) + adduct[-1]
-    counts, charge = bd.ion_composition(formula, adduct)
-    if counts is None:
-        return None, None
-    return bd._mz_from_counts(counts, charge), bd.form_arr_to_str(counts.astype(np.int16)) + ("+" if charge > 0 else "-")
-
-
 def run_theory(inputs):
     from mzdesk.ms1 import msbuddy_engine as bd
 
@@ -56,7 +41,7 @@ def run_theory(inputs):
 
     rows, ions = [], {}
     for a in (ADDUCTS_POS if positive else ADDUCTS_NEG)[1:]:
-        mz, ion_formula = _ion(bd, formula, a)
+        mz, ion_formula = bd.ion_mz_and_formula(formula, a)
         ions[a] = (mz, ion_formula)
         ppm = bd.ppm_error(observed, mz) if (observed and mz) else None
         near = ppm is not None and abs(ppm) <= ADDUCT_TABLE_PPM
@@ -72,7 +57,7 @@ def run_theory(inputs):
         note = f"{adduct} (Auto)"
     else:
         note = adduct
-    mz, ion_formula = ions.get(adduct) or _ion(bd, formula, adduct)
+    mz, ion_formula = ions.get(adduct) or bd.ion_mz_and_formula(formula, adduct)
     if mz is None:
         raise InputError(f"{formula} cannot form {adduct} (the adduct removes atoms the formula does not have).")
     ppm = bd.ppm_error(observed, mz) if observed else None
