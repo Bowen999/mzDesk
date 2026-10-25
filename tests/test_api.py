@@ -1,7 +1,8 @@
 """API 与页面定义的测试：spec 与 runner 对得上、示例能跑、封装结果与直接调引擎一致、错误输入返回 400。
 
 运行：python -m pytest tests
-MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）。没有时相关测试跳过。
+MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）；
+Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）。没有时相关测试跳过。
 """
 import shutil
 import types
@@ -13,6 +14,7 @@ from fastapi.testclient import TestClient
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
 from mzdesk.ms2 import cfmid_engine, neims_engine
+from mzdesk.platform_fit import pka_engine
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
 
 
@@ -30,6 +32,7 @@ LIVE = [m for m in MODULES if m["live"]]
 HAS_JAVA = shutil.which("java") is not None
 NO_DOCKER = _docker_unavailable()
 NO_NEIMS = not Path(neims_engine.weights_path()).is_file()
+NO_MOLGPKA = not Path(pka_engine.weights_path()).is_file()
 needs_docker = [pytest.mark.docker, pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")]
 OPTIONAL_BLOCKS = {"viewer3d"}          # 3D embedding can fail for some structures
 
@@ -103,6 +106,8 @@ def test_example_runs_and_fills_every_block(mod):
         pytest.skip(f"CFM-ID needs Docker: {NO_DOCKER}")
     if mod["id"] == "ms2_ei" and NO_NEIMS:
         pytest.skip("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup)")
+    if mod["id"] == "separation" and NO_MOLGPKA:
+        pytest.skip("MolGpKa weights not installed (python -m mzdesk.platform_fit.pka_setup)")
     assert mod["example"], f"{mod['id']} has no example"
     r = _run(mod["id"], mod["example"])
     assert r.status_code == 200, r.text

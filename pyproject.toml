@@ -20,7 +20,7 @@ mzdesk = "mzdesk.cli:main"
 packages = { find = { include = ["mzdesk", "mzdesk.*"] } }
 
 [tool.setuptools.package-data]
-mzdesk = ["lib/*.js", "lib/*.jar", "static/**/*"]
+mzdesk = ["lib/*.js", "lib/*.jar", "static/**/*", "data/**/*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "mzdesk.__version__" }

@@ -17,3 +17,5 @@ ms2deepscore>=2.0
 msbuddy>=0.3
 # mzdesk/ms2: EI MS (NEIMS) runs on numpy + rdkit only (already above). TensorFlow is needed once, only by `python -m mzdesk.ms2.neims_setup`, which converts the official weights; it is not a runtime dependency.
 # mzdesk/ms2: ESI MS/MS (CFM-ID 4 + MSRB) runs the wishartlab/cfmid image in Docker: needs Docker Desktop and `docker pull --platform linux/amd64 wishartlab/cfmid:msml4.4.10_msrb1.1.15`; no Python dependency.
+# mzdesk/platform_fit: pKa / Separation page (MolGpKa) runs on numpy + rdkit only (already above). PyTorch is needed once, only by `python -m mzdesk.platform_fit.pka_setup`, which downloads the MIT-licensed weights from the MolGpKa repository and converts them; it is not a runtime dependency (torch_geometric is not needed at all).
+# mzdesk/methods: Known methods page runs on numpy + rdkit only (already above). RepoRT (CC BY-SA 4.0) is an optional one-time download: `python -m mzdesk.methods.report_setup` needs git on PATH (sparse clone of github.com/michaelwitting/RepoRT, about 100 MB) and builds a ~40 MB local index; the JP18 data ships with the package.

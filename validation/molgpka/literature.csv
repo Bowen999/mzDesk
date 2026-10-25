@@ -1,0 +1,14 @@
+compound,site,type,group,predicted,literature,error
+ibuprofen,O15,acid,carboxylic acid,4.40,4.4–4.9,+0.00
+aspirin,O13,acid,carboxylic acid,3.39,3.5,-0.11
+lidocaine,N3,base,tertiary amine,7.60,7.9,-0.30
+morphine (amine),N2,base,tertiary amine,8.03,8.2,-0.17
+morphine (phenol),O13,acid,phenol,9.43,9.9,-0.47
+caffeine,N4,base,imidazole N (protonation site),2.06,0.6,+1.46
+glycine (acid),O5,acid,carboxylic acid,2.09,2.3,-0.21
+glycine (amine),N1,base,primary amine,9.64,9.6,+0.04
+sulfamethoxazole (aniline),N13,base,aniline N,4.13,1.8,+2.33
+sulfamethoxazole (sulfonamide),N5,acid,sulfonamide NH,7.02,5.7,+1.32
+metformin,N5,base,"biguanide, strongest base site",9.57,12.4,-2.83
+salicylic acid,O1,acid,carboxylic acid,2.97,3,-0.03
+procainamide,N3,base,tertiary amine,9.09,9.2,-0.11

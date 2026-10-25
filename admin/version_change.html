@@ -262,6 +262,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.6', date:'2026-10-25',
+  title:'可检测性：Platform 补上 CIL / GC-MS，Derivatization、Separation（MolGpKa）、Known methods（JP18 + RepoRT）接活',
+  note:'v0.2.5 未单独发布，内容并入本版。Separation 需一次性安装 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Known methods 的 RepoRT 需一次性下载（python -m mzdesk.methods.report_setup），JP18 数据随包。新增 tests/test_derivatization.py、test_separation.py、test_jp_build.py、test_known_methods.py。',
+  state:[['能算的模块页','14 / 32'], ['Pipeline','4 条，未接'], ['测试','366 个通过']],
+  c:{
+   prop:['feat','Platform：CIL LC-MS 四通道（规则按 Zhao 等 2019 Figure 1）和 GC-MS 判断。Derivatization：11 种试剂（GC / CIL / UV-FLD），完全衍生化产物的分子式、质量、CIL 重标质量、EI 特征离子，还原糖 MeOx 开环。Separation：MolGpKa（numpy 重写，与原版 349 个分子对照）+ 假碱性 N 过滤，带电状态、logD 曲线、分离模式建议。',true,{w:'mzdesk/platform_fit/derivatization.py · mzdesk/platform_fit/pka_engine.py · mzdesk/platform_fit/pka_setup.py · mzdesk/platform_fit/molgpka_smarts.py · mzdesk/platform_fit/separation_rules.py · mzdesk/platform_fit/separation_viz.py · validation/molgpka/'}],
+   other:['feat','Known methods：JP18 正文 + 补充本 I / II 合并提取 1924 条 LC / GC 方法（Kimi K3.1 Pro 抽样审核 150 块，33 处确认错误按规则修正）；RepoRT 本地索引；先精确匹配（含专论主成分），再按结构 + 理化性质 + 带电状态找相似化合物。',true,{w:'mzdesk/methods/ · mzdesk/data/known_methods/'}],
+   app:['chg','Detectability 下四页接活；Known methods 来源去掉未收录的 WHO 国际药典；Derivatization 去掉平台单选，试剂按 GC / CIL / UV-FLD 分组。',false,{w:'mzdesk/spec.py · mzdesk/api/runners/structure.py · pyproject.toml · requirements.txt · tests/test_api.py'}],
+   docs:['doc','README 可检测性各页写明方法、依据、安装命令；工具表 MolGpKa 改为已集成。',false,{w:'admin/README.md · admin/version_change.html'}]
+  }},
  {id:'v0.2.4', date:'2026-10-24',
   title:'Detectability 小类重划为 7 页：Platform / Separation / Ionization / Adducts / Non-MS detection / Derivatization / Known methods（新增 5 页都是占位）',
   note:'Platform 仍能算（脂质组 / 代谢组分类不变），其余 6 页只有页面格式。README 每页标了难度 / 争议（1–5）。',
