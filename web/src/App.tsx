@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
-import { getSpec } from "./api";
+import { getSpec, trackView } from "./api";
 import { LockGate } from "./components/LockGate";
 import { Brand, Sidebar } from "./components/Sidebar";
 import { SidebarResizer, useSidebarWidth } from "./components/SidebarResizer";
@@ -8,6 +8,7 @@ import { isLockedModule, useUnlocked } from "./lock";
 import { DevBlocks } from "./pages/DevBlocks";
 import { ModulePage } from "./pages/ModulePage";
 import { PipelinePage } from "./pages/PipelinePage";
+import { StatsPage } from "./pages/StatsPage";
 import type { Spec } from "./types";
 
 /** "/" lands on the first module once unlocked (Modules come first in the sidebar); while locked it lands on the first open
@@ -30,7 +31,7 @@ export default function App() {
   useEffect(() => { getSpec().then(setSpec).catch(e => setErr(String(e))); }, []);
   if (err) return <p className="page">Cannot load /api/spec: {err}</p>;
   if (!spec) return <p className="page">Loading…</p>;
-  return <BrowserRouter><Shell spec={spec} /></BrowserRouter>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><Shell spec={spec} /></BrowserRouter>;
 }
 
 /** True while the media query matches (re-renders on change). */
@@ -54,6 +55,7 @@ function Shell({ spec }: { spec: Spec }) {
   const rail = collapsed && !narrow;          // the drawer on small screens is always the full sidebar
   const collapse = (c: boolean) => { setCollapsed(c); try { localStorage.setItem("mzdesk.sidebarCollapsed", c ? "1" : "0"); } catch { /* not remembered */ } };
   useEffect(() => setDrawer(false), [pathname]);
+  useEffect(() => { if (!pathname.startsWith("/stats")) trackView(pathname); }, [pathname]);   // page views for /stats
   useEffect(() => {
     if (!drawer) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
@@ -80,6 +82,8 @@ function Shell({ spec }: { spec: Spec }) {
           <Route path="/modules/:id" element={<ModuleRoute spec={spec} />} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />
+          {/* usage statistics: not in the sidebar; its own password check runs on the server */}
+          <Route path="/stats" element={<StatsPage spec={spec} />} />
           <Route path="*" element={<p className="page">Not found.</p>} />
         </Routes>
       </main>

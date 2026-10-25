@@ -1,0 +1,54 @@
+[Unit]
+Description=mzDesk (FastAPI, served at https://bowenyang.org/mzdesk/ via nginx)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mzdesk
+Group=mzdesk
+WorkingDirectory=/opt/mzdesk
+Environment=HOME=/var/lib/mzdesk
+Environment=PYTHONUNBUFFERED=1
+Environment=MZDESK_NEIMS_DIR=/var/lib/mzdesk/models/neims
+Environment=MZDESK_MOLGPKA_DIR=/var/lib/mzdesk/models/molgpka
+Environment=MZDESK_METHODS_DIR=/var/lib/mzdesk/data/methods
+Environment=MZDESK_CACHE_DIR=/var/lib/mzdesk/cache
+Environment=MZDESK_STATS_DB=/var/lib/mzdesk/stats.sqlite
+Environment=MPLCONFIGDIR=/var/lib/mzdesk/cache/matplotlib
+Environment=NUMBA_CACHE_DIR=/var/lib/mzdesk/cache/numba
+# localhost only: nginx is the only way in. Real client IP comes from nginx (X-Forwarded-For, trusted from 127.0.0.1 only).
+ExecStart=/opt/mzdesk/.venv/bin/uvicorn mzdesk.api.app:app --host 127.0.0.1 --port 8599 --workers 2 \
+  --no-server-header --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-keep-alive 30 --limit-concurrency 64
+Restart=always
+RestartSec=3
+TimeoutStopSec=20
+
+# ---- sandbox: read-only system, writable data folder only, no privilege gain
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/mzdesk
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+UMask=0027
+# ---- resource caps (2 CPU / 3.8 GB box shared with MCID and others)
+MemoryMax=1800M
+TasksMax=256
+
+[Install]
+WantedBy=multi-user.target

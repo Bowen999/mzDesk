@@ -270,7 +270,7 @@ const VERSIONS = [
    app:['chg','白色主题 + IBM Plex Sans / Mono（本地打包）；结果顶部一行结论；数值卡片、卡片、轻量三级层次，宽屏两栏；运行后输入收成一行摘要；骨架屏、运行计时与进度条；侧边栏重新分组（Tools 组、Pipelines 放最后）、可拖动 200–380 px、可折叠成图标栏、蓝色底；窄屏抽屉菜单；浅色 / 跟随系统 / 深色三档主题；新 logo（桌洞立方体）与 favicon；品牌区 mzDesk + Beta / 版本号；输入方式顺序改为 Name → Draw → SMILES；Known methods 流动相分行显示；去掉 Class 和一句话描述。',false,{w:'web/src/ · web/public/favicon.svg · web/index.html · web/package.json'}],
    other:['feat','每个模块的一行结论（verdict），由计算结果生成；/api/spec 返回版本号；示例改为名字并核对 InChIKey。',true,{w:'mzdesk/api/verdicts.py · mzdesk/api/app.py · mzdesk/spec.py · mzdesk/methods/known_methods.py · tests/conftest.py'}],
    prop:['chg','结构图统一画法（细键线、柔和杂原子色、透明背景）与共用数据色板；Plotly 图字体与配色统一；长图标题改短，说明移入问号。',true,{w:'mzdesk/shared/colors.py · mzdesk/shared/depict.py · mzdesk/platform_fit/separation_viz.py · mzdesk/platform_fit/ionization_viz.py · mzdesk/platform_fit/non_ms_rules.py · mzdesk/platform_fit/derivatization.py · mzdesk/ms2/metfrag_engine.py · mzdesk/ms1/msbuddy_engine.py · mzdesk/shared/ms2_plot.py'}],
-   docs:['doc','本页加 v0.2.8。',false,{w:'admin/version_change.html'}]
+   docs:['doc','上线 https://bowenyang.org/mzdesk/：systemd 常驻服务（mzdesk 用户、沙箱、自动重启）+ nginx 子路径、限流与安全头；/mzdesk/stats 访问统计（服务器端校验密码，不存 IP）；deploy/ 一键更新脚本。本页加 v0.2.8。',false,{w:'deploy/ · mzdesk/api/stats.py · web/src/pages/StatsPage.tsx · admin/version_change.html'}]
   }},
  {id:'v0.2.7', date:'2026-10-25',
   title:'Detectability 全部接活（新增 Ionization / Adducts / Non-MS detection）+ 七页统一改版；其他页面加密码锁',

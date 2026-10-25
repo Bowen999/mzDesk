@@ -377,3 +377,29 @@ def test_verdict_never_breaks_a_run_and_reads_the_outputs():
 def test_spec_carries_the_version():
     from mzdesk import __version__
     assert client.get("/api/spec").json()["version"] == __version__
+
+
+def test_stats_record_runs_and_views_and_need_the_password(monkeypatch):
+    from mzdesk.api import stats
+    monkeypatch.setattr(stats, "check_password", lambda pw: pw == "right")
+    client.post("/api/track", json={"path": "/modules/separation", "ref": "https://www.google.com/search"})
+    client.post("/api/track", json={"path": "/stats"})                                    # the stats page itself is not counted
+    client.post("/api/modules/properties/run", json={"structure": {"mode": "SMILES / InChI", "value": "CCO"}})
+    client.post("/api/modules/properties/run", json={"structure": {"mode": "SMILES / InChI", "value": "not a smiles"}})
+    assert client.post("/api/stats", json={"password": "wrong"}).status_code == 401
+    s = client.post("/api/stats", json={"password": "right", "days": 7}).json()
+    assert len(s["daily"]) == 7 and s["daily"][-1]["runs"] == 2 and s["daily"][-1]["views"] == 1
+    assert s["modules"] == [{"module": "properties", "runs": 2, "errors": 1, "avg_ms": s["modules"][0]["avg_ms"]}]
+    assert s["pages"] == [{"path": "/modules/separation", "views": 1}] and s["referrers"] == [{"host": "www.google.com", "views": 1}]
+    assert s["totals"]["today"]["visitors"] == 1          # same IP + browser on one day = one visitor
+    assert s["errors"][0]["status"] == 400
+
+
+def test_stats_password_matches_the_page_lock():
+    import re
+    from pathlib import Path
+    from mzdesk.api import stats
+    lock_ts = (Path(__file__).parents[1] / "web" / "src" / "lock.ts").read_text()
+    assert stats.SALT_HEX in lock_ts and stats.HASH_HEX in lock_ts
+    assert re.search(r"ITERATIONS = 200_000", lock_ts) and stats.ITERATIONS == 200_000
+    assert not stats.check_password("") and not stats.check_password("wrong")

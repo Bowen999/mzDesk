@@ -19,6 +19,28 @@ async function json<T>(url: string, init?: RequestInit): Promise<T> {
 const post = <T,>(url: string, body: unknown) =>
   json<T>(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
-export const getSpec = () => json<Spec>("/api/spec");
-export const runModule = (id: string, inputs: unknown) => post<RunResult>(`/api/modules/${id}/run`, inputs);
-export const runPipeline = (id: string, inputs: unknown) => post<any>(`/api/pipelines/${id}/run`, inputs);
+/** Where the app is served: "/" locally, "/mzdesk/" behind bowenyang.org (set at build time: MZDESK_BASE=/mzdesk/ npm run build). */
+export const BASE = import.meta.env.BASE_URL;
+export const getSpec = () => json<Spec>(`${BASE}api/spec`);
+export const runModule = (id: string, inputs: unknown) => post<RunResult>(`${BASE}api/modules/${id}/run`, inputs);
+export const runPipeline = (id: string, inputs: unknown) => post<any>(`${BASE}api/pipelines/${id}/run`, inputs);
+
+/** Page view beacon for the stats page (fire and forget; never shows an error). */
+export function trackView(path: string) {
+  try {
+    void fetch(`${BASE}api/track`, { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ path, ref: document.referrer }) }).catch(() => undefined);
+  } catch { /* ignore */ }
+}
+
+export type Stats = {
+  days: number; generated: string;
+  totals: Record<"today" | "7d" | "range" | "all", { views: number; runs: number; visitors: number }>;
+  daily: { day: string; views: number; runs: number; visitors: number }[];
+  modules: { module: string; runs: number; errors: number; avg_ms: number }[];
+  pages: { path: string; views: number }[];
+  referrers: { host: string; views: number }[];
+  browsers: { browser: string; visitors: number }[];
+  errors: { time: string; module: string; status: number }[];
+};
+export const getStats = (password: string, days: number) => post<Stats>(`${BASE}api/stats`, { password, days });

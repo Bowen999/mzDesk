@@ -22,7 +22,7 @@ function load3Dmol(): Promise<any> {
     const w = window as any;
     if (w.$3Dmol) return resolve(w.$3Dmol);
     const s = document.createElement("script");
-    s.src = "/lib/3Dmol-min.js";
+    s.src = `${import.meta.env.BASE_URL}lib/3Dmol-min.js`;
     s.onload = () => resolve(w.$3Dmol);
     s.onerror = () => { mol3dPromise = null; reject(new Error("3Dmol.js failed to load")); };
     document.head.appendChild(s);

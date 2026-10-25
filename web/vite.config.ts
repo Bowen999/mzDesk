@@ -13,7 +13,9 @@ const ketcherRaphael = {
 
 // 构建输出到 mzdesk/static，由 FastAPI 托管；开发时 /api 和 /lib 代理到后端。
 // plotly.js 单独成块（约 1.5 MB gzip），第一次画图时才加载，所以放宽块大小警告。
+// MZDESK_BASE: the URL prefix the app is served under (default "/"; the bowenyang.org deploy builds with /mzdesk/).
 export default defineConfig({
+  base: process.env.MZDESK_BASE || "/",
   plugins: [ketcherRaphael, react()],
   // Ketcher 引用 Node 的 events 模块；浏览器里用同名 npm 包顶替
   resolve: { alias: { events: "events/" } },

@@ -3,15 +3,16 @@
 已接引擎的模块（spec 里 live=True）由 mzdesk/api/runners 计算；其余模块和 pipeline 返回 placeholder。
 """
 import logging
+import time
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from mzdesk import __version__
-from mzdesk.api import verdicts
+from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
 from mzdesk.spec import MODULES, PIPELINES, spec
@@ -37,7 +38,22 @@ def get_spec():
 
 
 @app.post("/api/modules/{module_id}/run")
-def run_module(module_id: str, inputs: dict):
+def run_module(module_id: str, inputs: dict, request: Request):
+    """Runs the module and records the run (module, status, time) for the stats page."""
+    t0, status = time.perf_counter(), 200
+    try:
+        out = _run_module(module_id, inputs)
+        status = out.status_code if isinstance(out, JSONResponse) else 200
+        return out
+    except HTTPException as exc:
+        status = exc.status_code
+        raise
+    finally:
+        if module_id in _modules:
+            stats.record(request, "run", module=module_id, status=status, ms=round(1000 * (time.perf_counter() - t0)))
+
+
+def _run_module(module_id, inputs):
     if module_id not in _modules:
         raise HTTPException(404, f"unknown module {module_id}")
     runner = RUNNERS.get(module_id)
@@ -55,6 +71,24 @@ def run_module(module_id: str, inputs: dict):
     outputs = clean(result.get("outputs", {}))
     return {"status": "ok", "module": module_id, "outputs": outputs, "warnings": result.get("warnings", []),
             "verdict": result.get("verdict") or verdicts.build(module_id, inputs, outputs)}
+
+
+@app.post("/api/track")
+def track(body: dict, request: Request):
+    """Page view beacon from the frontend (path inside the app, document.referrer)."""
+    path = str(body.get("path") or "")[:200]
+    if path and not path.startswith("/stats"):
+        stats.record(request, "view", path=path, ref=str(body.get("ref") or ""))
+    return {"ok": True}
+
+
+@app.post("/api/stats")
+def get_stats(body: dict):
+    """Usage numbers for the stats page; needs the site password (checked here, never sent back)."""
+    if not stats.check_password(body.get("password")):
+        time.sleep(0.6)        # slows guessing; nginx also rate-limits this path
+        raise HTTPException(401, "Wrong password.")
+    return stats.summary(body.get("days") or 30)
 
 
 @app.post("/api/pipelines/{pipeline_id}/run")
@@ -91,7 +125,8 @@ if (STATIC / "index.html").exists():
         candidate = (STATIC / path).resolve()
         if path and candidate.is_file() and STATIC.resolve() in candidate.parents:
             return FileResponse(candidate)
-        return FileResponse(STATIC / "index.html")
+        # the page itself must never be cached: it names the current (hashed) assets
+        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
 else:
     @app.get("/")
     def no_frontend():
