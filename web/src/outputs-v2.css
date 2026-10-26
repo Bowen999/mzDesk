@@ -92,7 +92,7 @@ button.pill.has-help { cursor: help; }
 button.pill.has-help:hover, button.pill.has-help[aria-expanded="true"] { filter: brightness(.96); border-color: currentColor; }
 button.pill.has-help:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* ---- reaction: full structures for Dansyl, functional-group schemes for other reagents ---- */
+/* ---- reaction: full structures for four CIL channels, functional-group schemes for other reagents ---- */
 .rx { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
 .rx.with-parent { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr); }
 .rx-parent img { display: block; width: 100%; max-width: 240px; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }

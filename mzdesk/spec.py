@@ -129,7 +129,7 @@ def chips(title=None, id=None, help=None, key=None):
     A chip with help is clickable: hover or focus shows its popover, click pins it."""
     return _extras({"type": "chips", "title": title, "key": key, "id": id}, help=help)
 def reaction(title=None, id=None, help=None, key=None):
-    """Reaction scheme next to the parent structure; Dansyl chloride options can show the complete substrate and product instead.
+    """Reaction scheme next to the parent structure; all four CIL channel options show the complete substrate and product instead.
     data: {"svg"?: fallback parent structure SVG with the reactive groups highlighted,
            "options": [{"label": "CIL · dansyl", "steps": [{"from": "R–NH₂", "reagent": "Dns-Cl", "to": "R–NH–Dns", "count"?: 2}],
                         "formula"?, "mass"?, "heavy"?, "help"?: str|list, "svg"?: parent structure with only this option's sites highlighted,
@@ -238,7 +238,7 @@ MODULES = [
                       "Yes: expected to work. Partial: only after derivatization. No: not expected. The ? on a tile gives its rule hits."]),
          reaction("Why and how", id="reactions",
                   help=["Shown when CIL or GC-MS applies. Choosing a reagent updates the structure to highlight only its reactive groups.",
-                        "Dansyl chloride shows the complete substrate and product, including every Dansyl tag; other reagents use functional-group schemes. Masses are monoisotopic."])],
+                        "All four CIL channels show complete substrate and product structures, including every label; other reagents use functional-group schemes. Masses are monoisotopic."])],
         subgroup="detectability", live=True, example={"structure": _name("L-tyrosine")}),
 
     module("separation", "Separation", "B", "Which <b>column</b>, and what <b>charge</b> the molecule carries at each pH (MolGpKa pKa prediction; needs a one-time weights download).",
@@ -306,7 +306,7 @@ MODULES = [
                help=["Full derivatization, one row per selected reagent that has a reactive group. Labels: reagent groups added.",
                      "Mass is monoisotopic; heavy mass (CIL only) is with a ¹³C₂-labelled reagent. The ? on a row lists the groups labelled, EI key ions and caveats."]),
          reaction("Reactions", id="deriv_reactions",
-                  help=["Dansyl chloride shows the complete substrate and product, including every Dansyl tag. Other reagents use functional-group schemes; ×n = number of groups.",
+                  help=["All four CIL channels show complete substrate and product structures, including every label. Other reagents use functional-group schemes; ×n = number of groups.",
                         "Choose a reagent above the scheme; the substrate highlights only its reactive groups."])],
         subgroup="detectability", live=True, example={"structure": _name("D-glucose")}),
 

@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.16', date:'2026-10-26', git:'',
+  title:'补齐四个 CIL Channel 的完整产物可视化',
+  note:'A / H / C / K 均显示完整底物与产物；K 通道只展示连接结构，不预测腙的 E / Z 比例。衍生化规则、分子式和质量不变。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1081 个通过']],
+  c:{
+   prop:['feat','新增 C 通道 DmPA 酯与 K 通道 Dansyl 腙的完整 RDKit 产物，并与 A / H 统一为四通道结构生成；多位点逐一反应，覆盖羧酸、二羧酸、醛、酮和芳香酮，产物分子式与原计算一致。',true,{w:'mzdesk/platform_fit/derivatization.py · mzdesk/api/runners/structure.py · tests/test_derivatization.py'}],
+   app:['chg','四个 CIL Channel 均进入完整 Substrate → Product 视图；GC、UV / FLD 等其他试剂继续使用官能团反应式。',true,{w:'mzdesk/spec.py · web/src/outputs-v2.css'}],
+   docs:['doc','README 更新四通道完整结构行为与 K 通道立体化学边界；版本号 0.2.16，本页加 v0.2.16。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.15', date:'2026-10-26', git:'',
   title:'Dansyl 可视化改为完整底物与多标签完整产物',
   note:'只改结构可视化与说明；衍生化规则、分子式和质量不变。其他试剂仍使用官能团反应式。',

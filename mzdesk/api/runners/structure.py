@@ -81,7 +81,7 @@ def _formula_text(formula):
 def _reaction_options(results, *, detail, mol=None, groups=None):
     """Reaction-block options for the derivatization results that apply (n > 0). detail=True (Platform page): formula / mass / heavy mass and the EI ions,
     caveats and label note in the option's "?"; detail=False (Derivatization page: the table has them): the scheme only, the "?" explains the abbreviations.
-    When mol and groups are given, each option carries its own reactive-site SVG; Dansyl chloride options also carry a complete product SVG."""
+    When mol and groups are given, each option carries its own reactive-site SVG; all four CIL channel options also carry a complete product SVG."""
     from mzdesk.platform_fit import derivatization as deriv
 
     options = []
@@ -94,7 +94,7 @@ def _reaction_options(results, *, detail, mol=None, groups=None):
         svg = product_svg = None
         if mol is not None and groups is not None:
             svg = deriv.highlight_svg(mol, deriv.reacting_groups([r], groups))
-            product_svg = deriv.dansyl_product_svg(mol, r, groups)
+            product_svg = deriv.reaction_product_svg(mol, r, groups)
         if not detail:
             options.append(bl.reaction_option(label, steps, help=abbr, svg=svg, product_svg=product_svg))
             continue

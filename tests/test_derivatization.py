@@ -1,6 +1,7 @@
 """衍生化引擎、官能团反应式，以及 Platform 页（四个 tile + Why and how 反应块）和 Derivatization 页（表 + 反应块）的测试（质量均为单同位素，容差 0.002）。"""
 import pytest
 from fastapi.testclient import TestClient
+from rdkit import Chem
 
 from mzdesk.api.app import app
 from mzdesk.platform_fit import derivatization as d
@@ -144,20 +145,46 @@ def test_dansyl_option_highlights_only_its_own_reactive_groups(monkeypatch):
 def test_dansyl_full_product_has_every_tag_and_the_same_formula(smiles, reagent, n_tags):
     res = d.derive(smiles, [reagent])
     r = res["results"][0]
-    product = d.dansyl_product(res["mol"], r, res["groups"])
+    product = d.reaction_product(res["mol"], r, res["groups"])
     assert r["n"] == n_tags and product is not None
     assert d.formula_string(d.parent_formula(product)) == r["formula"]
     assert sum(a.GetAtomicNum() == 16 for a in product.GetAtoms()) == sum(a.GetAtomicNum() == 16 for a in res["mol"].GetAtoms()) + n_tags
     targets = [i for key in r["labels"] for i in res["groups"][key]["atoms"]]
     assert all(any(n.GetAtomicNum() == 16 for n in product.GetAtomWithIdx(i).GetNeighbors()) for i in targets)
-    svg = d.dansyl_product_svg(res["mol"], r, res["groups"])
+    svg = d.reaction_product_svg(res["mol"], r, res["groups"])
     assert svg.lstrip().startswith(("<?xml", "<svg"))
 
 
-def test_full_product_svgs_are_exposed_only_for_dansyl_chloride():
+@pytest.mark.parametrize(("smiles", "n_tags"), [("CC(=O)O", 1), ("OC(=O)CCC(=O)O", 2)])
+def test_dmpa_full_product_has_every_ester_and_the_same_formula(smiles, n_tags):
+    res = d.derive(smiles, ["CIL · DmPA bromide (carboxyl)"])
+    r = res["results"][0]
+    product = d.reaction_product(res["mol"], r, res["groups"])
+    assert r["n"] == n_tags and product is not None
+    assert d.formula_string(d.parent_formula(product)) == r["formula"]
+    original_atoms = res["mol"].GetNumAtoms()
+    targets = [i for key in r["labels"] for i in res["groups"][key]["atoms"]]
+    assert all(any(n.GetIdx() >= original_atoms and n.GetAtomicNum() == 6
+                   for n in product.GetAtomWithIdx(i).GetNeighbors()) for i in targets)
+    assert d.reaction_product_svg(res["mol"], r, res["groups"]).lstrip().startswith(("<?xml", "<svg"))
+
+
+@pytest.mark.parametrize("smiles", ["CC(=O)CC(=O)C", "O=Cc1ccccc1", "O=c1cc(-c2ccccc2)oc2ccccc12"])
+def test_dansylhydrazine_full_product_has_every_hydrazone_and_the_same_formula(smiles):
+    res = d.derive(smiles, ["CIL · Dansylhydrazine (carbonyl)"])
+    r = res["results"][0]
+    product = d.reaction_product(res["mol"], r, res["groups"])
+    assert product is not None and d.formula_string(d.parent_formula(product)) == r["formula"]
+    assert product.GetNumAtoms() == res["mol"].GetNumAtoms() + 17 * r["n"]
+    assert len(product.GetSubstructMatches(Chem.MolFromSmarts("[#6]=[N][N][S]"))) == r["n"]
+    assert d.reaction_product_svg(res["mol"], r, res["groups"]).lstrip().startswith(("<?xml", "<svg"))
+
+
+def test_full_product_svgs_cover_all_four_cil_channels():
     platform = _options("NC(Cc1ccc(O)cc1)C(=O)O")
-    assert platform["CIL · Dansyl chloride"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
-    assert all("product_svg" not in platform[label] for label in ("CIL · DmPA bromide", "GC · TMS"))
+    for label in ("CIL · Dansyl chloride", "CIL · DmPA bromide"):
+        assert platform[label]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
+    assert "product_svg" not in platform["GC · TMS"]
 
     body = client.post("/api/modules/derivatization/run", json={
         "structure": {"mode": "SMILES / InChI", "value": GLUCOSE},
@@ -167,6 +194,15 @@ def test_full_product_svgs_are_exposed_only_for_dansyl_chloride():
     options = {o["label"]: o for o in body.json()["outputs"]["deriv_reactions"]["options"]}
     assert options["CIL · Dansyl chloride (base)"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
     assert "product_svg" not in options["GC · TMS"]
+
+    body = client.post("/api/modules/derivatization/run", json={
+        "structure": {"mode": "SMILES / InChI", "value": "CC(=O)CC(=O)C"},
+        "reagents": ["CIL · Dansylhydrazine (carbonyl)", "UV/FLD · DNPH (carbonyl)"],
+    })
+    assert body.status_code == 200, body.text
+    options = {o["label"]: o for o in body.json()["outputs"]["deriv_reactions"]["options"]}
+    assert options["CIL · Dansylhydrazine"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
+    assert "product_svg" not in options["UV/FLD · DNPH"]
 
 
 def test_platform_lipid_with_an_amine_keeps_cil_yes_and_says_lipidomics():

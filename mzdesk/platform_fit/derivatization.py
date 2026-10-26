@@ -1,7 +1,7 @@
 """Derivatization：找反应基团，按试剂算衍生物的分子式和单同位素质量，并给 Platform 页判断 CIL / GC-MS 适用性。
 
 母体取画出来的中性分子。质量全部用精确同位素质量（不用平均质量）。
-每个试剂还带一份官能团反应式（SCHEMES）；Dansyl chloride 另生成完整产物结构，Platform 和 Derivatization 两页的 reaction 块共用。
+每个试剂还带一份官能团反应式（SCHEMES）；四个 CIL Channel 均生成完整产物结构，Platform 和 Derivatization 两页的 reaction 块共用。
 """
 from __future__ import annotations
 
@@ -224,52 +224,118 @@ def highlight_svg(mol, groups, size=(560, 420)) -> Optional[str]:
     return drawer.GetDrawingText()
 
 
-def dansyl_product(mol, result, groups):
-    """Complete Dansyl chloride product, with one tag attached at every labelled atom; None for other reagents."""
-    if result["name"] not in ("Dansyl chloride", "Dansyl chloride (base)"):
-        return None
+def _product_sites(result, groups, reagent):
     targets = [i for key in result["labels"] for i in groups[key]["atoms"]]
     if not targets or len(targets) != result["n"]:
-        raise ValueError("Dansyl product sites do not agree with the label count.")
+        raise ValueError(f"{reagent} product sites do not agree with the label count.")
+    return targets
 
-    # Explicit Hs make the leaving H unambiguous for N / O / S and aromatic [nH]. Heavy-atom indices stay unchanged.
+
+def _without_site_hydrogens(mol, targets, reagent):
+    """Explicit Hs make the leaving H unambiguous for N / O / S and aromatic [nH]; heavy-atom indices stay unchanged."""
     work = Chem.RWMol(Chem.AddHs(mol))
     leaving = []
     for i in targets:
         hs = [n.GetIdx() for n in work.GetAtomWithIdx(i).GetNeighbors() if n.GetAtomicNum() == 1]
         if not hs:
-            raise ValueError(f"Dansyl reaction site {i} has no removable hydrogen.")
+            raise ValueError(f"{reagent} reaction site {i} has no removable hydrogen.")
         leaving.append(hs[0])
     for i in sorted(leaving, reverse=True):
         work.RemoveAtom(i)
-    product = work.GetMol()
+    return work.GetMol()
 
-    # PubChem CID 11801: 5-(dimethylamino)naphthalene-1-sulfonyl chloride. Remove Cl, then join each site to sulfur.
-    tag = Chem.RWMol(Chem.MolFromSmiles("CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)Cl"))
-    cl = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 17)
-    sulfur = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 16)
-    tag.RemoveAtom(cl)
-    if cl < sulfur:
-        sulfur -= 1
-    tag_mol = tag.GetMol()
+
+def _attach_at_sites(product, targets, tag, anchor, bond_type):
     for target in targets:
         offset = product.GetNumAtoms()
-        product = Chem.CombineMols(product, tag_mol)
+        product = Chem.CombineMols(product, tag)
         edit = Chem.RWMol(product)
-        edit.AddBond(target, offset + sulfur, Chem.BondType.SINGLE)
+        edit.AddBond(target, offset + anchor, bond_type)
         product = edit.GetMol()
+    return product
+
+
+def _clean_product(product):
     Chem.SanitizeMol(product)
     product = Chem.RemoveHs(product)
     Chem.SanitizeMol(product)
     return product
 
 
-def dansyl_product_svg(mol, result, groups, size=(640, 480)) -> Optional[str]:
-    """Full-product depiction for Dansyl chloride options; other reagents keep their functional-group schemes."""
-    product = dansyl_product(mol, result, groups)
+def _dansyl_chloride_product(mol, result, groups):
+    targets = _product_sites(result, groups, "Dansyl chloride")
+    product = _without_site_hydrogens(mol, targets, "Dansyl chloride")
+    # PubChem CID 11801. Remove Cl, then join every amine / phenol / hydroxyl / thiol / aromatic NH site to sulfur.
+    tag = Chem.RWMol(Chem.MolFromSmiles("CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)Cl"))
+    cl = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 17)
+    sulfur = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 16)
+    tag.RemoveAtom(cl)
+    if cl < sulfur:
+        sulfur -= 1
+    product = _attach_at_sites(product, targets, tag.GetMol(), sulfur, Chem.BondType.SINGLE)
+    return _clean_product(product)
+
+
+def _dmpa_product(mol, result, groups):
+    targets = _product_sites(result, groups, "DmPA bromide")
+    product = _without_site_hydrogens(mol, targets, "DmPA bromide")
+    # PubChem CID 142225. Remove Br, then join every carboxyl O to the phenacyl CH2 carbon, forming the complete ester.
+    tag = Chem.RWMol(Chem.MolFromSmiles("CN(C)C1=CC=C(C=C1)C(=O)CBr"))
+    bromine = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 35)
+    anchor = next(n.GetIdx() for n in tag.GetAtomWithIdx(bromine).GetNeighbors() if n.GetAtomicNum() == 6)
+    tag.RemoveAtom(bromine)
+    if bromine < anchor:
+        anchor -= 1
+    product = _attach_at_sites(product, targets, tag.GetMol(), anchor, Chem.BondType.SINGLE)
+    return _clean_product(product)
+
+
+def _dansylhydrazine_product(mol, result, groups):
+    targets = _product_sites(result, groups, "Dansylhydrazine")
+    product = Chem.AddHs(mol)
+    carbonyl_o = []
+    for i in targets:
+        oxygen = [n.GetIdx() for n in product.GetAtomWithIdx(i).GetNeighbors()
+                  if n.GetAtomicNum() == 8 and product.GetBondBetweenAtoms(i, n.GetIdx()).GetBondType() == Chem.BondType.DOUBLE]
+        if len(oxygen) != 1:
+            raise ValueError(f"Dansylhydrazine reaction site {i} is not a carbonyl carbon.")
+        carbonyl_o.append(oxygen[0])
+
+    # PubChem CID 94442: Dns-SO2-NH-NH2. Terminal NH2 loses two H; carbonyl O leaves as water after C=N formation.
+    tag = Chem.RWMol(Chem.AddHs(Chem.MolFromSmiles("CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)NN")))
+    terminal = next(a for a in tag.GetAtoms() if a.GetAtomicNum() == 7
+                    and sum(n.GetAtomicNum() == 1 for n in a.GetNeighbors()) == 2
+                    and any(n.GetAtomicNum() == 7 for n in a.GetNeighbors()))
+    anchor = terminal.GetIdx()
+    leaving = [n.GetIdx() for n in terminal.GetNeighbors() if n.GetAtomicNum() == 1]
+    for i in sorted(leaving, reverse=True):
+        tag.RemoveAtom(i)
+    product = _attach_at_sites(product, targets, tag.GetMol(), anchor, Chem.BondType.DOUBLE)
+    edit = Chem.RWMol(product)
+    for i in sorted(carbonyl_o, reverse=True):
+        edit.RemoveAtom(i)
+    return _clean_product(edit.GetMol())
+
+
+def reaction_product(mol, result, groups):
+    """Complete product for the four CIL channels (A / H / C / K); None for reagents without a full-structure renderer."""
+    if not result["n"]:
+        return None
+    if result["name"] in ("Dansyl chloride", "Dansyl chloride (base)"):
+        return _dansyl_chloride_product(mol, result, groups)
+    if result["name"] == "DmPA bromide":
+        return _dmpa_product(mol, result, groups)
+    if result["name"] == "Dansylhydrazine":
+        return _dansylhydrazine_product(mol, result, groups)
+    return None
+
+
+def reaction_product_svg(mol, result, groups, size=(640, 480)) -> Optional[str]:
+    """Full-product depiction for the four CIL channels; other reagents keep their functional-group schemes."""
+    product = reaction_product(mol, result, groups)
     if product is None:
         return None
-    rdCoordGen.AddCoords(product)       # keeps multiple large Dansyl tags separated
+    rdCoordGen.AddCoords(product)       # keeps multiple large labels separated
     drawer = _depict.svg_drawer(*size)
     drawer.DrawMolecule(product)
     drawer.FinishDrawing()
