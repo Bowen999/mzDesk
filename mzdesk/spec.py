@@ -19,6 +19,8 @@ from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
 from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
 # 指标名字只用标准库（和 ms2_similarity.py 共用一份），所以这里可以直接导入
 from mzdesk.ms2 import metric_names as METRIC_NAMES
+# isotopes 顶层只用标准库（IsoSpecPy 在用到时才导入）
+from mzdesk.ms1.isotopes import RESOLUTIONS
 
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
@@ -36,9 +38,13 @@ DATABASES = ["HMDB", "PubChem", "LIPID MAPS", "KEGG", "ChEBI", "DrugBank", "NORM
 # ---- 字段 ----
 def structure(id="structure", label="Compound", optional=False):
     return {"type": "structure", "id": id, "label": label, "optional": optional}
-def precursor(id="precursor", adduct=True, label="Precursor m/z", adducts=None):
-    return {"type": "precursor", "id": id, "adduct": adduct, "label": label,
-            "adducts": adducts or {"Positive": ADDUCTS_POS, "Negative": ADDUCTS_NEG}}
+def precursor(id="precursor", adduct=True, label="Precursor m/z", adducts=None, mz=True):
+    """mz=False: 不显示 m/z 输入框（只选离子模式和加合物）；该字段的加合物列表里没有 Auto 时，默认取列表第一项。"""
+    f = {"type": "precursor", "id": id, "adduct": adduct, "label": label,
+         "adducts": adducts or {"Positive": ADDUCTS_POS, "Negative": ADDUCTS_NEG}}
+    if not mz:
+        f["mz"] = False
+    return f
 def spectrum(id="ms2", label="MS2 spectrum", multi=False):
     return {"type": "spectrum", "id": id, "label": label, "multi": multi}
 def ms1(id="ms1"):
@@ -167,6 +173,7 @@ EXAMPLE_STRUCTURES = {
     "lidocaine": "CCN(CC)CC(=O)Nc1c(C)cccc1C",
     "POPC": r"CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCC/C=C\CCCCCCCC",
     "D-glucose": "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O",
+    "crisaborole": "B1(C2=C(CO1)C=C(C=C2)OC3=CC=C(C=C3)C#N)O",     # PubChem CID 44591583，C14H10BNO3
     "captopril": "C[C@H](CS)C(=O)N1CCC[C@H]1C(=O)O",
     "DOPG": r"CCCCCCCC/C=C\CCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC(O)CO)OC(=O)CCCCCCC/C=C\CCCCCCCC",   # PG 36:2
 }
@@ -298,22 +305,9 @@ MODULES = [
         subgroup="detectability", live=True, example={"structure": _name("captopril"), "sources": ["Japanese Pharmacopoeia", "RepoRT"]}),
 
     # ---- MS1 ----
-    module("ms1_theory", "Theoretical m/z", "A", "<b>Precursor m/z</b> of a structure or formula for an adduct, and its <b>isotope pattern</b>.",
-        [structure(label="Compound or formula"), precursor(label="Observed precursor m/z (optional)")],
-        [cards([("Precursor m/z", "theoretical"), ("Ion formula", ""), ("Error vs observed", "ppm")], id="theory"),
-         table(["Adduct", "Ion formula", "Theoretical m/z", "Δ ppm vs observed"], "All adducts", "Δ ppm shown when the observed m/z is within 100 ppm", id="adducts"),
-         table(["Isotope", "Theoretical m/z", "Theoretical abundance"], "Isotope pattern"), figure("Theoretical isotope pattern")],
-        subgroup="ms1", live=True, example={"structure": _name("caffeine"), "precursor": _prec("195.0877")}),
-
-    module("ms1_match", "Isotope match", "A", "<b>Score</b> the observed isotope pattern against theory; flag <b>Cl / Br / S</b>.",
-        [structure(label="Compound or formula"), precursor(), ms1(), number("tol_ppm", "Mass tolerance (ppm)", 5.0, 0.1)],
-        [cards([("Isotope score", "0–1"), ("Cl / Br", "present?"), ("S", "present?")]),
-         table(["Isotope", "Theoretical m/z", "Observed m/z", "Δ ppm", "Theoretical %", "Observed %"]),
-         figure("Theoretical vs observed isotope pattern")],
-        subgroup="ms1"),
-
-    module("ms1_search", "Exact-mass search", "A", "Which <b>database compounds</b> match the precursor m/z.",
-        [precursor(), number("tol_ppm", "Mass tolerance (ppm)", 5.0, 0.1), multiselect("databases", "Exact-mass databases", DATABASES, ["HMDB", "PubChem"])],
+    module("ms1_search", "Mass search", "A", "Which <b>database compounds</b> match the precursor m/z, optionally filtered by the <b>isotope pattern</b>.",
+        [precursor(), number("tol_ppm", "Mass tolerance (ppm)", 5.0, 0.1), multiselect("databases", "Exact-mass databases", DATABASES, ["HMDB", "PubChem"]),
+         ms1(), select("resolution", "Resolution", list(RESOLUTIONS)), number("isotope_min", "Isotope score threshold", 0.8, 0.05)],
         [cards([("Compounds", "", "One row per PubChem compound (CID). Stereoisomers and salts have their own CIDs, so they count separately."),
                 ("Formulas", "", "Different molecular formulas among the hits."),
                 ("Closest hit", "", "The compound with the smallest |Δ ppm|; among equals, one listed in a chosen database comes first."),
@@ -323,25 +317,34 @@ MODULES = [
                     help=["Every database is searched online through PubChem, so hits come from PubChem's copy of each database "
                           "(HMDB, DrugBank, ChEBI, KEGG, LIPID MAPS; NORMAN is its Suspect List Exchange, which includes SusDat).",
                           "One group per formula and adduct, closest first. Δ ppm = (observed m/z − theoretical m/z) / theoretical m/z × 10<sup>6</sup>; "
-                          "the theoretical m/z comes from the compound's monoisotopic mass and the adduct, as on the Theoretical m/z page.",
+                          "the theoretical m/z comes from the compound's monoisotopic mass and the adduct, as on the Theoretical page.",
                           "Auto tries every adduct of the ion mode. A compound is listed once, under its best-fitting adduct. "
                           "Permanently charged compounds (e.g. choline) only match [M]+.",
                           "At most 100 compounds are listed per database. PubChem alone can have thousands: compounds deposited by more "
                           "PubChem sources come first (depositor count), then lower CIDs (older, usually better known).",
-                          "IDs are the databases' own IDs, taken from PubChem cross-references; PubChem has no ID for NORMAN."])],
+                          "IDs are the databases' own IDs, taken from PubChem cross-references; PubChem has no ID for NORMAN.",
+                          "With an isotope MS, each group's theoretical pattern (IsoSpecPy, merged to the chosen resolution) is compared with it: every theoretical peak "
+                          "takes the most intense observed peak within the mass tolerance (Unit mass: 0.5 Da), each observed peak once; the score is the cosine "
+                          "between theoretical abundances and matched intensities, and a theoretical peak with no match counts as 0.",
+                          "Observed peaks that match no theoretical peak are ignored (they may be other ions). Groups below the threshold are hidden; "
+                          "groups whose formula cannot be scored (e.g. isotope labels) are kept and marked N/A."])],
         subgroup="ms1", live=True,
-        example={"precursor": _prec("195.0877"), "tol_ppm": "5", "databases": ["HMDB", "PubChem"]}),
+        example={"precursor": _prec("195.0877"), "tol_ppm": "5", "databases": ["HMDB", "PubChem"],
+                 "ms1": CAFFEINE_MS1, "resolution": "Q-TOF 30k", "isotope_min": "0.8"}),
 
-    module("ms1_formula", "Formula (BUDDY)", "A", "<b>Rank molecular formulas</b> for the precursor from its MS1 isotopes and MS2 (BUDDY).",
-        [precursor(adducts=BUDDY_ADDUCTS), ms1(), spectrum(label="MS2 spectrum (optional)"),
-         select("instrument", "Instrument", ["Orbitrap", "Q-TOF", "FT-ICR"]), checkbox("halogen", "Include halogens (F, Cl, Br, I)"),
-         text("formula", "Formula (optional: skip ranking, explain the MS2 with it)", placeholder="C8H10N4O2")],
-        [cards([("Top formula", ""), ("Adduct used", ""), ("MS1 isotope peaks used", "")], id="summary"),
-         table(["Rank", "Formula", "Theoretical m/z", "Δ ppm", "Probability", "FDR", "MS1 isotope similarity"], "Formula candidates", id="candidates"),
-         figure("MS2 fragment formulas · top candidate", id="fragments_plot", help="Hover a peak for its formula, Δ ppm and neutral loss."),
-         table(["m/z", "Rel. intensity (%)", "Fragment formula", "Δ ppm", "Neutral loss", "Other fits"], id="fragments")],
-        subgroup="ms1", live=True,
-        example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
+    module("ms1_theory", "Theoretical", "A", "<b>Precursor m/z</b> and <b>isotope pattern</b> of a structure or formula for an adduct.",
+        [structure(label="Compound or formula"),
+         precursor(label="Adduct", adducts={"Positive": ADDUCTS_POS[1:], "Negative": ADDUCTS_NEG[1:]}, mz=False),
+         select("resolution", "Resolution", list(RESOLUTIONS))],
+        [cards([("Precursor m/z", "theoretical", "m/z of the ion made of the most abundant isotope of each element (M), as the Mass search page uses it."),
+                ("Ion formula", ""), ("Most abundant peak", "")], id="theory"),
+         table(["Peak", "m/z", "Relative abundance (%)"], "Isotope pattern", id="pattern",
+               help=["Computed with IsoSpecPy from the ion formula (isotope fine structure), then merged to the chosen resolution: "
+                     "peaks closer than the FWHM (m/z ÷ resolution) become one peak (intensity-weighted m/z, summed abundance); Unit mass merges by nominal mass.",
+                     "M is the ion with the most abundant isotope of every element (<sup>11</sup>B, <sup>79</sup>Br, <sup>35</sup>Cl …). Lighter peaks are M−1 (e.g. <sup>10</sup>B).",
+                     "Peaks that stay apart at the chosen resolution carry (a), (b) after the label. Peaks below 0.1 % of the largest are dropped."]),
+         figure("Theoretical isotope pattern", id="pattern_plot", help="Hover a peak for its m/z and relative abundance.")],
+        subgroup="ms1", live=True, example={"structure": _name("crisaborole"), "precursor": _prec("", adduct="[M+H]+"), "resolution": "Orbitrap 60k"}),
 
     # ---- Spectrum（subgroup id 仍是 ms2）----
     module("ms2_clean", "Clean & Vis", "B", "<b>Clean</b> an MS2 spectrum, <b>see</b> it, and get it in <b>every common format</b> (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).",
@@ -421,6 +424,17 @@ MODULES = [
          table(["Observed m/z", "Rel. intensity (%)", "Kind", "Ion formula", "Theoretical m/z", "Δ ppm", "Neutral loss", "Fragment structure"], id="peaks")],
         subgroup="ms2", live=True,
         example={"structure": _name("DOPG"), "precursor": _prec("", "Negative", "[M-H]-"), "ms2": _paste(PG_36_2_MS2)}),
+
+    module("ms1_formula", "Formula (BUDDY)", "A", "<b>Rank molecular formulas</b> for the precursor from its MS1 isotopes and MS2 (BUDDY).",
+        [precursor(adducts=BUDDY_ADDUCTS), ms1(), spectrum(label="MS2 spectrum (optional)"),
+         select("instrument", "Instrument", ["Orbitrap", "Q-TOF", "FT-ICR"]), checkbox("halogen", "Include halogens (F, Cl, Br, I)"),
+         text("formula", "Formula (optional: skip ranking, explain the MS2 with it)", placeholder="C8H10N4O2")],
+        [cards([("Top formula", ""), ("Adduct used", ""), ("MS1 isotope peaks used", "")], id="summary"),
+         table(["Rank", "Formula", "Theoretical m/z", "Δ ppm", "Probability", "FDR", "MS1 isotope similarity"], "Formula candidates", id="candidates"),
+         figure("MS2 fragment formulas · top candidate", id="fragments_plot", help="Hover a peak for its formula, Δ ppm and neutral loss."),
+         table(["m/z", "Rel. intensity (%)", "Fragment formula", "Δ ppm", "Neutral loss", "Other fits"], id="fragments")],
+        subgroup="ms2", live=True,
+        example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
 
     module("ms2_denovo", "De novo", "A", "<b>Structure candidates</b> when no structure is given.",
         [precursor(), spectrum(), text("formula", "Formula (optional)")],
@@ -521,7 +535,7 @@ PIPELINES = [
     {"id": "library_search", "title": "Library search", "one_liner": "I have a <b>spectrum</b> and no structure. Find it in the <b>libraries</b> and check the hit.",
      "inputs": [spectrum(), precursor(), multiselect("libraries", "Libraries", LIBRARIES), number("tol_ppm", "Tolerance (ppm)", 10.0, 0.1)],
      "stages": [stage("Spectrum cleanup", "ms2_clean"), stage("MS2 library search", ["ms2_library", "ms2_similarity"]),
-                stage("MS1 check of the hits", ["ms1_theory", "ms1_match"]), stage("Exclusivity", "exclusivity"), stage("Report", "report")]},
+                stage("MS1 check of the hits", "ms1_theory"), stage("Exclusivity", "exclusivity"), stage("Report", "report")]},
     {"id": "de_novo", "title": "De novo annotation", "one_liner": "I have a spectrum, the libraries do not have it. Infer <b>formula</b>, then <b>structure candidates</b>.",
      "inputs": [precursor(), ms1(), spectrum(), number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1),
                 text("elements", "Element constraints", "C0-50 H0-100 N0-10 O0-20 P0-3 S0-3"),
@@ -531,7 +545,7 @@ PIPELINES = [
     {"id": "verify", "title": "Result verification", "one_liner": "I have a <b>candidate structure</b>. Does <b>every piece of evidence</b> support it?",
      "inputs": [structure(label="Candidate structure"), precursor(), ms1(), spectrum(),
                 number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1)],
-     "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Platform fit", "platform_fit"), stage("MS1", ["ms1_theory", "ms1_match"]),
+     "stages": [stage("Molecular", ["structure_formats", "properties"]), stage("Platform fit", "platform_fit"), stage("MS1", "ms1_theory"),
                 stage("MS2", ["ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments"]),
                 stage("Exclusivity", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
     {"id": "feature_prediction", "title": "MS feature prediction", "one_liner": "I have a <b>structure</b> and no spectrum. Predict <b>what the instrument will see</b>: adducts, precursor m/z, isotope pattern, MS2.",

@@ -18,7 +18,7 @@ export function initialValues(fields: Field[]): Record<string, any> {
     if (!f.id) continue;
     switch (f.type) {
       case "structure": v[f.id] = { mode: "Name / ID / Formula", value: "" }; break;
-      case "precursor": v[f.id] = { precursor_mz: "", ion_mode: "Positive", adduct: "Auto" }; break;
+      case "precursor": v[f.id] = { precursor_mz: "", ion_mode: "Positive", adduct: f.adducts?.Positive?.[0] ?? "Auto" }; break;
       case "spectrum": v[f.id] = { source: "Paste", value: "" }; break;
       case "checkbox": v[f.id] = !!f.value; break;
       case "multiselect": v[f.id] = f.value ?? []; break;
@@ -101,9 +101,9 @@ function PrecursorInput({ field, value, onChange }: P) {
   const adducts = lists[value.ion_mode] ?? lists.Positive;
   return (
     <div className="field wide composite row3">
-      <label className="field">{field.label ?? "Precursor m/z"}<input type="number" step="0.0001" placeholder="195.0877" value={value.precursor_mz} onChange={e => set({ precursor_mz: e.target.value })} /></label>
+      {field.mz !== false && <label className="field">{field.label ?? "Precursor m/z"}<input type="number" step="0.0001" placeholder="195.0877" value={value.precursor_mz} onChange={e => set({ precursor_mz: e.target.value })} /></label>}
       <div className="field"><span>Ion mode</span><div className="radio-row">
-        {["Positive", "Negative"].map(m => <label key={m}><input type="radio" checked={value.ion_mode === m} onChange={() => set({ ion_mode: m, adduct: "Auto" })} /> {m}</label>)}
+        {["Positive", "Negative"].map(m => <label key={m}><input type="radio" checked={value.ion_mode === m} onChange={() => set({ ion_mode: m, adduct: lists[m]?.[0] ?? "Auto" })} /> {m}</label>)}
       </div></div>
       {field.adduct !== false && <label className="field">Adduct<select value={value.adduct} onChange={e => set({ adduct: e.target.value })}>{adducts.map(a => <option key={a}>{a}</option>)}</select></label>}
     </div>

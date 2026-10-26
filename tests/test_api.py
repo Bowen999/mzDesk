@@ -61,7 +61,7 @@ def test_module_ids_unique_and_subgroups_known():
 
 def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
-    assert ms2 == ["ms2_clean", "ms2_ei", "ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments", "ms2_denovo"]
+    assert ms2 == ["ms2_clean", "ms2_ei", "ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments", "ms1_formula", "ms2_denovo"]
     assert "ms2" not in {m["id"] for m in MODULES}
     assert next(s["title"] for s in SUBGROUPS if s["id"] == "ms2") == "Spectrum"
 

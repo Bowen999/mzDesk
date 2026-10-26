@@ -170,13 +170,15 @@ def known_methods(i, o):
 
 
 def ms1_theory(i, o):
-    mz, formula, err = _card(o, "theory", "Precursor m/z"), _card(o, "theory", "Ion formula"), _card(o, "theory", "Error vs observed")
+    mz, formula = _card(o, "theory", "Precursor m/z"), _card(o, "theory", "Ion formula")
     if not mz:
         return None
-    adduct = re.sub(r"\s*\(.*\)$", "", _note(o, "theory", "Precursor m/z") or "")
+    adduct = _note(o, "theory", "Precursor m/z")
+    top, top_mz = _card(o, "theory", "Most abundant peak"), _note(o, "theory", "Most abundant peak")
+    n = len(_rows(o, "pattern"))
     text = f"{_b(adduct) + ' at ' if adduct else ''}{_b('m/z ' + mz)}" + (f" ({formula})" if formula else "")
-    if err:
-        text += f"; observed is {_b(err + ' ppm')} off"
+    if top:
+        text += f"; {n} isotope peak{'s' if n != 1 else ''}, most abundant {_b(top)}" + (f" ({top_mz})" if top_mz else "")
     return text + "."
 
 
@@ -199,6 +201,10 @@ def ms1_search(i, o):
         tol = f"{float(i.get('tol_ppm') or 5):g}"
     except (TypeError, ValueError):
         tol = "5"
+    note_all = _note(o, "summary", "Compounds") or ""
+    hid = re.search(r"(\d+) compounds? in (\d+) formula groups? hidden: isotope score below ([\d.]+)", note_all)
+    if n == "0" and hid:
+        return f"All {hid.group(1)} compounds within {tol} ppm fail the isotope score (≥ {hid.group(3)})."
     if n == "0":
         dbs = _card(o, "summary", "Databases searched")
         return f"Nothing matched within {tol} ppm" + (f" in {_join(dbs.split(', '))}." if dbs else ".")
@@ -207,6 +213,8 @@ def ms1_search(i, o):
     capped = "capped" in (_note(o, "summary", "Compounds") or "")
     text = _b(f"{n} compound{'s' if n != '1' else ''}") + (f" ({formulas} formula{'s' if formulas != '1' else ''})" if formulas else "") + f" within {tol} ppm"
     text += ", list capped" if capped else ""
+    if hid:
+        text += f", {hid.group(2)} formula group{'s' if hid.group(2) != '1' else ''} hidden by isotope score"
     if name and note:
         ion, _, ppm = note.partition(" · ")
         text += f"; closest: {_b(name)} {ion}" + (f" ({ppm})" if ppm else "")

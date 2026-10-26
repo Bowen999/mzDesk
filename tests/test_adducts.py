@@ -440,9 +440,13 @@ def test_mz_matches_the_theoretical_mz_page(name, polarity, additive, adduct):
     if name not in LIPIDS and NO_MOLGPKA:
         pytest.skip("MolGpKa weights not installed")
     ours = {c[0]: c for c, _ in _rows(_run({"structure": _smiles(S[name]), "ion_mode": polarity, "additive": additive}).json()["outputs"])}
-    ms1 = client.post("/api/modules/ms1_theory/run", json={"structure": _smiles(S[name]),
-                                                           "precursor": {"precursor_mz": "", "ion_mode": polarity, "adduct": adduct}}).json()
-    theirs = {r[0]: r for r in ms1["outputs"]["adducts"]["rows"]}
-    assert ours[adduct][2] == theirs[adduct][2] and ours[adduct][1] == theirs[adduct][1]
+    theirs = {}
+    for a in ours:
+        r = client.post("/api/modules/ms1_theory/run", json={"structure": _smiles(S[name]),
+                                                             "precursor": {"precursor_mz": "", "ion_mode": polarity, "adduct": a}})
+        if r.status_code == 200:
+            v = r.json()["outputs"]["theory"]["values"]
+            theirs[a] = (v["Ion formula"], v["Precursor m/z"]["value"])
+    assert ours[adduct][2] == theirs[adduct][1] and ours[adduct][1] == theirs[adduct][0]
     shared = set(ours) & set(theirs)
-    assert len(shared) >= 2 and all(ours[a][2] == theirs[a][2] for a in shared)
+    assert len(shared) >= 2 and all(ours[a][2] == theirs[a][1] for a in shared)

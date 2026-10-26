@@ -262,6 +262,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.10', date:'2026-10-25',
+  title:'MS1 改版：Mass search + Theoretical 两页；同位素分布改用 IsoSpecPy，Mass search 可按同位素得分过滤',
+  note:'新依赖 IsoSpecPy（pip install IsoSpecPy，BSD-2，用到时才导入）。删除 Isotope match 页；Formula (BUDDY) 移到 Spectrum 小类（id 不变，URL 和 pipeline 照旧）。新增 tests/test_isotopes.py。',
+  state:[['能算的模块页','19 / 31'], ['Pipeline','4 条，未接'], ['测试','1016 个通过']],
+  c:{
+   ms1:['feat','Theoretical（原 Theoretical m/z）：只选结构 / 分子式、离子模式、加合物（没有 Auto 和观测 m/z）、分辨率；输出 precursor m/z、离子式、最强峰、同位素表和棒图。同位素精细结构用 IsoSpecPy，按分辨率合并：Orbitrap 60k / Q-TOF 30k 把相差小于 FWHM（m/z÷R）的峰并成一个（强度加权 m/z，丰度相加），Unit mass 按名义质量合并；保留 ≥ 最强峰 0.1 %。M = 每个元素取最丰同位素的离子（11B、79Br …），更轻的峰标 M−1（10B 约为 11B 峰的 25 %）。元素不再限于 BUDDY 的 12 个（硼等都行）。Mass search（原 Exact-mass search）：可选 isotope MS + 分辨率 + 得分阈值（默认 0.8）；每个（分子式, 加合物）组算理论分布与观测的余弦相似度（每个理论峰取容差内最强的观测峰，每个观测峰只用一次，没匹配上的理论峰记 0，多出来的观测峰忽略；容差 = 页面 ppm，Unit mass 为 0.5 Da），低于阈值的组隐藏，摘要写隐藏了几组几个化合物，算不了的组保留并标 N/A。删除 Isotope match 页；pipeline 里的 ms1_match 阶段去掉。',true,{w:'mzdesk/ms1/isotopes.py · mzdesk/api/runners/ms1.py · mzdesk/spec.py · mzdesk/api/verdicts.py · tests/test_isotopes.py · tests/test_adducts.py'}],
+   ms2:['chg','Formula (BUDDY) 从 MS1 移到 Spectrum 小类，排在 Fragments (MetFrag) 之后；id 仍是 ms1_formula。',false,{w:'mzdesk/spec.py · tests/test_api.py'}],
+   app:['feat','precursor 字段可以不要 m/z 框（mz=False），加合物列表里没有 Auto 时默认取第一项。Theoretical 示例改为 crisaborole（含硼）。',false,{w:'web/src/components/Fields.tsx · web/src/types.ts · mzdesk/spec.py'}],
+   docs:['doc','README：MS1 两页和 IsoSpecPy 同位素引擎，Formula (BUDDY) 列入 Spectrum；候选软件表加 IsoSpecPy。requirements.txt 加 IsoSpecPy。版本号 0.2.10，本页加 v0.2.10。',false,{w:'admin/README.md · admin/version_change.html · requirements.txt · mzdesk/__init__.py'}]
+  }},
  {id:'v0.2.9', date:'2026-10-25',
   title:'MS1 精确质量检索（PubChem 在线）+ Spectrum 库检索（MassBank / GNPS 本地索引）上线',
   note:'精确质量检索联网即用。库检索需一次性安装本地库：python -m mzdesk.ms2.library_setup MassBank GNPS。新增 tests/test_exact_mass.py、test_library_search.py（离线：fake_pubchem 回放 + 小型库样例）。',

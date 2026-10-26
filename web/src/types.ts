@@ -1,5 +1,5 @@
 export type Field = {
-  type: string; id?: string; label?: string; optional?: boolean; adduct?: boolean; multi?: boolean;
+  type: string; id?: string; label?: string; optional?: boolean; adduct?: boolean; mz?: boolean; multi?: boolean;
   value?: any; step?: number | null; placeholder?: string | null; options?: string[]; min?: number; max?: number;
   accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
 };

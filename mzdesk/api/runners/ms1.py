@@ -1,4 +1,4 @@
-"""MS1 小类：理论 m/z（分子式 + 加合物）、精确质量检索（PubChem）、BUDDY 分子式推断。"""
+"""MS1 小类：Theoretical（m/z + 同位素分布）、Mass search（PubChem 精确质量 + 可选同位素过滤）；Formula (BUDDY) 页也在这里（侧栏归 Spectrum）。"""
 import re
 
 from rdkit import Chem
@@ -6,13 +6,12 @@ from rdkit.Chem import rdMolDescriptors
 
 from mzdesk.api import blocks, common
 from mzdesk.api.common import EngineError, InputError, fmt, signed
-from mzdesk.shared import colors
+from mzdesk.shared import colors, ms2_plot
 from mzdesk.shared.spectrum import parse_spectrum
 from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, DATABASES
 
 INSTRUMENTS = {"Orbitrap": "orbitrap", "Q-TOF": "qtof", "FT-ICR": "fticr"}
 ELEMENTS_NOTE = "Supported elements: C H N O P S F Cl Br I Na K."
-ADDUCT_TABLE_PPM = 100      # the all-adducts table shows Δ ppm only this close to the observed m/z
 SEARCH_MAX_PPM = 100        # exact-mass search: widest tolerance
 
 
@@ -30,45 +29,46 @@ def _neutral_formula(struct, warnings):
     return re.sub(r"[+-]\d*$", "", rdMolDescriptors.CalcMolFormula(mol))
 
 
+def _resolution(inputs):
+    from mzdesk.ms1 import isotopes
+    res = common.text(inputs, "resolution") or isotopes.DEFAULT_RESOLUTION
+    if res not in isotopes.RESOLUTIONS:
+        raise InputError(f"Unknown resolution {res}.")
+    return res
+
+
+def _pattern_figure(peaks):
+    """理论同位素分布棒图（样式同谱图页）；悬停卡片显示峰标签、m/z、相对丰度。"""
+    fig, cards = ms2_plot.spectrum_figure([(p["mz"], p["abundance"]) for p in peaks], y_title="Relative abundance (%)")
+    for card, p in zip(cards, peaks):
+        card["kind"] = p["label"]
+        card["rows"] = [["m/z", f"{p['mz']:.4f}"], ["Relative abundance", f"{p['abundance']:.2f} %"]]
+    return common.plotly(fig, peaks=cards)
+
+
 def run_theory(inputs):
-    from mzdesk.ms1 import msbuddy_engine as bd
+    from mzdesk.ms1 import isotopes
 
     warnings = []
     struct = common.structure(inputs, label="Compound or formula", allow_formula=True)
-    observed, positive, adduct = common.precursor(inputs, label="Observed precursor m/z")
+    _, positive, adduct = common.precursor(inputs)
+    pool = (ADDUCTS_POS if positive else ADDUCTS_NEG)[1:]
+    adduct = adduct or pool[0]          # Auto（流水线等旧输入）= [M+H]+ / [M-H]-
+    if adduct not in pool:
+        raise InputError(f"{adduct} is not a {'positive' if positive else 'negative'}-mode adduct.")
+    resolution = _resolution(inputs)
     formula = _neutral_formula(struct, warnings)
-    if not bd.formula_is_valid(formula):
-        raise InputError(f"{formula}: cannot compute m/z. {ELEMENTS_NOTE}")
-
-    rows, ions = [], {}
-    for a in (ADDUCTS_POS if positive else ADDUCTS_NEG)[1:]:
-        mz, ion_formula = bd.ion_mz_and_formula(formula, a)
-        ions[a] = (mz, ion_formula)
-        ppm = bd.ppm_error(observed, mz) if (observed and mz) else None
-        near = ppm is not None and abs(ppm) <= ADDUCT_TABLE_PPM
-        rows.append([a, ion_formula or common.MISSING, fmt(mz, 4), signed(ppm, 1) if near else common.MISSING])
-
-    if adduct is None:       # Auto: the adduct closest to the observed m/z, else [M+H]+ / [M-H]-
-        default = "[M+H]+" if positive else "[M-H]-"
-        if observed:
-            fits = [(abs(bd.ppm_error(observed, mz)), a) for a, (mz, _) in ions.items() if mz]
-            adduct = min(fits)[1] if fits else default
-        else:
-            adduct = default
-        note = f"{adduct} (Auto)"
-    else:
-        note = adduct
-    mz, ion_formula = ions.get(adduct) or bd.ion_mz_and_formula(formula, adduct)
-    if mz is None:
-        raise InputError(f"{formula} cannot form {adduct} (the adduct removes atoms the formula does not have).")
-    ppm = bd.ppm_error(observed, mz) if observed else None
-    if ppm is not None and abs(ppm) > 10:
-        warnings.append(f"Observed m/z {observed:.4f} is {ppm:+.1f} ppm from {formula} {adduct} ({mz:.4f}). "
-                        "Check the structure, adduct and ion mode.")
+    try:
+        pat = isotopes.pattern(formula, adduct, resolution)
+    except ValueError as exc:
+        raise InputError(str(exc)) from None
+    peaks = pat["peaks"]
+    top = max(peaks, key=lambda p: p["abundance"])
     return {"outputs": {
-        "theory": {"values": {"Precursor m/z": {"value": fmt(mz, 4), "note": note}, "Ion formula": ion_formula,
-                              "Error vs observed": signed(ppm, 1) if ppm is not None else common.MISSING}},
-        "adducts": {"rows": rows},
+        "theory": {"values": {"Precursor m/z": {"value": fmt(pat["mono_mz"], 4), "note": adduct}, "Ion formula": pat["ion_formula"],
+                              "Most abundant peak": {"value": top["label"], "note": f"m/z {top['mz']:.4f}"}}},
+        "pattern": {"rows": [[p["label"], fmt(p["mz"], 4), fmt(p["abundance"], 2)] for p in peaks]},
+        "pattern_plot": _pattern_figure(peaks),
     }, "warnings": warnings}
 
 
@@ -169,6 +169,47 @@ def _id_cell(hit, em):
     return blocks.link(" · ".join(tokens), url or em.PUBCHEM_URL.format(hit.cid)) if tokens else common.MISSING
 
 
+class _IsotopeFilter:
+    """Mass search 的同位素过滤：每个 (分子式, 加合物) 组算理论分布与观测的余弦相似度。"""
+
+    def __init__(self, observed, resolution, tol_ppm, threshold):
+        self.observed, self.resolution, self.tol_ppm, self.threshold = observed, resolution, tol_ppm, threshold
+
+    def score(self, formula, adduct):
+        """(得分 或 None = 算不了, 组的 "?" 文字)。"""
+        from mzdesk.ms1 import isotopes
+        try:
+            pat = isotopes.pattern(formula, adduct, self.resolution)
+        except ValueError as exc:
+            return None, f"No isotope score: {exc}"
+        sim = isotopes.similarity(pat["peaks"], self.observed, self.resolution, self.tol_ppm)
+        lines = [f"Isotope score {sim['score']:.2f} (cosine, {self.resolution})."]
+        for r in sim["rows"]:
+            lines.append(f"{r['label']} {r['mz']:.4f} ({r['abundance']:.1f} %): "
+                         + (f"observed {r['obs_mz']:.4f} ({signed(r['ppm'], 1)} ppm, {r['obs_rel']:.1f} %)" if r["obs_mz"] is not None else "no match"))
+        return sim["score"], lines
+
+
+def _isotope_filter(inputs, precursor_mz, tol_ppm, warnings):
+    """给了有效的 isotope MS 就返回过滤器，否则 None（页面行为和以前完全一样）。"""
+    from mzdesk.ms1 import isotopes
+    text = common.text(inputs, "ms1")
+    if not text:
+        return None
+    observed = parse_spectrum(text)
+    if not observed:
+        warnings.append("No valid isotope MS peaks; the isotope filter is off.")
+        return None
+    resolution = _resolution(inputs)
+    threshold = common.number(inputs, "isotope_min", "Isotope score threshold", default=0.8, minimum=0, maximum=1)
+    tol, in_da = isotopes.match_tolerance(resolution, tol_ppm)
+    window = tol if in_da else precursor_mz * tol * 1e-6
+    if not any(abs(m - precursor_mz) <= window for m, _ in observed):
+        warnings.append(f"The isotope MS has no peak within {tol:g} {'Da' if in_da else 'ppm'} of the precursor m/z {precursor_mz:.4f}; "
+                        "isotope scores will be low.")
+    return _IsotopeFilter(observed, resolution, tol_ppm, threshold)
+
+
 def run_search(inputs):
     from mzdesk.ms1 import exact_mass as em
 
@@ -186,6 +227,8 @@ def run_search(inputs):
     adducts = pool if adduct is None else [adduct]
     if not em.mass_windows(mz, adducts, tol):
         raise InputError("The precursor m/z is too small for the chosen adduct.")
+    warnings = []
+    iso = _isotope_filter(inputs, mz, tol, warnings)
     try:
         res = em.search(mz, adducts, tol, dbs)
     except em.ExactMassError as exc:
@@ -194,27 +237,47 @@ def run_search(inputs):
     groups = {}         # (formula, adduct) -> hits; the engine's order is closest first
     for h in res.hits:
         groups.setdefault((h.formula, h.adduct), []).append(h)
-    table = []
+    table, shown, hidden_groups, hidden_compounds, unscored = [], [], 0, 0, []
     for (formula, ad), hs in groups.items():
         hs.sort(key=lambda h: h.order)
         n = len(hs)
+        meta = f"m/z {hs[0].mz:.4f} · Δ {signed(hs[0].ppm, 1)} ppm · {n} compound{'s' if n != 1 else ''}"
+        help_ = None
+        if iso:
+            score, help_ = iso.score(formula, ad)
+            if score is None:
+                unscored.append(f"{formula} {ad}")
+                meta += " · isotope N/A"
+            elif score < iso.threshold:
+                hidden_groups += 1
+                hidden_compounds += n
+                continue
+            else:
+                meta += f" · isotope {score:.2f}"
+        shown += hs
         table.append(blocks.group(
             f"{formula} · {ad}",
             [[h.name, _id_cell(h, em), blocks.link(str(h.cid), em.PUBCHEM_URL.format(h.cid))] for h in hs],
-            meta=f"m/z {hs[0].mz:.4f} · Δ {signed(hs[0].ppm, 1)} ppm · {n} compound{'s' if n != 1 else ''}"))
+            meta=meta, help=help_))
+    if unscored:
+        warnings.append(f"No isotope score for {', '.join(unscored[:5])}{' …' if len(unscored) > 5 else ''}; kept.")
 
     chosen = [d for d in em.SOURCES if d in dbs]
     per_db = " · ".join(f"{d} {res.totals[d]:,}" + (f" ({res.shown[d]} listed)" if res.totals[d] > res.shown[d] else "") for d in chosen)
     capped = any(res.totals[d] > res.shown[d] for d in chosen)
-    top = res.hits[0] if res.hits else None
+    top = shown[0] if shown else None
+    notes = ([f"capped at {em.MAX_PER_DB} per database"] if capped else [])
+    if hidden_groups:
+        notes.append(f"{hidden_compounds} compound{'s' if hidden_compounds != 1 else ''} in {hidden_groups} formula group{'s' if hidden_groups != 1 else ''} "
+                     f"hidden: isotope score below {iso.threshold:g}")
     summary = {
-        "Compounds": {"value": str(len(res.hits)), "note": f"capped at {em.MAX_PER_DB} per database"} if capped else str(len(res.hits)),
-        "Formulas": str(len({h.formula for h in res.hits})),
+        "Compounds": {"value": str(len(shown)), "note": "; ".join(notes)} if notes else str(len(shown)),
+        "Formulas": str(len({h.formula for h in shown})),
         "Closest hit": {"value": top.name, "note": f"{top.formula} {top.adduct} · {signed(top.ppm, 1)} ppm"} if top else common.MISSING,
         "Databases searched": {"value": ", ".join(chosen), "note": per_db},
     }
-    return {"outputs": {"summary": {"values": summary}, "hits": blocks.grouptable_data(table, count=len(res.hits))},
-            "warnings": res.warnings}
+    return {"outputs": {"summary": {"values": summary}, "hits": blocks.grouptable_data(table, count=len(shown))},
+            "warnings": warnings + res.warnings}
 
 
 RUNNERS = {"ms1_theory": run_theory, "ms1_search": run_search, "ms1_formula": run_formula}
