@@ -129,12 +129,13 @@ def chips(title=None, id=None, help=None, key=None):
     A chip with help is clickable: hover or focus shows its popover, click pins it."""
     return _extras({"type": "chips", "title": title, "key": key, "id": id}, help=help)
 def reaction(title=None, id=None, help=None, key=None):
-    """Functional-group reaction scheme (functional groups only, never full product structures) next to the parent structure.
+    """Reaction scheme next to the parent structure; Dansyl chloride options can show the complete substrate and product instead.
     data: {"svg"?: fallback parent structure SVG with the reactive groups highlighted,
            "options": [{"label": "CIL · dansyl", "steps": [{"from": "R–NH₂", "reagent": "Dns-Cl", "to": "R–NH–Dns", "count"?: 2}],
-                        "formula"?, "mass"?, "heavy"?, "help"?: str|list, "svg"?: parent structure with only this option's sites highlighted}]}
-    Options render as selectable pills (the first is selected); the selected option draws each step as  from —reagent→ to ×count and selects its own SVG when present.
-    and a small line "formula · mass · heavy mass" + the option's "?". mass / heavy: bare value (a number is shown with 4 decimals),
+                        "formula"?, "mass"?, "heavy"?, "help"?: str|list, "svg"?: parent structure with only this option's sites highlighted,
+                        "product_svg"?: complete product structure; when present, render substrate —reagent→ product instead of functional-group steps}]}
+    Options render as selectable pills (the first is selected); the selected option selects its own SVG when present and draws either full structures or each step as from —reagent→ to ×count.
+    A small line shows "formula · mass · heavy mass" + the option's "?". mass / heavy: bare value (a number is shown with 4 decimals),
     the renderer adds the "mass" / "heavy mass" labels. Strings may use unicode subscripts or <sub> / <sup>."""
     return _extras({"type": "reaction", "title": title, "key": key, "id": id}, help=help)
 def grouptable(columns, title=None, id=None, help=None, caption=None, key=None, row_help=False):
@@ -237,7 +238,7 @@ MODULES = [
                       "Yes: expected to work. Partial: only after derivatization. No: not expected. The ? on a tile gives its rule hits."]),
          reaction("Why and how", id="reactions",
                   help=["Shown when CIL or GC-MS applies. Choosing a reagent updates the structure to highlight only its reactive groups.",
-                        "Only functional groups are drawn, not the full products. Choose a reagent above the scheme; masses are monoisotopic."])],
+                        "Dansyl chloride shows the complete substrate and product, including every Dansyl tag; other reagents use functional-group schemes. Masses are monoisotopic."])],
         subgroup="detectability", live=True, example={"structure": _name("L-tyrosine")}),
 
     module("separation", "Separation", "B", "Which <b>column</b>, and what <b>charge</b> the molecule carries at each pH (MolGpKa pKa prediction; needs a one-time weights download).",
@@ -305,8 +306,8 @@ MODULES = [
                help=["Full derivatization, one row per selected reagent that has a reactive group. Labels: reagent groups added.",
                      "Mass is monoisotopic; heavy mass (CIL only) is with a ¹³C₂-labelled reagent. The ? on a row lists the groups labelled, EI key ions and caveats."]),
          reaction("Reactions", id="deriv_reactions",
-                  help=["Only functional groups are drawn, not the full products. Choosing a reagent updates the structure to highlight only its reactive groups; ×n = number of groups.",
-                        "Choose a reagent above the scheme."])],
+                  help=["Dansyl chloride shows the complete substrate and product, including every Dansyl tag. Other reagents use functional-group schemes; ×n = number of groups.",
+                        "Choose a reagent above the scheme; the substrate highlights only its reactive groups."])],
         subgroup="detectability", live=True, example={"structure": _name("D-glucose")}),
 
     module("known_methods", "Known methods", "B", "Is there a <b>published method</b> (pharmacopoeia, RepoRT)? If not, what do the <b>most similar compounds</b> use?",

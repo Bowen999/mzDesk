@@ -12,7 +12,7 @@ import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
  *   grouptable data         : {"groups": [{"title", "meta"?, "help"?, "rows": [...]}], "count"?}   collapsed by default
  *   portal data             : {"tiles": [{"label", "status": yes|partial|no, "value"?, "chips"?: [str], "help"?}]}
  *   chips data              : {"chips": [{"label", "level": good|possible|poor (strong|moderate|weak, yes|no), "value"?, "help"?}]}
- *   reaction data           : {"svg"?, "options": [{"label", "steps": [{"from", "reagent"?, "to", "count"?}], "formula"?, "mass"?, "heavy"?, "help"?, "svg"?}]}
+ *   reaction data           : {"svg"?, "options": [{"label", "steps": [{"from", "reagent"?, "to", "count"?}], "formula"?, "mass"?, "heavy"?, "help"?, "svg"?, "product_svg"?}]}
  *   cards (style "metric")  : values {label: "v" | {"value", "note"?, "help"?}}; spec item (label, unit, help?)
  *   notes (collapsed=True)  : {"items": [...]} shown in the "?" next to the title (a "Details" disclosure when the block has no title)
  */
@@ -159,9 +159,11 @@ export function Reaction({ svg, options }: { svg?: string; options: RxOption[] }
   if (cur.heavy !== undefined && cur.heavy !== null) meta.push(<span key="h"><span className="rx-k">heavy mass</span> {asText(cur.heavy)}</span>);
   const help = helpLines(cur.help);
   const currentSvg = cur.svg ?? svg;
+  const full = currentSvg && cur.product_svg ? { substrate: currentSvg, product: cur.product_svg } : null;
+  const reagent = cur.steps.find((s) => s.reagent)?.reagent;
   return (
-    <div className={"rx" + (currentSvg ? " with-parent" : "")}>
-      {currentSvg && <div className="rx-parent"><ThemedSvg svg={currentSvg} className="" alt={`Parent structure with reactive groups highlighted for ${cur.label}`} /></div>}
+    <div className={"rx" + (!full && currentSvg ? " with-parent" : "")}>
+      {!full && currentSvg && <div className="rx-parent"><ThemedSvg svg={currentSvg} className="" alt={`Parent structure with reactive groups highlighted for ${cur.label}`} /></div>}
       <div className="rx-main">
         {options.length > 1 && (
           <div className="rx-opts" role="group" aria-label="Reaction options">
@@ -170,19 +172,36 @@ export function Reaction({ svg, options }: { svg?: string; options: RxOption[] }
                 <RichText text={o.label} />
               </button>))}
           </div>)}
-        <div className="rx-steps">
-          {(cur.steps ?? []).map((s, i) => (
-            <div className="rx-step" key={i}>
-              <span className="rx-box"><RichText text={s.from} /></span>
-              <span className="rx-arrow">
-                {s.reagent && <span className="rx-reagent"><span className="sr-only">with </span><RichText text={s.reagent} /></span>}
-                <span className="rx-line" aria-hidden="true" />
-              </span>
-              <span className="sr-only"> gives </span>
-              <span className="rx-box to"><RichText text={s.to} /></span>
-              {(s.count ?? 1) > 1 && <span className="rx-count" title={`${s.count} groups react`}>×{s.count}</span>}
-            </div>))}
-        </div>
+        {full ? (
+          <div className="rx-full">
+            <div className="rx-full-structure">
+              <div className="rx-full-label">Substrate</div>
+              <ThemedSvg svg={full.substrate} className="" alt={`Substrate with reactive sites highlighted for ${cur.label}`} />
+            </div>
+            <div className="rx-arrow rx-full-arrow">
+              {reagent && <span className="rx-reagent"><span className="sr-only">with </span><RichText text={reagent} /></span>}
+              <span className="rx-line" aria-hidden="true" />
+            </div>
+            <div className="rx-full-structure">
+              <div className="rx-full-label">Product</div>
+              <ThemedSvg svg={full.product} className="" alt={`Complete product structure for ${cur.label}`} />
+            </div>
+          </div>
+        ) : (
+          <div className="rx-steps">
+            {(cur.steps ?? []).map((s, i) => (
+              <div className="rx-step" key={i}>
+                <span className="rx-box"><RichText text={s.from} /></span>
+                <span className="rx-arrow">
+                  {s.reagent && <span className="rx-reagent"><span className="sr-only">with </span><RichText text={s.reagent} /></span>}
+                  <span className="rx-line" aria-hidden="true" />
+                </span>
+                <span className="sr-only"> gives </span>
+                <span className="rx-box to"><RichText text={s.to} /></span>
+                {(s.count ?? 1) > 1 && <span className="rx-count" title={`${s.count} groups react`}>×{s.count}</span>}
+              </div>))}
+          </div>
+        )}
         {(meta.length > 0 || help.length > 0) && (
           <div className="rx-meta">
             {meta.map((m, i) => <span key={i} className="rx-item">{m}{i < meta.length - 1 && <span className="rx-dot" aria-hidden="true">·</span>}</span>)}

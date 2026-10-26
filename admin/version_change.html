@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.15', date:'2026-10-26', git:'',
+  title:'Dansyl 可视化改为完整底物与多标签完整产物',
+  note:'只改结构可视化与说明；衍生化规则、分子式和质量不变。其他试剂仍使用官能团反应式。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1076 个通过']],
+  c:{
+   prop:['feat','Dansyl chloride 与碱活化 Dansyl 按实际反应原子逐一连接完整 Dns 基团，生成 RDKit 完整产物；多位点全部标记，CoordGen 布局分开大型标签，产物分子式与原计算一致。',true,{w:'mzdesk/platform_fit/derivatization.py · mzdesk/api/runners/structure.py · mzdesk/api/blocks.py · mzdesk/spec.py · tests/test_derivatization.py · tests/test_spec_blocks.py'}],
+   app:['feat','Dansyl 选项改为 Substrate —Dns-Cl→ Product 完整结构图；底物保留位点高亮，多标签产物完整显示；其他试剂不变。',true,{w:'web/src/components/Blocks.tsx · web/src/types.ts · web/src/outputs-v2.css · web/src/theme.css'}],
+   docs:['doc','README 更新完整底物 / 产物行为；版本号 0.2.15，本页加 v0.2.15。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.14', date:'2026-10-26', git:'',
   title:'修正 Dansyl 等衍生化试剂切换时的反应位点高亮',
   note:'只改可视化与说明；衍生化规则、分子式和质量不变。',

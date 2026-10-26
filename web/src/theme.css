@@ -251,7 +251,7 @@ code.ion {
 .rx-opt.on { color: var(--accent-ink); background: var(--accent-bg); border-color: var(--accent-line); font-weight: 500; }
 .rx-box { padding: 7px 12px; color: var(--ink); background: var(--panel-soft); border-color: var(--line); border-radius: 8px; }
 .rx-box.to { background: var(--accent-bg); border-color: var(--accent-line); }
-.rx-parent img { padding: 8px; background: transparent; border: 1px solid var(--line); border-radius: 8px; }
+.rx-parent img, .rx-full-structure img { padding: 8px; background: transparent; border: 1px solid var(--line); border-radius: 8px; }
 .rx-count { color: var(--ink); background: var(--canvas); border-color: var(--line); font-family: var(--mono); }
 .rx-meta { font-family: var(--mono); font-size: 12px; }
 .gt { background: var(--bg); border-color: var(--line); border-radius: 8px; }

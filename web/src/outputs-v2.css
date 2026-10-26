@@ -92,7 +92,7 @@ button.pill.has-help { cursor: help; }
 button.pill.has-help:hover, button.pill.has-help[aria-expanded="true"] { filter: brightness(.96); border-color: currentColor; }
 button.pill.has-help:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* ---- reaction: functional-group scheme next to the parent structure ---- */
+/* ---- reaction: full structures for Dansyl, functional-group schemes for other reagents ---- */
 .rx { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
 .rx.with-parent { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr); }
 .rx-parent img { display: block; width: 100%; max-width: 240px; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
@@ -111,6 +111,11 @@ button.pill.has-help:focus-visible { outline: 2px solid var(--accent); outline-o
 .rx-line { position: relative; height: 1px; background: currentColor; }
 .rx-line::after { content: ""; position: absolute; right: 0; top: -3.5px; border-left: 7px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
 .rx-count { margin-left: 4px; padding: 0 7px; font-size: 12px; font-weight: 600; line-height: 20px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
+.rx-full { display: grid; grid-template-columns: minmax(0, 1fr) minmax(64px, auto) minmax(0, 1fr); gap: 12px; align-items: center; min-width: 0; }
+.rx-full-structure { min-width: 0; }
+.rx-full-structure img { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+.rx-full-label { margin-bottom: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.rx-full-arrow { align-self: center; }
 .rx-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .rx-meta .rx-item { white-space: nowrap; }
 .rx-meta .rx-dot { margin-left: 6px; }
@@ -136,4 +141,7 @@ button.pill.has-help:focus-visible { outline: 2px solid var(--accent); outline-o
 .out-details[open] > summary { margin-bottom: 4px; }
 .out-details .notes { font-size: 13px; }
 
-@media (max-width: 700px) { .rx.with-parent { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .rx.with-parent, .rx-full { grid-template-columns: minmax(0, 1fr); }
+  .rx-full-arrow { width: 120px; justify-self: center; }
+}

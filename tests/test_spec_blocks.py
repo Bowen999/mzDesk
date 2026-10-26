@@ -121,6 +121,7 @@ def test_reaction_data():
     assert B.reaction_data([o], svg="<svg/>") == {"svg": "<svg/>", "options": [o]}
     assert B.reaction_data([o]) == {"options": [o]}
     assert B.reaction_option("with SVG", [s], svg="<svg id='sites'/>")["svg"] == "<svg id='sites'/>"
+    assert B.reaction_option("with product", [s], product_svg="<svg id='product'/>")["product_svg"] == "<svg id='product'/>"
     with pytest.raises(ValueError):
         B.reaction_option("x", [])
     with pytest.raises(ValueError):

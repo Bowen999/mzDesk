@@ -81,7 +81,7 @@ def _formula_text(formula):
 def _reaction_options(results, *, detail, mol=None, groups=None):
     """Reaction-block options for the derivatization results that apply (n > 0). detail=True (Platform page): formula / mass / heavy mass and the EI ions,
     caveats and label note in the option's "?"; detail=False (Derivatization page: the table has them): the scheme only, the "?" explains the abbreviations.
-    When mol and groups are given, each option carries its own reactive-site SVG instead of highlighting every reagent's sites together."""
+    When mol and groups are given, each option carries its own reactive-site SVG; Dansyl chloride options also carry a complete product SVG."""
     from mzdesk.platform_fit import derivatization as deriv
 
     options = []
@@ -91,11 +91,12 @@ def _reaction_options(results, *, detail, mol=None, groups=None):
         steps = [bl.step(frm, reagent, to, n) for frm, reagent, to, n in r["steps"]]
         abbr = deriv.SCHEMES[r["name"]]["abbr"]
         label = deriv.reagent_label(r["reagent"])
-        svg = None
+        svg = product_svg = None
         if mol is not None and groups is not None:
             svg = deriv.highlight_svg(mol, deriv.reacting_groups([r], groups))
+            product_svg = deriv.dansyl_product_svg(mol, r, groups)
         if not detail:
-            options.append(bl.reaction_option(label, steps, help=abbr, svg=svg))
+            options.append(bl.reaction_option(label, steps, help=abbr, svg=svg, product_svg=product_svg))
             continue
         help_ = []
         if r["ions"]:
@@ -105,7 +106,7 @@ def _reaction_options(results, *, detail, mol=None, groups=None):
             help_.append(f"Heavy mass: ¹³C₂-labelled reagent, +{2 * deriv.C13_SHIFT:.4f} Da per label ({r['n']} label{'s' if r['n'] > 1 else ''}).")
         help_.append(abbr + ".")
         options.append(bl.reaction_option(label, steps, formula=_formula_text(r["formula"]), mass=round(r["mass"], 4),
-                                          heavy=round(r["heavy"], 4) if r["heavy"] is not None else None, help=help_, svg=svg))
+                                          heavy=round(r["heavy"], 4) if r["heavy"] is not None else None, help=help_, svg=svg, product_svg=product_svg))
     return options
 
 

@@ -1,7 +1,7 @@
 """Derivatization：找反应基团，按试剂算衍生物的分子式和单同位素质量，并给 Platform 页判断 CIL / GC-MS 适用性。
 
 母体取画出来的中性分子。质量全部用精确同位素质量（不用平均质量）。
-每个试剂还带一份官能团反应式（SCHEMES，只画官能团不画完整产物），Platform 和 Derivatization 两页的 reaction 块共用。
+每个试剂还带一份官能团反应式（SCHEMES）；Dansyl chloride 另生成完整产物结构，Platform 和 Derivatization 两页的 reaction 块共用。
 """
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from collections import Counter
 from typing import Dict, List, Optional
 
 from rdkit import Chem
-from rdkit.Chem import Descriptors
+from rdkit.Chem import Descriptors, rdCoordGen
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Draw import rdMolDraw2D
 
@@ -220,6 +220,58 @@ def highlight_svg(mol, groups, size=(560, 420)) -> Optional[str]:
     atoms = sorted({i for g in groups.values() for i in g["atoms"]})
     drawer = _depict.svg_drawer(*size)
     drawer.DrawMolecule(mol, highlightAtoms=atoms, highlightAtomColors={i: HIGHLIGHT for i in atoms})
+    drawer.FinishDrawing()
+    return drawer.GetDrawingText()
+
+
+def dansyl_product(mol, result, groups):
+    """Complete Dansyl chloride product, with one tag attached at every labelled atom; None for other reagents."""
+    if result["name"] not in ("Dansyl chloride", "Dansyl chloride (base)"):
+        return None
+    targets = [i for key in result["labels"] for i in groups[key]["atoms"]]
+    if not targets or len(targets) != result["n"]:
+        raise ValueError("Dansyl product sites do not agree with the label count.")
+
+    # Explicit Hs make the leaving H unambiguous for N / O / S and aromatic [nH]. Heavy-atom indices stay unchanged.
+    work = Chem.RWMol(Chem.AddHs(mol))
+    leaving = []
+    for i in targets:
+        hs = [n.GetIdx() for n in work.GetAtomWithIdx(i).GetNeighbors() if n.GetAtomicNum() == 1]
+        if not hs:
+            raise ValueError(f"Dansyl reaction site {i} has no removable hydrogen.")
+        leaving.append(hs[0])
+    for i in sorted(leaving, reverse=True):
+        work.RemoveAtom(i)
+    product = work.GetMol()
+
+    # PubChem CID 11801: 5-(dimethylamino)naphthalene-1-sulfonyl chloride. Remove Cl, then join each site to sulfur.
+    tag = Chem.RWMol(Chem.MolFromSmiles("CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)Cl"))
+    cl = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 17)
+    sulfur = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 16)
+    tag.RemoveAtom(cl)
+    if cl < sulfur:
+        sulfur -= 1
+    tag_mol = tag.GetMol()
+    for target in targets:
+        offset = product.GetNumAtoms()
+        product = Chem.CombineMols(product, tag_mol)
+        edit = Chem.RWMol(product)
+        edit.AddBond(target, offset + sulfur, Chem.BondType.SINGLE)
+        product = edit.GetMol()
+    Chem.SanitizeMol(product)
+    product = Chem.RemoveHs(product)
+    Chem.SanitizeMol(product)
+    return product
+
+
+def dansyl_product_svg(mol, result, groups, size=(640, 480)) -> Optional[str]:
+    """Full-product depiction for Dansyl chloride options; other reagents keep their functional-group schemes."""
+    product = dansyl_product(mol, result, groups)
+    if product is None:
+        return None
+    rdCoordGen.AddCoords(product)       # keeps multiple large Dansyl tags separated
+    drawer = _depict.svg_drawer(*size)
+    drawer.DrawMolecule(product)
     drawer.FinishDrawing()
     return drawer.GetDrawingText()
 

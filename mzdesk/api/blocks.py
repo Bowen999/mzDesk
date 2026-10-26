@@ -79,11 +79,11 @@ def step(from_, reagent, to, count=1):
     return _keep({"from": from_, "reagent": reagent, "to": to, "count": count if count and count > 1 else None})
 
 
-def reaction_option(label, steps, formula=None, mass=None, heavy=None, help=None, svg=None):
+def reaction_option(label, steps, formula=None, mass=None, heavy=None, help=None, svg=None, product_svg=None):
     steps = list(steps)
     if not steps:
         raise ValueError("a reaction option needs at least one step")
-    return _keep({"label": label, "steps": steps, "formula": formula, "mass": mass, "heavy": heavy, "help": help, "svg": svg})
+    return _keep({"label": label, "steps": steps, "formula": formula, "mass": mass, "heavy": heavy, "help": help, "svg": svg, "product_svg": product_svg})
 
 
 def reaction_data(options, svg=None, help=None):

@@ -135,6 +135,40 @@ def test_dansyl_option_highlights_only_its_own_reactive_groups(monkeypatch):
     assert options[1]["svg"] == "<svg>acid</svg>"
 
 
+@pytest.mark.parametrize(("smiles", "reagent", "n_tags"), [
+    ("NC(Cc1ccc(O)cc1)C(=O)O", "CIL · Dansyl chloride (amine / phenol)", 2),
+    ("NC(Cc1cnc[nH]1)C(=O)O", "CIL · Dansyl chloride (amine / phenol)", 2),
+    (GLUCOSE, "CIL · Dansyl chloride, base-activated (hydroxyl)", 5),
+    ("NC(CS)C(=O)O", "CIL · Dansyl chloride, base-activated (hydroxyl)", 2),
+])
+def test_dansyl_full_product_has_every_tag_and_the_same_formula(smiles, reagent, n_tags):
+    res = d.derive(smiles, [reagent])
+    r = res["results"][0]
+    product = d.dansyl_product(res["mol"], r, res["groups"])
+    assert r["n"] == n_tags and product is not None
+    assert d.formula_string(d.parent_formula(product)) == r["formula"]
+    assert sum(a.GetAtomicNum() == 16 for a in product.GetAtoms()) == sum(a.GetAtomicNum() == 16 for a in res["mol"].GetAtoms()) + n_tags
+    targets = [i for key in r["labels"] for i in res["groups"][key]["atoms"]]
+    assert all(any(n.GetAtomicNum() == 16 for n in product.GetAtomWithIdx(i).GetNeighbors()) for i in targets)
+    svg = d.dansyl_product_svg(res["mol"], r, res["groups"])
+    assert svg.lstrip().startswith(("<?xml", "<svg"))
+
+
+def test_full_product_svgs_are_exposed_only_for_dansyl_chloride():
+    platform = _options("NC(Cc1ccc(O)cc1)C(=O)O")
+    assert platform["CIL · Dansyl chloride"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
+    assert all("product_svg" not in platform[label] for label in ("CIL · DmPA bromide", "GC · TMS"))
+
+    body = client.post("/api/modules/derivatization/run", json={
+        "structure": {"mode": "SMILES / InChI", "value": GLUCOSE},
+        "reagents": ["GC · TMS (MSTFA / BSTFA)", "CIL · Dansyl chloride, base-activated (hydroxyl)"],
+    })
+    assert body.status_code == 200, body.text
+    options = {o["label"]: o for o in body.json()["outputs"]["deriv_reactions"]["options"]}
+    assert options["CIL · Dansyl chloride (base)"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
+    assert "product_svg" not in options["GC · TMS"]
+
+
 def test_platform_lipid_with_an_amine_keeps_cil_yes_and_says_lipidomics():
     pe = "CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCCN)OC(=O)CCCCCCCCCCCCCCC"
     tiles = _tiles(pe)
