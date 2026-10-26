@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.12', date:'2026-10-26', git:'',
+  title:'MS1 与 Inorganic MS 页面按 Detectability 风格统一：大数字指标卡 + 折叠说明',
+  note:'只改输出块样式（spec.py），不改计算与数据；结果结构、id、示例全部不变。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1052 个通过']],
+  c:{
+   ms1:['chg','Mass search 摘要卡补标题 Summary；Theoretical 结果卡改为指标卡（标题 Theory）。',true,{w:'mzdesk/spec.py'}],
+   icp:['chg','Isotopes、IDMS、Mass bias & δ 三组结果卡改为指标卡（Mass bias 各分区补卡片标题）；Interferences、IDMS、Single-particle 的 Scope / 公式 / 方法说明收进折叠 notes（默认收起，同 Detectability 的 Rule hits）。',true,{w:'mzdesk/spec.py'}],
+   docs:['doc','版本号 0.2.12，本页加 v0.2.12。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.11', date:'2026-10-26', git:'',
   title:'新增 Inorganic MS：ICP-MS 同位素、干扰、IDMS、质量歧视与单颗粒五页',
   note:'全部为 B 类非核心日常工具，不进论文主线；纯 Python + IsoSpecPy，不联网、无新依赖。spICP-MS 只做信号换算。新增 tests/test_inorganic.py。',
