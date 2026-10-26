@@ -194,8 +194,11 @@ def _http(url: str, data: Optional[bytes] = None, timeout: float = 15.0) -> str:
         time.sleep(wait)
     headers = {"User-Agent": "mzDesk", "Accept": "application/json, text/plain"}
     if data:
-        headers["Content-Type"] = ("application/json" if data[:1] == b"{"
-                                   else "application/x-www-form-urlencoded")
+        if "reactome.org/AnalysisService/" in url:
+            headers["Content-Type"] = "text/plain"
+        else:
+            headers["Content-Type"] = ("application/json" if data[:1] == b"{"
+                                       else "application/x-www-form-urlencoded")
     req = urllib.request.Request(url, data=data, headers=headers)
     try:
         _last_call = time.time()

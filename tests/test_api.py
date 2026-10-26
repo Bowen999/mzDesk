@@ -104,7 +104,11 @@ def test_block_ids_unique_and_examples_match_inputs():
 
 # ---------------------------------------------------------------- live modules
 @pytest.mark.parametrize("mod", [pytest.param(m, id=m["id"], marks=needs_docker if m["id"] == "ms2_esi" else []) for m in LIVE])
-def test_example_runs_and_fills_every_block(mod):
+def test_example_runs_and_fills_every_block(mod, monkeypatch):
+    if mod["id"] == "identity":
+        from mzdesk.identity import enrich, resolve
+        monkeypatch.setattr(resolve, "resolve", lambda q, kind="Auto", **kw: _fake_resolved(query=q))
+        monkeypatch.setattr(enrich, "enrich", lambda r: {"outputs": enrich.empty_outputs(), "warnings": []})
     if mod["id"] == "ms2_fragments" and not HAS_JAVA:
         pytest.skip("MetFrag needs Java")
     if mod["id"] == "ms2_esi" and NO_DOCKER:
@@ -275,11 +279,13 @@ def _fake_resolved(**kw):
 
 
 def test_identity_runner_offline(monkeypatch):
-    from mzdesk.identity import resolve
+    from mzdesk.identity import enrich, resolve
     monkeypatch.setattr(resolve, "resolve", lambda q, kind="Auto", **kw: _fake_resolved(query=q))
+    monkeypatch.setattr(enrich, "enrich", lambda r: {"outputs": enrich.empty_outputs(), "warnings": []})
     body = _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": "caffeine"}, "kind": "Auto"}).json()
     assert body["status"] == "ok"
     out = body["outputs"]
+    assert set(enrich.OUTPUT_KEYS) <= set(out)
     names, ids = out["names"]["rows"], out["database_ids"]["rows"]
     assert [r[0] for r in names] == ["Name", "IUPAC", "CAS"]
     assert names[2][1] == {"text": "58-08-2", "href": "https://commonchemistry.cas.org/detail?cas_rn=58-08-2"}
@@ -308,11 +314,14 @@ def test_structure_formats_has_four_tabs():
 def test_properties_page_has_no_duplicates():
     body = _run("properties", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}}).json()
     out = body["outputs"]
-    assert set(out) == {"summary", "descriptors"}
+    assert set(out) == {"summary", "descriptors", "functional_groups"}
     assert out["summary"]["values"]["Monoisotopic mass"] == "194.0804"
     rows = out["descriptors"]["rows"]
     assert all(len(r) == 3 for r in rows) and not any("mass" in r[1].lower() or "MW" in r[1] for r in rows)
     assert [r[0] for r in rows] == ["Polarity", "", "", "", "Size & topology", "", "", ""]
+    group_rows = out["functional_groups"]["rows"]
+    assert group_rows and all(len(r) == 4 for r in group_rows)
+    assert out["functional_groups"]["count"] == sum(int(r[1]) for r in group_rows)
 
 
 def test_platform_page_is_a_portal_and_a_reaction_block():

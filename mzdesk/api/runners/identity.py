@@ -9,7 +9,7 @@ def run_identity(inputs):
     from rdkit import Chem
     from rdkit.Chem import rdMolDescriptors
 
-    from mzdesk.identity import resolve
+    from mzdesk.identity import enrich, resolve
 
     raw = inputs.get("structure") or {}
     query = str(raw.get("value") or "").strip() if isinstance(raw, dict) else str(raw).strip()
@@ -50,6 +50,9 @@ def run_identity(inputs):
         "candidates": {"rows": [[str(cid), title] for cid, title in r.candidates[1:]]},
         "synonyms": {"rows": [[s] for s in r.synonyms]},
     }
+    enriched = enrich.enrich(r)
+    outputs.update(enriched["outputs"])
+    warnings.extend(enriched["warnings"])
     svg = common.depiction_svg(r.smiles) if r.smiles else None
     if svg:
         outputs["depiction"] = {"svg": svg}

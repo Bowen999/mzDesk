@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.13', date:'2026-10-26', git:'',
+  title:'Molecular 补齐：Identity 背景注释与 Properties 官能团识别',
+  note:'外部注释按来源分行；单源失败只警告。HMDB 正常浓度需 MZDESK_HMDB_XML，不推断缺失值。新增 tests/test_molecular_completion.py。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1070 个通过']],
+  c:{
+   other:['feat','Identity 新增分类、来源证据、KEGG / Reactome / HMDB / SMPDB 通路、本地 HMDB 体液浓度、LOTUS 物种、供应商可得性和分来源 GHS。LOTUS 分类优先复用，NPClassifier / ClassyFire 缺失时补查；各来源独立降级。Reactome 纯文本 POST 修正。',true,{w:'mzdesk/identity/enrich.py · mzdesk/identity/resolve.py · mzdesk/api/runners/identity.py · mzdesk/spec.py · tests/test_molecular_completion.py'}],
+   prop:['feat','Properties 新增透明 SMARTS 官能团表：名称、数量、1 起始原子位置和规则文本；通用与特殊基团可重叠，不宣称穷举。',true,{w:'mzdesk/platform_fit/functional_groups.py · mzdesk/api/runners/structure.py · mzdesk/spec.py · tests/test_molecular_completion.py · tests/test_api.py'}],
+   docs:['doc','README 更新 Molecular 实际数据来源和边界；版本号 0.2.13，本页加 v0.2.13。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.12', date:'2026-10-26', git:'',
   title:'MS1 与 Inorganic MS 页面按 Detectability 风格统一：大数字指标卡 + 折叠说明',
   note:'只改输出块样式（spec.py），不改计算与数据；结果结构、id、示例全部不变。',

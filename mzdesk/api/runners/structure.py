@@ -37,6 +37,7 @@ def run_structure_formats(inputs):
 
 
 def run_properties(inputs):
+    from mzdesk.platform_fit import functional_groups as fg
     from mzdesk.platform_fit import molecular_properties as mp
 
     warnings = []
@@ -54,10 +55,13 @@ def run_properties(inputs):
               ("Size & topology", [("Heavy atoms", count(p.heavy_atoms)), ("Rotatable bonds", count(p.rotatable_bonds)),
                                    ("Rings", count(p.rings)), ("Aromatic rings", count(p.aromatic_rings))])]
     rows = [[group if i == 0 else "", name, value] for group, items in groups for i, (name, value) in enumerate(items)]
+    found = fg.find_functional_groups(smiles)
+    group_rows = [[g.name, str(g.count), fg.atom_text(g.matches), g.smarts] for g in found]
     outputs = {
         "summary": {"values": {"Formula": p.formula or common.MISSING, "Monoisotopic mass": fmt(p.exact_mass, 4),
                                "Average MW": fmt(p.mw, 4), "Net charge": f"{p.formal_charge:+d}" if p.formal_charge else "0"}},
         "descriptors": {"rows": rows},
+        "functional_groups": bl.table_data(group_rows, count=sum(g.count for g in found)),
     }
     return {"outputs": outputs, "warnings": warnings}
 
