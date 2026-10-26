@@ -130,10 +130,10 @@ def chips(title=None, id=None, help=None, key=None):
     return _extras({"type": "chips", "title": title, "key": key, "id": id}, help=help)
 def reaction(title=None, id=None, help=None, key=None):
     """Functional-group reaction scheme (functional groups only, never full product structures) next to the parent structure.
-    data: {"svg"?: parent structure SVG with the reactive groups highlighted,
+    data: {"svg"?: fallback parent structure SVG with the reactive groups highlighted,
            "options": [{"label": "CIL · dansyl", "steps": [{"from": "R–NH₂", "reagent": "Dns-Cl", "to": "R–NH–Dns", "count"?: 2}],
-                        "formula"?, "mass"?, "heavy"?, "help"?: str|list}]}
-    Options render as selectable pills (the first is selected); the selected option draws each step as  from —reagent→ to ×count
+                        "formula"?, "mass"?, "heavy"?, "help"?: str|list, "svg"?: parent structure with only this option's sites highlighted}]}
+    Options render as selectable pills (the first is selected); the selected option draws each step as  from —reagent→ to ×count and selects its own SVG when present.
     and a small line "formula · mass · heavy mass" + the option's "?". mass / heavy: bare value (a number is shown with 4 decimals),
     the renderer adds the "mass" / "heavy mass" labels. Strings may use unicode subscripts or <sub> / <sup>."""
     return _extras({"type": "reaction", "title": title, "key": key, "id": id}, help=help)
@@ -236,7 +236,7 @@ MODULES = [
                 help=["Rule-based screen of which workflow should work, not a measurement.",
                       "Yes: expected to work. Partial: only after derivatization. No: not expected. The ? on a tile gives its rule hits."]),
          reaction("Why and how", id="reactions",
-                  help=["Shown when CIL or GC-MS applies. The structure highlights the groups these reagents react with.",
+                  help=["Shown when CIL or GC-MS applies. Choosing a reagent updates the structure to highlight only its reactive groups.",
                         "Only functional groups are drawn, not the full products. Choose a reagent above the scheme; masses are monoisotopic."])],
         subgroup="detectability", live=True, example={"structure": _name("L-tyrosine")}),
 
@@ -305,7 +305,7 @@ MODULES = [
                help=["Full derivatization, one row per selected reagent that has a reactive group. Labels: reagent groups added.",
                      "Mass is monoisotopic; heavy mass (CIL only) is with a ¹³C₂-labelled reagent. The ? on a row lists the groups labelled, EI key ions and caveats."]),
          reaction("Reactions", id="deriv_reactions",
-                  help=["Only functional groups are drawn, not the full products. The structure highlights the groups the selected reagents react with; ×n = number of groups.",
+                  help=["Only functional groups are drawn, not the full products. Choosing a reagent updates the structure to highlight only its reactive groups; ×n = number of groups.",
                         "Choose a reagent above the scheme."])],
         subgroup="detectability", live=True, example={"structure": _name("D-glucose")}),
 

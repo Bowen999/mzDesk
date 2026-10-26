@@ -120,6 +120,7 @@ def test_reaction_data():
     assert o == {"label": "CIL · dansyl", "steps": [s], "formula": "C₁₂H₁₂N₂O₂S", "mass": 248.0619, "heavy": 250.07, "help": "h"}
     assert B.reaction_data([o], svg="<svg/>") == {"svg": "<svg/>", "options": [o]}
     assert B.reaction_data([o]) == {"options": [o]}
+    assert B.reaction_option("with SVG", [s], svg="<svg id='sites'/>")["svg"] == "<svg id='sites'/>"
     with pytest.raises(ValueError):
         B.reaction_option("x", [])
     with pytest.raises(ValueError):

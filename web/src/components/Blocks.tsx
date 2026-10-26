@@ -12,7 +12,7 @@ import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
  *   grouptable data         : {"groups": [{"title", "meta"?, "help"?, "rows": [...]}], "count"?}   collapsed by default
  *   portal data             : {"tiles": [{"label", "status": yes|partial|no, "value"?, "chips"?: [str], "help"?}]}
  *   chips data              : {"chips": [{"label", "level": good|possible|poor (strong|moderate|weak, yes|no), "value"?, "help"?}]}
- *   reaction data           : {"svg"?, "options": [{"label", "steps": [{"from", "reagent"?, "to", "count"?}], "formula"?, "mass"?, "heavy"?, "help"?}]}
+ *   reaction data           : {"svg"?, "options": [{"label", "steps": [{"from", "reagent"?, "to", "count"?}], "formula"?, "mass"?, "heavy"?, "help"?, "svg"?}]}
  *   cards (style "metric")  : values {label: "v" | {"value", "note"?, "help"?}}; spec item (label, unit, help?)
  *   notes (collapsed=True)  : {"items": [...]} shown in the "?" next to the title (a "Details" disclosure when the block has no title)
  */
@@ -158,9 +158,10 @@ export function Reaction({ svg, options }: { svg?: string; options: RxOption[] }
   if (cur.mass !== undefined && cur.mass !== null) meta.push(<span key="m"><span className="rx-k">mass</span> {asText(cur.mass)}</span>);
   if (cur.heavy !== undefined && cur.heavy !== null) meta.push(<span key="h"><span className="rx-k">heavy mass</span> {asText(cur.heavy)}</span>);
   const help = helpLines(cur.help);
+  const currentSvg = cur.svg ?? svg;
   return (
-    <div className={"rx" + (svg ? " with-parent" : "")}>
-      {svg && <div className="rx-parent"><ThemedSvg svg={svg} className="" alt="Parent structure with the reactive groups highlighted" /></div>}
+    <div className={"rx" + (currentSvg ? " with-parent" : "")}>
+      {currentSvg && <div className="rx-parent"><ThemedSvg svg={currentSvg} className="" alt={`Parent structure with reactive groups highlighted for ${cur.label}`} /></div>}
       <div className="rx-main">
         {options.length > 1 && (
           <div className="rx-opts" role="group" aria-label="Reaction options">

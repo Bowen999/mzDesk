@@ -100,6 +100,7 @@ def test_platform_reaction_block_for_tyrosine_glucose_caffeine_and_pc():
     options = {o["label"]: o for o in tyr["reactions"]["options"]}
     assert list(options) == ["CIL · Dansyl chloride", "CIL · DmPA bromide", "GC · TMS"]
     dns, gc = options["CIL · Dansyl chloride"], options["GC · TMS"]
+    assert all(o.get("svg") for o in options.values()) and dns["svg"] != gc["svg"]
     assert [(s["from"], s["to"]) for s in dns["steps"]] == [("R–NH₂", "R–NH–Dns"), ("Ar–OH", "Ar–O–Dns")]
     assert dns["formula"] == "C₃₃H₃₃N₃O₇S₂" and dns["mass"] == pytest.approx(647.176, abs=0.002)
     assert dns["heavy"] - dns["mass"] == pytest.approx(4.0134, abs=0.001)
@@ -113,6 +114,25 @@ def test_platform_reaction_block_for_tyrosine_glucose_caffeine_and_pc():
     assert glu["GC · MeOx + TMS"]["steps"][1]["count"] == 5 and glu["GC · MeOx + TMS"]["mass"] == pytest.approx(569.288, abs=0.002)
     for smiles in (CAFFEINE, PC):                                       # nothing reacts: the block is returned with an empty options list, no placeholder text
         assert _platform(smiles)["reactions"] == {"options": []}
+
+
+def test_dansyl_option_highlights_only_its_own_reactive_groups(monkeypatch):
+    from mzdesk.api.runners import structure as runner
+
+    res = d.derive("NC(Cc1ccc(O)cc1)C(=O)O",
+                   ["CIL · Dansyl chloride (amine / phenol)", "CIL · DmPA bromide (carboxyl)"])
+    seen = []
+
+    def fake_highlight(mol, groups):
+        keys = sorted(groups)
+        seen.append(set(keys))
+        return "<svg>" + ",".join(keys) + "</svg>"
+
+    monkeypatch.setattr(d, "highlight_svg", fake_highlight)
+    options = runner._reaction_options(res["results"], detail=True, mol=res["mol"], groups=res["groups"])
+    assert seen == [{"amine1", "phenol"}, {"acid"}]
+    assert options[0]["svg"] == "<svg>amine1,phenol</svg>"
+    assert options[1]["svg"] == "<svg>acid</svg>"
 
 
 def test_platform_lipid_with_an_amine_keeps_cil_yes_and_says_lipidomics():
@@ -146,6 +166,7 @@ def test_derivatization_page_outputs():
     assert "DmPA" in out["deriv_rows"]["help"] and "No reactive group" in out["deriv_rows"]["help"]
     rx = out["deriv_reactions"]
     assert rx["svg"] and [o["label"] for o in rx["options"]] == ["GC · TMS", "CIL · Dansyl chloride (base)"]
+    assert all(o.get("svg") for o in rx["options"])
     assert all("formula" not in o and "mass" not in o and "heavy" not in o for o in rx["options"])                  # the table has them
     assert rx["options"][0]["steps"] == [{"from": "R–OH", "reagent": "MSTFA / BSTFA", "to": "R–O–TMS", "count": 5}]
     assert rx["help"] == "Reactive groups found: alcohol OH ×5."

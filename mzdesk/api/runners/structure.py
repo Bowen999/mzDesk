@@ -78,9 +78,10 @@ def _formula_text(formula):
     return re.sub(r"\d+", lambda m: m.group().translate(_SUBSCRIPT), formula)
 
 
-def _reaction_options(results, *, detail):
+def _reaction_options(results, *, detail, mol=None, groups=None):
     """Reaction-block options for the derivatization results that apply (n > 0). detail=True (Platform page): formula / mass / heavy mass and the EI ions,
-    caveats and label note in the option's "?"; detail=False (Derivatization page: the table has them): the scheme only, the "?" explains the abbreviations."""
+    caveats and label note in the option's "?"; detail=False (Derivatization page: the table has them): the scheme only, the "?" explains the abbreviations.
+    When mol and groups are given, each option carries its own reactive-site SVG instead of highlighting every reagent's sites together."""
     from mzdesk.platform_fit import derivatization as deriv
 
     options = []
@@ -90,8 +91,11 @@ def _reaction_options(results, *, detail):
         steps = [bl.step(frm, reagent, to, n) for frm, reagent, to, n in r["steps"]]
         abbr = deriv.SCHEMES[r["name"]]["abbr"]
         label = deriv.reagent_label(r["reagent"])
+        svg = None
+        if mol is not None and groups is not None:
+            svg = deriv.highlight_svg(mol, deriv.reacting_groups([r], groups))
         if not detail:
-            options.append(bl.reaction_option(label, steps, help=abbr))
+            options.append(bl.reaction_option(label, steps, help=abbr, svg=svg))
             continue
         help_ = []
         if r["ions"]:
@@ -101,7 +105,7 @@ def _reaction_options(results, *, detail):
             help_.append(f"Heavy mass: ¹³C₂-labelled reagent, +{2 * deriv.C13_SHIFT:.4f} Da per label ({r['n']} label{'s' if r['n'] > 1 else ''}).")
         help_.append(abbr + ".")
         options.append(bl.reaction_option(label, steps, formula=_formula_text(r["formula"]), mass=round(r["mass"], 4),
-                                              heavy=round(r["heavy"], 4) if r["heavy"] is not None else None, help=help_))
+                                          heavy=round(r["heavy"], 4) if r["heavy"] is not None else None, help=help_, svg=svg))
     return options
 
 
@@ -147,7 +151,7 @@ def run_platform_fit(inputs):
     options = []
     if wanted:
         derived = deriv.derive(smiles, wanted)
-        options = _reaction_options(derived["results"], detail=True)
+        options = _reaction_options(derived["results"], detail=True, mol=derived["mol"], groups=derived["groups"])
         if gc["gc"] == "yes" and options and options[-1]["label"].startswith("GC"):
             options[-1]["help"] = ["Optional: the molecule is volatile enough to run directly."] + options[-1].get("help", [])
     if options:
@@ -186,7 +190,7 @@ def run_derivatization(inputs):
                             f"{r['heavy']:.4f}" if r["heavy"] is not None else common.MISSING], help=help_))
     skipped = [deriv.reagent_label(r["reagent"]) for r in res["results"] if not r["n"]]
     outputs = {"deriv_rows": bl.table_data(rows, count=len(rows), help=("No reactive group for: " + ", ".join(skipped) + ".") if skipped else None)}
-    options = _reaction_options(shown, detail=False)
+    options = _reaction_options(shown, detail=False, mol=res["mol"], groups=res["groups"])
     if options:
         svg = deriv.highlight_svg(res["mol"], deriv.reacting_groups(shown, res["groups"]))
         outputs["deriv_reactions"] = bl.reaction_data(options, svg=svg, help="Reactive groups found: " + ", ".join(deriv.group_text(res["groups"])) + ".")

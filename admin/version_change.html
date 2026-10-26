@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.14', date:'2026-10-26', git:'',
+  title:'修正 Dansyl 等衍生化试剂切换时的反应位点高亮',
+  note:'只改可视化与说明；衍生化规则、分子式和质量不变。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1071 个通过']],
+  c:{
+   prop:['fix','Platform 与 Derivatization 为每个反应选项生成独立母体结构 SVG；选择 Dansyl 时仅高亮胺 / 酚位点，不再混入其他试剂的羧基等位点。',true,{w:'mzdesk/api/runners/structure.py · mzdesk/api/blocks.py · mzdesk/spec.py · tests/test_derivatization.py · tests/test_spec_blocks.py'}],
+   app:['fix','反应式随所选试剂切换对应结构高亮；保留联合高亮 SVG 作为旧数据回退。',true,{w:'web/src/components/Blocks.tsx · web/src/types.ts'}],
+   docs:['doc','README 补充试剂切换的高亮行为；版本号 0.2.14，本页加 v0.2.14。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.13', date:'2026-10-26', git:'',
   title:'Molecular 补齐：Identity 背景注释与 Properties 官能团识别',
   note:'外部注释按来源分行；单源失败只警告。HMDB 正常浓度需 MZDESK_HMDB_XML，不推断缺失值。新增 tests/test_molecular_completion.py。',
