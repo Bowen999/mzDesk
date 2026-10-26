@@ -1,6 +1,6 @@
 """页面定义（唯一来源）。前端按这里的 pipelines / modules 渲染输入和输出格式。
 
-字段类型：structure, precursor, spectrum, ms1, number, text, select, multiselect, radio,
+字段类型：structure, precursor, spectrum, ms1, number, text, textarea, select, multiselect, radio,
 checkbox, slider, file, table, heading。
 输出块类型：table, cards, figure, code, formats, notes, button, heading, portal, chips, reaction, grouptable。
   任何块都可带 help（"?" 弹窗，字符串或字符串列表；运行时数据里的 data.help 会并进去）。数据形状见各 helper 的 docstring，
@@ -8,7 +8,7 @@ checkbox, slider, file, table, heading。
   formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：pipeline 的 stage 用 exclude 按 key 过滤块。
-模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk / tools；ms2 的显示名是 Spectrum），
+模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk / inorganic / tools；ms2 的显示名是 Spectrum），
   None = 直接列在 Modules 下。live=True 表示已接引擎（后端 mzdesk/api/runners.py 里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
@@ -21,6 +21,8 @@ from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
 from mzdesk.ms2 import metric_names as METRIC_NAMES
 # isotopes 顶层只用标准库（IsoSpecPy 在用到时才导入）
 from mzdesk.ms1.isotopes import RESOLUTIONS
+# Inorganic MS 的选项是纯静态数据；同位素表在 runner 内才读取
+from mzdesk.inorganic.data import ELEMENT_SYMBOLS, MATRIX_ELEMENTS, PARTICLE_PRESETS, SENSITIVITY_DWELL, SENSITIVITY_RATE
 
 ADDUCTS_POS = ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M]+", "[M+H-H2O]+", "[2M+H]+"]
 ADDUCTS_NEG = ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M-H-H2O]-", "[2M-H]-"]
@@ -53,6 +55,8 @@ def number(id, label, value=None, step=None, placeholder=None):
     return {"type": "number", "id": id, "label": label, "value": value, "step": step, "placeholder": placeholder}
 def text(id, label, value="", placeholder=None):
     return {"type": "text", "id": id, "label": label, "value": value, "placeholder": placeholder}
+def textarea(id, label, value="", placeholder=None, rows=5):
+    return {"type": "textarea", "id": id, "label": label, "value": value, "placeholder": placeholder, "rows": rows}
 def select(id, label, options, value=None):
     return {"type": "select", "id": id, "label": label, "options": options, "value": value or options[0]}
 def multiselect(id, label, options, value=None):
@@ -522,6 +526,112 @@ MODULES = [
         [structure(label="Analyte"), spectrum(label="Analyte MS2 (optional)"), number("min_shift", "Minimum mass shift (Da)", 3, 1), checkbox("check_vendors", "Check vendor availability", True)],
         [table(["Labelling", "Mass shift", "Positions", "Exchangeable-H risk", "Metabolic-loss risk", "Label kept in quantifier fragment", "Crosstalk with analyte M+n (%)", "Vendor"]),
          figure("Structure with labelled positions highlighted")], subgroup="dmpk"),
+
+    # ---- Inorganic MS（非核心）----
+    module("icp_isotopes", "Isotopes & internal standard", "B", "Choose an ICP-MS isotope from natural abundance, atomic isobars and matrix polyatomics; match an internal standard by mass and first ionization energy.",
+        [select("element", "Element", list(ELEMENT_SYMBOLS), "As"),
+         multiselect("matrix", "Plasma / solvent / matrix elements", list(ELEMENT_SYMBOLS), list(MATRIX_ELEMENTS))],
+        [cards([("Analyte", ""), ("Recommended isotope", ""), ("Top internal standard", ""), ("Analyte first IE", "eV")], "Recommendation", id="summary",
+                help=["Ranking is a transparent rule, not a measurement: isotopes with an atomic isobar from another element rank below all isotopes without one. Within each group, score = natural abundance fraction ÷ (1 + sum of polyatomic likelihood scores).",
+                      "A likelihood score is the product of natural isotope abundances, not an intensity. Real isotope choice depends on the actual sample matrix, instrument, resolution, cell mode and sensitivity."]),
+         table(["Isotope", "Exact mass (Da)", "Natural abundance (%)", "Atomic isobars", "Polyatomics (n)", "Strongest polyatomic"], "Isotopes", id="isotope_table",
+               help="Atomic isobars are isotopes of other elements with the same nominal mass and natural abundance > 0. Polyatomic counts and the strongest row come from the Interferences page engine with 2–3 atoms and the selected matrix."),
+         table(["Rank", "Isotope", "Rule score", "Reason"], "Recommended isotope(s)", id="recommendations",
+               help="Higher rule score is better within the no-atomic-isobar and atomic-isobar groups. The reason lists the natural abundance, total polyatomic likelihood penalty and strongest candidate."),
+         table(["Rank", "Internal standard", "|Δ mass| (Da)", "First IE (eV)", "|Δ IE| (eV)", "Combined distance"], "Internal standard suggestions", id="internal_standards",
+               help=["Candidates: ⁷Li / ⁶Li, ⁹Be, ⁴⁵Sc, ⁷²Ge / ⁷⁴Ge, ⁸⁹Y, ¹⁰³Rh, ¹¹⁵In, ¹⁵⁹Tb, ¹⁶⁵Ho, ¹⁷⁵Lu, ¹⁸⁵Re, ²⁰⁹Bi; the analyte element itself is excluded.",
+                     "Combined distance = 0.5 × (|candidate isotope mass − analyte average mass| / analyte average mass + |candidate IE − analyte IE| / analyte IE); lower is better. First ionization energies are from NIST ASD for all offered elements.",
+                     "This ranks only mass and first-ionization-energy closeness. It does not model recovery, ionization suppression, contamination, stability or instrument-specific response."])],
+        subgroup="inorganic", live=True, example={"element": "As", "matrix": list(MATRIX_ELEMENTS)}),
+
+    module("icp_interferences", "Interferences", "B", "Enumerate isotope-specific atomic isobars, M²⁺ ions and 2–3-atom polyatomic ions at an ICP-MS target nominal mass.",
+        [text("target", "Target isotope", "75As", "75As or As-75"),
+         multiselect("matrix", "Plasma / solvent / matrix elements", list(ELEMENT_SYMBOLS), list(MATRIX_ELEMENTS)),
+         select("max_atoms", "Maximum atoms per polyatomic ion", ["2", "3"], "3"),
+         multiselect("charge_states", "Charge states considered", ["1+", "2+"], ["1+", "2+"])],
+        [cards([("Interferences found", "n"), ("Strongest", "likelihood score"), ("Highest resolving power", "m/|Δm|")], "Summary", id="summary", style="metric"),
+         table(["Ion", "Type", "Exact m/z", "Δm (mDa)", "Required R", "Likelihood score"], "Interferences", id="interferences",
+               help=["Candidates match the target nominal mass: other-element atomic isobars (1+), isotopes at twice the target nominal mass (2+), and singly charged 2–3-atom combinations of the selected matrix elements. This includes ArX⁺, Ar₂⁺, oxides, hydroxides and hydrides.",
+                     "Exact m/z subtracts one electron mass per charge. Δm = candidate − target; required R = target m/z ÷ |Δm|. An exact mass coincidence has infinite required R.",
+                     "Likelihood score = product of constituent natural isotope abundances. It is not an intensity or ion-formation probability. Rows are score-sorted and capped at 50. No collision/reaction-cell recommendation is made."]),
+         notes("Scope & assumptions", id="notes")],
+        subgroup="inorganic", live=True,
+        example={"target": "75As", "matrix": list(MATRIX_ELEMENTS), "max_atoms": "3", "charge_states": ["1+", "2+"]}),
+
+    module("icp_idms", "Isotope dilution (IDMS)", "B", "Single-spike, mole-based isotope dilution with composition-specific molar masses, ratio sensitivity and an optimal-blend hint.",
+        [select("element", "Element", list(ELEMENT_SYMBOLS), "Ag"),
+         text("isotope_a", "Reference isotope a", "107Ag"), text("isotope_b", "Spike isotope b", "109Ag"),
+         number("a_x", "Sample A_x (blank = natural)", step="any"), number("b_x", "Sample B_x (blank = natural)", step="any"),
+         number("a_y", "Spike A_y", 0.01, "any"), number("b_y", "Spike B_y", 0.99, "any"),
+         number("spike_concentration", "Spike concentration c_y", 10.0), select("spike_unit", "Spike concentration unit", ["µg/g", "µmol/g"]),
+         number("m_x", "Sample mass m_x (g)", 1.0), number("m_y", "Spike mass m_y (g)", 0.5),
+         number("r_b", "Measured blend ratio R_B = a/b (mass-bias corrected)", 1.0, "any")],
+        [cards([("Sample concentration", "µg/g"), ("Sample amount content", "µmol/g"),
+                ("Error magnification", "|∂ln c_x / ∂ln R_B|"), ("Optimal blend R_opt", "√(R_x·R_y)")], "IDMS result", id="summary",
+                help=["c_x = c_y·(m_y/m_x)·(A_y − R_B·B_y)/(R_B·B_x − A_x). c_x and c_y are amount contents (µmol/g); m_x and m_y must use the same mass unit.",
+                      "µg/g spike input is converted with the spike molar mass from its isotopic composition; sample µg/g output uses the sample composition. Unlisted isotopes retain natural relative proportions within the remaining atom fraction.",
+                      "Error magnification = |∂c_x/∂R_B · R_B/c_x|. R_opt = √(R_x·R_y), where R_x = A_x/B_x and R_y = A_y/B_y. R_B must already be mass-bias corrected; this is not a full uncertainty budget."]),
+         table(["Quantity", "Value", "Unit / meaning"], "Intermediate values", id="intermediates"),
+         notes("Equation & limits", id="notes")],
+        subgroup="inorganic", live=True,
+        example={"element": "Ag", "isotope_a": "107Ag", "isotope_b": "109Ag", "a_x": "", "b_x": "", "a_y": "0.01", "b_y": "0.99",
+                 "spike_concentration": "10", "spike_unit": "µg/g", "m_x": "1", "m_y": "0.5", "r_b": "1"}),
+
+    module("icp_massbias", "Mass bias & δ values", "B", "Correct isotope ratios with three mass-bias laws or standard–sample bracketing, and convert between ratios and δ values.",
+        [heading("Mass-bias factor from a standard"),
+         text("mb_a", "Numerator isotope a", "107Ag"), text("mb_b", "Denominator isotope b", "109Ag"),
+         number("mb_measured_std", "Measured standard ratio R_meas,std", 0.99, "any"),
+         number("mb_true_std", "Certified standard ratio R_true,std", 1.0, "any"),
+         number("mb_measured_sample", "Measured sample ratio", 0.995, "any"),
+         heading("Standard–sample bracketing"),
+         number("bracket_sample", "Measured sample ratio", 0.995, "any"),
+         number("bracket_before", "Measured standard before", 0.990, "any"),
+         number("bracket_after", "Measured standard after", 0.992, "any"),
+         number("bracket_true", "Certified standard ratio", 1.0, "any"),
+         heading("δ value and inverse"),
+         number("delta_sample", "Sample ratio R_sample", 1.002, "any"),
+         number("delta_standard", "Standard ratio R_standard", 1.0, "any"),
+         number("delta_per_mil", "δ value for inverse (‰)", 2.0, "any")],
+        [head("Mass-bias correction"),
+         cards([("K = R_true/R_meas", ""), ("Linear ε", "per Da"), ("Power ε", "per Da"), ("Russell β", "")], id="mass_bias",
+               help=["K = R_true,std/R_meas,std. Linear: R_corr = R_meas·[1 + ε(m_a − m_b)]. Power: R_corr = R_meas·(1 + ε)^(m_a − m_b).",
+                     "Exponential (Russell): R_corr = R_meas·(m_a/m_b)^β, with β = ln(K)/ln(m_a/m_b). Isotope masses come from IsoSpecPy by isotope label.",
+                     "All laws require positive ratios and different isotope masses. They are alternative empirical mass-bias models, not interchangeable physical measurements; use the law validated for the instrument and element."]),
+         table(["Law", "Parameter", "Value", "Correction factor", "Corrected sample ratio"], "Corrected sample ratios", id="corrected_ratios"),
+         head("Standard–sample bracketing"),
+         cards([("Corrected sample ratio", ""), ("Mean measured standard", "")], id="bracketing",
+               help="Corrected R_sample = R_meas,sample·R_true,std/mean(R_meas,std before, after). Bracketing assumes the mean of the two standards represents drift across the sample; it does not estimate uncertainty or nonlinear drift."),
+         head("δ value and inverse"),
+         cards([("δ from ratios", "‰"), ("R_sample/R_standard from δ", ""), ("R_sample from δ", "")], id="delta",
+               help="δ(‰) = (R_sample/R_standard − 1) × 1000. Inverse: R_sample/R_standard = 1 + δ/1000; multiply by R_standard for R_sample. The inverse requires δ > −1000‰ for a positive ratio.")],
+        subgroup="inorganic", live=True,
+        example={"mb_a": "107Ag", "mb_b": "109Ag", "mb_measured_std": "0.99", "mb_true_std": "1", "mb_measured_sample": "0.995",
+                 "bracket_sample": "0.995", "bracket_before": "0.990", "bracket_after": "0.992", "bracket_true": "1",
+                 "delta_sample": "1.002", "delta_standard": "1", "delta_per_mil": "2"}),
+
+    module("icp_sp", "Single-particle ICP-MS", "B", "Convert detected particle-event signals to spherical diameter and number concentration using dissolved-standard calibration and transport efficiency.",
+        [select("material", "Particle material", list(PARTICLE_PRESETS) + ["Custom"], "Au"),
+         text("custom_formula", "Custom composition formula (Custom only)", "", "TiO2"), number("density", "Custom density (g/cm³; Custom only)", step=0.01),
+         select("element", "Measured element (must occur in the formula)", list(ELEMENT_SYMBOLS), "Au"),
+         number("sensitivity", "Dissolved calibration sensitivity S", 1000.0),
+         select("sensitivity_unit", "Sensitivity unit", [SENSITIVITY_DWELL, SENSITIVITY_RATE]),
+         number("dwell_ms", "Dwell time t_dw (ms)", 1.0), number("flow", "Sample flow q (mL/min)", 0.3),
+         number("transport_pct", "Transport efficiency η (%)", 5.0), number("background", "Background counts per dwell I_bg", 2.0),
+         textarea("intensities", "Particle event intensities (counts; one per line or a single value)", "5054.728\n6200\n4500", "5054.7\n6200\n4500", 6),
+         number("n_events", "Number of events N (blank = listed events)", 3, 1), number("acquisition_s", "Acquisition time t_acq (s)", 60.0),
+         number("threshold", "Threshold intensity for size LOD (counts; optional)", 3000.0)],
+        [cards([("Mean diameter", "nm"), ("Median diameter", "nm"), ("Number concentration", "particles/mL"), ("Size LOD", "nm")], "Single-particle results", id="summary", style="metric",
+                help=["Pace et al., Anal. Chem. 2011, 83, 9361. m_el[µg] = (I − I_bg)·η·q[L/s]·t_dw[s]/S, where S is counts per dwell per µg/L; counts/s sensitivity is first multiplied by t_dw in seconds. m_p = m_el/X and d = (6m_p/(πρ))^(1/3).",
+                      "C_N = N/(η·q·t_acq), with q in mL/s for particles/mL. X is the measured-element mass fraction from the formula and IsoSpecPy average atomic masses.",
+                      "Only existing event signals are converted: no raw time-series processing, threshold detection, dissolved-background fitting, coating/dissolution or spectral-interference correction. Size LOD is the optional threshold converted to diameter, not a statistical detection limit."]),
+         table(["Event", "Intensity (counts)", "Net counts", "Element mass (fg)", "Particle mass (fg)", "Diameter (nm)"], "Particle events", id="events",
+               help="Element and particle masses are shown in fg (1 fg = 10⁻¹⁵ g). The table is capped at 200 events; means, medians and the histogram use every supplied event."),
+         figure("Diameter histogram", id="histogram", help="One histogram of all supplied particle-event diameters; summary statistics are not based on the capped table."),
+         notes("Method & limits", id="notes")],
+        subgroup="inorganic", live=True,
+        example={"material": "Au", "custom_formula": "", "density": "", "element": "Au", "sensitivity": "1000",
+                 "sensitivity_unit": SENSITIVITY_DWELL, "dwell_ms": "1", "flow": "0.3", "transport_pct": "5", "background": "2",
+                 "intensities": "5054.728\n6200\n4500", "n_events": "3", "acquisition_s": "60", "threshold": "3000"}),
 ]
 
 
@@ -561,7 +671,7 @@ GROUPS = [{"id": "modules", "title": "Modules"}, {"id": "pipelines", "title": "P
 # Modules 下的小类，侧栏按这里的顺序列出（组内已接引擎的模块排前面）；Pipelines 排在 Modules 之后
 SUBGROUPS = [{"id": "molecular", "title": "Molecular"}, {"id": "detectability", "title": "Detectability"},
              {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "Spectrum"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"},
-             {"id": "tools", "title": "Tools"}]
+             {"id": "inorganic", "title": "Inorganic MS"}, {"id": "tools", "title": "Tools"}]
 
 
 def spec():

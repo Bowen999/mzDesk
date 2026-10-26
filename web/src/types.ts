@@ -1,7 +1,7 @@
 export type Field = {
   type: string; id?: string; label?: string; optional?: boolean; adduct?: boolean; mz?: boolean; multi?: boolean;
   value?: any; step?: number | null; placeholder?: string | null; options?: string[]; min?: number; max?: number;
-  accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
+  rows?: number; accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
 };
 /** Help text for a "?" popover: one string, or a list shown as bullets. */
 export type Help = string | string[];

@@ -253,6 +253,7 @@ const SECTIONS = [
   {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/spec.py'},
+  {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
   {id:'pipe',  name:'Pipeline',   d:'4 条鉴定流程',                    w:'mzdesk/spec.py'},
   {id:'other', name:'Other',      d:'身份 · 排他性 · 正交 · 报告等', w:'mzdesk/spec.py · mzdesk/shared/'},
   {id:'docs',  name:'Docs',       d:'计划 · 本页',                     w:'admin/README.md · admin/version_change.html'},
@@ -262,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.11', date:'2026-10-26', git:'',
+  title:'新增 Inorganic MS：ICP-MS 同位素、干扰、IDMS、质量歧视与单颗粒五页',
+  note:'全部为 B 类非核心日常工具，不进论文主线；纯 Python + IsoSpecPy，不联网、无新依赖。spICP-MS 只做信号换算。新增 tests/test_inorganic.py。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1052 个通过']],
+  c:{
+   icp:['feat','Isotopes & internal standard：同位素 / 干扰表、规则化同位素推荐、质量 + NIST 第一电离能内标排序。Interferences：原子等重、M²⁺、2–3 原子多原子离子，精确 m/z、Δm、所需分辨率和丰度乘积。IDMS：单尖峰摩尔法、组成摩尔质量、R_B 灵敏度与最佳混合比。Mass bias & δ values：三种校正律、bracketing、δ 互算。Single-particle ICP-MS：Pace 法信号 → 粒径 / 数量浓度，不做原始时间序列或阈值检测。',true,{w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py · mzdesk/spec.py · tests/test_inorganic.py'}],
+   app:['feat','侧栏在 DMPK 与 Tools 之间新增 Inorganic MS 小类和原子线图标；新增通用 textarea 输入，单颗粒事件强度可每行粘贴一个值。',false,{w:'mzdesk/spec.py · mzdesk/api/runners/__init__.py · web/src/assets/icons.svg · web/src/components/Fields.tsx · web/src/types.ts'}],
+   docs:['doc','README 功能范围新增 Inorganic MS（非核心）五页及边界；版本号 0.2.11，本页加 v0.2.11。requirements.txt 无新增依赖。',false,{w:'admin/README.md · admin/version_change.html · mzdesk/__init__.py'}]
+  }},
  {id:'v0.2.10', date:'2026-10-25',
   title:'MS1 改版：Mass search + Theoretical 两页；同位素分布改用 IsoSpecPy，Mass search 可按同位素得分过滤',
   note:'新依赖 IsoSpecPy（pip install IsoSpecPy，BSD-2，用到时才导入）。删除 Isotope match 页；Formula (BUDDY) 移到 Spectrum 小类（id 不变，URL 和 pipeline 照旧）。新增 tests/test_isotopes.py。',

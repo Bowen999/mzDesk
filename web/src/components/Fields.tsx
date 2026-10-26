@@ -41,6 +41,7 @@ export function FieldInput({ field, value, onChange }: P) {
     case "ms1": return <label className="field wide">{f.label}<textarea rows={4} value={value} onChange={e => onChange(e.target.value)} /></label>;
     case "number": return <label className="field">{f.label}<input type="number" step={f.step ?? "any"} placeholder={f.placeholder ?? ""} value={value ?? ""} onChange={e => onChange(e.target.value)} /></label>;
     case "text": return <label className="field">{f.label}<input type="text" placeholder={f.placeholder ?? ""} value={value ?? ""} onChange={e => onChange(e.target.value)} /></label>;
+    case "textarea": return <label className="field wide">{f.label}<textarea rows={f.rows ?? 5} placeholder={f.placeholder ?? ""} value={value ?? ""} onChange={e => onChange(e.target.value)} /></label>;
     case "select": return <label className="field">{f.label}<select value={value} onChange={e => onChange(e.target.value)}>{f.options!.map(o => <option key={o}>{o}</option>)}</select></label>;
     case "radio": return (
       <div className="field"><span>{f.label}</span><div className="radio-row">
@@ -158,6 +159,7 @@ export function summarizeInputs(fields: Field[], values: Record<string, any>): {
       case "multiselect": text = Array.isArray(v) && v.length ? `${f.label}: ${v.length <= 2 ? v.join(", ") : v.length + " selected"}` : ""; break;
       case "file": text = v?.name ? short(v.name, 32) : ""; break;
       case "table": text = v ? `${f.label}: given` : ""; break;
+      case "textarea": text = v ? `${f.label}: ${String(v).split("\n").filter((l: string) => l.trim()).length} lines` : ""; break;
       default: text = v !== "" && v !== null && v !== undefined ? `${String(f.label).replace(/\s*\(.*\)$/, "")}: ${short(String(v), 32)}` : "";
     }
     if (text) items.push(text);
