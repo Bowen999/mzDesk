@@ -1,6 +1,6 @@
 """相似度指标的名字与类别（只用标准库）。
 
-Similarity & mirror 页的得分表、Library search 页的指标多选、ms2_similarity.py 的计算都从这里取名字，
+Similarity 页的得分表、Library search 页的指标多选、ms2_similarity.py 的计算都从这里取名字，
 spec.py 也导入它（所以这里不能引入 numpy / matchms），名字因此不会漂移。顺序 = 得分表的顺序。
 """
 CAT_MATCHMS = "Classic peak matching (matchms)"

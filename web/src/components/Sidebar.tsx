@@ -9,13 +9,12 @@ import { LockIcon } from "./LockGate";
 
 type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
 
-/** Modules first, then Pipelines. Modules: one entry per subgroup in spec.subgroups order (working pages before placeholders,
- *  otherwise spec order); a module without a subgroup is listed on its own after them. */
+/** Modules first, then Workflows. Modules: one entry per subgroup in spec.subgroups order, with the modules in spec order;
+ *  a module without a subgroup is listed on its own after them. */
 function moduleEntries(spec: Spec): Entry[] {
   const mods = spec.modules.filter(m => m.group === "modules");
-  const liveFirst = (ms: Module[]) => [...ms.filter(m => m.live), ...ms.filter(m => !m.live)];
   const out: Entry[] = spec.subgroups
-    .map(s => ({ kind: "sub" as const, id: s.id, title: s.title, mods: liveFirst(mods.filter(m => m.subgroup === s.id)) }))
+    .map(s => ({ kind: "sub" as const, id: s.id, title: s.title, mods: mods.filter(m => m.subgroup === s.id) }))
     .filter(e => e.mods.length);
   for (const m of mods) if (!m.subgroup || !spec.subgroups.some(s => s.id === m.subgroup)) out.push({ kind: "link", m });
   return out;
@@ -137,7 +136,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
         })}
       </div>
       <div className="nav-group">
-        <div className="nav-title">Pipelines</div>
+        <div className="nav-title">Workflows</div>
         {spec.pipelines.map(p => (
           <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>
             <Icon name="pipeline" className="nav-icon" />

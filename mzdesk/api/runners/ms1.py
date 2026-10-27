@@ -1,4 +1,4 @@
-"""MS1 小类：Theoretical（m/z + 同位素分布）、Mass search（PubChem 精确质量 + 可选同位素过滤）；Formula (BUDDY) 页也在这里（侧栏归 Spectrum）。"""
+"""MS1 小类：Theoretical（m/z + 同位素分布）、Mass search（PubChem 精确质量 + 可选同位素过滤）；Formula annotation 页也在这里（侧栏归 Spectrum）。"""
 import re
 
 from rdkit import Chem

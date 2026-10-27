@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.17', date:'2026-10-26', git:'',
+  title:'修复侧边栏 / 锁屏 / Stats 布局与刷新交互；Spectrum 顺序和命名同步',
+  note:'只改前端布局 / 交互与 spec 命名；计算输出不变。',
+  state:[['能算的模块页','24 / 36'], ['Pipeline','4 条，未接'], ['测试','1081 个通过']],
+  c:{
+   app:['fix','侧边栏解锁后品牌行可换行，Lock / 折叠按钮不再被裁；锁屏卡片在矮视口可纵向滚动；Stats 365 天柱图横向滚动，刷新失败显示错误并忽略过期请求；Pipeline Run 请求期间禁用。Spectrum 顺序改为 Clean → Similarity → Library → Formula → De novo → EI → MS/MS → Fragments；Compound / Workflows / ICP-MS / Utilities & reporting 及页面标题同步，开放 Detectability / MS1 / Spectrum / ICP-MS。',false,{w:'mzdesk/spec.py · web/src/components/Sidebar.tsx · web/src/theme.css · web/src/lock.css · web/src/pages/StatsPage.tsx · web/src/pages/PipelinePage.tsx · web/src/lock.ts · web/src/components/LockGate.tsx · web/src/App.tsx · tests/test_api.py · tests/test_isotopes.py · tests/test_inorganic.py'}],
+   docs:['doc','README 同步 Compound / Workflows / ICP-MS 命名；版本号 0.2.17，本页加 v0.2.17。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.16', date:'2026-10-26', git:'',
   title:'补齐四个 CIL Channel 的完整产物可视化',
   note:'A / H / C / K 均显示完整底物与产物；K 通道只展示连接结构，不预测腙的 E / Z 比例。衍生化规则、分子式和质量不变。',

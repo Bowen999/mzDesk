@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Frontend-only password lock. Everything outside the Detectability subgroup sits behind it.
+ * Frontend-only password lock. Everything outside the open subgroups (Detectability, MS1, Spectrum, ICP-MS) sits behind it.
  * This keeps casual viewers out; it is NOT access control (the API is open, and anyone with the
  * browser's dev tools can flip the flag), so never treat it as protection for real secrets.
  * Only a salted PBKDF2 hash is stored here; the password itself is not part of the source.
@@ -11,9 +11,9 @@ const HASH_HEX = "9bcbf15d44d26180b6d179732218c949367dae9a2e5be513211ce742c6d343
 const ITERATIONS = 200_000;
 const STORAGE_KEY = "mzdesk.unlocked";   // sessionStorage: cleared when the browser (tab) closes
 
-/** Modules in this subgroup are open to everyone; every other module and every pipeline is locked. */
-export const OPEN_SUBGROUP = "detectability";
-export const isLockedModule = (m: { subgroup: string | null }) => m.subgroup !== OPEN_SUBGROUP;
+/** Modules in these subgroups are open to everyone; every other module and every pipeline is locked. */
+export const OPEN_SUBGROUPS = new Set(["detectability", "ms1", "ms2", "inorganic"]);
+export const isLockedModule = (m: { subgroup: string | null }) => !m.subgroup || !OPEN_SUBGROUPS.has(m.subgroup);
 
 const fromHex = (hex: string) => Uint8Array.from(hex.match(/../g) ?? [], b => parseInt(b, 16));
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { runPipeline } from "../api";
 import { FieldInput, initialValues } from "../components/Fields";
@@ -11,13 +11,17 @@ export function PipelinePage({ spec }: { spec: Spec }) {
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(pipe ? pipe.inputs : []));
   const [stages, setStages] = useState<{ title: string; status: string }[] | null>(null);
   const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(false);
+  const running = useRef(false);
   useEffect(() => { if (pipe) { setValues(initialValues(pipe.inputs)); setStages(null); setMsg(""); } }, [id]);
   if (!pipe) return <p>Unknown pipeline.</p>;
 
   const run = async () => {
-    setMsg("running…");
+    if (running.current) return;
+    running.current = true; setBusy(true); setMsg("running…");
     try { const r = await runPipeline(pipe.id, values); setStages(r.stages); setMsg("placeholder: the pipeline does not run yet; run each module from its own page"); }
     catch (e: any) { setMsg("error: " + e.message); }
+    finally { running.current = false; setBusy(false); }
   };
   return (
     <div className="page">
@@ -26,7 +30,7 @@ export function PipelinePage({ spec }: { spec: Spec }) {
       <div className="panel">
         <h4 className="panel-title">Input (once)</h4>
         <div className="fields">{pipe.inputs.map((f, i) => <FieldInput key={f.id ?? i} field={f} value={f.id ? values[f.id] : undefined} onChange={v => f.id && setValues({ ...values, [f.id]: v })} />)}</div>
-        <div className="actions"><button className="btn" onClick={run}>Run pipeline</button><span className="msg">{msg}</span></div>
+        <div className="actions"><button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? "Running…" : "Run pipeline"}</button><span className="msg">{msg}</span></div>
         {stages && <ul className="stage-status">{stages.map(s => <li key={s.title}>{s.title}: {s.status}</li>)}</ul>}
         <details><summary>Query object (shared by every stage)</summary><pre className="code">{JSON.stringify(values, null, 2)}</pre></details>
       </div>

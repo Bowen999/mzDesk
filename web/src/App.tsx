@@ -12,7 +12,7 @@ import { StatsPage } from "./pages/StatsPage";
 import type { Spec } from "./types";
 
 /** "/" lands on the first module once unlocked (Modules come first in the sidebar); while locked it lands on the first open
- *  (Detectability) page instead of a blurred wall. */
+ *  page instead of a blurred wall. */
 function Home({ spec }: { spec: Spec }) {
   const unlocked = useUnlocked();
   const first = unlocked ? spec.modules[0] : spec.modules.find(m => !isLockedModule(m)) ?? spec.modules[0];

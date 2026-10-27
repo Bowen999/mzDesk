@@ -40,7 +40,7 @@ function UnlockCard() {
         value={pw} onChange={e => { setPw(e.target.value); if (err) setErr(""); }} />
       <div className="lock-error" role="alert">{err}</div>
       <button type="submit" className="btn" disabled={busy}>{busy ? "Checking…" : "Unlock"}</button>
-      <p className="lock-note">Detectability pages are open without a password.</p>
+      <p className="lock-note">Open without a password: Detectability, MS1, Spectrum, ICP-MS.</p>
     </form>
   );
 }

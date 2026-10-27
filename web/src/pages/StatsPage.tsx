@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { ApiError, getStats, type Stats } from "../api";
 import type { Spec } from "../types";
 
@@ -9,13 +9,23 @@ export function StatsPage({ spec }: { spec: Spec }) {
   const [data, setData] = useState<Stats | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const request = useRef(0);
   const title = (id: string) => spec.modules.find(m => m.id === id)?.title ?? id;
 
   const load = async (d = days) => {
+    const mine = ++request.current;
     setBusy(true); setErr("");
-    try { setData(await getStats(pw, d)); }
-    catch (e) { setErr(e instanceof ApiError && e.message ? e.message : String(e)); if (!data) setData(null); }
-    finally { setBusy(false); }
+    try {
+      const next = await getStats(pw, d);
+      if (mine !== request.current) return;
+      setData(next);
+      setDays(next.days);
+    } catch (e) {
+      if (mine !== request.current) return;
+      setErr(e instanceof ApiError && e.message ? e.message : String(e));
+    } finally {
+      if (mine === request.current) setBusy(false);
+    }
   };
   const submit = (e: FormEvent) => { e.preventDefault(); void load(); };
 
@@ -37,8 +47,8 @@ export function StatsPage({ spec }: { spec: Spec }) {
     <div className="page stats-page">
       <div className="module-heading"><div className="module-heading-copy"><div className="module-kicker">mzDesk</div><h1>Usage statistics</h1></div></div>
       <div className="stats-bar">
-        <div className="chip-row">{[7, 30, 90, 365].map(d => <button key={d} type="button" className={"chip" + (d === days ? " on" : "")} onClick={() => { setDays(d); void load(d); }}>{d} days</button>)}</div>
-        <span className="msg">{busy ? "Loading…" : `Updated ${new Date(data.generated).toLocaleString()}`}</span>
+        <div className="chip-row">{[7, 30, 90, 365].map(d => <button key={d} type="button" className={"chip" + (d === days ? " on" : "")} onClick={() => void load(d)}>{d} days</button>)}</div>
+        <span className={"msg" + (err ? " stats-err" : "")}>{err || (busy ? "Loading…" : `Updated ${new Date(data.generated).toLocaleString()}`)}</span>
         <button type="button" className="btn secondary" onClick={() => void load()} disabled={busy}>Refresh</button>
       </div>
       <div className="outputs has-data">
@@ -47,14 +57,18 @@ export function StatsPage({ spec }: { spec: Spec }) {
         </div></div></div>
         <div className="block span-full tier-card"><div className="out">
           <h4 className="out-title">Daily activity <span className="stats-legend"><i className="lg-views" />views <i className="lg-runs" />runs</span></h4>
-          <div className="stats-chart" role="img" aria-label="Views and runs per day">
-            {data.daily.map(d => (
-              <div key={d.day} className="stats-col" title={`${d.day}: ${d.visitors} visitors, ${d.views} views, ${d.runs} runs`}>
-                <span className="bar views" style={{ height: `${(100 * d.views) / max}%` }} />
-                <span className="bar runs" style={{ height: `${(100 * d.runs) / max}%` }} />
-              </div>))}
+          <div className="stats-chart-scroll">
+            <div className="stats-chart-inner" style={{ minWidth: `${data.daily.length * 5}px` }}>
+              <div className="stats-chart" role="img" aria-label="Views and runs per day">
+                {data.daily.map(d => (
+                  <div key={d.day} className="stats-col" title={`${d.day}: ${d.visitors} visitors, ${d.views} views, ${d.runs} runs`}>
+                    <span className="bar views" style={{ height: `${(100 * d.views) / max}%` }} />
+                    <span className="bar runs" style={{ height: `${(100 * d.runs) / max}%` }} />
+                  </div>))}
+              </div>
+              <div className="stats-axis"><span>{data.daily[0]?.day}</span><span>{data.daily[data.daily.length - 1]?.day}</span></div>
+            </div>
           </div>
-          <div className="stats-axis"><span>{data.daily[0]?.day}</span><span>{data.daily[data.daily.length - 1]?.day}</span></div>
         </div></div>
         <Table title="Module runs" cols={["Module", "Runs", "Errors", "Avg time"]}
           rows={data.modules.map(m => [title(m.module), m.runs, m.errors, `${(m.avg_ms / 1000).toFixed(1)} s`])} />

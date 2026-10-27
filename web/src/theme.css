@@ -294,7 +294,7 @@ code.ion {
   .sidebar-resizer { display: none; }
   .drawer-backdrop { display: block; position: fixed; inset: 0; z-index: 30; background: rgba(22, 26, 35, .28); opacity: 0; pointer-events: none; transition: opacity .2s; }
   .drawer-open .drawer-backdrop { opacity: 1; pointer-events: auto; }
-  .lock-gate.is-locked { height: calc(100vh - 52px); }
+  .lock-gate.is-locked { height: calc(100vh - 52px); height: calc(100dvh - 52px); }
 }
 @media (max-width: 700px) {
   .panel { padding: 16px; border-radius: 10px; }
@@ -401,8 +401,9 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .brand.compact .brand-name { font-size: 20px; }
 .topbar .brand-name { font-size: 21px; }
 .topbar .brand-tag { font-size: 9.5px; }
-.sidebar .lock-brand-row { align-items: flex-end; margin-bottom: 28px; }
-.brand-actions { display: flex; align-items: center; gap: 4px; }
+.sidebar .lock-brand-row { align-items: flex-end; flex-wrap: wrap; row-gap: 6px; margin-bottom: 28px; }
+.brand { min-width: 0; }
+.brand-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 
 /* ---------------------------------------------------------------- sidebar footer: theme switch */
 .sidebar-foot { margin-top: auto; padding: 16px 4px 2px; }
@@ -571,6 +572,8 @@ body.resizing .sidebar-shell { transition: none; }
 .stats-err { color: var(--ov-red-ink); }
 .stats-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
 .stats-bar .btn { margin-left: auto; }
+.stats-chart-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.stats-chart-inner { min-width: 100%; }
 .stats-chart { display: flex; align-items: flex-end; gap: 2px; height: 180px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .stats-col { position: relative; flex: 1; display: flex; align-items: flex-end; gap: 1px; height: 100%; min-width: 3px; }
 .stats-col:hover { background: var(--row-hover); }

@@ -32,7 +32,7 @@ def test_inorganic_subgroup_and_live_modules():
     ids = [s["id"] for s in SUBGROUPS]
     assert ids[ids.index("dmpk") + 1:ids.index("tools")] == ["inorganic"]
     assert [m["id"] for m in INORGANIC] == IDS
-    assert next(s["title"] for s in SUBGROUPS if s["id"] == "inorganic") == "Inorganic MS"
+    assert next(s["title"] for s in SUBGROUPS if s["id"] == "inorganic") == "ICP-MS"
     for module in INORGANIC:
         assert module["cls"] == "B" and module["live"] is True and module["example"]
         assert any(block.get("help") for block in module["outputs"]), module["id"]
