@@ -23,9 +23,10 @@ import shutil
 import signal
 import subprocess
 import tempfile
-import threading
 import time
 from pathlib import Path
+
+from mzdesk.shared import heavy_lock
 
 VERSION = "3.73"
 EXE_NAME = "MsfinderConsoleApp.exe"
@@ -50,7 +51,7 @@ MS1_MATCH_DA = 0.0005
 HALOGEN_KEYS = ("Fcheck", "ClCheck", "BrCheck", "Icheck")
 SILICON_KEYS = ("SiCheck",)
 
-_RUN_LOCK = threading.Lock()
+_RUN_LOCK = heavy_lock.LOCK         # shared with the FRIGID engine: one heavy local job at a time
 
 
 class MsFinderError(RuntimeError):
@@ -313,7 +314,9 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
     query = build_query(precursor_mz, positive, adduct, ms2, ms1, name)
     mono, exe, ini = check_msfinder()
 
-    if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S):
+    if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
+        if _RUN_LOCK.holder == "FRIGID":
+            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
         raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
     try:
         t0 = time.monotonic()

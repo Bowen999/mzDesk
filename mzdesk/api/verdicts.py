@@ -3,6 +3,7 @@
 build(module_id, inputs, outputs) -> str | None. The text may use <b> (the page renders <sub> <sup> <i> <b> <code>).
 A runner may also return its own "verdict"; that one wins. None = the page shows no verdict line.
 """
+import html
 import re
 
 MINUS = "−"
@@ -307,9 +308,21 @@ def ms2_structure(i, o):
     return (f"Top candidate: {_b(name)} ({form}), score {score}" + (f" · {n} candidates" if n.isdigit() and n != "1" else "") + ".")
 
 
+def ms2_denovo(i, o):
+    rows = _rows(o, "candidates")
+    formula = _card(o, "summary", "Formula used")
+    if not rows:
+        return f"FRIGID generated no formula-matched structure for {_b(formula)} (see the warnings)." if formula else None
+    smiles, score = _text(rows[0][2]), _text(rows[0][4])
+    short = html.escape(smiles if len(smiles) <= 60 else smiles[:59] + "…")
+    n = len(rows)
+    return (f"Top generated candidate: {_b(short)}" + (f", similarity {score}" if score not in ("", "—") else "")
+            + f" · {n} formula-matched candidate{'s' if n != 1 else ''} (hypotheses).")
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
-                                    ms2_structure)}
+                                    ms2_structure, ms2_denovo)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 

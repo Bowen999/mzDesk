@@ -250,7 +250,7 @@ const ROW_GROUPS = {};   // 行不分组
 // 行 = 模块。d = 一句话说明；w = 对应的文件 / 文件夹（用 " · " 分开）
 const SECTIONS = [
   {id:'ms1',   name:'MS1',        d:'理论 m/z · 同位素 · 分子式',        w:'mzdesk/ms1/ · mzdesk/api/runners/ms1.py'},
-  {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 结构预测 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
+  {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 结构预测 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/ms2_denovo.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/spec.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.21', date:'2026-10-28', git:'',
+  title:'De novo structure 接入 FRIGID-base（本机 PyTorch）',
+  note:'Spectrum 小类里排在 Structure prediction 之后的一页从骨架变为可算：正离子 MS/MS + 分子式 → 生成的候选结构（假设，不是鉴定）。分子式留空时用 BUDDY 第一名；只在本机版可用，在线版返回安装说明。',
+  state:[['能算的模块页','28 / 37'], ['Pipeline','4 条，未接'], ['测试','1270 个通过（未跑 Docker / 联网的 17 个、FRIGID 实跑 3 个；另有 MS-FINDER / MetFrag 真实运行 6 个因内存紧张未跑）']],
+  c:{
+   ms2:['feat','De novo structure（id ms2_denovo）接入 FRIGID-base（Coley 组；代码 Apache-2.0，DLM 检查点 Apache-2.0，MIST 检查点 MIT）：输入 precursor（只做正离子，负离子返回 400 并说明；7 个加合物，Auto = [M+H]+）、MS2、分子式（可空）、模式（Quick 16 个样本 / Full 最多 100 个，默认 Quick）；输出摘要卡片（Top candidate、Formula used 及来源、Device 及用时和峰值内存、Samples）和生成候选表（排名、结构图、SMILES、分子式、得分 = 与预测指纹的 Tanimoto、InChIKey 2D 段）。只列分子式匹配的候选；同位素标记、自由基、净电荷不对（[M]+ 要求 +1，其余要求 0；硝基、N-氧化物这类电荷分离的中性分子保留）和重复的隐藏，隐藏了几个写在警告里；一个都没有时给空表和警告。分子式留空时用 BUDDY（同 Formula annotation 页的引擎，Orbitrap 设置、不含卤素）的第一名，结果和警告写明用了哪个分子式、概率多少；BUDDY 不能处理 [M]+ / [M+H-2H2O]+，无结果时要求手填。帮助文字写明：结果是假设；作者基准（修订于 2026-10-21，给定真实分子式）MassSpecGym top-1 8.21 % / top-10 9.82 %，NPLIB1 13.31 % / 20.15 %，真实场景更低；得分是相似度不是概率；不预测立体化学；熟悉的化合物可能来自训练数据。设备 auto（Apple GPU 需 ≥ 12 GB 可用内存且 swap 余量 > 1 GB，否则 CPU；MZDESK_FRIGID_DEVICE 可改）。安装 `python -m mzdesk.ms2.frigid_setup`（约 3 GB：conda 前缀环境 + 钉死版本的轮子、固定提交 9a3e623 的 FRIGID 克隆并打设备补丁和 SAFE 导入补丁、两个检查点校验 md5、SAFE 分词器；--check 只报告）。驱动脚本和我们在 MIT 许可的 MassSpecGym 标签上训练的 SAFE 长度模型随 mzDesk 发布。每次运行：临时文件夹、独立进程组、超时 Quick 300 s / Full 1200 s、外层内存看护（RSS 6.5 GB / 物理 footprint 13 GB，略高于驱动自带的 6 / 12 GB）、CPU 线程数按空闲核数限制（核数 − 负载，至少 2；MZDESK_FRIGID_THREADS 可指定。核都被别的任务占满时 PyTorch 默认线程数会卡住：实测 Quick 在空闲 Mac 上约 20 s，旁边有 SIRIUS 任务时超过 300 s 被超时杀掉，限成 2 个线程后 50 s 以内完成）。MS-FINDER 和 FRIGID 共用一把重任务锁（同一时刻只跑一个）：FRIGID 等 20 s 后报忙，MS-FINDER 的等待和报忙行为不变，只是在 FRIGID 运行时提示它在等 FRIGID。示例是 MassBank MSBNK-LCSB-LU119905 的咖啡因 [M+H]+（CC BY 4.0，分子式 C8H10N4O2 已给，不依赖 BUDDY）：CPU、Quick 约 30 s、峰值约 4.5 GB，咖啡因排第一（相似度 1.000）。',true,{w:'mzdesk/ms2/frigid_engine.py · mzdesk/ms2/frigid_setup.py · mzdesk/ms2/frigid_driver/ · mzdesk/lib/frigid/ · mzdesk/shared/memguard.py · mzdesk/shared/heavy_lock.py · mzdesk/ms2/msfinder_engine.py · mzdesk/api/runners/ms2_denovo.py · mzdesk/api/runners/__init__.py · mzdesk/api/verdicts.py · mzdesk/spec.py · pyproject.toml · requirements.txt · tests/test_frigid.py · tests/fixtures/frigid/ · tests/test_api.py'}],
+   docs:['doc','README 加 De novo structure 页说明（输入、BUDDY 回退、Quick / Full、设备 auto、只在本机、准确率提醒、许可）和本机安装 / 运行条件，排除表里 DiffMS 一行改为“FRIGID 已作为 De novo 页接入，DiffMS 不用”；requirements.txt 加一行 FRIGID 说明；版本号 0.2.21，本页加 v0.2.21。',false,{w:'admin/README.md · requirements.txt · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.20', date:'2026-10-28', git:'',
   title:'Structure prediction 加 Include halogens / Include Si 开关；修正输入栏的谱峰数',
   note:'两个独立复选框，默认都关（行为同以前）；勾选时本次运行用参数文件副本打开 F Cl Br I / Si。折叠输入栏里的谱图计数从“N lines”改为按服务器读法数的“N peaks”。',

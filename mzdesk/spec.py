@@ -19,6 +19,8 @@ from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
 from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
 # msfinder_engine 顶层只用标准库，这里只读它的加合物名单
 from mzdesk.ms2.msfinder_engine import ADDUCTS as MSFINDER_ADDUCT_NAMES
+# frigid_engine 顶层也只用标准库（memguard / heavy_lock 都是纯标准库），这里只读加合物名单和 Quick / Full 的显示名
+from mzdesk.ms2.frigid_engine import ADDUCTS as FRIGID_ADDUCT_NAMES, MODE_LABELS as FRIGID_MODES
 # 指标名字只用标准库（和 ms2_similarity.py 共用一份），所以这里可以直接导入
 from mzdesk.ms2 import metric_names as METRIC_NAMES
 # isotopes 顶层只用标准库（IsoSpecPy 在用到时才导入）
@@ -35,6 +37,8 @@ BUDDY_ADDUCTS = {"Positive": ["Auto", "[M+H]+", "[M+Na]+", "[M+NH4]+", "[M+K]+",
                  "Negative": ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M+Br]-"]}
 # MS-FINDER 用自己的加合物写法（FA = formate, Hac = acetate）；Auto = [M+H]+ / [M-H]-
 MSFINDER_ADDUCTS = {mode: ["Auto"] + names for mode, names in MSFINDER_ADDUCT_NAMES.items()}
+# FRIGID 只做正离子（负离子时 runner 返回说明），所以 Negative 下只有 Auto；Auto = [M+H]+
+FRIGID_ADDUCTS = {"Positive": ["Auto"] + FRIGID_ADDUCT_NAMES, "Negative": ["Auto"]}
 LIBRARIES = ["MassBank", "GNPS"]            # 本地索引见 mzdesk/ms2/library_setup.py
 LIBRARY_METRICS = METRIC_NAMES.LIBRARY_ORDER    # Library search 页的指标多选 = Similarity 页得分表里的全部 16 项（同一份名字，谱熵排第一）
 LIBRARY_DEFAULT_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.COSINE_GREEDY]
@@ -454,10 +458,20 @@ MODULES = [
         subgroup="ms2", live=True,
         example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)}),
 
-    module("ms2_denovo", "De novo structure", "A", "<b>Structure candidates</b> when no structure is given.",
-        [precursor(), spectrum(), text("formula", "Formula (optional)")],
-        [table(["Rank", "SMILES", "Formula", "Score", "Tool"], "De novo candidates")],
-        subgroup="ms2"),
+    module("ms2_denovo", "De novo structure", "A", "<b>Generated candidate structures</b> from FRIGID when the compound is not in any database (hypotheses). Local version only.",
+        [precursor(label="Precursor m/z (positive mode only)", adducts=FRIGID_ADDUCTS), spectrum(),
+         text("formula", "Formula (optional; blank = BUDDY's top-1 formula)", placeholder="C8H10N4O2"), select("mode", "Mode", FRIGID_MODES)],
+        [cards([("Top candidate", ""), ("Formula used", ""), ("Device", ""), ("Samples", "generated / shown")], id="summary"),
+         table(["Rank", "Structure", "SMILES", "Formula", "Score", "InChIKey (2D)"], "Generated candidates", id="candidates",
+               help=["These are hypotheses, not identifications. FRIGID does not search a database: it writes structures for the formula you give and the molecular fingerprint it predicts from the MS/MS, so a candidate can be a molecule that exists nowhere. Check any candidate against a reference standard, a library spectrum (Library search) or a predicted spectrum (MS/MS prediction).",
+                     "How often the right structure is among them (the authors' benchmark of FRIGID-base, revised 2026-10-21, with the true formula given): MassSpecGym top-1 8.21 %, top-10 9.82 %; NPLIB1 top-1 13.31 %, top-10 20.15 %. Real-world accuracy is likely lower. Quick mode draws 16 samples, so it is a first look; Full mode draws until 10 different formula-matched structures or 100 samples.",
+                     "Score: Tanimoto similarity (Morgan fingerprint, radius 2, 4096 bits) between the candidate and the fingerprint FRIGID predicted from the spectrum. It is a similarity, not a probability, and scores of different spectra are not comparable.",
+                     "Only candidates with the right formula are shown; isotope-labelled, radical, wrongly charged and duplicate structures are hidden. SMILES carry no stereochemistry (FRIGID does not predict it), so the InChIKey is the 2D block only.",
+                     "A familiar compound can come back because the model saw it in training, not because it read this spectrum.",
+                     "Formula: if you leave it blank the page takes the top-1 formula of BUDDY (Orbitrap settings, no halogens) and says so under Formula used; a wrong formula gives wrong structures. FRIGID knows C H N O P S F Cl Br I B Si Se As Fe Co Na K, and only positive-mode adducts.",
+                     "Local version only: needs the one-time install python -m mzdesk.ms2.frigid_setup (about 3 GB). A run takes roughly 20-40 s and 4-5 GB of memory, and one heavy job (this page or Structure prediction) runs at a time."])],
+        subgroup="ms2", live=True,
+        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2), "formula": "C8H10N4O2"}),
 
     module("ms2_ei", "EI-MS prediction", "A", "Predict the <b>70 eV electron-ionization spectrum</b> of a structure (NEIMS). One ion type: [M]+•.",
         [structure()],

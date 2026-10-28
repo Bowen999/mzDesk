@@ -4,7 +4,9 @@
 MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）；
 Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Library search 的示例需要 MassBank 索引（python -m mzdesk.ms2.library_setup MassBank）；
 Structure prediction 需要 Mono + MS-FINDER（python -m mzdesk.ms2.msfinder_setup，只在本机）。没有时相关测试跳过。
+De novo structure 需要 FRIGID（python -m mzdesk.ms2.frigid_setup，只在本机），而且真实运行默认不跑：设 MZDESK_RUN_FRIGID=1 才跑（约 20–40 s、4–5 GB 内存）。
 """
+import os
 import shutil
 import types
 from pathlib import Path
@@ -14,7 +16,7 @@ from fastapi.testclient import TestClient
 
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
-from mzdesk.ms2 import cfmid_engine, library_index, msfinder_engine, neims_engine
+from mzdesk.ms2 import cfmid_engine, frigid_engine, library_index, msfinder_engine, neims_engine
 from mzdesk.platform_fit import pka_engine
 from mzdesk import spec
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
@@ -38,6 +40,15 @@ def _msfinder_unavailable():
     return None
 
 
+def _frigid_unavailable():
+    """Why FRIGID cannot run here (not installed), or None."""
+    try:
+        frigid_engine.check_frigid()
+    except frigid_engine.FrigidError as exc:
+        return str(exc)
+    return None
+
+
 client = TestClient(app)
 LIVE = [m for m in MODULES if m["live"]]
 HAS_JAVA = shutil.which("java") is not None
@@ -46,6 +57,8 @@ NO_NEIMS = not Path(neims_engine.weights_path()).is_file()
 NO_MOLGPKA = not Path(pka_engine.weights_path()).is_file()
 NO_MASSBANK = not library_index.is_installed("MassBank")
 NO_MSFINDER = _msfinder_unavailable()
+NO_FRIGID = _frigid_unavailable()
+RUN_FRIGID = os.environ.get("MZDESK_RUN_FRIGID") == "1"        # a real FRIGID run takes 20-40 s and 4-5 GB: opt-in
 needs_docker = [pytest.mark.docker, pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")]
 OPTIONAL_BLOCKS = {"viewer3d"}          # 3D embedding can fail for some structures
 
@@ -126,6 +139,10 @@ def test_example_runs_and_fills_every_block(mod, monkeypatch):
         pytest.skip(f"CFM-ID needs Docker: {NO_DOCKER}")
     if mod["id"] == "ms2_structure" and NO_MSFINDER:
         pytest.skip(f"MS-FINDER not available: {NO_MSFINDER}")
+    if mod["id"] == "ms2_denovo" and not RUN_FRIGID:
+        pytest.skip("real FRIGID runs are opt-in: set MZDESK_RUN_FRIGID=1 (about 20-40 s and 4-5 GB of memory)")
+    if mod["id"] == "ms2_denovo" and NO_FRIGID:
+        pytest.skip(f"FRIGID not available: {NO_FRIGID}")
     if mod["id"] == "ms2_ei" and NO_NEIMS:
         pytest.skip("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup)")
     if mod["id"] == "ms2_library" and NO_MASSBANK:
@@ -160,8 +177,9 @@ def test_clean_page_reads_precursor_from_pasted_record():
 
 
 def test_placeholder_module_answers_placeholder():
-    body = _run("ms2_denovo", {}).json()
+    body = _run("som", {}).json()
     assert body["status"] == "placeholder" and body["outputs"] == {}
+    assert not next(m for m in MODULES if m["id"] == "som")["live"]
 
 
 def test_similarity_matches_engine():
@@ -253,6 +271,10 @@ def test_draw_mode_takes_the_editor_smiles():
     ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "[M-H]-"}, "ms2": _paste("138.07 100")}),
     ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "halogen": "yes"}),
     ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "silicon": 1}),
+    ("ms2_denovo", {"ms2": _paste("138.07 100")}),
+    ("ms2_denovo", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Negative", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "formula": "C8H10N4O2"}),
+    ("ms2_denovo", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "formula": "C8H10Zn"}),
+    ("ms2_denovo", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "formula": "C8H10N4O2", "mode": "Slow"}),
     ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "noise_pct": "150"}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "normalize": "Everything = 7"}),
