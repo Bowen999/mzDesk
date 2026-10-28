@@ -1,0 +1,16 @@
+method	subset	N	top1	top1_pct	top5	top5_pct	top10	top10_pct	top20	top20_pct	any_rank	any_rank_pct	n_ties_at_truth
+formula	all	8	6	75.0	6	75.0	6	75.0	6	75.0	7	87.5	5
+CSI:FingerID	all	8	4	50.0	5	62.5	6	75.0	6	75.0	7	87.5	0
+MSNovelist	all	8	1	12.5	1	12.5	1	12.5	2	25.0	2	25.0	0
+formula	Priority	5	3	60.0	3	60.0	3	60.0	3	60.0	4	80.0	2
+CSI:FingerID	Priority	5	2	40.0	3	60.0	4	80.0	4	80.0	4	80.0	0
+MSNovelist	Priority	5	1	20.0	1	20.0	1	20.0	2	40.0	2	40.0	0
+formula	Bonus	3	3	100.0	3	100.0	3	100.0	3	100.0	3	100.0	3
+CSI:FingerID	Bonus	3	2	66.7	2	66.7	2	66.7	2	66.7	3	100.0	0
+MSNovelist	Bonus	3	0	0.0	0	0.0	0	0.0	0	0.0	0	0.0	0
+formula	pos	5	4	80.0	4	80.0	4	80.0	4	80.0	4	80.0	3
+CSI:FingerID	pos	5	3	60.0	3	60.0	3	60.0	3	60.0	4	80.0	0
+MSNovelist	pos	5	1	20.0	1	20.0	1	20.0	2	40.0	2	40.0	0
+formula	neg	3	2	66.7	2	66.7	2	66.7	2	66.7	3	100.0	2
+CSI:FingerID	neg	3	1	33.3	2	66.7	3	100.0	3	100.0	3	100.0	0
+MSNovelist	neg	3	0	0.0	0	0.0	0	0.0	0	0.0	0	0.0	0

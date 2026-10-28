@@ -17,3 +17,10 @@ mzdesk/static/
 
 # copyrighted papers stay local
 paper/literature/*.pdf
+
+# CASMI2022 benchmark: raw data and large SIRIUS outputs stay local
+benchmark/casmi2022/raw/
+benchmark/casmi2022/sirius_run/ms/*.ms
+benchmark/casmi2022/sirius_run/project*/
+benchmark/casmi2022/sirius_run/logs/
+benchmark/casmi2022/sirius_run/results/**/sirius_summaries/
