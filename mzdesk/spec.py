@@ -17,6 +17,8 @@ from mzdesk.shared.ms2_clean import NORMALIZE, SORT_BY
 from mzdesk.identity.resolve import KINDS as IDENTITY_KINDS
 # cfmid_engine 顶层只用标准库，导入它不会拉进 rdkit / Docker
 from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
+# msfinder_engine 顶层只用标准库，这里只读它的加合物名单
+from mzdesk.ms2.msfinder_engine import ADDUCTS as MSFINDER_ADDUCT_NAMES
 # 指标名字只用标准库（和 ms2_similarity.py 共用一份），所以这里可以直接导入
 from mzdesk.ms2 import metric_names as METRIC_NAMES
 # isotopes 顶层只用标准库（IsoSpecPy 在用到时才导入）
@@ -31,6 +33,8 @@ METFRAG_ADDUCTS = {"Positive": ["Auto", "[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+
                    "Negative": ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-"]}
 BUDDY_ADDUCTS = {"Positive": ["Auto", "[M+H]+", "[M+Na]+", "[M+NH4]+", "[M+K]+", "[M+H-H2O]+"],
                  "Negative": ["Auto", "[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M+Br]-"]}
+# MS-FINDER 用自己的加合物写法（FA = formate, Hac = acetate）；Auto = [M+H]+ / [M-H]-
+MSFINDER_ADDUCTS = {mode: ["Auto"] + names for mode, names in MSFINDER_ADDUCT_NAMES.items()}
 LIBRARIES = ["MassBank", "GNPS"]            # 本地索引见 mzdesk/ms2/library_setup.py
 LIBRARY_METRICS = METRIC_NAMES.LIBRARY_ORDER    # Library search 页的指标多选 = Similarity 页得分表里的全部 16 项（同一份名字，谱熵排第一）
 LIBRARY_DEFAULT_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.COSINE_GREEDY]
@@ -170,6 +174,11 @@ CAFFEINE_MS1 = "195.0877 100\n196.0902 10.3\n197.0922 0.9"
 # MassBank 里的真实咖啡因 [M+H]+ MS/MS（MSBNK-LCSB-LU119903，Q Exactive，CE 45；NIST 格式的 0-999 强度）：Library search 页的示例
 CAFFEINE_MASSBANK_MS2 = ("56.0496 2\n69.0447 18\n83.0603 10\n97.0076 2\n97.0395 1\n109.0397 3\n110.0713 101\n111.0554 5\n112.0873 1\n122.0711 1\n"
                          "123.0428 3\n135.0668 1\n136.0747 1\n138.0663 999\n151.0978 5\n156.0768 2\n180.0642 2\n181.0719 3\n195.0878 847")
+# MS-FINDER 页的示例：MassBank 记录 MSBNK-LCSB-LU119905 的真实咖啡因 [M+H]+ MS/MS（Q Exactive，CE 75，CC BY 4.0；作者 Elapavalore, Kondić, Singh, Schymanski）；
+# m/z 取记录里的 4 位小数，强度取记录的 rel.int.（0-999）
+CAFFEINE_MSFINDER_MS2 = ("54.0339 7\n56.0495 88\n57.0448 9\n67.029 9\n68.0369 7\n69.0446 320\n70.0286 4\n80.0129 2\n81.0447 38\n82.0525 16\n"
+                         "83.0603 316\n93.0447 7\n97.0075 27\n97.0397 21\n108.0557 14\n109.0396 90\n110.0712 590\n111.0552 39\n113.0346 4\n"
+                         "122.0711 3\n123.0427 144\n135.0663 5\n136.0744 3\n138.0662 999\n154.0607 4\n156.0762 2\n195.0876 58")
 # Example names and the structure PubChem gives for each (checked by InChIKey). Tests use this table to run the examples offline.
 EXAMPLE_STRUCTURES = {
     "caffeine": CAFFEINE,
@@ -426,6 +435,20 @@ MODULES = [
          table(["m/z", "Rel. intensity (%)", "Fragment formula", "Δ ppm", "Neutral loss", "Other fits"], id="fragments")],
         subgroup="ms2", live=True,
         example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
+
+    module("ms2_structure", "Structure prediction", "A", "<b>Ranked candidate structures</b> from MS-FINDER (offline, local structure DB). Local version only: needs Mono.",
+        [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1()],
+        [cards([("Top candidate", ""), ("Top formula", ""), ("Adduct used", ""), ("Candidates", "structures / formulas")], id="summary"),
+         table(["Rank", "Structure", "Name", "SMILES", "Formula", "Score", "Ontology", "InChIKey", "Databases"], "Structure candidates", id="structures",
+               help=["Candidates come from MS-FINDER's local structure databases (HMDB, ChEBI, PubChem-derived, COCONUT, UNPD and others). Nothing is sent online, and a compound that is not in them cannot be returned.",
+                     "Score: MS-FINDER's total score from in-silico fragmentation (hydrogen-rearrangement rules, tree depth 2) against the MS2 peaks; higher is better. Candidates of different formulas are listed together; the Formula column shows which one each belongs to.",
+                     "Structures are searched for the 5 best formulas only. The table shows the best 50. Databases: where the structure is listed; the ? shows the IDs."]),
+         table(["Rank", "Formula", "Neutral mass", "Mass error (mDa)", "Score"], "Formula candidates", id="formulas",
+               help=["Formula score: mass accuracy, the isotope pattern (when MS1 is given) and how well the MS2 fragments and neutral losses fit. Only formulas with a positive score are listed (best 50).",
+                     "Search limits of the shipped parameter file: precursor tolerance 1 mDa (isotope peaks must sit within 0.5 mDa of the precursor m/z), fragment tolerance 10 mDa, elements C H N O P S only (F, Cl, Br, I and Si are switched off).",
+                     "[M]+ is a permanent cation: the formula is the cation's own."])],
+        subgroup="ms2", live=True,
+        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)}),
 
     module("ms2_denovo", "De novo structure", "A", "<b>Structure candidates</b> when no structure is given.",
         [precursor(), spectrum(), text("formula", "Formula (optional)")],

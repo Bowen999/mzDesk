@@ -250,7 +250,7 @@ const ROW_GROUPS = {};   // 行不分组
 // 行 = 模块。d = 一句话说明；w = 对应的文件 / 文件夹（用 " · " 分开）
 const SECTIONS = [
   {id:'ms1',   name:'MS1',        d:'理论 m/z · 同位素 · 分子式',        w:'mzdesk/ms1/ · mzdesk/api/runners/ms1.py'},
-  {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
+  {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 结构预测 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/spec.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.19', date:'2026-10-28', git:'',
+  title:'Structure prediction 接入 MS-FINDER（本机 Mono，离线）',
+  note:'Spectrum 小类第九页：precursor + MS2（可选 MS1 同位素）→ 结构候选与分子式候选排序；只在本机版可用，在线版返回安装说明。',
+  state:[['能算的模块页','27 / 37'], ['Pipeline','4 条，未接'], ['测试','1140 个通过（未跑 Docker / 联网的 17 个）']],
+  c:{
+   ms2:['feat','新增 Structure prediction（id ms2_structure，排在 Formula annotation 之后）：MS-FINDER v3.73 经 Mono 运行，结构只来自它的本地结构库、不联网；输出结构候选表（结构图、得分、本体类别、InChIKey、来源库）和分子式候选表，Auto 加合物写明用了 [M+H]+ / [M-H]-。同一时刻只跑一个进程，超过 300 秒或 4 GB 内存就杀掉整个进程组；`python -m mzdesk.ms2.msfinder_setup` 一次性安装（官方 zip 和 9 个控制台源文件都用 SHA-256 固定），--check 只报告。示例是 MassBank MSBNK-LCSB-LU119905 的咖啡因（CC BY 4.0）。',true,{w:'mzdesk/ms2/msfinder_engine.py · mzdesk/ms2/msfinder_setup.py · mzdesk/lib/msfinder/mzdesk_msfinder.ini · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/__init__.py · mzdesk/api/verdicts.py · mzdesk/spec.py · pyproject.toml · requirements.txt · tests/test_msfinder.py · tests/fixtures/msfinder/ · tests/test_api.py'}],
+   docs:['doc','README 加 Structure prediction 页说明和本机安装 / 运行条件，MS-FINDER 对比行注明已接入；版本号 0.2.19，本页加 v0.2.19。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.18', date:'2026-10-26', git:'',
   title:'日常计算器与代谢物质量位移搜索接入引擎',
   note:'两个 B 类模块从骨架变为可计算；计算器补摩尔质量、目标浓度和终体积输入，质量位移支持结构 / 分子式和特征表。',

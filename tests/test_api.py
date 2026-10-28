@@ -2,7 +2,8 @@
 
 运行：python -m pytest tests
 MetFrag 需要 Java；ESI MS/MS 需要 Docker 和 CFM-ID 镜像；EI MS 需要 NEIMS 权重（python -m mzdesk.ms2.neims_setup）；
-Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Library search 的示例需要 MassBank 索引（python -m mzdesk.ms2.library_setup MassBank）。没有时相关测试跳过。
+Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；Library search 的示例需要 MassBank 索引（python -m mzdesk.ms2.library_setup MassBank）；
+Structure prediction 需要 Mono + MS-FINDER（python -m mzdesk.ms2.msfinder_setup，只在本机）。没有时相关测试跳过。
 """
 import shutil
 import types
@@ -13,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from mzdesk.api.app import app
 from mzdesk.api.runners import RUNNERS
-from mzdesk.ms2 import cfmid_engine, library_index, neims_engine
+from mzdesk.ms2 import cfmid_engine, library_index, msfinder_engine, neims_engine
 from mzdesk.platform_fit import pka_engine
 from mzdesk import spec
 from mzdesk.spec import CAFFEINE, MODULES, PIPELINES, SUBGROUPS
@@ -28,6 +29,15 @@ def _docker_unavailable():
     return None
 
 
+def _msfinder_unavailable():
+    """Why MS-FINDER cannot run here (Mono or the install is missing), or None."""
+    try:
+        msfinder_engine.check_msfinder()
+    except msfinder_engine.MsFinderError as exc:
+        return str(exc)
+    return None
+
+
 client = TestClient(app)
 LIVE = [m for m in MODULES if m["live"]]
 HAS_JAVA = shutil.which("java") is not None
@@ -35,6 +45,7 @@ NO_DOCKER = _docker_unavailable()
 NO_NEIMS = not Path(neims_engine.weights_path()).is_file()
 NO_MOLGPKA = not Path(pka_engine.weights_path()).is_file()
 NO_MASSBANK = not library_index.is_installed("MassBank")
+NO_MSFINDER = _msfinder_unavailable()
 needs_docker = [pytest.mark.docker, pytest.mark.skipif(NO_DOCKER is not None, reason=f"Docker unavailable: {NO_DOCKER}")]
 OPTIONAL_BLOCKS = {"viewer3d"}          # 3D embedding can fail for some structures
 
@@ -61,7 +72,7 @@ def test_module_ids_unique_and_subgroups_known():
 
 def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
-    assert ms2 == ["ms2_clean", "ms2_similarity", "ms2_library", "ms1_formula", "ms2_denovo", "ms2_ei", "ms2_esi", "ms2_fragments"]
+    assert ms2 == ["ms2_clean", "ms2_similarity", "ms2_library", "ms1_formula", "ms2_structure", "ms2_denovo", "ms2_ei", "ms2_esi", "ms2_fragments"]
     assert "ms2" not in {m["id"] for m in MODULES}
     assert next(s["title"] for s in SUBGROUPS if s["id"] == "ms2") == "Spectrum"
 
@@ -113,6 +124,8 @@ def test_example_runs_and_fills_every_block(mod, monkeypatch):
         pytest.skip("MetFrag needs Java")
     if mod["id"] == "ms2_esi" and NO_DOCKER:
         pytest.skip(f"CFM-ID needs Docker: {NO_DOCKER}")
+    if mod["id"] == "ms2_structure" and NO_MSFINDER:
+        pytest.skip(f"MS-FINDER not available: {NO_MSFINDER}")
     if mod["id"] == "ms2_ei" and NO_NEIMS:
         pytest.skip("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup)")
     if mod["id"] == "ms2_library" and NO_MASSBANK:
@@ -236,6 +249,8 @@ def test_draw_mode_takes_the_editor_smiles():
     ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": "C1CC"}, "adduct": "[M+H]+"}),
     ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}, "adduct": "[M+K]+"}),
     ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": "C[Si](C)C"}, "adduct": "[M+H]+"}),
+    ("ms2_structure", {"ms2": _paste("138.07 100")}),
+    ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "[M-H]-"}, "ms2": _paste("138.07 100")}),
     ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "noise_pct": "150"}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "normalize": "Everything = 7"}),

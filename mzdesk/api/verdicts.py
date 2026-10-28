@@ -291,8 +291,25 @@ def ms2_fragments(i, o):
     return f"The structure explains {_b(peaks.replace(' / ', ' of ') + ' peaks')}" + (f", {_b(inten + ' %')} of the intensity." if inten else ".")
 
 
+def ms2_structure(i, o):
+    rows = _rows(o, "structures")
+    formula = _card(o, "summary", "Top formula")
+    if not rows:
+        if formula:
+            return f"No structure in MS-FINDER's local database for {_b(formula)} and the other top formulas; the formula table has the candidates."
+        return "MS-FINDER found no molecular formula for this precursor."
+    name, form, score = _text(rows[0][2]), _text(rows[0][4]), _text(rows[0][5])
+    n = (_card(o, "summary", "Candidates") or "").split(" / ")[0]
+    try:
+        score = f"{float(score):.2f}"
+    except ValueError:
+        pass
+    return (f"Top candidate: {_b(name)} ({form}), score {score}" + (f" · {n} candidates" if n.isdigit() and n != "1" else "") + ".")
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
-                                    ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments)}
+                                    ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
+                                    ms2_structure)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 
