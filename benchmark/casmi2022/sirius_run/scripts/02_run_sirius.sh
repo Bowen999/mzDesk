@@ -123,12 +123,18 @@ if [[ "${SKIP_EXPORT:-0}" != 1 ]]; then
   # QC: which requested compounds have formula / PubChem-structure / MSNovelist results (missing ones are
   # flagged 0 in qc_results_present.tsv; e.g. "No suitable fragmentation tree" -> no structure, or timeout, or MSNovelist mass limit).
   python3 - "$SUM_DIR" "${IDS[@]}" <<'PY'
-import sys, pandas as pd
+import sys, re, csv, pandas as pd
 d, ids = sys.argv[1], ["challenge_" + i for i in sys.argv[2:]]
 def have(fn):
-    try: df = pd.read_csv(f"{d}/{fn}", sep="\t", usecols=["mappingFeatureId"])
+    # quoting=QUOTE_NONE is essential: compound names contain a stray '"' that would otherwise make
+    # pandas swallow following lines as one quoted field and silently drop whole challenges (v1 bug).
+    out = set()
+    try:
+        for ch in pd.read_csv(f"{d}/{fn}", sep="\t", usecols=["mappingFeatureId"], quoting=csv.QUOTE_NONE,
+                              dtype=str, chunksize=500000):
+            out |= set(ch.mappingFeatureId.dropna().unique())
     except Exception: return set()
-    return set(df.mappingFeatureId.str.extract(r"_(challenge_\d+)_challenge")[0].dropna())
+    return {m.group(1) for m in (re.search(r"_(challenge_\d+)_challenge", x) for x in out) if m}
 sets = {"formula": have("formula_identifications_all.tsv"),
         "pubchem_structure": have("structure_identifications_all.tsv"),
         "msnovelist": have("denovo_structure_identifications_all.tsv")}

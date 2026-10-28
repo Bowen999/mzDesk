@@ -1,0 +1,16 @@
+method	subset	N	top1	top1_pct	top5	top5_pct	top10	top10_pct	top20	top20_pct	any_rank	any_rank_pct	n_ties_at_truth
+formula	all	500	398	79.6	430	86.0	443	88.6	455	91.0	462	92.4	387
+CSI:FingerID	all	500	143	28.6	220	44.0	254	50.8	276	55.2	417	83.4	9
+MSNovelist	all	500	80	16.0	107	21.4	121	24.2	131	26.2	143	28.6	5
+formula	Priority	250	190	76.0	207	82.8	214	85.6	218	87.2	224	89.6	180
+CSI:FingerID	Priority	250	68	27.2	102	40.8	112	44.8	126	50.4	205	82.0	7
+MSNovelist	Priority	250	36	14.4	48	19.2	55	22.0	59	23.6	67	26.8	2
+formula	Bonus	250	208	83.2	223	89.2	229	91.6	237	94.8	238	95.2	207
+CSI:FingerID	Bonus	250	75	30.0	118	47.2	142	56.8	150	60.0	212	84.8	2
+MSNovelist	Bonus	250	44	17.6	59	23.6	66	26.4	72	28.8	76	30.4	3
+formula	pos	304	237	78.0	259	85.2	267	87.8	274	90.1	274	90.1	220
+CSI:FingerID	pos	304	92	30.3	139	45.7	156	51.3	168	55.3	250	82.2	3
+MSNovelist	pos	304	55	18.1	69	22.7	80	26.3	87	28.6	94	30.9	3
+formula	neg	196	161	82.1	171	87.2	176	89.8	181	92.3	188	95.9	167
+CSI:FingerID	neg	196	51	26.0	81	41.3	98	50.0	108	55.1	167	85.2	6
+MSNovelist	neg	196	25	12.8	38	19.4	41	20.9	44	22.4	49	25.0	2

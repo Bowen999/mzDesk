@@ -22,6 +22,7 @@ Ranking rules
               The listed (file-order) rank is also written, as *_rank_listed.
 """
 import argparse
+import csv
 import re
 import sys
 from pathlib import Path
@@ -30,6 +31,7 @@ import pandas as pd
 
 TOPS = [1, 5, 10, 20]
 ID_RE = re.compile(r"_(challenge_\d+)_challenge")
+ID_RE_B = re.compile(rb"_(challenge_\d+)_challenge")
 
 
 def norm_adduct(a):
@@ -39,12 +41,44 @@ def norm_adduct(a):
     return a
 
 
-def read(summ, name):
+def raw_challenge_ids(p):
+    """Independent, line-based challenge-id set (no CSV parsing at all)."""
+    ids = set()
+    with open(p, "rb") as fh:
+        for line in fh:
+            m = ID_RE_B.search(line)
+            if m:
+                ids.add(m.group(1).decode())
+    return ids
+
+
+def read(summ, name, usecols, keep_ids=None, chunksize=200_000):
+    """Read a SIRIUS summary TSV.
+
+    quoting=QUOTE_NONE: compound names can contain a stray '"', which the default
+    CSV quoting would treat as an opening quote and swallow following lines
+    (silently dropping whole challenges). Only `usecols` are kept, in chunks, and
+    rows are filtered to `keep_ids` so the 1.5 GB structure file stays small.
+    Parsed challenge set is checked against a raw line-based scan.
+    """
     p = Path(summ) / name
     if not p.exists():
         return pd.DataFrame()
-    df = pd.read_csv(p, sep="\t", dtype=str, keep_default_na=False)
-    df["cid"] = df["mappingFeatureId"].str.extract(ID_RE)[0]
+    cols = list(dict.fromkeys(usecols + ["mappingFeatureId"]))
+    parts = []
+    for ch in pd.read_csv(p, sep="\t", dtype=str, keep_default_na=False, quoting=csv.QUOTE_NONE,
+                          usecols=cols, chunksize=chunksize):
+        ch["cid"] = ch["mappingFeatureId"].str.extract(ID_RE)[0]
+        if keep_ids is not None:
+            ch = ch[ch["cid"].isin(keep_ids)]
+        parts.append(ch)
+    df = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=cols + ["cid"])
+    raw = raw_challenge_ids(p)
+    parsed = set(df["cid"].dropna()) if keep_ids is None else set(df["cid"].dropna()) | (raw - keep_ids)
+    assert parsed == raw, (f"{name}: parsed challenges != raw line scan "
+                           f"(missing {sorted(raw - parsed)[:5]}, extra {sorted(parsed - raw)[:5]})")
+    print(f"{name}: {len(raw)} challenges with rows (raw line scan == parsed), "
+          f"{len(df)} rows kept", flush=True)
     return df
 
 
@@ -185,9 +219,14 @@ def main():
     if not ids:
         sys.exit("empty challenge set")
 
-    formula = read(a.summaries, "formula_identifications_all.tsv")
-    csi = read(a.summaries, "structure_identifications_all.tsv")
-    nov = read(a.summaries, "denovo_structure_identifications_all.tsv")
+    keep = {f"challenge_{n:03d}" for n in ids}
+    formula = read(a.summaries, "formula_identifications_all.tsv",
+                   ["formulaRank", "molecularFormula", "adduct", "SiriusScore"], keep)
+    csi = read(a.summaries, "structure_identifications_all.tsv",
+               ["structurePerIdRank", "ConfidenceScoreExact", "ConfidenceScoreApproximate",
+                "CSI:FingerIDScore", "InChIkey2D", "name"], keep)
+    nov = read(a.summaries, "denovo_structure_identifications_all.tsv",
+               ["structurePerIdRank", "CSI:FingerIDScore", "InChIkey2D"], keep)
     for name, df in [("formula", formula), ("CSI", csi), ("MSNovelist", nov)]:
         if df.empty:
             df["cid"] = pd.Series(dtype=str)
