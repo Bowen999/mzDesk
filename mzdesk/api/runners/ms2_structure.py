@@ -11,6 +11,7 @@ FORMULA_ROWS = 50
 DB_NAMES_SHOWN = 4
 HELP_IDS = 40
 IMG_SIZE = (200, 140)
+BASE_ELEMENTS = "C H N O P S"
 
 
 def _databases_cell(databases):
@@ -42,10 +43,27 @@ def _formula_rows(formulas):
             for rank, f in enumerate(formulas[:FORMULA_ROWS], 1)]
 
 
+def _elements(halogen, silicon):
+    """Elements the formula search used, for the summary card."""
+    return " ".join([BASE_ELEMENTS] + (["F Cl Br I"] if halogen else []) + (["Si"] if silicon else []))
+
+
+def _element_hint(halogen, silicon):
+    """Sentence that tells the user which element switch to try; empty when both are already on."""
+    if halogen and silicon:
+        return ""
+    if not halogen and not silicon:
+        return "Include halogens (F, Cl, Br, I) and Include Si are off; tick them if the compound may contain those elements."
+    if not halogen:
+        return "Include halogens is off; tick it if the compound may contain F, Cl, Br or I."
+    return "Include Si is off; tick it if the compound may contain silicon."
+
+
 def run_structure(inputs):
     from mzdesk.ms2 import msfinder_engine as mf
 
     warnings = []
+    halogen, silicon = common.flag(inputs, "halogen", "Include halogens"), common.flag(inputs, "silicon", "Include Si")
     field_mz, positive, adduct = common.precursor(inputs)
     ms2, file_mz = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings)
     precursor_mz = field_mz or file_mz
@@ -67,19 +85,20 @@ def run_structure(inputs):
                             f"{(m0_mz - precursor_mz) * 1000:+.1f} mDa); MS-FINDER cannot match the isotope pattern. Use the same m/z in both fields.")
 
     try:
-        res = mf.predict(precursor_mz, positive, adduct, ms2, ms1)
+        res = mf.predict(precursor_mz, positive, adduct, ms2, ms1, halogen=halogen, silicon=silicon)
     except mf.MsFinderError as exc:
         raise EngineError(str(exc), exc.log) from None
     except ValueError as exc:
         raise InputError(str(exc)) from None
 
     structures, formulas = res["structures"], res["formulas"]
+    elements, hint = _elements(halogen, silicon), _element_hint(halogen, silicon)
     if not formulas:
-        warnings.append(f"MS-FINDER found no molecular formula for m/z {precursor_mz:.4f} as {res['adduct']} within 1 mDa "
-                        "(elements C H N O P S; F, Cl, Br, I and Si are switched off). Check the precursor m/z and the adduct.")
+        warnings.append(f"MS-FINDER found no molecular formula for m/z {precursor_mz:.4f} as {res['adduct']} within 1 mDa (elements {elements}). "
+                        "Check the precursor m/z and the adduct." + (" " + hint if hint else ""))
     elif not structures:
         warnings.append(f"MS-FINDER's local structure databases have no candidate for {formulas[0]['formula']} and the other top formulas. "
-                        "PubChem is not used, so the compound may simply not be in them.")
+                        "PubChem is not used, so the compound may simply not be in them." + (" " + hint if hint else ""))
     if len(structures) > STRUCTURE_ROWS:
         warnings.append(f"MS-FINDER returned {len(structures)} structures; the table shows the best {STRUCTURE_ROWS}.")
 
@@ -89,6 +108,7 @@ def run_structure(inputs):
                           if top else common.MISSING),
         "Top formula": ({"value": formulas[0]["formula"], "note": f"score {fmt(formulas[0]['score'], 3)}"} if formulas else common.MISSING),
         "Adduct used": ({"value": res["adduct"], "note": "Auto: " + ("positive" if positive else "negative") + " mode"} if adduct is None else res["adduct"]),
+        "Elements searched": {"value": elements, "note": "halogens " + ("on" if halogen else "off") + " · Si " + ("on" if silicon else "off")},
         "Candidates": {"value": f"{len(structures)} / {len(formulas)}",
                        "note": f"MS2 peaks {res['ms2_count']}" + (f" · MS1 peaks {res['ms1_count']}" if res["ms1_count"] else "")}}
     return {"outputs": {

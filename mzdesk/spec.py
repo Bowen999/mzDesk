@@ -437,15 +437,19 @@ MODULES = [
         example={"precursor": _prec("195.0877"), "ms1": CAFFEINE_MS1, "ms2": _paste(CAFFEINE_MS2)}),
 
     module("ms2_structure", "Structure prediction", "A", "<b>Ranked candidate structures</b> from MS-FINDER (offline, local structure DB). Local version only: needs Mono.",
-        [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1()],
-        [cards([("Top candidate", ""), ("Top formula", ""), ("Adduct used", ""), ("Candidates", "structures / formulas")], id="summary"),
+        [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1(),
+         checkbox("halogen", "Include halogens (F, Cl, Br, I)"), checkbox("silicon", "Include Si")],
+        [cards([("Top candidate", ""), ("Top formula", ""), ("Adduct used", ""), ("Elements searched", ""), ("Candidates", "structures / formulas")], id="summary"),
          table(["Rank", "Structure", "Name", "SMILES", "Formula", "Score", "Ontology", "InChIKey", "Databases"], "Structure candidates", id="structures",
                help=["Candidates come from MS-FINDER's local structure databases (HMDB, ChEBI, PubChem-derived, COCONUT, UNPD and others). Nothing is sent online, and a compound that is not in them cannot be returned.",
                      "Score: MS-FINDER's total score from in-silico fragmentation (hydrogen-rearrangement rules, tree depth 2) against the MS2 peaks; higher is better. Candidates of different formulas are listed together; the Formula column shows which one each belongs to.",
                      "Structures are searched for the 5 best formulas only. The table shows the best 50. Databases: where the structure is listed; the ? shows the IDs."]),
          table(["Rank", "Formula", "Neutral mass", "Mass error (mDa)", "Score"], "Formula candidates", id="formulas",
                help=["Formula score: mass accuracy, the isotope pattern (when MS1 is given) and how well the MS2 fragments and neutral losses fit. Only formulas with a positive score are listed (best 50).",
-                     "Search limits of the shipped parameter file: precursor tolerance 1 mDa (isotope peaks must sit within 0.5 mDa of the precursor m/z), fragment tolerance 10 mDa, elements C H N O P S only (F, Cl, Br, I and Si are switched off).",
+                     "Search limits of the shipped parameter file: precursor tolerance 1 mDa (isotope peaks must sit within 0.5 mDa of the precursor m/z), fragment tolerance 10 mDa, elements C H N O P S. "
+                     "F, Cl, Br, I and Si are searched only when you tick Include halogens / Include Si (each off by default; the Elements searched card shows what was used).",
+                     "Atoms per carbon atom allowed by MS-FINDER's common range: H 4, N 2, O 2.5, S 1, P 0.5, and with the boxes ticked F 1.5, Cl 1, Br 1, I 0.5, Si 0.5. "
+                     "A compound with more fluorine than 1.5 per carbon (for example a perfluorinated acid) is outside it.",
                      "[M]+ is a permanent cation: the formula is the cation's own."])],
         subgroup="ms2", live=True,
         example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)}),

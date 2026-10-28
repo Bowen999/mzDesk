@@ -65,6 +65,14 @@ def number(inputs, key, label, *, default=None, required=False, positive=False, 
     return value
 
 
+def flag(inputs, key, label):
+    """Checkbox field -> bool. Absent / null = off; anything but true / false (a string, a number) is an InputError."""
+    raw = inputs.get(key)
+    if raw is None or isinstance(raw, bool):
+        return bool(raw)
+    raise InputError(f"{label} must be true or false.")
+
+
 def is_formula(s):
     """True for a plain element formula such as C8H10N4O2 (every symbol a real element)."""
     if not s or not _FORMULA.match(s):

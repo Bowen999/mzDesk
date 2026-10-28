@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import type { Field } from "../types";
+import { countPeaks } from "../peakCount";
 
 // Ketcher 很大，只在选 Draw 时才下载
 const StructureEditor = lazy(() => import("./StructureEditor"));
@@ -149,8 +150,8 @@ export function summarizeInputs(fields: Field[], values: Record<string, any>): {
         text = [v?.precursor_mz ? `m/z ${v.precursor_mz}` : "", v?.ion_mode, v?.adduct && v.adduct !== "Auto" ? v.adduct : ""].filter(Boolean).join(" · ");
         break;
       case "spectrum": {
-        const n = String(v?.value ?? "").split(/\n|(?<=\d)\s+(?=\d+(?:\.\d+)?[:\s])/).filter(l => l.trim()).length;
-        text = v?.source === "USI" ? short(String(v.value ?? "")) : v?.filename ? short(v.filename, 32) : v?.value ? `${f.label}: ${n} lines` : "";
+        const n = countPeaks(String(v?.value ?? ""));       // peaks as the server reads them, not text lines (see peakCount.ts)
+        text = v?.source === "USI" ? short(String(v.value ?? "")) : v?.filename ? short(v.filename, 32) : v?.value ? `${f.label}: ${n ? `${n} peaks` : "given"}` : "";
         if (text && !lead) { lead = text; continue; }
         break;
       }

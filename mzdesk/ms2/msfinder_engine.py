@@ -6,7 +6,8 @@ One run = one spectrum: write a .mat query file into a fresh temp folder, call
     mono MsfinderConsoleApp.exe predict -i <in> -o <out> -m mzdesk_msfinder.ini
 and read `Formula result-N.txt` / `Structure result-N.txt` (N is a sum of date parts, so the files are found by glob).
 The shipped parameter file (mzdesk/lib/msfinder/mzdesk_msfinder.ini) keeps every online source off: PubChem is never queried, the
-structure candidates come from MS-FINDER's local databases only.
+structure candidates come from MS-FINDER's local databases only. It also keeps F, Cl, Br, I and Si off; "Include halogens" and
+"Include Si" on the page switch them on for ONE run through a copy of the file in that run's temp folder (the shipped file is never changed).
 
 Things worth knowing (all checked against the sources of tag MSFINDER-v3.73 and real runs):
   * Exit code is 1 on success and 255 on failure, so success is judged by the result files.
@@ -44,6 +45,10 @@ ADDUCTS = {"Positive": ["[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M+Li]+", "[
            "Negative": ["[M-H]-", "[M+Cl]-", "[M+FA-H]-", "[M+Hac-H]-", "[M+Br]-", "[M-H2O-H]-", "[M+Na-2H]-"]}
 # The isotope peaks are matched to the precursor within half of Ms1Tolerance of the parameter file (0.001 Da): 0.5 mDa.
 MS1_MATCH_DA = 0.0005
+# Element switches of the parameter file (MS-FINDER's INI reader takes a value that contains "T" as on, anything else as off).
+# CommonRange (the shipped setting) allows, per carbon atom: F 1.5, Cl 1, Br 1, I 0.5, Si 0.5 (and H 4, N 2, O 2.5, P 0.5, S 1; O/P >= 2 when P is present).
+HALOGEN_KEYS = ("Fcheck", "ClCheck", "BrCheck", "Icheck")
+SILICON_KEYS = ("SiCheck",)
 
 _RUN_LOCK = threading.Lock()
 
@@ -93,6 +98,30 @@ def check_msfinder():
     if not s["ini"]:
         raise MsFinderError(f"The mzDesk parameter file {INI_PATH} is missing; reinstall mzDesk.")
     return s["mono"], s["exe"], s["ini"]
+
+
+# ---------------------------------------------------------------- parameter file
+def ini_with_elements(text, halogen=False, silicon=False):
+    """Text of the parameter file with the chosen element switches set to True; every other line stays byte for byte.
+
+    halogen -> Fcheck, ClCheck, BrCheck, Icheck; silicon -> SiCheck (independent of each other). A switch that is not in the text is
+    appended, so an older copy of the file still works. Neither flag: the text comes back unchanged.
+    """
+    wanted = {k.lower(): k for flag, keys in ((halogen, HALOGEN_KEYS), (silicon, SILICON_KEYS)) if flag for k in keys}
+    done, out = set(), []
+    for line in text.splitlines(keepends=True):
+        key, eq, _ = line.partition("=")
+        name = wanted.get(key.strip().lower()) if eq else None         # "#Fcheck=..." is a comment: its key starts with "#"
+        if name:
+            eol = line[len(line.rstrip("\r\n")):]                      # keep the line ending as it was
+            out.append(f"{name}=True{eol}")
+            done.add(name)
+        else:
+            out.append(line)
+    extra = [f"{name}=True\n" for name in wanted.values() if name not in done]
+    if extra and out and not out[-1].endswith("\n"):
+        out[-1] += "\n"
+    return "".join(out + extra)
 
 
 # ---------------------------------------------------------------- query file
@@ -267,12 +296,14 @@ def _read(path):
     return path.read_text(encoding="utf-8", errors="replace")       # the files are ASCII: MS-FINDER writes '?' for any other character
 
 
-def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, name="query", timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
+def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, silicon=False, name="query", timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
     """Formula and structure candidates for one MS/MS spectrum.
 
-    adduct: MS-FINDER name or None / "Auto". ms2 / ms1: [(m/z, intensity)]. Raises ValueError for input MS-FINDER cannot use and
-    MsFinderError when it is missing, busy or fails. Returns
-    {"adduct", "precursor_mz", "positive", "formulas": [...], "structures": [...], "ms1_count", "ms2_count", "seconds", "peak_rss_mb", "log"}.
+    adduct: MS-FINDER name or None / "Auto". ms2 / ms1: [(m/z, intensity)]. halogen / silicon: also search formulas with F, Cl, Br, I /
+    with Si (a per-run copy of the parameter file; both off = the shipped file is used as it is). Raises ValueError for input MS-FINDER
+    cannot use and MsFinderError when it is missing, busy or fails. Returns
+    {"adduct", "precursor_mz", "positive", "halogen", "silicon", "formulas": [...], "structures": [...], "ms1_count", "ms2_count",
+     "seconds", "peak_rss_mb", "log"}.
     """
     adduct = resolve_adduct(positive, adduct)
     if not precursor_mz or precursor_mz <= 0:
@@ -291,6 +322,10 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, name="query", time
             in_dir.mkdir()
             out_dir.mkdir()
             (in_dir / "query.mat").write_text(query, encoding="ascii")
+            if halogen or silicon:                                  # this run only: a copy in the run's temp folder, the shipped file stays as it is
+                run_ini = Path(tmp) / INI_PATH.name
+                run_ini.write_bytes(ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen, silicon).encode("utf-8"))
+                ini = run_ini
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
             cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(ini)]
             _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
@@ -306,6 +341,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, name="query", time
 
     ms1_count = formulas["ms1_count"] if formulas["ms1_count"] is not None else structures["ms1_count"]
     ms2_count = formulas["ms2_count"] if formulas["ms2_count"] is not None else structures["ms2_count"]
-    return {"adduct": adduct, "precursor_mz": precursor_mz, "positive": positive, "formulas": formulas["rows"], "structures": structures["rows"],
+    return {"adduct": adduct, "precursor_mz": precursor_mz, "positive": positive, "halogen": bool(halogen), "silicon": bool(silicon),
+            "formulas": formulas["rows"], "structures": structures["rows"],
             "ms1_count": ms1_count if ms1_count is not None else len(ms1 or []), "ms2_count": ms2_count if ms2_count is not None else len(ms2),
             "seconds": seconds, "peak_rss_mb": peak, "log": log}

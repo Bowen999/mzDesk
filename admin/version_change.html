@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.20', date:'2026-10-28', git:'',
+  title:'Structure prediction 加 Include halogens / Include Si 开关；修正输入栏的谱峰数',
+  note:'两个独立复选框，默认都关（行为同以前）；勾选时本次运行用参数文件副本打开 F Cl Br I / Si。折叠输入栏里的谱图计数从“N lines”改为按服务器读法数的“N peaks”。',
+  state:[['能算的模块页','27 / 37'], ['Pipeline','4 条，未接'], ['测试','1164 个通过（未跑 Docker / 联网的 17 个）']],
+  c:{
+   ms2:['feat','Structure prediction 新增两个独立复选框：Include halogens (F, Cl, Br, I) 把 Fcheck / ClCheck / BrCheck / Icheck 设为 True，Include Si 把 SiCheck 设为 True，默认都关。勾选时本次运行用写在临时文件夹里的参数文件副本（其他行不动，随附的 mzdesk_msfinder.ini 不改），范围仍是 MS-FINDER 的 CommonRange（每个 C 上最多 F 1.5、Cl 1、Br 1、I 0.5、Si 0.5）。结果新增 Elements searched 卡片；没找到分子式或结构而开关还关着时，警告提示勾选；复选框值不是 true / false 返回 400。真实 MassBank 谱验证：二氯芬酸、溴西泮、氟康唑不勾卤素时找不到结构，勾后结构都排第一；硅氧烷二胺只勾 Si 才找到，氟硅唑两个都勾才找到；每次运行仍约 5 秒、峰值约 2.1–2.4 GB。',true,{w:'mzdesk/ms2/msfinder_engine.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/common.py · mzdesk/spec.py · tests/test_msfinder.py · tests/test_api.py'}],
+   app:['fix','输入栏折叠后，谱图字段的计数不再把“m/z 强度”的每一行数成两行（27 个峰曾显示 53 lines）：新的计数按服务器 parse_spectrum 的读法，只数峰（逐行、mz:int 列表、分号分隔、MSP / MGF / MassBank / SIRIUS 的表头和注释行不数，多条谱只数第一条，重复 m/z 和强度为 0 的不数），显示“N peaks”；JSON / XML / 数组文本不在这里数，只写 given。',false,{w:'web/src/peakCount.ts · web/src/components/Fields.tsx'}],
+   docs:['doc','README 更新 Structure prediction 的元素说明（两个开关、CommonRange 上限、真实谱验证）；版本号 0.2.20，本页加 v0.2.20。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.19', date:'2026-10-28', git:'',
   title:'Structure prediction 接入 MS-FINDER（本机 Mono，离线）',
   note:'Spectrum 小类第九页：precursor + MS2（可选 MS1 同位素）→ 结构候选与分子式候选排序；只在本机版可用，在线版返回安装说明。',

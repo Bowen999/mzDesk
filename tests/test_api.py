@@ -251,6 +251,8 @@ def test_draw_mode_takes_the_editor_smiles():
     ("ms2_esi", {"structure": {"mode": "SMILES / InChI", "value": "C[Si](C)C"}, "adduct": "[M+H]+"}),
     ("ms2_structure", {"ms2": _paste("138.07 100")}),
     ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "[M-H]-"}, "ms2": _paste("138.07 100")}),
+    ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "halogen": "yes"}),
+    ("ms2_structure", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"}, "ms2": _paste("138.07 100"), "silicon": 1}),
     ("ms2_clean", {"spectrum": _paste("not a spectrum")}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "noise_pct": "150"}),
     ("ms2_clean", {"spectrum": _paste("100 1"), "normalize": "Everything = 7"}),

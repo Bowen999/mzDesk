@@ -1,7 +1,8 @@
 """Structure prediction（MS-FINDER，Mono）的测试：查询文件写法、结果解析、安装检查、进程看护、runner 外形、安装脚本。
 
 fixtures：tests/fixtures/msfinder/ 是真实运行的结果文件（咖啡因、卡马西平，MassBank MSBNK-LCSB-LU119905 / LU126603，CC BY），路径换成了中性路径。
-只有最后一个集成测试真的启动 MS-FINDER（约 4-5 s，峰值约 2.3 GB 内存）；没有 Mono / MS-FINDER 时它跳过（python -m mzdesk.ms2.msfinder_setup）。
+最后的集成测试（test_real_run_*）真的启动 MS-FINDER（每次约 4-5 s，峰值约 2.3 GB 内存，一次一个）；没有 Mono / MS-FINDER 时它们跳过（python -m mzdesk.ms2.msfinder_setup）。
+卤素 / Si 开关的两个集成测试用 MassBank 的真实谱（出处和许可见各常量上方的注释），没有编造峰。
 """
 import os
 import re
@@ -52,7 +53,7 @@ def _run(inputs):
 
 def _fake_result(**over):
     f, s = mf.parse_formula_results(CAFFEINE_FORMULA), mf.parse_structure_results(CAFFEINE_STRUCTURE)
-    res = {"adduct": "[M+H]+", "precursor_mz": 195.0877, "positive": True, "formulas": f["rows"], "structures": s["rows"],
+    res = {"adduct": "[M+H]+", "precursor_mz": 195.0877, "positive": True, "halogen": False, "silicon": False, "formulas": f["rows"], "structures": s["rows"],
            "ms1_count": 0, "ms2_count": 27, "seconds": 4.0, "peak_rss_mb": 2200.0, "log": ""}
     res.update(over)
     return res
@@ -64,7 +65,8 @@ def fake_predict(monkeypatch):
     calls = []
 
     def predict(precursor_mz, positive, adduct, ms2, ms1=None, **kw):
-        calls.append({"precursor_mz": precursor_mz, "positive": positive, "adduct": adduct, "ms2": ms2, "ms1": ms1})
+        calls.append({"precursor_mz": precursor_mz, "positive": positive, "adduct": adduct, "ms2": ms2, "ms1": ms1,
+                      "halogen": kw.get("halogen"), "silicon": kw.get("silicon")})
         return _fake_result(adduct=mf.resolve_adduct(positive, adduct), positive=positive)
 
     monkeypatch.setattr(mf, "predict", predict)
@@ -139,6 +141,50 @@ def test_adducts_exist_in_the_msfinder_resource_lists():
     known = {"Positive": (res / "AdductPositives.apf").read_text().split(), "Negative": (res / "AdductNegatives.anf").read_text().split()}
     for mode, names in mf.ADDUCTS.items():
         assert set(names) <= set(known[mode]), mode
+
+
+# ---------------------------------------------------------------- parameter file: the element switches
+SHIPPED_INI = mf.INI_PATH.read_text()
+ELEMENT_KEYS = ("Fcheck", "ClCheck", "BrCheck", "Icheck", "SiCheck")
+
+
+def _ini_values(text):
+    return dict(ln.split("=", 1) for ln in text.splitlines() if "=" in ln and not ln.startswith("#"))
+
+
+def _other_lines(text, keys):
+    return [ln for ln in text.splitlines(keepends=True) if ln.split("=", 1)[0] not in keys]
+
+
+def test_shipped_parameter_file_keeps_halogens_and_si_off():
+    values = _ini_values(SHIPPED_INI)
+    assert all(values[k] == "False" for k in ELEMENT_KEYS)
+    assert (values["CommonRange"], values["ExtendedRange"], values["ExtremeRange"]) == ("TRUE", "FALSE", "FALSE")      # the range is not touched either
+    assert values["PubChemNeverUse"] == "True"                                                                           # nothing goes online
+
+
+def test_no_switch_returns_the_text_unchanged():
+    assert mf.ini_with_elements(SHIPPED_INI) == SHIPPED_INI
+    assert mf.ini_with_elements(SHIPPED_INI, halogen=False, silicon=False) == SHIPPED_INI
+
+
+@pytest.mark.parametrize("halogen,silicon,on", [(True, False, {"Fcheck", "ClCheck", "BrCheck", "Icheck"}), (False, True, {"SiCheck"}),
+                                                (True, True, set(ELEMENT_KEYS))])
+def test_ini_rewrite_flips_only_the_chosen_keys(halogen, silicon, on):
+    text = mf.ini_with_elements(SHIPPED_INI, halogen=halogen, silicon=silicon)
+    values = _ini_values(text)
+    assert {k for k in ELEMENT_KEYS if values[k] == "True"} == on                      # halogens and Si are independent of each other
+    assert _other_lines(text, ELEMENT_KEYS) == _other_lines(SHIPPED_INI, ELEMENT_KEYS)  # every other line byte for byte
+    assert len(text.splitlines()) == len(SHIPPED_INI.splitlines())                     # nothing added or dropped
+    assert [ln.split("=")[0] for ln in text.splitlines()] == [ln.split("=")[0] for ln in SHIPPED_INI.splitlines()]      # same order
+
+
+def test_ini_rewrite_keeps_line_endings_comments_and_adds_a_missing_key():
+    crlf = "#Fcheck=False\r\nFcheck=False\r\nOcheck=True\r\nSiCheck=False"
+    out = mf.ini_with_elements(crlf, halogen=True)
+    assert out.split("\r\n")[:3] == ["#Fcheck=False", "Fcheck=True", "Ocheck=True"] and out.endswith("SiCheck=False\nClCheck=True\nBrCheck=True\nIcheck=True\n")
+    assert mf.ini_with_elements("fcheck=False\n", halogen=True).splitlines()[0] == "Fcheck=True"      # the reader ignores case, so do we
+    assert mf.ini_with_elements("", silicon=True) == "SiCheck=True\n"
 
 
 # ---------------------------------------------------------------- result files
@@ -283,6 +329,8 @@ def fake_install(monkeypatch, tmp_path):
     def install(formula=CAFFEINE_FORMULA, structure=CAFFEINE_STRUCTURE, number=77, log="Writing done"):
         def fake_run(cmd, cwd, env, timeout, rss_cap_mb, **kw):
             seen.update(cmd=cmd, cwd=cwd, env=env, timeout=timeout, rss_cap_mb=rss_cap_mb)
+            seen["ini_path"] = Path(cmd[cmd.index("-m") + 1])
+            seen["ini_text"] = seen["ini_path"].read_text()
             in_dir, out_dir = Path(cmd[cmd.index("-i") + 1]), Path(cmd[cmd.index("-o") + 1])
             seen["query"] = (in_dir / "query.mat").read_text()
             seen["in_dir"] = in_dir
@@ -306,6 +354,39 @@ def test_predict_runs_the_console_app_and_parses_both_files(fake_install, tmp_pa
     assert res["adduct"] == "[M+H]+" and res["formulas"][0]["formula"] == "C8H10N4O2" and res["structures"][0]["name"] == "Caffeine"
     assert (res["ms1_count"], res["ms2_count"]) == (0, 27) and res["peak_rss_mb"] == 2300.0
     assert not seen["in_dir"].exists()                                                # the temp folder is gone
+
+
+def test_predict_without_the_switches_uses_the_shipped_parameter_file(fake_install, tmp_path):
+    seen = fake_install()
+    res = mf.predict(195.0877, True, None, PEAKS)
+    assert seen["ini_path"] == tmp_path / "x.ini"                                      # the file itself, no copy
+    assert res["halogen"] is False and res["silicon"] is False
+
+
+@pytest.mark.parametrize("halogen,silicon", [(True, False), (False, True), (True, True)])
+def test_predict_with_a_switch_runs_on_a_per_run_copy_and_leaves_the_shipped_file_alone(fake_install, tmp_path, halogen, silicon):
+    shipped = tmp_path / "x.ini"
+    shipped.write_text(SHIPPED_INI)
+    seen = fake_install()
+    res = mf.predict(195.0877, True, None, PEAKS, halogen=halogen, silicon=silicon)
+    assert seen["ini_path"] != shipped and seen["ini_path"].name == mf.INI_PATH.name           # a copy with the shipped name, in the run's temp folder
+    assert tmp_path not in seen["ini_path"].parents                                            # (not in the folder of the shipped file)
+    assert not seen["ini_path"].exists()                                                       # gone with the temp folder
+    values = _ini_values(seen["ini_text"])
+    assert {k for k in ELEMENT_KEYS if values[k] == "True"} == ({"Fcheck", "ClCheck", "BrCheck", "Icheck"} if halogen else set()) | ({"SiCheck"} if silicon else set())
+    assert _other_lines(seen["ini_text"], ELEMENT_KEYS) == _other_lines(SHIPPED_INI, ELEMENT_KEYS)
+    assert shipped.read_text() == SHIPPED_INI and _ini_values(shipped.read_text())["Fcheck"] == "False"      # the shipped file is untouched
+    assert (res["halogen"], res["silicon"]) == (halogen, silicon)
+
+
+def test_real_shipped_file_is_not_modified_by_a_run_with_both_switches(fake_install, monkeypatch):
+    before = mf.INI_PATH.read_bytes()
+    seen = fake_install()
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": mf.INI_PATH.parent, "exe": mf.INI_PATH, "resources": mf.INI_PATH.parent,
+                                                "ini": mf.INI_PATH})
+    mf.predict(195.0877, True, None, PEAKS, halogen=True, silicon=True)
+    assert seen["ini_path"] != mf.INI_PATH and _ini_values(seen["ini_text"])["SiCheck"] == "True"
+    assert mf.INI_PATH.read_bytes() == before
 
 
 def test_predict_finds_result_files_whatever_their_number(fake_install):
@@ -384,6 +465,41 @@ def test_runner_reports_what_auto_became(fake_predict):
     assert [c["adduct"] for c in fake_predict] == [None, None, "[M+Na]+"] and [c["positive"] for c in fake_predict] == [True, False, True]
 
 
+def test_page_has_the_two_element_boxes_off_by_default():
+    fields = {f["id"]: f for m in MODULES if m["id"] == "ms2_structure" for f in m["inputs"]}
+    assert fields["halogen"] == {"type": "checkbox", "id": "halogen", "label": "Include halogens (F, Cl, Br, I)", "value": False}
+    assert fields["silicon"] == {"type": "checkbox", "id": "silicon", "label": "Include Si", "value": False}
+    assert not any(k in m.get("example", {}) for m in MODULES if m["id"] == "ms2_structure" for k in ("halogen", "silicon"))      # the example keeps today's behaviour
+
+
+def test_runner_passes_the_element_boxes_to_the_engine_independently(fake_predict):
+    base = {"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2)}
+    _run(base)
+    _run({**base, "halogen": True})
+    _run({**base, "silicon": True})
+    _run({**base, "halogen": True, "silicon": True})
+    _run({**base, "halogen": False, "silicon": None})
+    assert [(c["halogen"], c["silicon"]) for c in fake_predict] == [(False, False), (True, False), (False, True), (True, True), (False, False)]
+
+
+@pytest.mark.parametrize("field,value", [("halogen", "yes"), ("halogen", "false"), ("halogen", 1), ("silicon", "true"), ("silicon", [True])])
+def test_runner_rejects_a_checkbox_that_is_not_true_or_false(fake_predict, field, value):
+    r = _run({"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2), field: value})
+    assert r.status_code == 400 and "must be true or false" in r.json()["detail"]
+    assert fake_predict == []                                                          # MS-FINDER is never started for it
+
+
+def test_runner_states_which_elements_were_searched(fake_predict):
+    def card(**boxes):
+        return _run({"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2), **boxes}).json()["outputs"]["summary"]["values"]["Elements searched"]
+    assert card() == {"value": "C H N O P S", "note": "halogens off · Si off"}
+    assert card(halogen=True) == {"value": "C H N O P S F Cl Br I", "note": "halogens on · Si off"}
+    assert card(silicon=True) == {"value": "C H N O P S Si", "note": "halogens off · Si on"}
+    assert card(halogen=True, silicon=True) == {"value": "C H N O P S F Cl Br I Si", "note": "halogens on · Si on"}
+    labels = [c["label"] for m in MODULES if m["id"] == "ms2_structure" for b in m["outputs"] if b.get("id") == "summary" for c in b["items"]]
+    assert "Elements searched" in labels
+
+
 def test_runner_passes_the_peaks_and_the_ms1_pattern_to_the_engine(fake_predict):
     _run({"precursor": PRECURSOR, "ms2": _paste("100 5\n200 50"), "ms1": CAFFEINE_MS1})
     call = fake_predict[0]
@@ -431,6 +547,29 @@ def test_runner_without_formula_or_structure_says_so(monkeypatch):
     body = _run({"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2)}).json()
     assert any("local structure databases have no candidate" in w for w in body["warnings"])
     assert "No structure in MS-FINDER's local database for <b>C8H10N4O2</b>" in body["verdict"]
+
+
+def test_runner_hint_names_the_element_box_that_is_off(monkeypatch):
+    monkeypatch.setattr(mf, "predict", lambda *a, **k: _fake_result(formulas=[], structures=[]))
+    base = {"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2)}
+
+    def warning(**boxes):
+        return next(w for w in _run({**base, **boxes}).json()["warnings"] if "no molecular formula" in w)
+    w = warning()
+    assert "elements C H N O P S)" in w and "Include halogens (F, Cl, Br, I) and Include Si are off; tick them" in w
+    w = warning(halogen=True)
+    assert "elements C H N O P S F Cl Br I)" in w and "Include Si is off; tick it if the compound may contain silicon." in w and "halogens is off" not in w
+    w = warning(silicon=True)
+    assert "elements C H N O P S Si)" in w and "Include halogens is off; tick it if the compound may contain F, Cl, Br or I." in w
+    w = warning(halogen=True, silicon=True)
+    assert "elements C H N O P S F Cl Br I Si)" in w and "tick" not in w                  # both boxes are on: nothing left to suggest
+
+    only_formulas = _fake_result(structures=[])
+    monkeypatch.setattr(mf, "predict", lambda *a, **k: only_formulas)
+    body = _run(base).json()
+    assert any("no candidate for C8H10N4O2" in w and "tick them" in w for w in body["warnings"])
+    body = _run({**base, "halogen": True, "silicon": True}).json()
+    assert any("no candidate for C8H10N4O2" in w and "tick" not in w for w in body["warnings"])
 
 
 def test_engine_failures_are_502_with_the_log_and_bad_input_is_400(monkeypatch):
@@ -537,3 +676,38 @@ def test_real_run_ranks_caffeine_first_with_ms1_isotopes():
     assert res["structures"][0]["inchikey"].startswith("RYYVLZVUVIJVGH") and res["structures"][0]["name"] == "Caffeine"
     assert (res["ms1_count"], res["ms2_count"]) == (3, 27)                       # the isotope peaks were read
     assert res["peak_rss_mb"] < mf.RSS_CAP_MB and res["seconds"] < mf.TIMEOUT_S
+
+
+# Halogen / Si spectra for the two real runs below: real MassBank records (peak lists as the MassBank API gives them, "rel" column), nothing invented.
+# Diclofenac [M+H]+: MSBNK-CASMI_2016-SM856902, licence CC BY (MassBank), LC-ESI-QFT, MS2, CE 35 NCE, authors Krauss M, Schymanski EL (2016).
+DICLOFENAC_PRECURSOR = 296.024
+DICLOFENAC_MS2 = [(179.0729, 2), (180.0806, 13), (214.0417, 796), (215.0495, 999), (243.0402, 6), (250.0185, 530), (278.0134, 287), (296.0240, 164)]
+# 3,3'-(1,1,3,3-Tetramethyldisiloxane-1,3-diyl)dipropan-1-amine [M+H]+ (two Si, no halogen): MSBNK-EPA-ENTACT_AGILENT000481, licence CC BY (MassBank),
+# ESI-QTOF, MS2, CE 40, EPA CCTE and Agilent Technologies (2023).
+SILOXANE_PRECURSOR = 249.1813
+SILOXANE_MS2 = [(59.0312, 44), (74.0421, 999), (74.0726, 19), (74.0838, 12), (75.0261, 43), (116.0890, 263)]
+
+
+def _formulas(res):
+    return [f["formula"] for f in res["formulas"]]
+
+
+@pytest.mark.skipif(NO_MSFINDER is not None, reason=f"MS-FINDER not available: {NO_MSFINDER}")
+def test_real_run_diclofenac_is_found_only_with_halogens_on():
+    """Two real MS-FINDER runs (~5 s, ~2.3 GB peak each, one after the other): the parameter file keeps Cl off, the per-run copy switches it on."""
+    off = mf.predict(DICLOFENAC_PRECURSOR, True, None, DICLOFENAC_MS2)
+    assert "C14H11Cl2NO2" not in _formulas(off) and off["structures"] == [] and off["halogen"] is False
+    on = mf.predict(DICLOFENAC_PRECURSOR, True, None, DICLOFENAC_MS2, halogen=True)
+    assert on["halogen"] is True and on["formulas"][0]["formula"] == "C14H11Cl2NO2" and abs(on["formulas"][0]["mass_error_da"]) < 0.001
+    assert on["structures"][0]["name"] == "Diclofenac" and on["structures"][0]["inchikey"].startswith("DCOPUUMXTXDBNB")
+    assert on["peak_rss_mb"] < mf.RSS_CAP_MB and on["seconds"] < mf.TIMEOUT_S
+
+
+@pytest.mark.skipif(NO_MSFINDER is not None, reason=f"MS-FINDER not available: {NO_MSFINDER}")
+def test_real_run_siloxane_needs_the_si_box_and_not_the_halogen_box():
+    """Two real runs: halogens on alone does not allow Si; Si on does (rank 1 formula and structure)."""
+    hal = mf.predict(SILOXANE_PRECURSOR, True, None, SILOXANE_MS2, halogen=True)
+    assert "C10H28N2OSi2" not in _formulas(hal) and hal["silicon"] is False
+    si = mf.predict(SILOXANE_PRECURSOR, True, None, SILOXANE_MS2, silicon=True)
+    assert si["silicon"] is True and si["formulas"][0]["formula"] == "C10H28N2OSi2" and abs(si["formulas"][0]["mass_error_da"]) < 0.001
+    assert si["structures"][0]["formula"] == "C10H28N2OSi2" and si["structures"][0]["inchikey"].startswith("GPXCORHXFPYJEH")
