@@ -229,8 +229,8 @@ function StructureInput({ field, value, onChange, error }: P) {
   const nameLabel = allowFormula ? "Name / ID / Formula" : "Name / ID";
   const modes: [string, string][] = [[NAME_MODE, nameLabel], ["Draw", "Draw"], ["SMILES / InChI", "SMILES / InChI"]];
   const namePlaceholder = allowFormula
-    ? "Name, CAS, formula, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank ID — e.g. caffeine"
-    : "Name, CAS, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank ID — e.g. caffeine";
+    ? "Name, CAS, formula, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank / CompTox / ChEMBL ID — e.g. caffeine"
+    : "Name, CAS, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank / CompTox / ChEMBL ID — e.g. caffeine";
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
   // Keep one buffer per mode, so Name → Draw → Name does not erase the typed identifier.
   const switchMode = (m: string) => {

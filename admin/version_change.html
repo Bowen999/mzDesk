@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.23', date:'2026-10-28', git:'',
+  title:'Compound 三页审查：补 CompTox / ChEMBL 输入',
+  note:'按 admin/README 逐条核对 Identity / Structure & formats / Properties & groups：3D、格式转换、描述符和官能团都已接，唯一缺口是 README 承诺的 CompTox（DTXSID）与 ChEMBL ID 不能显式选择。补齐下拉框、Auto 识别、UniChem 反查、链接和同义词过滤，没有改任何计算。',
+  state:[['Compound 模块','3 / 3 已接'], ['测试','1308 通过 · 12 跳过 · 17 xfail'], ['版本','0.2.23']],
+  c:{
+   other:['feat','Identity 的 Input type 加 CompTox、ChEMBL：DTXSID 与 CHEMBL 写法在 Auto 下自动识别；PubChem 认不出时按 UniChem sourceID 反查 InChIKey；Database IDs 和链接沿用已有的 CompTox / ChEMBL 行；同义词里的这两种 ID 不再混进 Synonyms。',true,{w:'mzdesk/identity/resolve.py · tests/test_identity.py'}],
+   app:['chg','名称 / ID 输入框的占位文字补上 CompTox / ChEMBL，与下拉框一致。',false,{w:'web/src/components/Fields.tsx'}],
+   docs:['doc','README 注明 CompTox / ChEMBL 可显式选择、Auto 识别和 UniChem 回退；版本号 0.2.23，本页加 v0.2.23。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.22', date:'2026-10-28', git:'',
   title:'Spectrum 九页审查：输入校验、可用性与输入区重做',
   note:'逐页审查 Spectrum 小类并修复可复现 bug、输入缺口和 UI/UX：必填标记与提交前校验、分节输入区、USI 解析、错误提示、隐藏字段不提交、陈旧结果提示、EI/MS/MS 模式专用字段、MS-FINDER ExtendedRange、De novo 的 MS1/卤素回退、乘数电荷 MGF 导出、质量误差符号，以及 matchms / numba 与内存看护在受限环境下的降级。',

@@ -42,6 +42,10 @@ def canned(monkeypatch):
     ("C07481", "KEGG"),
     ("CHEBI:27732", "ChEBI"),
     ("DB00201", "DrugBank"),
+    ("DTXSID7020182", "CompTox"),
+    ("dtxsid7020182", "CompTox"),
+    ("CHEMBL25", "ChEMBL"),
+    ("chembl25", "ChEMBL"),
     ("LMFA01010001", "LIPID MAPS"),
     ("RYYVLZVUVIJVGH-UHFFFAOYSA-N", "InChIKey"),
     ("InChI=1S/CH4O/c1-2/h2H,1H3", "InChI"),
@@ -49,6 +53,33 @@ def canned(monkeypatch):
 ])
 def test_detect(q, kind):
     assert R.detect(q) == kind
+
+
+def test_comptox_and_chembl_are_known_id_kinds():
+    assert R.KINDS[-2:] == ["CompTox", "ChEMBL"]
+    assert R._norm_query("dtxsid7020182", "CompTox") == "DTXSID7020182"
+    assert R._norm_query("chembl25", "ChEMBL") == "CHEMBL25"
+    assert R._is_id("DTXSID7020182") and R._is_id("CHEMBL25")
+    ids = R._ids_from_synonyms(["DTXSID7020182", "chembl25", "58-08-2"])
+    assert ids == {"CompTox": ["DTXSID7020182"], "ChEMBL": ["CHEMBL25"], "CAS": ["58-08-2"]}
+    assert R._KIND_SOURCE["CompTox"] == "comptox" and R._KIND_SOURCE["ChEMBL"] == "chembl"
+
+
+def test_resolve_comptox_reads_the_id_kind(monkeypatch):
+    seen = {}
+
+    def find(q, kind, timeout):
+        seen.update(q=q, kind=kind)
+        return [6623]
+
+    monkeypatch.setattr(R, "_find_cids", find)
+    monkeypatch.setattr(R, "_pc_props", lambda cid, timeout: {
+        "Title": "Bisphenol A", "SMILES": "CC(C)(c1ccc(O)cc1)c1ccc(O)cc1",
+        "InChIKey": "IISBACLAFKSPIT-UHFFFAOYSA-N"})
+    r = R.resolve("dtxsid7020182", "CompTox", want_ids=False)
+    assert seen == {"q": "DTXSID7020182", "kind": "CompTox"}
+    assert r.kind == "CompTox" and r.cid == 6623
+    assert r.links["PubChem"].endswith("/6623")
 
 
 def test_resolve_caffeine_offline(canned):

@@ -108,6 +108,12 @@ def test_molecular_and_detectability_subgroups():
     assert [s["id"] for s in SUBGROUPS][:2] == ["molecular", "detectability"]
 
 
+def test_identity_offers_comptox_and_chembl_inputs():
+    identity = next(m for m in MODULES if m["id"] == "identity")
+    kinds = next(f for f in identity["inputs"] if f["id"] == "kind")["options"]
+    assert kinds[-2:] == ["CompTox", "ChEMBL"]
+
+
 def test_pipeline_stages_point_to_existing_modules():
     ids = {m["id"] for m in MODULES}
     for p in PIPELINES:
@@ -340,6 +346,21 @@ def test_identity_runner_offline(monkeypatch):
                                          "PubChem CID": "2519"}
     assert out["candidates"]["rows"] == [["1", "Other"]]
     assert out["depiction"]["svg"]
+
+
+def test_identity_runner_forwards_the_comptox_kind(monkeypatch):
+    from mzdesk.identity import enrich, resolve
+    seen = {}
+
+    def fake_resolve(q, kind="Auto", **kw):
+        seen["kind"] = kind
+        return _fake_resolved(query=q, kind=kind, ids={}, links={"PubChem": "https://pubchem.ncbi.nlm.nih.gov/compound/2519"})
+
+    monkeypatch.setattr(resolve, "resolve", fake_resolve)
+    monkeypatch.setattr(enrich, "enrich", lambda r: {"outputs": enrich.empty_outputs(), "warnings": []})
+    body = _run("identity", {"structure": {"mode": "Name / ID / Formula", "value": "DTXSID7020182"}, "kind": "CompTox"}).json()
+    assert body["status"] == "ok" and seen["kind"] == "CompTox"
+    assert body["outputs"]["resolved"]["values"]["Name"]["note"] == "read as CompTox"
 
 
 def test_structure_formats_has_four_tabs():

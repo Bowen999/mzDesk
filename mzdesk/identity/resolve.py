@@ -1,7 +1,8 @@
 """resolve.py
 
 名称 / ID / 结构 的互转与跨库链接。输入一个字符串（名称、CAS、SMILES、InChI、
-InChIKey、PubChem CID、HMDB、KEGG、ChEBI、LIPID MAPS、DrugBank），返回结构与其他标识符。
+InChIKey、PubChem CID、HMDB、KEGG、ChEBI、LIPID MAPS、DrugBank、CompTox、ChEMBL），
+返回结构与其他标识符。
 
 结构互转走 RDKit（本地）；名称与跨库 ID 走 PubChem PUG REST 和 UniChem。
 所有网络访问经过唯一的 `_http`（带 sqlite 磁盘缓存），测试时只需 monkeypatch 它。
@@ -25,7 +26,7 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import inchi as rd_inchi
 
 KINDS = ["Auto", "Name", "SMILES", "InChI", "InChIKey", "CAS", "PubChem CID",
-         "HMDB", "KEGG", "ChEBI", "LIPID MAPS", "DrugBank"]
+         "HMDB", "KEGG", "ChEBI", "LIPID MAPS", "DrugBank", "CompTox", "ChEMBL"]
 
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug"
 UNICHEM = "https://www.ebi.ac.uk/unichem/api/v1"
@@ -41,13 +42,16 @@ _RE_KEGG = re.compile(r"^C\d{5}$")
 _RE_CHEBI = re.compile(r"^CHEBI:\d+$", re.I)
 _RE_LM = re.compile(r"^LM[A-Z]{2}\d{8,12}$")
 _RE_DB = re.compile(r"^DB\d{5}$")
+_RE_DTXSID = re.compile(r"^DTXSID\d{7,10}$", re.I)
+_RE_CHEMBL = re.compile(r"^CHEMBL\d+$", re.I)
 
 # UniChem shortName -> 本模块的 ID 标签
 _UNICHEM_MAP = {"hmdb": "HMDB", "chebi": "ChEBI", "drugbank": "DrugBank", "comptox": "CompTox",
                 "chembl": "ChEMBL", "lipidmaps": "LIPID MAPS", "kegg_ligand": "KEGG"}
 # 反向查询用的 UniChem 数据源名
 _KIND_SOURCE = {"HMDB": "hmdb", "KEGG": "kegg_ligand", "ChEBI": "chebi",
-                "LIPID MAPS": "lipidmaps", "DrugBank": "drugbank"}
+                "LIPID MAPS": "lipidmaps", "DrugBank": "drugbank",
+                "CompTox": "comptox", "ChEMBL": "chembl"}
 
 _LINKS = {
     "PubChem": "https://pubchem.ncbi.nlm.nih.gov/compound/{}",
@@ -116,6 +120,10 @@ def detect(query: str) -> str:
         return "LIPID MAPS"
     if _RE_DB.match(q):
         return "DrugBank"
+    if _RE_DTXSID.match(q):
+        return "CompTox"
+    if _RE_CHEMBL.match(q):
+        return "ChEMBL"
     if _cas_ok(q):
         return "CAS"
     if q.isdigit():
@@ -300,7 +308,8 @@ def _pc_synonyms(cid: int, timeout: float) -> list:
 
 def _is_id(s: str) -> bool:
     return bool(_cas_ok(s) or _RE_KEGG.match(s) or _RE_CHEBI.match(s) or _RE_HMDB.match(s)
-                or _RE_DB.match(s) or re.match(r"^LM[A-Z]{2}\d{8,}$", s))
+                or _RE_DB.match(s) or _RE_DTXSID.match(s) or _RE_CHEMBL.match(s)
+                or re.match(r"^LM[A-Z]{2}\d{8,}$", s))
 
 
 def _ids_from_synonyms(syns: list) -> dict:
@@ -322,6 +331,10 @@ def _ids_from_synonyms(syns: list) -> dict:
             add("HMDB", s)
         elif _RE_DB.match(s):
             add("DrugBank", s)
+        elif _RE_DTXSID.match(s):
+            add("CompTox", s.upper())
+        elif _RE_CHEMBL.match(s):
+            add("ChEMBL", s.upper())
         elif re.match(r"^LM[A-Z]{2}\d{8,}$", s):
             add("LIPID MAPS", s)
     return ids
@@ -393,7 +406,7 @@ def _key_from_source_id(kind: str, query: str, timeout: float) -> Optional[str]:
 def _norm_query(q: str, kind: str) -> str:
     if kind == "ChEBI" and q.lower().startswith("chebi:"):
         return "CHEBI:" + q.split(":", 1)[1]
-    if kind in ("HMDB", "DrugBank", "LIPID MAPS", "KEGG"):
+    if kind in ("HMDB", "DrugBank", "LIPID MAPS", "KEGG", "CompTox", "ChEMBL"):
         return q.upper()
     return q
 
