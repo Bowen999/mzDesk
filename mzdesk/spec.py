@@ -846,30 +846,20 @@ def stage(title, modules, exclude=None):
 
 
 PIPELINES = [
-    {"id": "library_search", "title": "Library search", "one_liner": "I have a <b>spectrum</b> and no structure. Find it in the <b>libraries</b> and check the hit.",
-     "inputs": [spectrum(), precursor(), multiselect("libraries", "Libraries", LIBRARIES), number("tol_ppm", "Tolerance (ppm)", 10.0, 0.1)],
-     "stages": [stage("Spectrum cleanup", "ms2_clean"), stage("MS2 library search", ["ms2_library", "ms2_similarity"]),
-                stage("MS1 check of the hits", "ms1_theory"), stage("Alternative explanations", "exclusivity"), stage("Report", "report")]},
-    {"id": "de_novo", "title": "De novo annotation", "one_liner": "I have a spectrum, the libraries do not have it. Infer <b>formula</b>, then <b>structure candidates</b>.",
-     "inputs": [precursor(), ms1(), spectrum(), number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1),
-                text("elements", "Element constraints", "C0-50 H0-100 N0-10 O0-20 P0-3 S0-3"),
-                multiselect("databases", "Candidate databases", DATABASES, ["HMDB", "PubChem"])],
-     "stages": [stage("Spectrum cleanup", "ms2_clean"), stage("MS1: formula", "ms1_formula"), stage("MS2: fragment explanation / de novo", ["ms2_fragments", "ms2_denovo"]),
-                stage("Alternative explanations", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
-    {"id": "verify", "title": "Result verification", "one_liner": "I have a <b>candidate structure</b>. Does <b>every piece of evidence</b> support it?",
-     "inputs": [structure(label="Candidate structure"), precursor(), ms1(), spectrum(),
-                number("rt_min", "RT (min, optional)", step=0.01), number("ccs", "CCS (Å², optional)", step=0.1)],
-     "stages": [stage("Compound", ["structure_formats", "properties"]), stage("Platform fit", "platform_fit"), stage("MS1", "ms1_theory"),
-                stage("MS2", ["ms2_esi", "ms2_library", "ms2_similarity", "ms2_fragments"]),
-                stage("Alternative explanations", "exclusivity"), stage("Orthogonal", ["rt", "ccs"]), stage("Report", "report")]},
-    {"id": "feature_prediction", "title": "MS feature prediction", "one_liner": "I have a <b>structure</b> and no spectrum. Predict <b>what the instrument will see</b>: adducts, precursor m/z, isotope pattern, MS2.",
-     "inputs": [structure(), radio("ion_mode", "Ion mode", ["Positive", "Negative", "Both"]), multiselect("adducts", "Adducts", ["Auto"] + ADDUCTS_POS[1:] + ADDUCTS_NEG[1:], ["Auto"]),
-                select("instrument", "Instrument / CE", ["Q-TOF 20 eV", "Q-TOF 40 eV", "Orbitrap HCD NCE 30", "Triple quadrupole"]), select("out_format", "Export format", ["MSP", "MGF", "MassBank record", "JSON"])],
-     "stages": [stage("Compound", ["structure_formats", "properties"]), stage("Adduct prediction", "adducts"),
-                stage("MS1 theory: precursor m/z and isotope pattern", "ms1_theory"),
-                stage("Spectrum prediction (ESI MS/MS, EI MS)", ["ms2_esi", "ms2_ei"]),
-                stage("Export", "ms2_clean")]},
+    {"id": "esi_ms2_annotation", "title": "ESI MS/MS Annotation",
+     "one_liner": "I have an <b>ESI MS/MS spectrum</b> and a precursor m/z. Clean it, search the libraries, infer the formula, explain the fragments, propose structures and check the candidate by prediction.",
+     "inputs": [precursor(), spectrum(label="MS2 spectrum"), ms1(), structure(optional=True, label="Candidate structure (optional)"),
+                multiselect("libraries", "Libraries", LIBRARIES),
+                number("tol_ppm", "Precursor tolerance (ppm)", 10.0, 0.1), number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001)],
+     "stages": [stage("Spectrum cleanup", "ms2_clean"),
+                stage("Library search", ["ms2_library", "ms2_similarity"]),
+                stage("Formula annotation", "ms1_formula"),
+                stage("Fragment explanation", "ms2_fragments"),
+                stage("Structure candidates", ["ms2_structure", "ms2_denovo"]),
+                stage("Predicted MS/MS", "ms2_esi"),
+                stage("Report", "report")]},
 ]
+
 
 GROUPS = [{"id": "modules", "title": "Modules"}, {"id": "pipelines", "title": "Workflows"}]
 # Modules 下的小类，侧栏按这里的顺序列出（组内已接引擎的模块排前面）；Workflows 排在 Modules 之后

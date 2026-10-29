@@ -96,10 +96,17 @@ def test_predicted_spectrum_page_is_gone():
     assert "ms2_predicted" not in {mid for p in PIPELINES for s in p["stages"] for mid in s["modules"]}
 
 
-def test_pipelines_use_the_spectrum_prediction_pages():
-    stages = {(p["id"], s["title"]): s["modules"] for p in PIPELINES for s in p["stages"]}
-    assert stages[("verify", "MS2")][0] == "ms2_esi"
-    assert stages[("feature_prediction", "Spectrum prediction (ESI MS/MS, EI MS)")] == ["ms2_esi", "ms2_ei"]
+def test_the_only_workflow_is_esi_ms2_annotation():
+    assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation"]
+    assert PIPELINES[0]["title"] == "ESI MS/MS Annotation"
+    stages = {s["title"]: s["modules"] for s in PIPELINES[0]["stages"]}
+    assert stages["Spectrum cleanup"] == ["ms2_clean"]
+    assert stages["Library search"] == ["ms2_library", "ms2_similarity"]
+    assert stages["Formula annotation"] == ["ms1_formula"]
+    assert stages["Fragment explanation"] == ["ms2_fragments"]
+    assert stages["Structure candidates"] == ["ms2_structure", "ms2_denovo"]
+    assert stages["Predicted MS/MS"] == ["ms2_esi"]
+    assert PIPELINES[0]["stages"][-1]["modules"] == ["report"]
 
 
 def test_molecular_and_detectability_subgroups():

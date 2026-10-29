@@ -254,7 +254,7 @@ const SECTIONS = [
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/dmpk/ · mzdesk/api/runners/nca.py · mzdesk/api/runners/stability.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
-  {id:'pipe',  name:'Pipeline',   d:'4 条鉴定流程',                    w:'mzdesk/spec.py'},
+  {id:'pipe',  name:'Workflow',   d:'1 条 ESI MS/MS 注释流程',           w:'mzdesk/spec.py'},
   {id:'other', name:'Other',      d:'身份 · 排他性 · 正交 · MRM · 报告等', w:'mzdesk/ms2/mrm.py · mzdesk/api/runners/mrm.py · mzdesk/spec.py · mzdesk/shared/'},
   {id:'docs',  name:'Docs',       d:'计划 · 本页',                     w:'admin/README.md · admin/version_change.html'},
   {id:'app',   name:'App',        d:'网页 · API',                      w:'web/ · mzdesk/api/'}
@@ -265,11 +265,12 @@ const SECTIONS = [
 const VERSIONS = [
  {id:'v0.2.24', date:'2026-10-28', git:'',
   title:'补三个占位页：NCA 药代参数、代谢稳定性、MRM 离子对',
-  note:'DMPK 两页和 Utilities 一页从骨架变为可算：NCA 与代谢稳定性是纯本地算法；MRM 的“结构预测碎片”用 CFM-ID（Docker，已装）、“库谱”用 MassBank 索引、“自己的谱”离线。三条路径都不新增运行环境。',
-  state:[['能算的模块页','31 / 37'], ['Workflow','1 条（ESI MS/MS Annotation），未接'], ['测试','TESTCOUNT']],
+  note:'DMPK 两页和 Utilities 一页从骨架变为可算：NCA 与代谢稳定性是纯本地算法；MRM 的“结构预测碎片”用 CFM-ID（Docker，已装）、“库谱”用 MassBank 索引、“自己的谱”离线，三条路径都不新增运行环境。Workflows 同时从四条合成一条 ESI MS/MS Annotation。',
+  state:[['能算的模块页','31 / 37'], ['Workflow','1 条（ESI MS/MS Annotation），未接'], ['测试','1383 passed（4 个 MS-FINDER 真实运行测试在本机沙箱下失败：无权读取 ~/tools/msfinder，未改这些文件）']],
   c:{
    dmpk:['feat','两个 DMPK 页接上引擎。NCA 药代参数（id nca）：输入浓度–时间表（可带表头，逗号 / tab / 空格，# 注释；恰好两列、≥3 行、时间严格递增、浓度 > 0，否则报错并指出行号）、剂量、给药途径、λz 取点数；Cmax 取最大实测浓度（并列取首个），AUC0-t / AUMC0-t 用线性梯形，λz 为最后 N 点 ln C 对 t 的不加权 OLS（斜率须为负），t½ = ln2/λz，AUC0-∞ = AUC0-t + C_last/λz，AUMC0-∞ 再加 t_last·C_last/λz + C_last/λz²，MRT = AUMC/AUC，CL/F = dose_mg×10³/AUC0-∞（L/h），Vz/F = CL/F/λz；输出 8 张指标卡、12 行参数表、半对数图（观测点 + 末端拟合 + t½ 注释）、假设说明，警告 AUC 外推 > 20% / R² < 0.9 / λz 仅 3 点；MRT 在 IV infusion 含 T_inf/2 未校正、口服为 MAT + MRT；不做对数梯形、C0 反推、BLQ 建模，浓度必须 > 0。示例（口服 100 mg）t½ 4.88 h、AUC0-∞ 1,520 ng·h/mL、CL/F 65.9 L/h。代谢稳定性（id stability）：时间–剩余百分比表 + 体系（肝微粒体 / 肝细胞 / S9 / 血浆）+ 蛋白浓度或细胞密度 + 物种；ln(% remaining/100) 对时间做不加权 OLS，k = −斜率、t½ = ln2/k、同报 R²；体外 CLint = k×1000/蛋白（µL/min/mg）或 k×1000/细胞（µL/min/10⁶ cells）；CLint_scaled = CLint × MPPGL（或 HPGL）× 肝重 / 1000（mL/min/kg）；well-stirred CLh = Qh·fu·CLint_scaled/(Qh + fu·CLint_scaled)，fu = 1，ER = CLh/Qh；常数 MPPGL 45 mg/g、HPGL 99×10⁶ cells/g（Barter 2007 人源共识，所有物种共用），肝重与 Qh 取 Davies & Morris 1993，逐行写在参数表；输出 5 张卡、拟合图、参数表、假设说明，警告 R² < 0.9 / 最后一点 > 80% / t½ > 2×最长孵育时间 / 蛋白或细胞密度非正。示例 23.5 min、58.9 µL/min/mg、15.9 mL/min/kg。',true,{w:'mzdesk/dmpk/nca.py · mzdesk/dmpk/stability.py · mzdesk/api/runners/nca.py · mzdesk/api/runners/stability.py · mzdesk/spec.py · mzdesk/api/verdicts.py · tests/test_nca.py · tests/test_stability.py'}],
    other:['feat','MRM 离子对（id mrm，已接）：起点三选一。结构路径用 CFM-ID 的 10 / 20 / 40 eV 预测谱，按 m/z ±0.01 Da 合并取各碎片最强强度与出现能量，按强度取前 N 个不同 m/z，前体用 MetFrag 理论值；库谱路径用 InChIKey 前 14 位 + 同一加合物 + 前体 ±10 ppm 匹配 MassBank，取峰最多的一条（刻意按加合物过滤：不过滤会选到别的仪器 / 别的加合物、低质量端全是噪声的记录）；自己的谱路径从 PEPMASS 头读前体、取最强 N 个峰、CE 留空。排除前体峰（≥ precursor m/z），最强碎片为定量离子、其余定性，相对强度以所选谱基峰为 100；eV → NCE 用 NCE = CE×500/(m/z×z)。输出离子对表、方法表 CSV（formats 块可复制；Export 按钮仍是未接的前端占位）、假设说明；预测 RT 显示“—”并注明 RT / RI 页未接。示例（咖啡因 [M+H]+ 自己的谱，离线 5 ms）195.0877 → 138.0663 / 110.0713 / 69.0447。',true,{w:'mzdesk/ms2/mrm.py · mzdesk/api/runners/mrm.py · mzdesk/spec.py · mzdesk/api/verdicts.py · tests/test_mrm.py'}],
+   pipe:['chg','四条 workflow（Library search / De novo annotation / Result verification / MS feature prediction）删除，只留一条 ESI MS/MS Annotation（id esi_ms2_annotation）：输入 precursor、MS2、可选 MS1、可选候选结构、库选择与前后体容差，七个阶段 = Spectrum cleanup → Library search（ms2_library + ms2_similarity）→ Formula annotation → Fragment explanation（MetFrag）→ Structure candidates（MS-FINDER + FRIGID）→ Predicted MS/MS（CFM-ID）→ Report。删掉的是拆成四个入口的重复叙事，实际是同一条注释链路；工作流引擎仍是占位，能列阶段但不串联运行。',false,{w:'mzdesk/spec.py · tests/test_api.py · admin/README.md'}],
    docs:['doc','README 把 MRM、代谢稳定性、NCA 三节从计划改成已接说明（输入、公式、常数与来源、假设与限制）；新增 admin/missing_modules.md（6 个占位页的复杂度 / 争议打分与后续顺序）；版本号 0.2.24，本页加 v0.2.24。',false,{w:'admin/README.md · admin/missing_modules.md · mzdesk/__init__.py · admin/version_change.html'}]
   }},
  {id:'v0.2.23', date:'2026-10-28', git:'',

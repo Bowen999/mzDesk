@@ -15,7 +15,7 @@ def run_adducts(inputs):
     from mzdesk.platform_fit import adduct_rules as ar
 
     smiles = common.structure(inputs)["smiles"]
-    mode = inputs.get("ion_mode") or "Positive"         # the Feature-prediction pipeline also sends "Both"
+    mode = inputs.get("ion_mode") or "Positive"         # the API also accepts "Both"
     if mode not in ar.POLARITIES:
         raise InputError(f"Ion mode must be one of {', '.join(ar.POLARITIES)}.")
     add = inputs.get("additive") or "Formic acid"
