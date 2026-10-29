@@ -13,24 +13,27 @@ def _mz(x):
 def _int(y):
     if float(y).is_integer():
         return f"{y:.0f}"
-    s = f"{y:.6g}"
-    return f"{y:.2f}" if "e" in s else s
+    # 10 significant digits keep tiny intensities (e.g. 1.2e-7) readable; the parser accepts
+    # scientific notation, while forcing "%.2f" on such values wrote 0.00 and dropped them.
+    return f"{y:.10g}"
 
 
 def _line(name):
     return " ".join(str(name).split()) or "Unknown"
 
 
-def to_format(peaks, fmt, *, precursor_mz=None, name=None, ion_mode=None):
+def to_format(peaks, fmt, *, precursor_mz=None, name=None, ion_mode=None, charge=1):
     """Write ``peaks`` [(mz, intensity)] as text in format ``fmt`` (one of FORMATS), in the given order.
 
     ``precursor_mz``, ``name`` and ``ion_mode`` ("Positive" / "Negative") go into the headers of the
-    record formats (MSP, MGF, MassBank, SIRIUS) when given.
+    record formats (MSP, MGF, MassBank, SIRIUS) when given. ``charge`` is the absolute charge written
+    to the MGF CHARGE field (for example 2 for [M-2H]2-).
     """
     p = [(_mz(a), _int(b)) for a, b in peaks]
     title = _line(name or "Unknown")
     pre = None if precursor_mz is None else _mz(precursor_mz)
     pos = None if not ion_mode else str(ion_mode).lower().startswith("pos")
+    z = abs(int(charge)) or 1
     lines = [f"{a}\t{b}" for a, b in p]
     if fmt == "Peak list":
         return "\n".join(lines)
@@ -46,7 +49,7 @@ def to_format(peaks, fmt, *, precursor_mz=None, name=None, ion_mode=None):
         return "\n".join(head + lines)
     if fmt == "MGF":
         head = ["BEGIN IONS", f"TITLE={title}"] + ([f"PEPMASS={pre}"] if pre else []) \
-            + ([f"CHARGE=1{'+' if pos else '-'}"] if pos is not None else [])
+            + ([f"CHARGE={z}{'+' if pos else '-'}"] if pos is not None else [])
         return "\n".join(head + lines + ["END IONS"])
     if fmt == "MassBank":
         top = max((b for _, b in peaks), default=1.0)

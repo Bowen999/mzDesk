@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.22', date:'2026-10-28', git:'',
+  title:'Spectrum 九页审查：输入校验、可用性与输入区重做',
+  note:'逐页审查 Spectrum 小类并修复可复现 bug、输入缺口和 UI/UX：必填标记与提交前校验、分节输入区、USI 解析、错误提示、隐藏字段不提交、陈旧结果提示、EI/MS/MS 模式专用字段、MS-FINDER ExtendedRange、De novo 的 MS1/卤素回退、乘数电荷 MGF 导出、质量误差符号，以及 matchms / numba 与内存看护在受限环境下的降级。',
+  state:[['Spectrum 模块','9 / 9 浏览器冒烟通过'], ['测试','1300+ 通过（重引擎按需实跑）'], ['版本','0.2.22']],
+  c:{
+   ms2:['fix','Spectrum 九页逐页修复：Spectrum cleanup 的 USI 现在经 GNPS2 解析、离子模式大小写不再反转极性、亚正规强度归一化不再 500、MGF/MSP 头冲突给警告、极小强度格式往返不丢；Similarity 的 matchms/numba 缓存失败会降级而不是 500、主分数标注实际指标、碎片容差上限 5 Da、头 precursor 读取有提示；Library search 支持 Auto (any adduct)、EI 忽略并隐藏 MS/MS 专用字段、所有指标 N/A 时不再误报 No hit、MGF 电荷按加合物写 2-/3-、可选指标排序说明；Formula annotation 支持从 MS2 头读 precursor、拒绝带电荷/自由基点式与不能形成加合物的式、手填式时显式警告 MS1 未使用、离子模式/加合物不匹配 400；Structure prediction 加 Extended element range、扩展多电荷/二聚体加合物、质量误差改为 observed − theoretical、MS-FINDER 缺失或只读时给清晰错误；De novo 隐藏 Negative、加可选 MS1 与 BUDDY 卤素回退、显式说明两者只在分子式留空时生效；EI/MS 预测导出带分子离子 m/z、质量误差与电荷正确。统一布尔字段解析（字符串 "false" 不再当 true）、复合字段类型错误 400、SIRIUS .ms 不再把 >ms1peaks 混进 MS2、JSON record 对象可直接粘贴、注释块不再变成空的首条记录。',true,{w:'mzdesk/__init__.py · mzdesk/api/common.py · mzdesk/api/runners/ms1.py · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/ms2_denovo.py · mzdesk/api/verdicts.py · mzdesk/ms2/ms2_similarity.py · mzdesk/ms2/library_search.py · mzdesk/ms2/msfinder_engine.py · mzdesk/ms2/metfrag_engine.py · mzdesk/shared/spectrum.py · mzdesk/shared/ms2_clean.py · mzdesk/shared/ms2_formats.py · mzdesk/shared/memguard.py · mzdesk/ms2/frigid_driver/memguard.py · mzdesk/spec.py · tests/'}],
+   app:['chg','Spectrum 输入区按 Query / Cleaning / Search / Fragmentation 等分节；必填项标 * 并在 POST 前校验、聚焦首个缺失字段；单行模块说明、输入区标题与结果区标题；隐藏的模式专用字段不提交；运行中改输入不再把旧结果折叠成新输入摘要，陈旧结果有明确警告；切页 remount + 回到顶部；复选框、单选组、复合字段的 label / aria 与键盘操作补全；宽表首列固定、滚动区域可聚焦。',false,{w:'web/src/components/Fields.tsx · web/src/pages/ModulePage.tsx · web/src/components/Blocks.tsx · web/src/theme.css · web/src/types.ts · web/src/App.tsx'}],
+   docs:['doc','README 同步 Spectrum 的新输入行为（USI、必填、EI 隐藏字段、ExtendedRange、多电荷加合物、质量误差符号、De novo MS1/卤素回退）；版本号 0.2.22，本页加 v0.2.22。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.21', date:'2026-10-28', git:'',
   title:'De novo structure 接入 FRIGID-base（本机 PyTorch）',
   note:'Spectrum 小类里排在 Structure prediction 之后的一页从骨架变为可算：正离子 MS/MS + 分子式 → 生成的候选结构（假设，不是鉴定）。分子式留空时用 BUDDY 第一名；只在本机版可用，在线版返回安装说明。',

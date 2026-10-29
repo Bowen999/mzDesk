@@ -28,7 +28,9 @@ from mzdesk.shared.spectrum import parse_spectrum  # noqa: F401  re-exported for
 RDLogger.DisableLog('rdApp.*')
 
 JAR = Path(__file__).parent.parent / "lib" / "MetFragCommandLine-2.5.2.jar"
-METFRAG_TIMEOUT_S = 1200
+# Keep the server's own timeout below the online nginx proxy_read_timeout (300 s); otherwise
+# nginx returns HTML 504 before the runner can return its JSON 502 and tool log.
+METFRAG_TIMEOUT_S = 280
 
 
 # --------------------------------------------------------------------------

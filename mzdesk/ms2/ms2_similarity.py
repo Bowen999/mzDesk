@@ -110,9 +110,12 @@ def clean_peaks(mz: np.ndarray, intensities: np.ndarray) -> tuple[np.ndarray, np
 
 
 def to_matchms_spectrum(mz, intensities, precursor_mz=None, ionmode=None):
-    """构建 matchms Spectrum（仅做强度归一化，避免默认过滤链对 precursor 的要求）。"""
-    from matchms import Spectrum
-    from matchms.filtering import normalize_intensities
+    """Build a matchms Spectrum (only intensity normalization; no filtering chain needs a precursor)."""
+    try:
+        from matchms import Spectrum
+        from matchms.filtering import normalize_intensities
+    except Exception as exc:  # noqa: BLE001 - a broken optional dependency must not break the page
+        raise MatchmsUnavailable(f"{type(exc).__name__}: {exc}") from exc
 
     metadata = {}
     if precursor_mz is not None:
@@ -123,6 +126,10 @@ def to_matchms_spectrum(mz, intensities, precursor_mz=None, ionmode=None):
                     intensities=np.asarray(intensities, dtype=float),
                     metadata=metadata)
     return normalize_intensities(spec)
+
+
+class MatchmsUnavailable(RuntimeError):
+    """matchms cannot be imported (the rest of the page can still run)."""
 
 
 # --------------------------------------------------------------------------- #
@@ -144,6 +151,21 @@ def _greedy_match(mz1, w1, mz2, w2, tolerance):
             used2.add(j)
             matches.append((i, j))
     return matches
+
+
+def greedy_cosine(mz1, i1, mz2, i2, tolerance):
+    """CosineGreedy-compatible score and matched-peak count without matchms.
+
+    Used when matchms cannot be imported (for example a numba/pynndescent cache problem):
+    the rest of the Similarity page and the library search still work, and the 7 matchms
+    metrics are N/A. ``i1`` / ``i2`` are already normalized to the base peak by clean_peaks().
+    """
+    w1 = np.asarray(i1, dtype=float) / 100.0
+    w2 = np.asarray(i2, dtype=float) / 100.0
+    matches = _greedy_match(mz1, w1, mz2, w2, tolerance)
+    num = sum(w1[i] * w2[j] for i, j in matches)
+    den = float(np.linalg.norm(w1) * np.linalg.norm(w2))
+    return (float(num / den) if den > 0 else 0.0), len(matches)
 
 
 def _nist_weights(mz, intensities, mz_power=3.0, int_power=0.6):
@@ -571,15 +593,26 @@ def compute_all_similarities(peaks1, peaks2, precursor_mz1=None, precursor_mz2=N
 
     results: list[dict] = []
 
-    spec1 = to_matchms_spectrum(mz1, i1, precursor_mz1, ionmode)
-    spec2 = to_matchms_spectrum(mz2, i2, precursor_mz2, ionmode)
+    matchms_error = None
+    try:
+        spec1 = to_matchms_spectrum(mz1, i1, precursor_mz1, ionmode)
+        spec2 = to_matchms_spectrum(mz2, i2, precursor_mz2, ionmode)
+    except MatchmsUnavailable as exc:
+        matchms_error = f"matchms is unavailable ({exc})"
+        spec1 = spec2 = None
+        for name in mn.MATCHMS:
+            _add_result(results, mn.CAT_MATCHMS, name, note=f"N/A: {matchms_error}")
 
-    _matchms_scores(spec1, spec2, tolerance, results)
+    if matchms_error is None:
+        _matchms_scores(spec1, spec2, tolerance, results)
     _entropy_scores(mz1, i1, mz2, i2, tolerance, results)
     _custom_scores(mz1, i1, mz2, i2, tolerance, results)
 
     if use_deep:
-        _ms2deepscore_score(spec1, spec2, ms2deepscore_model_path, results)
+        if matchms_error is None:
+            _ms2deepscore_score(spec1, spec2, ms2deepscore_model_path, results)
+        else:
+            _add_result(results, mn.CAT_DEEP, mn.MS2DEEPSCORE, note=f"N/A: {matchms_error}")
         _spec2vec_score(mz1, i1, precursor_mz1, mz2, i2, precursor_mz2,
                         spec2vec_model_path, results, ionmode=ionmode)
 

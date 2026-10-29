@@ -40,10 +40,14 @@ POLL_S = 0.5
 BUSY_WAIT_S = 20            # how long a second request waits for the run in progress before it is turned away
 MAX_PEAKS = 2000
 
-# MS-FINDER's own adduct names (Resources/AdductPositives.apf, AdductNegatives.anf): the common singly charged ones, each checked with a
-# real run. FA = formate, Hac = acetate. [M]+ is the permanent cation (the formula is the cation's). "Auto" on the page = the first entry.
-ADDUCTS = {"Positive": ["[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M+Li]+", "[M+H-H2O]+", "[M+ACN+H]+", "[M]+"],
-           "Negative": ["[M-H]-", "[M+Cl]-", "[M+FA-H]-", "[M+Hac-H]-", "[M+Br]-", "[M-H2O-H]-", "[M+Na-2H]-"]}
+# MS-FINDER's own adduct names (Resources/AdductPositives.apf, AdductNegatives.anf): the common ones, each checked with a
+# real run. FA = formate, Hac = acetate. [M]+ / [M]- are the permanent ion / radical ion (the formula is the ion's own).
+# Multiply charged adducts are listed too, because a 2+ precursor with [M+H]+ would give half the formula mass.
+# "Auto" on the page = the first entry.
+ADDUCTS = {"Positive": ["[M+H]+", "[M+Na]+", "[M+K]+", "[M+NH4]+", "[M+Li]+", "[M+H-H2O]+", "[M+ACN+H]+", "[M+CH3OH+H]+",
+                        "[2M+H]+", "[M+2H]2+", "[M+3H]3+", "[M]+"],
+           "Negative": ["[M-H]-", "[M+Cl]-", "[M+FA-H]-", "[M+Hac-H]-", "[M+Br]-", "[M-H2O-H]-", "[M+Na-2H]-", "[M+TFA-H]-",
+                        "[2M-H]-", "[M-2H]2-", "[M-3H]3-", "[M]-"]}
 # The isotope peaks are matched to the precursor within half of Ms1Tolerance of the parameter file (0.001 Da): 0.5 mDa.
 MS1_MATCH_DA = 0.0005
 # Element switches of the parameter file (MS-FINDER's INI reader takes a value that contains "T" as on, anything else as off).
@@ -102,24 +106,31 @@ def check_msfinder():
 
 
 # ---------------------------------------------------------------- parameter file
-def ini_with_elements(text, halogen=False, silicon=False):
-    """Text of the parameter file with the chosen element switches set to True; every other line stays byte for byte.
+def ini_with_elements(text, halogen=False, silicon=False, extended=False):
+    """Text of the parameter file with the chosen switches set; every other line stays byte for byte.
 
-    halogen -> Fcheck, ClCheck, BrCheck, Icheck; silicon -> SiCheck (independent of each other). A switch that is not in the text is
-    appended, so an older copy of the file still works. Neither flag: the text comes back unchanged.
+    halogen -> Fcheck, ClCheck, BrCheck, Icheck; silicon -> SiCheck (independent of each other).
+    extended -> CommonRange=False, ExtendedRange=True (PFAS and other unusual compositions).
+    A switch that is not in the text is appended, so an older copy of the file still works.
+    No flag: the text comes back unchanged.
     """
-    wanted = {k.lower(): k for flag, keys in ((halogen, HALOGEN_KEYS), (silicon, SILICON_KEYS)) if flag for k in keys}
+    wanted = {k.lower(): (k, "True") for flag, keys in ((halogen, HALOGEN_KEYS), (silicon, SILICON_KEYS))
+              if flag for k in keys}
+    if extended:
+        wanted.update({"commonrange": ("CommonRange", "False"), "extendedrange": ("ExtendedRange", "True"),
+                       "extremerange": ("ExtremeRange", "False")})
     done, out = set(), []
     for line in text.splitlines(keepends=True):
         key, eq, _ = line.partition("=")
-        name = wanted.get(key.strip().lower()) if eq else None         # "#Fcheck=..." is a comment: its key starts with "#"
-        if name:
+        hit = wanted.get(key.strip().lower()) if eq else None          # "#Fcheck=..." is a comment: its key starts with "#"
+        if hit:
+            name, value = hit
             eol = line[len(line.rstrip("\r\n")):]                      # keep the line ending as it was
-            out.append(f"{name}=True{eol}")
+            out.append(f"{name}={value}{eol}")
             done.add(name)
         else:
             out.append(line)
-    extra = [f"{name}=True\n" for name in wanted.values() if name not in done]
+    extra = [f"{name}={value}\n" for name, value in wanted.values() if name not in done]
     if extra and out and not out[-1].endswith("\n"):
         out[-1] += "\n"
     return "".join(out + extra)
@@ -235,17 +246,29 @@ def parse_structure_results(text):
 
 # ---------------------------------------------------------------- process
 def _group_rss_mb(pgid):
-    """Resident memory (MB) of every process in the process group, from `ps`; 0 when ps is not available."""
+    """Resident memory (MB) of every process in the process group, from `ps`.
+
+    When ps is missing or blocked (containers, sandboxes) fall back to the kernel's per-process
+    RSS for the group leader, so the cap still fires instead of silently reading 0.
+    """
+    out = ""
     try:
         out = subprocess.run(["ps", "-axo", "pgid=,rss="], capture_output=True, text=True, timeout=5).stdout
     except (OSError, subprocess.TimeoutExpired):
-        return 0.0
+        out = ""
     total = 0
     for line in out.splitlines():
         parts = line.split()
         if len(parts) == 2 and parts[0] == str(pgid) and parts[1].isdigit():
             total += int(parts[1])
-    return total / 1024.0
+    if total:
+        return total / 1024.0
+    try:
+        from mzdesk.shared.memguard import proc_memory
+        mem = proc_memory(int(pgid))
+        return (mem or {}).get("rss_mb", 0.0)
+    except Exception:  # noqa: BLE001 - a missing probe must not kill the run
+        return 0.0
 
 
 def _kill_group(proc):
@@ -297,14 +320,16 @@ def _read(path):
     return path.read_text(encoding="utf-8", errors="replace")       # the files are ASCII: MS-FINDER writes '?' for any other character
 
 
-def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, silicon=False, name="query", timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
+def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, silicon=False, extended=False,
+            name="query", timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
     """Formula and structure candidates for one MS/MS spectrum.
 
     adduct: MS-FINDER name or None / "Auto". ms2 / ms1: [(m/z, intensity)]. halogen / silicon: also search formulas with F, Cl, Br, I /
-    with Si (a per-run copy of the parameter file; both off = the shipped file is used as it is). Raises ValueError for input MS-FINDER
-    cannot use and MsFinderError when it is missing, busy or fails. Returns
-    {"adduct", "precursor_mz", "positive", "halogen", "silicon", "formulas": [...], "structures": [...], "ms1_count", "ms2_count",
-     "seconds", "peak_rss_mb", "log"}.
+    with Si. extended: use MS-FINDER's ExtendedRange (PFAS and other unusual compositions) instead of CommonRange. A per-run copy of
+    the parameter file is used whenever a switch is on; with all switches off the shipped file is used as it is. Raises ValueError for
+    input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
+    {"adduct", "precursor_mz", "positive", "halogen", "silicon", "extended", "formulas": [...], "structures": [...],
+     "ms1_count", "ms2_count", "seconds", "peak_rss_mb", "log"}.
     """
     adduct = resolve_adduct(positive, adduct)
     if not precursor_mz or precursor_mz <= 0:
@@ -325,9 +350,9 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
             in_dir.mkdir()
             out_dir.mkdir()
             (in_dir / "query.mat").write_text(query, encoding="ascii")
-            if halogen or silicon:                                  # this run only: a copy in the run's temp folder, the shipped file stays as it is
+            if halogen or silicon or extended:                      # this run only: a copy in the run's temp folder, the shipped file stays as it is
                 run_ini = Path(tmp) / INI_PATH.name
-                run_ini.write_bytes(ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen, silicon).encode("utf-8"))
+                run_ini.write_bytes(ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen, silicon, extended).encode("utf-8"))
                 ini = run_ini
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
             cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(ini)]
@@ -345,6 +370,6 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
     ms1_count = formulas["ms1_count"] if formulas["ms1_count"] is not None else structures["ms1_count"]
     ms2_count = formulas["ms2_count"] if formulas["ms2_count"] is not None else structures["ms2_count"]
     return {"adduct": adduct, "precursor_mz": precursor_mz, "positive": positive, "halogen": bool(halogen), "silicon": bool(silicon),
-            "formulas": formulas["rows"], "structures": structures["rows"],
+            "extended": bool(extended), "formulas": formulas["rows"], "structures": structures["rows"],
             "ms1_count": ms1_count if ms1_count is not None else len(ms1 or []), "ms2_count": ms2_count if ms2_count is not None else len(ms2),
             "seconds": seconds, "peak_rss_mb": peak, "log": log}

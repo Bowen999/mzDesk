@@ -7,7 +7,8 @@ from mzdesk.shared import ms2_formats, ms2_plot
 def run_ei(inputs):
     from mzdesk.ms2 import neims_engine as ne
 
-    smiles = common.structure(inputs)["smiles"]
+    warnings = []
+    smiles = common.structure(inputs, warnings=warnings)["smiles"]
     try:
         res = ne.predict(smiles)
     except ne.NEIMSError as exc:
@@ -33,8 +34,8 @@ def run_ei(inputs):
             "Base peak m/z": common.MISSING if base is None else str(base)}},
         "spectrum": common.plotly(fig, peaks=cards),
         "peaks": {"rows": [[str(mz), f"{rel:.1f}"] for mz, rel in peaks]},
-        "formats": {"formats": ms2_formats.all_formats(peaks, name=name, ion_mode="Positive")},
-    }, "warnings": res["warnings"]}
+        "formats": {"formats": ms2_formats.all_formats(peaks, name=name, ion_mode="Positive", precursor_mz=mol_ion)},
+    }, "warnings": warnings + res["warnings"]}
 
 
 RUNNERS = {"ms2_ei": run_ei}

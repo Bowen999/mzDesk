@@ -147,20 +147,27 @@ def proc_memory(pid: int) -> dict | None:
 
 
 def tree_pids(root: int) -> list[int]:
-    """root + all descendants (via ps)."""
-    out = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, timeout=5).stdout
+    """root + all descendants (via ps). Falls back to [root] when ps is unavailable or blocked."""
+    root = int(root)
+    try:
+        out = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, timeout=5).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return [root]
     kids: dict[int, list[int]] = {}
     for line in out.splitlines():
         p = line.split()
         if len(p) == 2:
-            kids.setdefault(int(p[1]), []).append(int(p[0]))
-    seen, stack = [], [int(root)]
+            try:
+                kids.setdefault(int(p[1]), []).append(int(p[0]))
+            except ValueError:
+                continue
+    seen, stack = [], [root]
     while stack:
         x = stack.pop()
         if x not in seen:
             seen.append(x)
             stack.extend(kids.get(x, []))
-    return seen
+    return seen or [root]
 
 
 def tree_memory(root: int, include_children: bool = True) -> dict:

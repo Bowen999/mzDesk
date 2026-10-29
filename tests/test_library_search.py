@@ -129,7 +129,11 @@ def test_library_page_definition():
     assert f["libraries"]["options"] == ["MassBank", "GNPS"] and f["libraries"]["value"] == ["MassBank", "GNPS"]
     assert f["metrics"]["options"] == spec.LIBRARY_METRICS and f["metrics"]["value"] == [ENT, COS]
     assert f["tol_ppm"]["value"] == 10.0 and f["threshold"]["value"] == 0.7
-    assert "MS/MS only" in f["precursor"]["label"] and "EI: 0.5" in f["tol_da"]["label"]
+    assert "MS/MS only" in f["precursor"]["label"] and "MS/MS only" in f["tol_da"]["label"]
+    assert f["precursor"]["required_when"] == {"field": "spectrum_type", "equals": "MS/MS"}
+    assert f["precursor"]["visible_when"] == {"field": "spectrum_type", "equals": "MS/MS"}
+    assert f["tol_da"]["visible_when"] == {"field": "spectrum_type", "equals": "MS/MS"}
+    assert f["precursor"]["auto_label"] == "Auto (any adduct)"
     assert "MoNA" not in spec.LIBRARIES and "MoNA" not in mod["one_liner"]
     assert set(setup_mod.NAMES) == set(spec.LIBRARIES)
     hits = next(b for b in mod["outputs"] if b.get("id") == "hits")
@@ -753,3 +757,23 @@ def test_a_failed_build_leaves_the_old_index_alone(tmp_path, monkeypatch):
         setup_mod.build_from("MassBank", empty, {"version": "x"}, progress=lambda *_: None)
     assert lx.load("MassBank").meta["built"] == good and not (tmp_path / ".MassBank.building").exists()
     lx.clear_cache()
+
+
+def test_no_applicable_metric_is_not_a_no_hit(libs, monkeypatch):
+    monkeypatch.setitem(sys.modules, "ms2deepscore", None)
+    monkeypatch.setitem(sys.modules, "gensim", None)
+    res = _search(CAFFEINE, metrics=[mn.MS2DEEPSCORE], threshold=0.7)
+    assert res["n_candidates"] > 0 and res["n_kept"] == 0 and res["n_metrics_scored"] == 0
+    assert "N/A" in res["notes"][mn.MS2DEEPSCORE]
+    r = _run(**_ms(metrics=[mn.MS2DEEPSCORE]))
+    body = r.json()
+    assert body["outputs"]["summary"]["values"]["Hits ≥ threshold"]["note"].endswith("no applicable metric")
+    assert "No hit could be scored" in body["verdict"]
+
+
+def test_ei_ignores_hidden_msms_only_values(libs):
+    r = _run(spectrum_type="EI", ms2=_paste(EI_QUERY), precursor=_prec("0"), tol_ppm="0", tol_da="10", threshold="0.5")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert any("precursor m/z is not used for EI" in w for w in body["warnings"])
+    assert "Adduct" not in body["outputs"]["hits"]["columns"]

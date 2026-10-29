@@ -454,3 +454,62 @@ def test_stats_password_matches_the_page_lock():
     assert stats.SALT_HEX in lock_ts and stats.HASH_HEX in lock_ts
     assert re.search(r"ITERATIONS = 200_000", lock_ts) and stats.ITERATIONS == 200_000
     assert not stats.check_password("") and not stats.check_password("wrong")
+
+
+# ---------------------------------------------------------------- Spectrum input-regression cases
+def test_ms1_formula_formula_adduct_and_charge_validation():
+    from mzdesk.spec import CAFFEINE
+    base = {"precursor": {"precursor_mz": "153.0", "ion_mode": "Negative", "adduct": "[M-H]-"}, "formula": "CCl4"}
+    r = _run("ms1_formula", base)
+    assert r.status_code == 400 and "cannot form [M-H]-" in r.json()["detail"]
+    for formula in ("C8H10N4O2+", "C8H10N4O2•"):
+        r = _run("ms1_formula", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "Auto"},
+                                 "formula": formula})
+        assert r.status_code == 400 and "neutral formula" in r.json()["detail"]
+    r = _run("ms1_formula", {"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "[M-H]-"},
+                             "formula": CAFFEINE})
+    assert r.status_code == 400 and "not a positive-mode adduct" in r.json()["detail"]
+
+
+def test_ms1_formula_reads_precursor_from_the_ms2_header_and_warns_about_unused_ms1():
+    mgf = "BEGIN IONS\nPEPMASS=195.0877\n138.0662 100\nEND IONS"
+    r = _run("ms1_formula", {"precursor": {"precursor_mz": "", "ion_mode": "Positive", "adduct": "Auto"},
+                             "ms2": _paste(mgf), "formula": "C8H10N4O2", "ms1": "195.0877 100\n197.09 90"})
+    assert r.status_code == 200
+    body = r.json()
+    assert any("read from the MS2 spectrum header" in w for w in body["warnings"])
+    assert any("does not use the MS1 isotope pattern" in w for w in body["warnings"])
+
+
+def test_ms2_clean_ion_mode_is_case_insensitive_and_writes_the_charge():
+    body = _run("ms2_clean", {"spectrum": _paste("100 1\n200 10"), "ion_mode": "negative"}).json()
+    assert "CHARGE=1-" in body["outputs"]["formats"]["formats"]["MGF"]
+    assert _run("ms2_clean", {"spectrum": _paste("100 1"), "ion_mode": "sideways"}).status_code == 400
+
+
+def test_malformed_composite_and_spectrum_values_are_400_not_500():
+    for module, inputs in (
+        ("ms2_clean", {"spectrum": "100 1\n200 2"}),
+        ("ms2_similarity", {"query": _paste("100 1"), "reference": _paste("100 1"), "query_precursor": "x"}),
+        ("ms2_structure", {"precursor": "195.1", "ms2": _paste("100 1")}),
+    ):
+        r = _run(module, inputs)
+        assert r.status_code == 400, (module, r.text)
+
+
+def test_subnormal_intensities_do_not_500():
+    r = _run("ms2_clean", {"spectrum": _paste("100 1e-308\n200 2e-308"), "normalize": "Base peak = 100"})
+    assert r.status_code == 200
+    assert all(row[1] == "0" or row[1] == "100" or row[1] for row in r.json()["outputs"]["peaks"]["rows"])
+
+
+def test_similarity_tolerance_is_capped():
+    r = _run("ms2_similarity", {"query": _paste("100 100"), "reference": _paste("107 100"), "tol_da": "10"})
+    assert r.status_code == 400 and "at most 5" in r.json()["detail"]
+
+
+def test_similarity_reads_headers_and_says_so():
+    q = "BEGIN IONS\nPEPMASS=250\n100 1\n150 3\nEND IONS"
+    r = "BEGIN IONS\nPEPMASS=251\n100 2\n151 3\nEND IONS"
+    body = _run("ms2_similarity", {"query": _paste(q), "reference": _paste(r)}).json()
+    assert any("Query precursor m/z 250.0000 is read" in w for w in body["warnings"])

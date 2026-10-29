@@ -246,8 +246,10 @@ def ms2_esi(i, o):
     if not peaks:
         return None
     engine, formula = _card(o, "summary", "Engine"), _card(o, "summary", "Ion formula")
-    return (f"{_b(peaks + ' predicted peaks')}" + (f" for {formula}" if formula else "") + (f" at m/z {mz}" if mz else "")
-            + (f" ({engine})." if engine else "."))
+    ev = _note(o, "summary", "Peaks")
+    counts = peaks.replace(" · ", " / ")
+    return (f"{_b(counts + ' predicted peaks')}" + (f" at {ev}" if ev else "") + (f" for {formula}" if formula else "")
+            + (f" at m/z {mz}" if mz else "") + (f" ({engine})." if engine else "."))
 
 
 _SHORT_METRIC = {"SpectralEntropy (weighted)": "entropy", "SpectralEntropy (unweighted)": "unweighted entropy"}
@@ -261,9 +263,12 @@ def ms2_library(i, o):
         if i.get("spectrum_type") == "EI":
             return "The selected libraries have no EI spectra."
         return "No library spectrum has a matching precursor m/z, so nothing was scored."
-    m = re.search(r"≥ ([\d.\-]+)$", _note(o, "summary", "Hits ≥ threshold") or "")
+    m = re.search(r"≥ ([\d.\-]+)", _note(o, "summary", "Hits ≥ threshold") or "")
     thr = m.group(1) if m else (f"{float(i.get('threshold') or 0.7):g}")
     if n == "0":
+        if "no applicable metric" in (_note(o, "summary", "Hits ≥ threshold") or ""):
+            return (f"No hit could be scored: none of the selected metrics is available for these {scored} candidates "
+                    "(see the N/A notes below).")
         return f"No hit: none of the {scored} candidates reaches {thr} on any selected metric."
     name, note = _card(o, "summary", "Best hit"), _note(o, "summary", "Best hit")
     score, metric = _card(o, "summary", "Rank score"), _note(o, "summary", "Rank score")
@@ -280,9 +285,13 @@ def ms2_similarity(i, o):
     except (TypeError, ValueError):
         return None
     word = "Very similar" if s >= 0.8 else "Similar" if s >= 0.6 else "Weakly similar" if s >= 0.4 else "Not similar"
+    method = (_note(o, "summary", "Primary score") or "").strip()
+    name = {"SpectralEntropy (weighted)": "entropy similarity",
+            "SpectralEntropy (unweighted)": "unweighted entropy similarity",
+            "CosineGreedy": "cosine similarity"}.get(method, method or "score")
     passed, matched = _card(o, "summary", "Metrics ≥ threshold"), _card(o, "summary", "Matched peaks")
     extra = [f"{passed} metrics above threshold" if passed else None, f"{matched} matched peaks" if matched else None]
-    return f"{_b(word)}: entropy similarity {_b(score)}" + ("; " + ", ".join(e for e in extra if e) if any(extra) else "") + "."
+    return f"{_b(word)}: {name} {_b(score)}" + ("; " + ", ".join(e for e in extra if e) if any(extra) else "") + "."
 
 
 def ms2_fragments(i, o):

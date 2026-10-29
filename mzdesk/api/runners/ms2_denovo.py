@@ -5,6 +5,7 @@
 """
 from mzdesk.api import common
 from mzdesk.api.common import EngineError, InputError, fmt
+from mzdesk.shared.spectrum import parse_spectrum
 
 IMG_SIZE = (200, 140)
 SMILES_IN_CARD = 44         # longer SMILES are cut in the card; the whole string is in the card's "?" and in the table
@@ -29,7 +30,7 @@ def _formula_mismatch(fe, formula, precursor_mz, adduct):
             f"{MISMATCH_PPM:g} ppm). Check the formula and the adduct.")
 
 
-def _formula_from_buddy(fe, precursor_mz, adduct, ms2, warnings):
+def _formula_from_buddy(fe, precursor_mz, adduct, ms2, ms1, halogen, warnings):
     """(formula, source note) from BUDDY's top-1 formula; InputError when BUDDY cannot give one."""
     from mzdesk.ms1 import msbuddy_engine as bd
 
@@ -37,7 +38,7 @@ def _formula_from_buddy(fe, precursor_mz, adduct, ms2, warnings):
         raise InputError(f"No formula was entered, and BUDDY cannot infer one for {adduct} (it handles {', '.join(bd.ADDUCTS_POSITIVE)}). "
                          "Enter the molecular formula.")
     try:
-        res = bd.annotate_formula(precursor_mz, True, adduct, None, "", tuple(ms2), (), "orbitrap", False)
+        res = bd.annotate_formula(precursor_mz, True, adduct, None, "", tuple(ms2), tuple(ms1), "orbitrap", halogen)
     except ValueError as exc:
         raise InputError(f"No formula was entered, and BUDDY could not be used: {exc} Enter the molecular formula.") from None
     cands = res["candidates"]
@@ -52,8 +53,9 @@ def _formula_from_buddy(fe, precursor_mz, adduct, ms2, warnings):
     prob = top.get("prob")
     note = f"BUDDY top-1 of {len(cands)}" + (f" · probability {prob:.2f}" if isinstance(prob, (int, float)) else "")
     others = [c["formula"] for c in cands[1:3]]
+    settings = "Orbitrap settings" + ("" if halogen else ", no halogens")
     warnings.append(f"No formula was entered, so BUDDY's top-1 formula {formula}" + (f" (probability {prob:.2f})" if isinstance(prob, (int, float)) else "")
-                    + " was used (Orbitrap settings, no halogens). If it is wrong, every structure below is wrong too"
+                    + f" was used ({settings}). If it is wrong, every structure below is wrong too"
                     + (f"; BUDDY's next candidates: {', '.join(others)}" if others else "") + ". Enter the formula to override it.")
     return formula, note
 
@@ -86,6 +88,11 @@ def run_denovo(inputs):
         warnings.append(f"Precursor m/z {file_mz:.4f} is read from the spectrum.")
     elif file_mz and abs(file_mz - field_mz) > 0.01:
         warnings.append(f"The MS2 file says precursor m/z {file_mz:.4f}; the form value {field_mz:.4f} is used.")
+    ms1_text = common.text(inputs, "ms1")
+    ms1 = parse_spectrum(ms1_text)
+    if ms1_text and not ms1:
+        warnings.append("No valid MS1 peaks; the isotope pattern is ignored.")
+    halogen = common.flag(inputs, "halogen", "Include halogens in the formula fallback")
     try:
         adduct, _ = fe.resolve_adduct(adduct)
         mode = fe.resolve_mode(common.text(inputs, "mode"))
@@ -104,8 +111,10 @@ def run_denovo(inputs):
         mismatch = _formula_mismatch(fe, formula, precursor_mz, adduct)
         if mismatch:
             warnings.append(mismatch)
+        if ms1 or halogen:
+            warnings.append("MS1 and Include halogens only affect the BUDDY fallback; they are ignored because a formula was entered.")
     else:
-        formula, source = _formula_from_buddy(fe, precursor_mz, adduct, ms2, warnings)
+        formula, source = _formula_from_buddy(fe, precursor_mz, adduct, ms2, ms1, halogen, warnings)
 
     try:
         res = fe.predict(formula, precursor_mz, adduct, ms2, mode)

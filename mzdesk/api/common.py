@@ -17,7 +17,7 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
-from mzdesk.shared.spectrum import first_record, parse_spectrum
+from mzdesk.shared.spectrum import USIError, fetch_usi, first_record, parse_spectrum
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -87,13 +87,18 @@ def is_formula(s):
     return True
 
 
-def structure(inputs, key="structure", label="Structure", *, required=True, allow_formula=False):
+def structure(inputs, key="structure", label="Structure", *, required=True, allow_formula=False, warnings=None):
     """Structure field -> {"kind": "smiles", "smiles": ...} | {"kind": "formula", "formula": ...} | None.
 
     SMILES / InChI mode accepts SMILES or an InChI string. Name / ID / Formula mode accepts a formula
     where the page allows one; anything else is resolved to a SMILES by mzdesk.identity.resolve.
+    ``warnings`` (a list, optional) receives the ambiguity note for an input that is both a formula
+    and a valid SMILES (CO, NO, ...): a structure page cannot know which one the user meant.
     """
-    value = inputs.get(key) or {}
+    raw_value = inputs.get(key)
+    if raw_value is not None and not isinstance(raw_value, dict):
+        raise InputError(f"{label}: invalid input; expected an object with mode and value.")
+    value = raw_value or {}
     mode = value.get("mode") or "SMILES / InChI"
     s = str(value.get("value") or "").strip()
     if not s:
@@ -102,13 +107,22 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
         return None
     if mode == "Name / ID / Formula":
         from mzdesk.identity import resolve
-        # C00001 之类的 KEGG ID 长得像分子式：只有识别为 Name 才当分子式
-        if allow_formula and is_formula(s) and resolve.detect(s) == "Name":
-            return {"kind": "formula", "formula": s}
+        detected = resolve.detect(s)
+        # C00001 之类的 KEGG ID 长得像分子式：只有识别为 Name 才当分子式。
+        # Require a digit: names such as POPC, CO or NO are also made only of element symbols.
+        if is_formula(s) and any(ch.isdigit() for ch in s) and detected == "Name":
+            if allow_formula:
+                return {"kind": "formula", "formula": s}
+            raise InputError(f"{label}: '{s}' looks like a molecular formula, but this page needs a structure. "
+                             "Enter a name, database ID, SMILES or InChI instead.")
         try:
-            return {"kind": "smiles", "smiles": resolve.to_smiles(s)}
+            smiles = resolve.to_smiles(s)
         except resolve.ResolveError as exc:
             raise InputError(f"{label}: {exc}") from None
+        if warnings is not None and detected == "SMILES" and is_formula(s):
+            warnings.append(f"'{s}' is both a valid molecular formula and a valid SMILES; it was read as SMILES. "
+                            "If you meant a formula, use Formula annotation (this page needs a structure).")
+        return {"kind": "smiles", "smiles": smiles}
     if s.startswith("InChI="):
         mol = Chem.MolFromInchi(s)
         if mol is None:
@@ -133,26 +147,42 @@ def record_name(inputs, smiles, key="structure"):
 
 def precursor(inputs, key="precursor", label="Precursor m/z", *, required=False):
     """Precursor field -> (m/z or None, positive: bool, adduct or None for Auto)."""
-    value = inputs.get(key) or {}
+    raw_value = inputs.get(key)
+    if raw_value is not None and not isinstance(raw_value, dict):
+        raise InputError(f"{label}: invalid input; expected an object with precursor_mz, ion_mode and adduct.")
+    value = raw_value or {}
     mz = number(value, "precursor_mz", label, required=required, positive=True)
-    positive = value.get("ion_mode", "Positive") != "Negative"
+    mode = str(value.get("ion_mode") or "Positive").strip().lower()
+    if mode not in ("positive", "negative"):
+        raise InputError(f"Ion mode must be Positive or Negative, not {value.get('ion_mode')!r}.")
     adduct = value.get("adduct") or "Auto"
-    return mz, positive, (None if adduct == "Auto" else adduct)
+    return mz, mode == "positive", (None if adduct == "Auto" else adduct)
 
 
 def spectrum(inputs, key, label, warnings, *, required=True):
     """Spectrum field -> (peaks [(mz, intensity)], precursor m/z read from the text or None).
 
     The text may be any format parse_spectrum reads; MGF / MSP / MassBank / SIRIUS headers give the
-    precursor (and only the first spectrum of an MGF / MSP file is used).
+    precursor (and only the first spectrum of an MGF / MSP file is used). A USI is resolved through
+    the public GNPS / MassIVE resolver (internet).
     """
-    value = inputs.get(key) or {}
+    raw_value = inputs.get(key)
+    if raw_value is not None and not isinstance(raw_value, dict):
+        raise InputError(f"{label}: invalid input; expected an object with source and value.")
+    value = raw_value or {}
     source = value.get("source") or "Paste"
+    if source not in ("Paste", "MGF / MSP file", "USI"):
+        raise InputError(f"{label}: unknown source {source!r}; use Paste, MGF / MSP file or USI.")
     raw = str(value.get("value") or "")
     if source == "USI":
-        if raw.strip():
-            raise InputError(f"{label}: USI lookup is not connected yet. Paste the peak list or upload an MGF / MSP file.")
-        raw = ""
+        raw = raw.strip()
+        if not raw:
+            raise InputError(f"{label}: enter a USI such as mzspec:GNPS:GNPS-LIBRARY:accession:CCMSLIB...")
+        try:
+            peaks, file_precursor = fetch_usi(raw)
+        except USIError as exc:
+            raise InputError(f"{label}: {exc}") from None
+        return peaks, file_precursor
     file_precursor = None
     if raw.strip():
         rec = first_record(raw)

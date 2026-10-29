@@ -124,8 +124,10 @@ def test_auto_adduct_follows_the_ion_mode():
 def test_adduct_must_fit_the_mode_and_the_list():
     with pytest.raises(ValueError, match="not a positive-mode adduct"):
         mf.resolve_adduct(True, "[M-H]-")
-    with pytest.raises(ValueError, match="does not support"):
+    with pytest.raises(ValueError, match="not a negative-mode adduct"):
         mf.resolve_adduct(False, "[M+3H]3+")
+    with pytest.raises(ValueError, match="does not support"):
+        mf.resolve_adduct(True, "[M+3Na]3+")
 
 
 def test_page_offers_auto_first_then_the_engine_adducts():
@@ -166,6 +168,13 @@ def test_shipped_parameter_file_keeps_halogens_and_si_off():
 def test_no_switch_returns_the_text_unchanged():
     assert mf.ini_with_elements(SHIPPED_INI) == SHIPPED_INI
     assert mf.ini_with_elements(SHIPPED_INI, halogen=False, silicon=False) == SHIPPED_INI
+
+
+def test_extended_range_switches_only_the_range_keys():
+    text = mf.ini_with_elements(SHIPPED_INI, extended=True)
+    values = _ini_values(text)
+    assert (values["CommonRange"], values["ExtendedRange"], values["ExtremeRange"]) == ("False", "True", "False")
+    assert _other_lines(text, ("CommonRange", "ExtendedRange", "ExtremeRange")) == _other_lines(SHIPPED_INI, ("CommonRange", "ExtendedRange", "ExtremeRange"))
 
 
 @pytest.mark.parametrize("halogen,silicon,on", [(True, False, {"Fcheck", "ClCheck", "BrCheck", "Icheck"}), (False, True, {"SiCheck"}),
@@ -448,7 +457,7 @@ def test_runner_fills_the_three_blocks(fake_predict):
     assert first[6] == "Xanthines" and first[7] == "RYYVLZVUVIJVGH-UHFFFAOYSA-N"
     assert first[8]["text"] == "HMDB, KNApSAcK, ChEBI, DrugBank +16" and "HMDB: HMDB0001847" in first[8]["help"]
     assert rows[5][6] == "—"                                                                # empty ontology
-    assert out["formulas"]["rows"][:2] == [["1", "C8H10N4O2", "194.0804", "−0.05", "4.407"], ["2", "C8H18OS2", "194.0799", "−0.52", "3.102"]]
+    assert out["formulas"]["rows"][:2] == [["1", "C8H10N4O2", "194.0804", "+0.05", "4.407"], ["2", "C8H18OS2", "194.0799", "+0.52", "3.102"]]
     assert out["summary"]["values"]["Top candidate"] == {"value": "Caffeine", "note": "C8H10N4O2 · score 8.16"}
     assert out["summary"]["values"]["Candidates"]["value"] == "15 / 2"
     assert body["verdict"] == "Top candidate: <b>Caffeine</b> (C8H10N4O2), score 8.16 · 15 candidates."
@@ -465,11 +474,12 @@ def test_runner_reports_what_auto_became(fake_predict):
     assert [c["adduct"] for c in fake_predict] == [None, None, "[M+Na]+"] and [c["positive"] for c in fake_predict] == [True, False, True]
 
 
-def test_page_has_the_two_element_boxes_off_by_default():
+def test_page_has_the_element_boxes_and_extended_range_off_by_default():
     fields = {f["id"]: f for m in MODULES if m["id"] == "ms2_structure" for f in m["inputs"]}
-    assert fields["halogen"] == {"type": "checkbox", "id": "halogen", "label": "Include halogens (F, Cl, Br, I)", "value": False}
-    assert fields["silicon"] == {"type": "checkbox", "id": "silicon", "label": "Include Si", "value": False}
-    assert not any(k in m.get("example", {}) for m in MODULES if m["id"] == "ms2_structure" for k in ("halogen", "silicon"))      # the example keeps today's behaviour
+    for fid, label in (("halogen", "Include halogens (F, Cl, Br, I)"), ("silicon", "Include Si"),
+                       ("extended", "Extended element range (PFAS / unusual compositions)")):
+        assert fields[fid]["type"] == "checkbox" and fields[fid]["label"] == label and fields[fid]["value"] is False
+    assert not any(k in m.get("example", {}) for m in MODULES if m["id"] == "ms2_structure" for k in ("halogen", "silicon", "extended"))
 
 
 def test_runner_passes_the_element_boxes_to_the_engine_independently(fake_predict):
@@ -492,10 +502,11 @@ def test_runner_rejects_a_checkbox_that_is_not_true_or_false(fake_predict, field
 def test_runner_states_which_elements_were_searched(fake_predict):
     def card(**boxes):
         return _run({"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2), **boxes}).json()["outputs"]["summary"]["values"]["Elements searched"]
-    assert card() == {"value": "C H N O P S", "note": "halogens off · Si off"}
-    assert card(halogen=True) == {"value": "C H N O P S F Cl Br I", "note": "halogens on · Si off"}
-    assert card(silicon=True) == {"value": "C H N O P S Si", "note": "halogens off · Si on"}
-    assert card(halogen=True, silicon=True) == {"value": "C H N O P S F Cl Br I Si", "note": "halogens on · Si on"}
+    assert card() == {"value": "C H N O P S", "note": "halogens off · Si off · common range"}
+    assert card(halogen=True) == {"value": "C H N O P S F Cl Br I", "note": "halogens on · Si off · common range"}
+    assert card(silicon=True) == {"value": "C H N O P S Si", "note": "halogens off · Si on · common range"}
+    assert card(halogen=True, silicon=True) == {"value": "C H N O P S F Cl Br I Si", "note": "halogens on · Si on · common range"}
+    assert card(extended=True) == {"value": "C H N O P S", "note": "halogens off · Si off · extended range"}
     labels = [c["label"] for m in MODULES if m["id"] == "ms2_structure" for b in m["outputs"] if b.get("id") == "summary" for c in b["items"]]
     assert "Elements searched" in labels
 
@@ -556,19 +567,21 @@ def test_runner_hint_names_the_element_box_that_is_off(monkeypatch):
     def warning(**boxes):
         return next(w for w in _run({**base, **boxes}).json()["warnings"] if "no molecular formula" in w)
     w = warning()
-    assert "elements C H N O P S)" in w and "Include halogens (F, Cl, Br, I) and Include Si are off; tick them" in w
+    assert "elements C H N O P S)" in w and "Off: Include halogens (F, Cl, Br, I), Include Si, Extended element range" in w
     w = warning(halogen=True)
-    assert "elements C H N O P S F Cl Br I)" in w and "Include Si is off; tick it if the compound may contain silicon." in w and "halogens is off" not in w
+    assert "elements C H N O P S F Cl Br I)" in w and "Off: Include Si, Extended element range" in w and "Include halogens" not in w
     w = warning(silicon=True)
-    assert "elements C H N O P S Si)" in w and "Include halogens is off; tick it if the compound may contain F, Cl, Br or I." in w
+    assert "elements C H N O P S Si)" in w and "Off: Include halogens (F, Cl, Br, I), Extended element range" in w
     w = warning(halogen=True, silicon=True)
-    assert "elements C H N O P S F Cl Br I Si)" in w and "tick" not in w                  # both boxes are on: nothing left to suggest
+    assert "elements C H N O P S F Cl Br I Si)" in w and "Off: Extended element range" in w
+    w = warning(halogen=True, silicon=True, extended=True)
+    assert "tick" not in w                  # every relevant switch is on: nothing left to suggest
 
     only_formulas = _fake_result(structures=[])
     monkeypatch.setattr(mf, "predict", lambda *a, **k: only_formulas)
     body = _run(base).json()
-    assert any("no candidate for C8H10N4O2" in w and "tick them" in w for w in body["warnings"])
-    body = _run({**base, "halogen": True, "silicon": True}).json()
+    assert any("no candidate for C8H10N4O2" in w and "tick a box" in w for w in body["warnings"])
+    body = _run({**base, "halogen": True, "silicon": True, "extended": True}).json()
     assert any("no candidate for C8H10N4O2" in w and "tick" not in w for w in body["warnings"])
 
 

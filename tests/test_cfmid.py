@@ -251,7 +251,7 @@ def test_runner_fills_every_block(monkeypatch):
     assert list(o) == ["summary", "spectrum_low", "spectrum_medium", "spectrum_high", "peaks", "formats"]
     assert o["summary"]["values"] == {
         "Engine": "CFM-ID 4.4.10 (ML)", "Precursor m/z": {"value": "195.0877", "note": "[M+H]+"}, "Ion formula": "C8H11N4O2+",
-        "Peaks": {"value": "2 · 5 · 10", "note": "low · medium · high"}}
+        "Peaks": {"value": "2 · 5 · 10", "note": "10 eV · 20 eV · 40 eV"}}
     for energy, n in (("low", 2), ("medium", 5), ("high", 10)):
         block = o[f"spectrum_{energy}"]
         assert block["plotly"]["data"] and len(block["peaks"]) == n
@@ -276,7 +276,7 @@ def test_runner_formats_hold_three_readable_records(monkeypatch):
 
 
 def test_runner_names_records_after_a_typed_name(monkeypatch):
-    monkeypatch.setattr(esi_msms.common, "structure", lambda inputs, label="": {"kind": "smiles", "smiles": CAFFEINE})
+    monkeypatch.setattr(esi_msms.common, "structure", lambda inputs, label="", **kw: {"kind": "smiles", "smiles": CAFFEINE})
     out = _run(monkeypatch, structure={"mode": "Name / ID / Formula", "value": "caffeine"})
     assert first_record(out["outputs"]["formats"]["formats"]["MSP"])["name"] == "caffeine [M+H]+ | low (10 eV)"
 
@@ -359,3 +359,8 @@ def test_real_runner_end_to_end():
     assert out["outputs"]["summary"]["values"]["Engine"] == "MSRB 1.1.15"
     rec = first_record(out["outputs"]["formats"]["formats"]["MassBank"])
     assert rec["n_records"] == 3 and rec["precursor_mz"] == pytest.approx(760.58508)
+
+
+def test_runner_writes_the_charge_of_a_multiply_charged_adduct(monkeypatch):
+    out = _run(monkeypatch, adduct="[M-2H]2-")
+    assert "CHARGE=2-" in out["outputs"]["formats"]["formats"]["MGF"]

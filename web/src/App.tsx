@@ -22,7 +22,8 @@ function Home({ spec }: { spec: Spec }) {
 function ModuleRoute({ spec }: { spec: Spec }) {
   const { id } = useParams();
   const mod = spec.modules.find(m => m.id === id);
-  return <LockGate required={!!mod && isLockedModule(mod)}><ModulePage spec={spec} /></LockGate>;
+  // key: a module switch remounts the page, so values/results cannot flash from the previous module.
+  return <LockGate required={!!mod && isLockedModule(mod)}><ModulePage key={id} spec={spec} /></LockGate>;
 }
 
 export default function App() {
@@ -55,6 +56,7 @@ function Shell({ spec }: { spec: Spec }) {
   const rail = collapsed && !narrow;          // the drawer on small screens is always the full sidebar
   const collapse = (c: boolean) => { setCollapsed(c); try { localStorage.setItem("mzdesk.sidebarCollapsed", c ? "1" : "0"); } catch { /* not remembered */ } };
   useEffect(() => setDrawer(false), [pathname]);
+  useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); }, [pathname]);
   useEffect(() => { if (!pathname.startsWith("/stats")) trackView(pathname); }, [pathname]);   // page views for /stats
   useEffect(() => {
     if (!drawer) return;

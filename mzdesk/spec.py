@@ -380,10 +380,10 @@ MODULES = [
     # ---- Spectrum（subgroup id 仍是 ms2）----
     module("ms2_clean", "Spectrum cleanup", "B", "<b>Clean</b> an MS2 spectrum, <b>see</b> it, and get it in <b>every common format</b> (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).",
         [spectrum("spectrum", "MS2 spectrum (any common format)"), number("precursor_mz", "Precursor m/z (optional)", step=0.0001),
-         radio("ion_mode", "Ion mode (for MSP / MGF headers)", ["Positive", "Negative"]),
+         radio("ion_mode", "Ion mode (for exported headers)", ["Positive", "Negative"]),
          number("noise_pct", "Noise threshold (% of base peak)", 0, 0.1), select("normalize", "Normalize", NORMALIZE),
-         checkbox("remove_precursor", "Remove precursor"), number("precursor_tol", "Precursor tolerance (Da)", 0.02, 0.001),
-         select("sort_by", "Sort by", SORT_BY)],
+         number("precursor_tol", "Precursor tolerance (Da)", 0.02, 0.001), select("sort_by", "Sort by", SORT_BY),
+         checkbox("remove_precursor", "Remove precursor")],
         [cards([("Detected format", ""), ("Peaks in", ""), ("Peaks out", ""), ("Removed", "noise · precursor")], id="summary"),
          figure("Cleaned spectrum", id="spectrum", help=["Grey: removed peaks.", "Hover a peak for details."]),
          table(["m/z", "Intensity", "Rel. intensity (%)", "Kept", "Reason"], "Peaks", "Rel. intensity: % of the input base peak. Reason: noise, precursor", id="peaks"),
@@ -397,7 +397,7 @@ MODULES = [
          spectrum("reference", "Reference spectrum"), number("reference_precursor", "Reference precursor m/z (optional)", step=0.0001),
          number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001), number("threshold", "Score threshold", 0.7, 0.05),
          radio("ion_mode", "Ion mode", ["Positive", "Negative"]),
-         checkbox("deep", "Deep-learning scores (MS2DeepScore, Spec2Vec; first use downloads the models)")],
+         checkbox("deep", "Deep-learning scores (MS2DeepScore, Spec2Vec)")],
         [cards([("Primary score", "spectral entropy, weighted"), ("Metrics ≥ threshold", "n / N"), ("Matched peaks", "pairs"),
                 ("Query matched", "%"), ("Reference matched", "%")], id="summary"),
          figure("Mirror plot", id="mirror", help=["Up: query. Down: reference.", "Dark: matched peaks."]),
@@ -410,7 +410,7 @@ MODULES = [
         [radio("spectrum_type", "Spectrum type", ["MS/MS", "EI"]), spectrum(label="Query spectrum"),
          precursor(label="Precursor m/z (MS/MS only)"),
          number("tol_ppm", "Precursor tolerance (ppm, MS/MS only)", 10.0, 0.1),
-         number("tol_da", "Fragment tolerance (Da; EI: 0.5)", 0.02, 0.001),
+         number("tol_da", "Fragment tolerance (Da, MS/MS only)", 0.02, 0.001),
          multiselect("libraries", "Libraries", LIBRARIES), multiselect("metrics", "Metrics", LIBRARY_METRICS, LIBRARY_DEFAULT_METRICS),
          number("threshold", "Score threshold", 0.7, 0.05)],
         [cards([("Best hit", "name", "The first row of the table: the hit with the highest score on the ranking metric."),
@@ -431,8 +431,9 @@ MODULES = [
 
     module("ms1_formula", "Formula annotation", "A", "<b>Rank molecular formulas</b> for the precursor from its MS1 isotopes and MS2 (BUDDY).",
         [precursor(adducts=BUDDY_ADDUCTS), ms1(), spectrum(label="MS2 spectrum (optional)"),
-         select("instrument", "Instrument", ["Orbitrap", "Q-TOF", "FT-ICR"]), checkbox("halogen", "Include halogens (F, Cl, Br, I)"),
-         text("formula", "Formula (optional: skip ranking, explain the MS2 with it)", placeholder="C8H10N4O2")],
+         select("instrument", "Instrument", ["Orbitrap", "Q-TOF", "FT-ICR"]),
+         text("formula", "Formula (optional: skip ranking, explain the MS2 with it)", placeholder="C8H10N4O2"),
+         checkbox("halogen", "Include halogens (F, Cl, Br, I)")],
         [cards([("Top formula", ""), ("Adduct used", ""), ("MS1 isotope peaks used", "")], id="summary"),
          table(["Rank", "Formula", "Theoretical m/z", "Δ ppm", "Probability", "FDR", "MS1 isotope similarity"], "Formula candidates", id="candidates"),
          figure("MS2 fragment formulas · top candidate", id="fragments_plot", help="Hover a peak for its formula, Δ ppm and neutral loss."),
@@ -442,7 +443,8 @@ MODULES = [
 
     module("ms2_structure", "Structure prediction", "A", "<b>Ranked candidate structures</b> from MS-FINDER (offline, local structure DB). Local version only: needs Mono.",
         [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1(),
-         checkbox("halogen", "Include halogens (F, Cl, Br, I)"), checkbox("silicon", "Include Si")],
+         checkbox("halogen", "Include halogens (F, Cl, Br, I)"), checkbox("silicon", "Include Si"),
+         checkbox("extended", "Extended element range (PFAS / unusual compositions)")],
         [cards([("Top candidate", ""), ("Top formula", ""), ("Adduct used", ""), ("Elements searched", ""), ("Candidates", "structures / formulas")], id="summary"),
          table(["Rank", "Structure", "Name", "SMILES", "Formula", "Score", "Ontology", "InChIKey", "Databases"], "Structure candidates", id="structures",
                help=["Candidates come from MS-FINDER's local structure databases (HMDB, ChEBI, PubChem-derived, COCONUT, UNPD and others). Nothing is sent online, and a compound that is not in them cannot be returned.",
@@ -452,6 +454,7 @@ MODULES = [
                help=["Formula score: mass accuracy, the isotope pattern (when MS1 is given) and how well the MS2 fragments and neutral losses fit. Only formulas with a positive score are listed (best 50).",
                      "Search limits of the shipped parameter file: precursor tolerance 1 mDa (isotope peaks must sit within 0.5 mDa of the precursor m/z), fragment tolerance 10 mDa, elements C H N O P S. "
                      "F, Cl, Br, I and Si are searched only when you tick Include halogens / Include Si (each off by default; the Elements searched card shows what was used).",
+                     "Mass error (mDa) is observed − theoretical (the same sign as Δ ppm elsewhere); positive means the measured m/z is heavier. "
                      "Atoms per carbon atom allowed by MS-FINDER's common range: H 4, N 2, O 2.5, S 1, P 0.5, and with the boxes ticked F 1.5, Cl 1, Br 1, I 0.5, Si 0.5. "
                      "A compound with more fluorine than 1.5 per carbon (for example a perfluorinated acid) is outside it.",
                      "[M]+ is a permanent cation: the formula is the cation's own."])],
@@ -459,8 +462,9 @@ MODULES = [
         example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)}),
 
     module("ms2_denovo", "De novo structure", "A", "<b>Generated candidate structures</b> from FRIGID when the compound is not in any database (hypotheses). Local version only.",
-        [precursor(label="Precursor m/z (positive mode only)", adducts=FRIGID_ADDUCTS), spectrum(),
-         text("formula", "Formula (optional; blank = BUDDY's top-1 formula)", placeholder="C8H10N4O2"), select("mode", "Mode", FRIGID_MODES)],
+        [precursor(label="Precursor m/z (positive mode only)", adducts=FRIGID_ADDUCTS), spectrum(), ms1(),
+         text("formula", "Formula (optional; blank = BUDDY's top-1 formula)", placeholder="C8H10N4O2"),
+         select("mode", "Mode", FRIGID_MODES), checkbox("halogen", "Include halogens (BUDDY formula fallback)")],
         [cards([("Top candidate", ""), ("Formula used", ""), ("Device", ""), ("Samples", "generated / shown")], id="summary"),
          table(["Rank", "Structure", "SMILES", "Formula", "Score", "InChIKey (2D)"], "Generated candidates", id="candidates",
                help=["These are hypotheses, not identifications. FRIGID does not search a database: it writes structures for the formula you give and the molecular fingerprint it predicts from the MS/MS, so a candidate can be a molecule that exists nowhere. Check any candidate against a reference standard, a library spectrum (Library search) or a predicted spectrum (MS/MS prediction).",
@@ -468,7 +472,7 @@ MODULES = [
                      "Score: Tanimoto similarity (Morgan fingerprint, radius 2, 4096 bits) between the candidate and the fingerprint FRIGID predicted from the spectrum. It is a similarity, not a probability, and scores of different spectra are not comparable.",
                      "Only candidates with the right formula are shown; isotope-labelled, radical, wrongly charged and duplicate structures are hidden. SMILES carry no stereochemistry (FRIGID does not predict it), so the InChIKey is the 2D block only.",
                      "A familiar compound can come back because the model saw it in training, not because it read this spectrum.",
-                     "Formula: if you leave it blank the page takes the top-1 formula of BUDDY (Orbitrap settings, no halogens) and says so under Formula used; a wrong formula gives wrong structures. FRIGID knows C H N O P S F Cl Br I B Si Se As Fe Co Na K, and only positive-mode adducts.",
+                     "Formula: if you leave it blank the page takes the top-1 formula of BUDDY (Orbitrap settings; halogens are off unless you tick Include halogens) and says so under Formula used; a wrong formula gives wrong structures. FRIGID knows C H N O P S F Cl Br I B Si Se As Fe Co Na K, and only positive-mode adducts.",
                      "Local version only: needs the one-time install python -m mzdesk.ms2.frigid_setup (about 3 GB). A run takes roughly 20-40 s and 4-5 GB of memory, and one heavy job (this page or Structure prediction) runs at a time."])],
         subgroup="ms2", live=True,
         example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2), "formula": "C8H10N4O2"}),
@@ -697,6 +701,128 @@ MODULES = [
                  "sensitivity_unit": SENSITIVITY_DWELL, "dwell_ms": "1", "flow": "0.3", "transport_pct": "5", "background": "2",
                  "intensities": "5054.728\n6200\n4500", "n_events": "3", "acquisition_s": "60", "threshold": "3000"}),
 ]
+
+
+# ---- Form metadata (Spectrum pages) ----
+# Keys are optional and only added when used, so the field serialisation of other pages is unchanged.
+#   section / form_order : the frontend groups fields into sections (in this order)
+#   required             : a star, aria-required and a pre-flight check before POST
+#   required_when        : conditional required ({"field": ..., "equals"/"in"/"empty": ...})
+#   header_fallback      : a blank m/z/number is accepted when the spectrum header supplies it
+#   visible_when         : hide controls that the chosen mode ignores
+#   auto_label / ion_modes / allow_formula / help : display and input capability metadata
+def _configure_forms(module_id, sections, *, required=(), required_when=None, header_fallback=(),
+                     visible=None, auto_labels=None, ion_modes=None, allow_formula=(), help=None):
+    module = next(m for m in MODULES if m["id"] == module_id)
+    fields = {f.get("id"): f for f in module["inputs"] if f.get("id")}
+    for order, (title, ids) in enumerate(sections):
+        for fid in ids:
+            if fid in fields:
+                fields[fid]["section"] = title
+                fields[fid]["form_order"] = order
+    for fid in required:
+        if fid in fields:
+            fields[fid]["required"] = True
+    for fid, condition in (required_when or {}).items():
+        if fid in fields:
+            fields[fid]["required_when"] = condition
+    for fid in header_fallback:
+        if fid in fields:
+            fields[fid]["header_fallback"] = True
+    for fid, condition in (visible or {}).items():
+        if fid in fields:
+            fields[fid]["visible_when"] = condition
+    for fid, label in (auto_labels or {}).items():
+        if fid in fields:
+            fields[fid]["auto_label"] = label
+    for fid, modes in (ion_modes or {}).items():
+        if fid in fields:
+            fields[fid]["ion_modes"] = modes
+    for fid in allow_formula:
+        if fid in fields:
+            fields[fid]["allow_formula"] = True
+    for fid, text in (help or {}).items():
+        if fid in fields:
+            fields[fid]["help"] = text
+
+
+_configure_forms("ms2_clean",
+    [("Spectrum", ["spectrum", "precursor_mz", "ion_mode"]),
+     ("Cleaning", ["noise_pct", "normalize", "remove_precursor", "precursor_tol", "sort_by"])],
+    required=("spectrum",), header_fallback=("precursor_mz",),
+    help={"spectrum": "Paste any common format, upload a file, or resolve a USI. The precursor m/z and name in an MGF / MSP header are used when the fields are blank.",
+          "precursor_mz": "Blank = read from the MGF / MSP header when present."})
+_configure_forms("ms2_similarity",
+    [("Query", ["query", "query_precursor"]), ("Reference", ["reference", "reference_precursor"]),
+     ("Matching & scores", ["tol_da", "threshold", "ion_mode", "deep"])],
+    required=("query", "reference"), header_fallback=("query_precursor", "reference_precursor"),
+    visible={"ion_mode": {"field": "deep", "equals": True}},
+    help={"ion_mode": "Used only by MS2DeepScore / Spec2Vec; the classic scores do not need it.",
+          "deep": "First use downloads the models (internet).",
+          "query": "Paste a peak list or upload an MGF / MSP file. A header precursor m/z is used when that field is blank."})
+_configure_forms("ms2_library",
+    [("Query", ["spectrum_type", "ms2", "precursor", "tol_ppm", "tol_da"]),
+     ("Search", ["libraries", "metrics", "threshold"])],
+    required=("ms2", "libraries", "metrics"), required_when={"precursor": {"field": "spectrum_type", "equals": "MS/MS"}},
+    header_fallback=("precursor",),
+    visible={"precursor": {"field": "spectrum_type", "equals": "MS/MS"},
+             "tol_ppm": {"field": "spectrum_type", "equals": "MS/MS"},
+             "tol_da": {"field": "spectrum_type", "equals": "MS/MS"}},
+    auto_labels={"precursor": "Auto (any adduct)"},
+    help={"precursor": "Required for MS/MS unless the spectrum header carries it. Auto = any adduct; a chosen adduct must also match the library record.",
+          "tol_da": "Peak-matching tolerance for MS/MS. EI always uses unit mass (0.5 Da) and hides this field.",
+          "metrics": "Hits are ranked by the first selected metric in this list order, not by the order you clicked.",
+          "libraries": "A selected library that is not installed is skipped with the one-time setup command."})
+_configure_forms("ms1_formula",
+    [("Query", ["precursor", "ms1", "ms2"]), ("Formula search", ["instrument", "formula", "halogen"])],
+    required=("precursor",), header_fallback=("precursor",),
+    help={"precursor": "Required unless the MS2 spectrum header carries it. BUDDY supports m/z 1–1500.",
+          "formula": "Optional: if given, ranking is skipped and the MS2 is explained with this formula. It must be a neutral formula (no charge); clear it to use MS1 and rank candidates.",
+          "halogen": "Only used when Formula is blank; it widens BUDDY's element search.",
+          "ms1": "Optional isotope pattern around the precursor (m/z intensity per line). A pattern that misses the precursor is ignored with a warning."})
+_configure_forms("ms2_structure",
+    [("Query", ["precursor", "ms2", "ms1"]), ("Search scope", ["halogen", "silicon", "extended"])],
+    required=("precursor", "ms2"), header_fallback=("precursor",),
+    auto_labels={"precursor": "Auto ([M+H]+ / [M-H]+)"},
+    help={"precursor": "MS-FINDER searches the formula from this m/z and adduct. Auto = [M+H]+ in positive mode, [M-H]- in negative mode.",
+          "ms1": "Optional isotope pattern; the first peak within 0.5 mDa of the precursor is used.",
+          "halogen": "F, Cl, Br and I are off by default because they widen the formula search.",
+          "silicon": "Si is off by default; tick it for silicon-containing compounds.",
+          "extended": "Switches MS-FINDER from CommonRange to ExtendedRange, which allows more F per carbon (PFAS) and other unusual compositions. Slower and more false formulas."})
+_configure_forms("ms2_denovo",
+    [("Query", ["precursor", "ms2", "ms1"]), ("Generation", ["formula", "mode", "halogen"])],
+    required=("precursor", "ms2"), header_fallback=("precursor",),
+    ion_modes={"precursor": ["Positive"]},
+    auto_labels={"precursor": "Auto ([M+H]+)"},
+    help={"precursor": "FRIGID only generates positive-mode structures; the negative option is hidden.",
+          "ms1": "Optional isotope pattern. It is used only when Formula is blank, to improve BUDDY's top-1 formula.",
+          "formula": "Blank = BUDDY's top-1 formula (not available for [M]+ or [M+H-2H2O]+; enter a formula there). FRIGID only knows C H N O P S F Cl Br I B Si Se As Fe Co Na K.",
+          "halogen": "Used only when Formula is blank: widen BUDDY's formula search to F, Cl, Br and I.",
+          "mode": "Quick = 16 samples (a first look). Full = up to 100 samples and takes longer."})
+_configure_forms("ms2_ei",
+    [("Structure", ["structure"])],
+    required=("structure",),
+    help={"structure": "NEIMS predicts EI from the neutral structure; a formula alone cannot be used here."})
+_configure_forms("ms2_esi",
+    [("Structure", ["structure"]), ("Ion", ["adduct"])],
+    required=("structure",),
+    help={"adduct": "MSRB covers seven lipid adducts; the CFM-ID ML fallback only supports [M+H]+ and [M-H]-. Other adducts return a clear error instead of a different ion.",
+          "structure": "A salt keeps its largest component; a charged structure is neutralised before the adduct is added."})
+_configure_forms("ms2_fragments",
+    [("Candidate", ["structure", "precursor"]), ("Spectrum", ["ms2"]), ("Fragmentation", ["tree_depth", "tol_abs", "tol_ppm"])],
+    required=("structure", "ms2"), header_fallback=("precursor",),
+    auto_labels={"precursor": "Auto ([M+H]+ / [M-H]-)"},
+    help={"precursor": "Blank = theoretical m/z from the structure and adduct. A measured value is used for neutral losses and a mismatch warning.",
+          "ms2": "The measured MS2 spectrum; MetFrag annotates its peaks.",
+          "tree_depth": "Bond cleavages considered by MetFrag; higher is slower and can over-explain."})
+
+# Also expose the formula capability on the pages whose runners pass allow_formula=True.
+for _mid, _fid in (("ms1_theory", "structure"), ("met_shift", "structure")):
+    _m = next((m for m in MODULES if m["id"] == _mid), None)
+    if _m:
+        _f = next((f for f in _m["inputs"] if f.get("id") == _fid), None)
+        if _f:
+            _f["allow_formula"] = True
 
 
 # ---- Pipelines ----

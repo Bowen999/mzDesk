@@ -1,7 +1,11 @@
+export type FieldCondition = { field: string; equals?: any; in?: any[]; empty?: boolean };
 export type Field = {
   type: string; id?: string; label?: string; optional?: boolean; adduct?: boolean; mz?: boolean; multi?: boolean;
   value?: any; step?: number | null; placeholder?: string | null; options?: string[]; min?: number; max?: number;
   rows?: number; accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
+  // form metadata (Spectrum pages; optional everywhere)
+  section?: string; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
+  header_fallback?: boolean; auto_label?: string; ion_modes?: string[]; allow_formula?: boolean; help?: Help;
 };
 /** Help text for a "?" popover: one string, or a list shown as bullets. */
 export type Help = string | string[];

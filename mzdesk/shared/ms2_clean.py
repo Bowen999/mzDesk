@@ -42,6 +42,10 @@ def clean_spectrum(peaks, *, noise_pct=0.0, normalize="None", precursor_mz=None,
         scale = 1.0 / (sum(kept) or 1.0)
     else:
         scale = 1.0
+    # Subnormal intensities (1e-308) make the scale overflow; keep the output finite instead of
+    # producing inf and a later NaN in the MassBank writer.
+    if not (math.isfinite(scale) and scale > 0):
+        scale = 1.0
     for r in rows:
         r["intensity"] *= scale
     out = [(r["mz"], r["intensity"]) for r in rows if r["kept"]]

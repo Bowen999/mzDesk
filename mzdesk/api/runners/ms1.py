@@ -92,23 +92,44 @@ def run_formula(inputs):
     from mzdesk.ms1 import msbuddy_engine as bd
 
     warnings = []
-    precursor_mz, positive, adduct = common.precursor(inputs, required=True)
+    ms2, file_precursor = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings, required=False)
+    precursor_mz, positive, adduct = common.precursor(inputs, required=False)
+    if precursor_mz is None and file_precursor:
+        precursor_mz = file_precursor
+        warnings.append(f"Precursor m/z {file_precursor:.4f} is read from the MS2 spectrum header.")
+    elif precursor_mz is not None and file_precursor and abs(file_precursor - precursor_mz) > 0.01:
+        warnings.append(f"The MS2 file says precursor m/z {file_precursor:.4f}; the form value {precursor_mz:.4f} is used.")
+    if precursor_mz is None:
+        raise InputError("Precursor m/z is required. Enter it, or use an MS2 spectrum whose MGF / MSP header has it.")
+    if adduct is not None:
+        pool = bd.ADDUCTS_POSITIVE if positive else bd.ADDUCTS_NEGATIVE
+        if adduct not in pool:
+            raise InputError(f"{adduct} is not a {'positive' if positive else 'negative'}-mode adduct BUDDY supports. "
+                             f"Choose one of: {', '.join(pool)}.")
     ms1_text = common.text(inputs, "ms1")
     ms1 = parse_spectrum(ms1_text)
     if ms1_text and not ms1:
         warnings.append("No valid MS1 peaks; the isotope pattern is ignored.")
-    ms2, file_precursor = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings, required=False)
     instrument = INSTRUMENTS.get(inputs.get("instrument") or "Orbitrap", "orbitrap")
     ms1_tol, ms2_tol = bd.INSTRUMENT_TOLS[instrument]
-    halogen = bool(inputs.get("halogen"))
+    halogen = common.flag(inputs, "halogen", "Include halogens")
     formula = common.text(inputs, "formula")
-    if formula and not bd.formula_is_valid(formula):
-        raise InputError(f"Invalid formula {formula}. {ELEMENTS_NOTE}")
+    if formula:
+        if any(ch in formula for ch in "+-•·."):
+            raise InputError(f"{formula} is not a neutral formula. Use the neutral formula (for example C8H10N4O2) "
+                             "and choose the charge as the adduct above.")
+        if not bd.formula_is_valid(formula):
+            raise InputError(f"Invalid formula {formula}. {ELEMENTS_NOTE}")
+        used_adduct = adduct or bd.default_adduct(positive)
+        formula_mz, _ = bd.ion_mz_and_formula(formula, used_adduct)
+        if formula_mz is None:
+            raise InputError(f"{formula} cannot form {used_adduct}: it lacks an atom the adduct removes, or its ion m/z is invalid. "
+                             "Check the formula and the adduct.")
+        if ms1:
+            warnings.append("When Formula is supplied, BUDDY does not use the MS1 isotope pattern; clear Formula to rank with MS1.")
     lo, hi = bd.PRECURSOR_MZ_RANGE
     if not formula and not lo < precursor_mz < hi:
         raise InputError(f"BUDDY supports precursor m/z between {lo:.0f} and {hi:.0f}.")
-    if file_precursor and abs(file_precursor - precursor_mz) > 0.01:
-        warnings.append(f"The MS2 file says precursor m/z {file_precursor:.4f}; the form value {precursor_mz:.4f} is used.")
     if formula:
         mismatch = _formula_mismatch(bd, formula, precursor_mz, positive, adduct or bd.default_adduct(positive), ms1_tol)
         if mismatch:

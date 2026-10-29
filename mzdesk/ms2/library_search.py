@@ -118,11 +118,16 @@ class _Scorer:
         self.metrics = metrics
         self.pair_metrics = [m for m in metrics if m not in mn.DEEP]
         self.matchms = {}
-        from matchms import similarity            # 贪心匹配峰数总要算（平局排序、"Matched peaks" 列），所以 CosineGreedy 总建
-        for name in dict.fromkeys([mn.COSINE_GREEDY] + [m for m in self.pair_metrics if m in mn.MATCHMS]):
-            cls = getattr(similarity, name, None)
-            if cls is not None:
-                self.matchms[name] = cls(tolerance=tol)
+        self.matchms_error = None
+        try:
+            from matchms import similarity          # 贪心匹配峰数总要算（平局排序、"Matched peaks" 列），所以 CosineGreedy 总建
+        except Exception as exc:  # noqa: BLE001 - fall back to the local greedy cosine
+            self.matchms_error = f"{type(exc).__name__}: {exc}"
+        else:
+            for name in dict.fromkeys([mn.COSINE_GREEDY] + [m for m in self.pair_metrics if m in mn.MATCHMS]):
+                cls = getattr(similarity, name, None)
+                if cls is not None:
+                    self.matchms[name] = cls(tolerance=tol)
         self.q_spec = _Spectrum(q_mz, q_int, q_precursor)
         self.q_peaks = np.column_stack([q_mz, q_int])
         self.binned = {m for m in self.pair_metrics if m in (mn.BINNED_COSINE, mn.BINNED_PEARSON, mn.BINNED_SPEARMAN)}
@@ -132,6 +137,8 @@ class _Scorer:
             self.me = ms_entropy
 
     def na_reason(self, metric):
+        if self.matchms_error and metric in mn.MATCHMS and metric != mn.COSINE_GREEDY:
+            return f"N/A: matchms is unavailable ({self.matchms_error})"
         if self.ei and metric in EI_NA:
             return EI_NA[metric]
         return None
@@ -148,6 +155,11 @@ class _Scorer:
                 s, matches = sim._unpack_matchms_score(g.pair(self.q_spec, cand))
             except Exception:  # noqa: BLE001
                 s, matches = None, 0
+            if mn.COSINE_GREEDY in self.pair_metrics:
+                out[mn.COSINE_GREEDY] = s
+        else:
+            # matchms cannot be imported: use the same greedy 1:1 pairing and cosine formula.
+            s, matches = sim.greedy_cosine(self.q_mz, self.q_int, mz2, i2, self.tol)
             if mn.COSINE_GREEDY in self.pair_metrics:
                 out[mn.COSINE_GREEDY] = s
         for name in self.pair_metrics:
@@ -458,6 +470,10 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
         if name not in notes and np.isnan(S[:, col[name]]).all():
             notes[name] = "N/A for every candidate"
 
+    # How many selected metrics produced at least one number; 0 means nothing could be scored at
+    # all (for example only MS2DeepScore when torch/model is missing), which is not a "no hit".
+    result["n_metrics_scored"] = int(np.isfinite(S).any(axis=0).sum())
+
     # ---- 保留、排序
     kept = np.flatnonzero((S >= threshold).any(axis=1))          # NaN 比较为 False：N/A 不参与
     # 排序用的指标：所选指标（选项顺序）里第一个对命中有分数的；第一个若对所有命中都是 N/A（如 EI 的 ModifiedCosine）就跳过
@@ -495,5 +511,6 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
 
 def _empty(metrics, kind, tol, loaded, warnings, notes, prefilter):
     return {"hits": [], "n_kept": 0, "n_candidates": 0, "hidden_copies": 0, "rank_metric": None, "metrics": metrics, "kind": kind, "tolerance": tol,
+            "n_metrics_scored": 0,
             "libraries": [{"name": l.name, "version": l.version, "label": l.label(), "candidates": 0} for l in loaded],
             "warnings": warnings, "notes": notes, "prefilter": prefilter, "top_peaks": None, "top_precursor": None}

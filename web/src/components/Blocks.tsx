@@ -55,7 +55,8 @@ const isMultiline = (c: Cell) => cellText(c).includes("\n");
 /** The shared table body: header + rows (+ trailing "?" column when `rowHelp`). */
 export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string }) {
   return (
-    <div className="table-wrap">
+    <div className={"table-wrap" + (columns.length > 6 ? " wide" : "")} tabIndex={0}
+      role="region" aria-label={`Results table, ${columns.length} columns; scroll horizontally for more`}>
       <table className="out-table">
         <thead><tr>{columns.map(c => <th key={c}>{c}</th>)}{rowHelp && <th className="help-col" aria-label="Help" />}</tr></thead>
         <tbody>

@@ -39,7 +39,7 @@ def _structure_rows(structures):
 
 def _formula_rows(formulas):
     return [[str(rank), f["formula"], fmt(f["neutral_mass"], 4),
-             signed(None if f["mass_error_da"] is None else f["mass_error_da"] * 1000, 2), fmt(f["score"], 3)]
+             signed(None if f["mass_error_da"] is None else -f["mass_error_da"] * 1000, 2), fmt(f["score"], 3)]
             for rank, f in enumerate(formulas[:FORMULA_ROWS], 1)]
 
 
@@ -48,15 +48,18 @@ def _elements(halogen, silicon):
     return " ".join([BASE_ELEMENTS] + (["F Cl Br I"] if halogen else []) + (["Si"] if silicon else []))
 
 
-def _element_hint(halogen, silicon):
-    """Sentence that tells the user which element switch to try; empty when both are already on."""
-    if halogen and silicon:
+def _element_hint(halogen, silicon, extended=False):
+    """Sentence that tells the user which switch to try; empty when everything relevant is already on."""
+    if halogen and silicon and extended:
         return ""
-    if not halogen and not silicon:
-        return "Include halogens (F, Cl, Br, I) and Include Si are off; tick them if the compound may contain those elements."
+    parts = []
     if not halogen:
-        return "Include halogens is off; tick it if the compound may contain F, Cl, Br or I."
-    return "Include Si is off; tick it if the compound may contain silicon."
+        parts.append("Include halogens (F, Cl, Br, I)")
+    if not silicon:
+        parts.append("Include Si")
+    if not extended:
+        parts.append("Extended element range (for PFAS / unusual compositions)")
+    return "Off: " + ", ".join(parts) + "; tick a box if the compound may contain those elements."
 
 
 def run_structure(inputs):
@@ -64,6 +67,7 @@ def run_structure(inputs):
 
     warnings = []
     halogen, silicon = common.flag(inputs, "halogen", "Include halogens"), common.flag(inputs, "silicon", "Include Si")
+    extended = common.flag(inputs, "extended", "Extended element range")
     field_mz, positive, adduct = common.precursor(inputs)
     ms2, file_mz = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings)
     precursor_mz = field_mz or file_mz
@@ -85,14 +89,14 @@ def run_structure(inputs):
                             f"{(m0_mz - precursor_mz) * 1000:+.1f} mDa); MS-FINDER cannot match the isotope pattern. Use the same m/z in both fields.")
 
     try:
-        res = mf.predict(precursor_mz, positive, adduct, ms2, ms1, halogen=halogen, silicon=silicon)
+        res = mf.predict(precursor_mz, positive, adduct, ms2, ms1, halogen=halogen, silicon=silicon, extended=extended)
     except mf.MsFinderError as exc:
         raise EngineError(str(exc), exc.log) from None
     except ValueError as exc:
         raise InputError(str(exc)) from None
 
     structures, formulas = res["structures"], res["formulas"]
-    elements, hint = _elements(halogen, silicon), _element_hint(halogen, silicon)
+    elements, hint = _elements(halogen, silicon), _element_hint(halogen, silicon, extended)
     if not formulas:
         warnings.append(f"MS-FINDER found no molecular formula for m/z {precursor_mz:.4f} as {res['adduct']} within 1 mDa (elements {elements}). "
                         "Check the precursor m/z and the adduct." + (" " + hint if hint else ""))
@@ -108,7 +112,8 @@ def run_structure(inputs):
                           if top else common.MISSING),
         "Top formula": ({"value": formulas[0]["formula"], "note": f"score {fmt(formulas[0]['score'], 3)}"} if formulas else common.MISSING),
         "Adduct used": ({"value": res["adduct"], "note": "Auto: " + ("positive" if positive else "negative") + " mode"} if adduct is None else res["adduct"]),
-        "Elements searched": {"value": elements, "note": "halogens " + ("on" if halogen else "off") + " · Si " + ("on" if silicon else "off")},
+        "Elements searched": {"value": elements, "note": "halogens " + ("on" if halogen else "off") + " · Si " + ("on" if silicon else "off")
+                              + " · " + ("extended range" if res.get("extended", extended) else "common range")},
         "Candidates": {"value": f"{len(structures)} / {len(formulas)}",
                        "note": f"MS2 peaks {res['ms2_count']}" + (f" · MS1 peaks {res['ms1_count']}" if res["ms1_count"] else "")}}
     return {"outputs": {

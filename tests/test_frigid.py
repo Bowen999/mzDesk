@@ -713,8 +713,8 @@ def test_buddy_formula_that_frigid_cannot_use_is_a_400(monkeypatch, fake_predict
 def test_page_definition_is_live_with_the_agreed_inputs_and_blocks():
     m = _module()
     assert m["live"] is True and m["subgroup"] == "ms2" and m["title"] == "De novo structure"
-    assert [f["id"] for f in m["inputs"]] == ["precursor", "ms2", "formula", "mode"]
-    mode = m["inputs"][3]
+    assert [f["id"] for f in m["inputs"]] == ["precursor", "ms2", "ms1", "formula", "mode", "halogen"]
+    mode = m["inputs"][4]
     assert mode["options"] == ["Quick (16 samples)", "Full (up to 100 samples)"] and mode["value"] == "Quick (16 samples)"
     assert [b["id"] for b in m["outputs"]] == ["summary", "candidates"]
     assert [i["label"] for i in m["outputs"][0]["items"]] == ["Top candidate", "Formula used", "Device", "Samples"]
@@ -1062,3 +1062,10 @@ def test_real_run_without_a_formula_takes_buddys_top_formula(monkeypatch):
     assert used["value"] == fe.check_formula(expected[0]["formula"]) and used["note"].startswith("BUDDY top-1")
     assert any("BUDDY's top-1 formula" in w for w in body["warnings"])
     assert all(row[3] == used["value"] for row in body["outputs"]["candidates"]["rows"])
+
+
+def test_buddy_fallback_gets_ms1_and_the_halogen_switch(monkeypatch, fake_predict):
+    calls = _buddy(monkeypatch, [{"rank": 1, "formula": "C8H10N4O2", "prob": 0.9}])
+    body = _run({**_no_formula(), "ms1": "195.0877 100\n196.0902 10", "halogen": True}).json()
+    assert calls[0]["ms1"] == ((195.0877, 100.0), (196.0902, 10.0)) and calls[0]["halogen"] is True
+    assert "no halogens" not in " ".join(body["warnings"])

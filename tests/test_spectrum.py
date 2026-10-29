@@ -1,5 +1,5 @@
 """共享峰表解析：各种输入格式的识别与解析；MGF / MSP 文件只取第一条谱。"""
-from mzdesk.shared.spectrum import detect_format, first_record, parse_spectrum
+from mzdesk.shared.spectrum import detect_format, fetch_usi, first_record, parse_spectrum
 
 MGF = """BEGIN IONS
 TITLE=caffeine
@@ -100,3 +100,47 @@ def test_semicolon_separated_peaks():
     assert detect_format("138.0662:100;195.0877:32") == "MS-DIAL / MoNA (mz:int)"
     assert detect_format("138.0662 100;195.0877 32") == "Peak list (one per line)"
     assert parse_spectrum("Name: x\nComment: CE 20; 40 eV\n100 1\n") == [(100.0, 1.0)]
+
+
+def test_sirius_ms1peaks_are_not_mixed_into_the_ms2_spectrum():
+    text = (">compound x\n>parentmass 195.0877\n>ms1peaks\n195.0877 1000\n195.0910 120\n"
+            ">ms2peaks\n138.0662 100\n110.0713 20\n")
+    assert parse_spectrum(text) == [(110.0713, 20.0), (138.0662, 100.0)]
+    assert detect_format(text) == "SIRIUS .ms"
+
+
+def test_json_record_object_with_peaks_and_precursor():
+    text = '{"peaks": [[100, 5], [200, 10]], "precursor_mz": 200.1, "name": "x"}'
+    assert parse_spectrum(text) == [(100.0, 5.0), (200.0, 10.0)]
+    assert detect_format(text) == "JSON record"
+    rec = first_record(text)
+    assert rec["precursor_mz"] == 200.1 and rec["name"] == "x"
+
+
+def test_comment_before_msp_name_is_not_an_empty_first_record():
+    text = "# exported by a tool\nName: caffeine\nPrecursorMZ: 195.0877\n100 1\n200 2\n"
+    rec = first_record(text)
+    assert rec["n_records"] == 1 and rec["name"] == "caffeine" and rec["precursor_mz"] == 195.0877
+    assert parse_spectrum(text) == [(100.0, 1.0), (200.0, 2.0)]
+
+
+def test_usi_resolver_maps_the_gnps_json(monkeypatch):
+    from mzdesk.shared import spectrum as sp
+
+    class Response:
+        def __enter__(self): return self
+        def __exit__(self, *exc): return False
+        def read(self, n): return (b'{"n_peaks": 2, "precursor_mz": 195.0877, '
+                                   b'"peaks": [[138.0662, 100], [110.0713, 20], [138.0662, 80]]}')
+
+    seen = {}
+
+    def fake_urlopen(request, timeout):
+        seen["url"] = request.full_url
+        return Response()
+
+    monkeypatch.setattr(sp.urllib.request, "urlopen", fake_urlopen)
+    peaks, precursor = fetch_usi("mzspec:GNPS:GNPS-LIBRARY:accession:CCMSLIB00005435822")
+    assert peaks == [(110.0713, 20.0), (138.0662, 100.0)]       # duplicate m/z keeps the stronger peak
+    assert precursor == 195.0877
+    assert "CCMSLIB00005435822" in seen["url"]

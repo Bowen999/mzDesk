@@ -1,11 +1,73 @@
 """共享峰表解析器。MS1、MS2 各页都从这里读谱，不各自解析。"""
 import json
 import math
+import os
 import re
+import urllib.error
+import urllib.parse
+import urllib.request
 
 _SEP = re.compile(r"[\s,]+")
 # '184.07 : 100' -> '184.07:100' (only between two numbers; never merges '184.07: 200.1:5')
 _COLON_GAP = re.compile(r"(?<=[\d.])\s*:\s*(?=[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?(?:[\s,]|$))")
+
+# Universal Spectrum Identifier resolver. GNPS2 covers GNPS / MassIVE USIs; a local mirror can
+# be selected with MZDESK_USI_ENDPOINT (the USI is appended URL-encoded).
+USI_ENDPOINT = "https://metabolomics-usi.gnps2.org/json/?usi1="
+USI_TIMEOUT_S = 25
+USI_MAX_BYTES = 20 << 20
+
+
+class USIError(ValueError):
+    """The USI could not be resolved (bad syntax, network error, no spectrum, malformed response)."""
+
+
+def fetch_usi(usi):
+    """Resolve a USI -> ([(mz, intensity), ...], precursor_mz or None).
+
+    Only the public GNPS/MassIVE resolver is used. The peaks are cleaned with the same rules
+    as parse_spectrum (positive finite m/z and intensity, duplicate m/z collapsed).
+    """
+    usi = (usi or "").strip()
+    parts = usi.split(":")
+    if not usi.startswith("mzspec:") or len(parts) < 5:
+        raise USIError("A USI must look like mzspec:GNPS:GNPS-LIBRARY:accession:CCMSLIB... "
+                       "(mzspec:collection:accession:spectrum).")
+    endpoint = os.environ.get("MZDESK_USI_ENDPOINT") or USI_ENDPOINT
+    url = endpoint + urllib.parse.quote(usi, safe="")
+    request = urllib.request.Request(url, headers={"User-Agent": "mzDesk USI resolver"})
+    try:
+        with urllib.request.urlopen(request, timeout=USI_TIMEOUT_S) as response:
+            data = response.read(USI_MAX_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        raise USIError(f"The USI service answered HTTP {exc.code} for {usi}. "
+                       "Check the USI, or paste the peak list instead.") from None
+    except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        raise USIError(f"Could not reach the USI service ({exc}). Check the network, or paste the peak list instead.") from None
+    if len(data) > USI_MAX_BYTES:
+        raise USIError("The USI response is too large (over 20 MB).")
+    try:
+        obj = json.loads(data.decode("utf-8", "replace"))
+    except (ValueError, UnicodeDecodeError):
+        raise USIError("The USI service returned a response that is not JSON.") from None
+    pairs = obj.get("peaks") if isinstance(obj, dict) else None
+    if not isinstance(pairs, list) or not pairs:
+        raise USIError(f"The USI service returned no peaks for {usi}.")
+    agg = {}
+    for pair in pairs:
+        if not isinstance(pair, (list, tuple)) or len(pair) < 2:
+            continue
+        mz, inten = _finite(pair[0]), _finite(pair[1])
+        if mz is None or inten is None or mz <= 0 or inten <= 0:
+            continue
+        key = round(mz, 5)
+        if inten > agg.get(key, 0.0):
+            agg[key] = inten
+    if not agg:
+        raise USIError(f"The USI service returned no usable peaks for {usi}.")
+    precursor = _finite(obj.get("precursor_mz")) if isinstance(obj, dict) else None
+    return sorted(agg.items()), (precursor if precursor and precursor > 0 else None)
+
 
 
 def _finite(tok):
@@ -27,12 +89,15 @@ _HAS_PK = re.compile(r"^\s*PK\$PEAK\s*:", re.I | re.M)
 _HAS_MGF = re.compile(r"^\s*BEGIN\s+IONS\s*$", re.I | re.M)
 _HAS_MSP = re.compile(r"^\s*(?:NAME|NUM\s*PEAKS)\s*:", re.I | re.M)
 _HAS_SIRIUS = re.compile(r"^\s*>(?:compound|parentmass|ms2)", re.I | re.M)
+_SIRIUS_MS2 = re.compile(r"^\s*>ms2peaks\b", re.I | re.M)
+_SIRIUS_NEXT = re.compile(r"^\s*>", re.M)
 _CSV_HEAD = re.compile(r"\A\s*\"?m/?z\"?\s*[,;\t]", re.I)
 _MZ_KEYS, _INT_KEYS = ("mz", "m/z"), ("intensity", "int", "abundance")
 
 
 def _json_pairs(s):
-    """(label, pairs) for a JSON list of [mz, int] pairs or {mz, intensity} objects (outer [] optional)."""
+    """(label, pairs) for a JSON list of [mz, int] pairs, {mz, intensity} objects, or a record
+    object such as {"peaks": [[mz, int], ...], "precursor_mz": ...} (outer [] optional)."""
     if s[0] not in "[{":
         return None
     for cand in (s, "[" + s + "]"):
@@ -40,9 +105,12 @@ def _json_pairs(s):
             obj = json.loads(cand)
         except ValueError:
             continue
+        record = isinstance(obj, dict) and isinstance(obj.get("peaks"), list)
+        if record:
+            obj = obj["peaks"]
         if not isinstance(obj, list):
             continue
-        pairs, label = [], None
+        pairs, label = [], "JSON record" if record else None
         for e in obj:
             if isinstance(e, (list, tuple)) and len(e) >= 2:
                 mz, inten = _finite(e[0]), _finite(e[1])
@@ -144,6 +212,16 @@ def _extract(text):
         return "HMDB XML", pairs
     if _HAS_PK.search(s):
         return "MassBank record", _massbank_pairs(s)
+    # SIRIUS .ms can hold >ms1peaks and >ms2peaks: only the MS2 section belongs to an MS2 input.
+    sirius = _SIRIUS_MS2.search(s)
+    if sirius:
+        body = s[sirius.end():]
+        nxt = _SIRIUS_NEXT.search(body)
+        if nxt:
+            body = body[:nxt.start()]
+        pairs, _ = _line_pairs(body)
+        if pairs:
+            return "SIRIUS .ms", pairs
     pairs, colon = _line_pairs(s)
     if not pairs:
         return "Unknown", []
@@ -224,7 +302,9 @@ def first_record(text):
     else:
         cur = []
         for ln in lines:
-            if _MSP_NAME.match(ln) and any(x.strip() for x in cur):
+            # Only a block that already holds a peak line is a record; a leading comment /
+            # license block before "Name:" must not become the first (empty) record.
+            if _MSP_NAME.match(ln) and any(re.match(r"\s*[\d.+-]", x) for x in cur):
                 records.append(cur)
                 cur = []
             cur.append(ln)
@@ -243,4 +323,14 @@ def first_record(text):
         if m and precursor is None:
             value = _finite(m.group(1))
             precursor = value if value and value > 0 else None
+    if (precursor is None or name is None) and (text or "").strip().startswith("{"):
+        try:
+            obj = json.loads((text or "").strip())
+        except ValueError:
+            obj = None
+        if isinstance(obj, dict):
+            value = _finite(obj.get("precursor_mz"))
+            precursor = precursor if precursor is not None else (value if value and value > 0 else None)
+            if name is None and isinstance(obj.get("name"), str):
+                name = obj["name"].strip() or None
     return {"peaks_text": "\n".join(rec), "precursor_mz": precursor, "name": name, "n_records": max(len(records), 1)}
