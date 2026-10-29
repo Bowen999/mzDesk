@@ -263,6 +263,13 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.26', date:'2026-10-29', git:'',
+  title:'README：对比工具标准 4 定义、组件更正',
+  note:'标准 4 定为“最后一次更新在名单冻结日前 3 年内”，正式版本或代码提交都算，避免把没有版本号但仍在维护的研究工具（JESTR、DiffMS 等）排掉；按此 CFM-ID（Bitbucket 源码 2025-08）和 MIST（最后提交 2024-06）都在窗口内。同时更正注释流程的组件名单。只改文档。',
+  state:[['标准 4','最后一次更新 ≤ 3 年（冻结日起算）'], ['流程组件','msbuddy · 自建谱库 · MS-FINDER · FRIGID'], ['版本','0.2.26']],
+  c:{
+   docs:['doc','README 对比工具入选标准第 4 条改为“最后一次更新（正式版本或代码提交都算）在名单冻结日前 3 年内；没有版本号的用提交号 + 权重文件校验值锁定”；更正 v0.2.25 写错的组件名单：注释流程的组件是 msbuddy（定离子、定分子式）、自建谱库检索、MS-FINDER、FRIGID，MetFrag 和 CFM-ID 只有单独页面、算外部工具；防泄漏一条的举例同步改为 msbuddy、FRIGID。版本号 0.2.26，本页加 v0.2.26。',false,{w:'admin/README.md · mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.25', date:'2026-10-29', git:'',
   title:'重写 README 的验证 / 案例一节',
   note:'对照 paper/literature（MetFrag 2016、UmetaFlow、MAW、patRoon、pyMSscreen 等）和 J. Cheminf 投稿要求，把验证改成跑结果前写定的方案：EI 不做准确率主张；SIRIUS 不符合场景，进排除表；防泄漏按训练集分层；平局按最差 / 期望名次；不劣效界值 −5 个百分点；案例改为 2 人盲审。只改文档，不改代码。',
