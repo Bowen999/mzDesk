@@ -329,9 +329,46 @@ def ms2_denovo(i, o):
             + f" · {n} formula-matched candidate{'s' if n != 1 else ''} (hypotheses).")
 
 
+def nca(i, o):
+    t_half, auc, cl = _card(o, "summary", "t½"), _card(o, "summary", "AUC0-∞"), _card(o, "summary", "CL/F")
+    if not t_half or not auc or not cl:
+        return None
+    return f"t½ {_b(t_half + ' h')} · AUC0-∞ {_b(auc + ' ng·h/mL')} · CL/F {_b(cl + ' L/h')}"
+
+
+def stability(i, o):
+    t_half = _card(o, "summary", "t½")
+    if not t_half:
+        return None
+    system = i.get("system") or "Liver microsomes"
+    unit = "µL/min/10⁶ cells" if system == "Hepatocytes" else "µL/min/mg"
+    clint, clh = _card(o, "summary", "CLint"), _card(o, "summary", "Predicted hepatic CL")
+    parts = [f"t½ {_b(t_half + ' min')}"]
+    if clint:
+        parts.append(f"CLint {_b(clint + ' ' + unit)}")
+    if clh:
+        parts.append(f"predicted hepatic CL {_b(clh + ' mL/min/kg')}")
+    text = " · ".join(parts)
+    if not clint and system == "Plasma":
+        text += " · plasma stability: t½ only"
+    return text + "."
+
+
+def mrm(i, o):
+    rows = _rows(o, "transitions")
+    if not rows:
+        return None
+    n = len(rows)
+    precursor, product, ce = _text(rows[0][0]), _text(rows[0][1]), _text(rows[0][2])
+    polarity = _card(o, "summary", "Polarity")
+    adduct = " for [M+H]+" if polarity == "Positive" else " for [M-H]-" if polarity == "Negative" else ""
+    text = f"{n} transition{'s' if n != 1 else ''}{adduct} {_b(precursor)} → {_b(product)} (quantifier)"
+    return text + (f", CE {_b(ce)}" if ce and ce != "—" else "") + "."
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
-                                    ms2_structure, ms2_denovo)}
+                                    ms2_structure, ms2_denovo, nca, stability, mrm)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 
