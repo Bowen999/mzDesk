@@ -345,9 +345,21 @@ def stability(i, o):
     return text + "."
 
 
+def mrm(i, o):
+    rows = _rows(o, "transitions")
+    if not rows:
+        return None
+    n = len(rows)
+    precursor, product, ce = _text(rows[0][0]), _text(rows[0][1]), _text(rows[0][2])
+    polarity = _card(o, "summary", "Polarity")
+    adduct = " for [M+H]+" if polarity == "Positive" else " for [M-H]-" if polarity == "Negative" else ""
+    text = f"{n} transition{'s' if n != 1 else ''}{adduct} {_b(precursor)} → {_b(product)} (quantifier)"
+    return text + (f", CE {_b(ce)}" if ce and ce != "—" else "") + "."
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
-                                    ms2_structure, ms2_denovo, nca, stability)}
+                                    ms2_structure, ms2_denovo, nca, stability, mrm)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 
