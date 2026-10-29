@@ -320,9 +320,16 @@ def ms2_denovo(i, o):
             + f" · {n} formula-matched candidate{'s' if n != 1 else ''} (hypotheses).")
 
 
+def nca(i, o):
+    t_half, auc, cl = _card(o, "summary", "t½"), _card(o, "summary", "AUC0-∞"), _card(o, "summary", "CL/F")
+    if not t_half or not auc or not cl:
+        return None
+    return (f"t½ {_b(t_half + ' h')} · AUC0-∞ {_b(auc + ' ng·h/mL')} · CL/F {_b(cl + ' L/h')}")
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
-                                    ms2_structure, ms2_denovo)}
+                                    ms2_structure, ms2_denovo, nca)}
 NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
 
 
