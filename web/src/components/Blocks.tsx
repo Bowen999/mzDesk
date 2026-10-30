@@ -6,7 +6,7 @@ import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
 /**
  * Renderers for the generic output blocks. Data contracts (the spec helpers in mzdesk/spec.py and the builders in
  * mzdesk/api/blocks.py are the reference; help = string | string[] everywhere):
- *   table / grouptable cell : "text" | {"text", "url"} | {"badge", "tone"} | {"text", "help"} | {"img"}   (badge / text may also carry url + help)
+ *   table / grouptable cell : "text" | {"text", "url"} | {"badge", "tone"} | {"text", "help"} | {"text", "hover_svg"} | {"img"}   (badge / text may also carry url + help)
  *   table row               : [cells] | {"cells": [...], "help"}   (the "?" column only with spec row_help=True)
  *   table data              : {"rows": [...], "count"?}           count -> pill next to the title
  *   grouptable data         : {"groups": [{"title", "meta"?, "help"?, "rows": [...]}], "count"?}   collapsed by default
@@ -36,6 +36,12 @@ function TextLines({ text }: { text: string }) {
     </span>);
 }
 
+/** Text (usually a SMILES) whose 2D structure is drawn on hover / keyboard focus, in the same popover as the "?" help; click pins it. */
+function Depicted({ svg, children }: { svg: string; children: ReactNode }) {
+  const { triggerProps, popover } = useHelpPopover([], <ThemedSvg svg={svg} className="pop-struct" alt="2D structure" />);
+  return <><button type="button" className="cell-depict" {...triggerProps}>{children}</button>{popover}</>;
+}
+
 export function CellView({ cell }: { cell: Cell }) {
   if (cell === null || cell === undefined) return null;
   if (typeof cell !== "object") return typeof cell === "string" ? <TextLines text={cell} /> : <>{String(cell)}</>;
@@ -44,6 +50,7 @@ export function CellView({ cell }: { cell: Cell }) {
   const url = safeUrl(cell.url ?? cell.href ?? "");
   let node: ReactNode = cell.badge !== undefined ? <span className={"badge tone-" + tone}>{cell.badge}</span> : <TextLines text={cell.text ?? ""} />;
   if (url) node = <a href={url} target="_blank" rel="noopener noreferrer">{node}</a>;
+  if (cell.hover_svg) node = <Depicted svg={cell.hover_svg}>{node}</Depicted>;
   const lines = helpLines(cell.help);
   return <>{node}{lines.length > 0 && <HelpButton lines={lines} className="inline" label="Help" />}</>;
 }
@@ -52,10 +59,23 @@ const cellText = (c: Cell) => (typeof c === "string" ? c : c && typeof c === "ob
 const isLong = (c: Cell) => cellText(c).length > 40;
 const isMultiline = (c: Cell) => cellText(c).includes("\n");
 
+/** Keep long identifiers readable without discarding their full value. */
+function CompactText({ text, column }: { text: string; column: string }) {
+  const [open, setOpen] = useState(false);
+  const short = text.startsWith("mzspec:") ? `${text.slice(0, 46)}…${text.slice(-18)}` : `${text.slice(0, 80)}…`;
+  return <span className={"compact-cell" + (open ? " is-open" : "")}>
+    <span className="compact-cell-text">{open ? <TextLines text={text} /> : short}</span>
+    <button type="button" className="cell-expand" aria-expanded={open} aria-label={`${open ? "Collapse" : "Show full"} ${column}`}
+      onClick={() => setOpen(v => !v)}>{open ? "Less" : "More"}</button>
+  </span>;
+}
+
 /** The shared table body: header + rows (+ trailing "?" column when `rowHelp`). */
-export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string }) {
+export function RowsTable({ columns, rows, rowHelp = false, empty, compact = false }: { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string; compact?: boolean }) {
   return (
-    <div className={"table-wrap" + (columns.length > 6 ? " wide" : "")} tabIndex={0}
+    <>
+    {compact && columns.length > 6 && <small className="table-scroll-hint">Scroll sideways to see all columns.</small>}
+    <div className={"table-wrap" + (columns.length > 6 ? " wide" : "") + (compact ? " compact-table" : "")} tabIndex={0}
       role="region" aria-label={`Results table, ${columns.length} columns; scroll horizontally for more`}>
       <table className="out-table">
         <thead><tr>{columns.map(c => <th key={c}>{c}</th>)}{rowHelp && <th className="help-col" aria-label="Help" />}</tr></thead>
@@ -66,7 +86,9 @@ export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: 
               const lines = helpLines(help);
               return (
                 <tr key={i}>
-                  {cells.map((c, j) => <td key={j} className={isMultiline(c) ? "long lines" : isLong(c) ? "long" : undefined}><CellView cell={c} /></td>)}
+                  {cells.map((c, j) => <td key={j} className={isMultiline(c) ? "long lines" : isLong(c) ? "long" : undefined}>
+                    {compact && typeof c === "string" && c.length > 80 ? <CompactText text={c} column={columns[j] ?? "text"} /> : <CellView cell={c} />}
+                  </td>)}
                   {rowHelp && <td className="help-col">{lines.length > 0 && <HelpButton lines={lines} label="Row help" />}</td>}
                 </tr>);
             })
@@ -74,6 +96,7 @@ export function RowsTable({ columns, rows, rowHelp = false, empty }: { columns: 
         </tbody>
       </table>
     </div>
+    </>
   );
 }
 

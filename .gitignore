@@ -24,3 +24,16 @@ benchmark/casmi2022/sirius_run/ms/*.ms
 benchmark/casmi2022/sirius_run/project*/
 benchmark/casmi2022/sirius_run/logs/
 benchmark/casmi2022/sirius_run/results/**/sirius_summaries/
+
+# local scratch, benchmark runs and large data (not part of the app)
+.screens/
+.chrome-test/
+.sirius_home/
+benchmark/JESTR/
+benchmark/MIST/
+benchmark/std/
+benchmark/casmi2022/jm_run/
+benchmark/.mplcache/
+research_inputs/
+# Pan-ReDU snapshot: redistribution licence not confirmed yet
+mzdesk/gnps/redu_cache/*.gz

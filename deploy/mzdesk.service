@@ -10,6 +10,7 @@ Group=mzdesk
 WorkingDirectory=/opt/mzdesk
 Environment=HOME=/var/lib/mzdesk
 Environment=PYTHONUNBUFFERED=1
+Environment=MZDESK_FEEDBACK_DIR=/var/lib/mzdesk/feedback
 Environment=MZDESK_NEIMS_DIR=/var/lib/mzdesk/models/neims
 Environment=MZDESK_MOLGPKA_DIR=/var/lib/mzdesk/models/molgpka
 Environment=MZDESK_METHODS_DIR=/var/lib/mzdesk/data/methods
@@ -17,6 +18,9 @@ Environment=MZDESK_CACHE_DIR=/var/lib/mzdesk/cache
 Environment=MZDESK_STATS_DB=/var/lib/mzdesk/stats.sqlite
 Environment=MPLCONFIGDIR=/var/lib/mzdesk/cache/matplotlib
 Environment=NUMBA_CACHE_DIR=/var/lib/mzdesk/cache/numba
+# SMTP for the sidebar's feedback form. Optional: without the file, messages are saved (not emailed) under
+# /var/lib/mzdesk/feedback. Secrets stay in /etc/mzdesk/mail.env, never in this repo; see deploy/README.md.
+EnvironmentFile=-/etc/mzdesk/mail.env
 # localhost only: nginx is the only way in. Real client IP comes from nginx (X-Forwarded-For, trusted from 127.0.0.1 only).
 ExecStart=/opt/mzdesk/.venv/bin/uvicorn mzdesk.api.app:app --host 127.0.0.1 --port 8599 --workers 2 \
   --no-server-header --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-keep-alive 30 --limit-concurrency 64

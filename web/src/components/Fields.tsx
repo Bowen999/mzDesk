@@ -1,4 +1,4 @@
-import { lazy, Suspense, useId } from "react";
+import { lazy, Suspense, useId, useRef, useState } from "react";
 import type { Field, FieldCondition } from "../types";
 import { countPeaks } from "../peakCount";
 
@@ -93,6 +93,7 @@ export function isFilled(f: Field, value: any, fields: Field[], values: Record<s
       if (String(value?.precursor_mz ?? "").trim()) return true;
       return headerSatisfies(f, fields, values);
     case "spectrum": return !!String(value?.value ?? "").trim();
+    case "file": return !!value?.name && (f.binary ? !!value?.base64 : typeof value?.text === "string");
     case "multiselect": return Array.isArray(value) && value.length > 0;
     case "checkbox": return !!value;
     case "table": return !!String(value ?? "").trim();
@@ -205,11 +206,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
           aria-valuetext={String(value)} onChange={e => onChange(Number(e.target.value))} />
         <Note text={help} error={error} id={`${inputId}-help`} />
       </label>);
-    case "file": return (
-      <label className="field" htmlFor={inputId}><span className="field-label-text">{f.label}{required && <Req />}</span>
-        <input {...common} type="file" accept={f.accept} onChange={async e => onChange(await readFiles(e.target.files))} />
-        <Note text={help} error={error} id={`${inputId}-help`} />
-      </label>);
+    case "file": return <FileInput field={f} value={value} onChange={onChange} error={error} inputId={inputId} required={required} />;
     case "table": return (
       <label className="field wide" htmlFor={inputId}><span className="field-label-text">{f.label}{required && <Req />}</span>
         <div className="grid-head">{f.columns!.join("  |  ")}</div>
@@ -219,6 +216,48 @@ export function FieldInput({ field, value, onChange, error }: P) {
       </label>);
     default: return <div className="field">unknown field type {f.type}</div>;
   }
+}
+
+function FileInput({ field, value, onChange, error, inputId, required }: P & { inputId: string; required: boolean }) {
+  const [fileError, setFileError] = useState("");
+  const sequence = useRef(0);
+  const help = typeof field.help === "string" ? field.help : undefined;
+  const select = async (files: FileList | null) => {
+    const id = ++sequence.current;
+    const file = files?.[0];
+    setFileError("");
+    onChange("");
+    if (!file) return;
+    if (field.max_bytes && (file.size === 0 || file.size > field.max_bytes)) {
+      setFileError(`Choose a non-empty file of at most ${field.max_bytes / 1_000_000} MB.`);
+      return;
+    }
+    try {
+      if (!field.binary) {
+        const result = await readFiles(files);
+        if (id === sequence.current) onChange(result);
+        return;
+      }
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ""));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
+      const comma = data.indexOf(",");
+      if (comma < 0) throw new Error("Invalid file data");
+      if (id === sequence.current) onChange({ name: file.name, base64: data.slice(comma + 1) });
+    } catch {
+      if (id === sequence.current) setFileError("Could not read the file. Please choose it again.");
+    }
+  };
+  return <label className="field" htmlFor={inputId}>
+    <span className="field-label-text">{field.label}{required && <Req />}</span>
+    <input id={inputId} type="file" accept={field.accept} aria-required={required || undefined}
+      aria-invalid={!!(error || fileError) || undefined} onChange={e => void select(e.target.files)} />
+    {value?.name && <small>{value.name}</small>}
+    <Note text={help} error={fileError || error} />
+  </label>;
 }
 
 function StructureInput({ field, value, onChange, error }: P) {

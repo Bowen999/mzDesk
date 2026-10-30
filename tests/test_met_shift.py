@@ -24,7 +24,7 @@ def test_example_matches_three_shifts_and_three_features():
     rows = body["outputs"]["hits"]["rows"]
     assert len(rows) == 4
     assert rows[0][0] == "+O (hydroxylation)"
-    assert rows[0][3] == "211.08260"
+    assert rows[0][3] == "168.06550"
     assert rows[1][0] == "−2H (dehydrogenation)"
     assert rows[1][3] == "—"
     assert body["outputs"]["features_plot"]["plotly"]["data"]

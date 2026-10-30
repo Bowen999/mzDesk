@@ -1,0 +1,11 @@
+spec	formula	ionization	dataset	compound	parentmass	instrument
+casmi091	C4H9NO	[M+H]+	casmi2022	casmi091	87.068414	unknown
+casmi141	C6H11N	[M+H]+	casmi2022	casmi141	97.089149	unknown
+casmi201	C4H10N2O	[M+H]+	casmi2022	casmi201	102.079313	unknown
+casmi177	C7H15N	[M+H]+	casmi2022	casmi177	113.120449	unknown
+casmi184	C10H16O2	[M+H]+	casmi2022	casmi184	168.11503	unknown
+casmi416	C8H8O3	[M-H]-	casmi2022	casmi416	152.047345	unknown
+casmi087	C9H10O3	[M-H]-	casmi2022	casmi087	166.062995	unknown
+casmi188	C8H8O4	[M-H]-	casmi2022	casmi188	168.04226	unknown
+casmi024	C8H6O5	[M-H]-	casmi2022	casmi024	182.021523	unknown
+casmi074	C10H14O3	[M-H]-	casmi2022	casmi074	182.094295	unknown

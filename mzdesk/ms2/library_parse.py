@@ -16,10 +16,12 @@ KIND_NAMES = {MSMS: "MS/MS", EI: "EI"}
 
 
 # ---------------------------------------------------------------- 加合物写法统一
-# 同一种加合物在不同库里写法不同：M+H / [M+H]+ / [M+H]1+；[M+2H]++ / [M+2H]2+；[M+H-H2O]+ / [M-H2O+H]+；[M+FA-H]- / [M+HCOO]-
+# 同一种加合物在不同库里写法不同：M+H / [M+H]+ / [M+H]1+；[M+2H]++ / [M+2H]2+；[M+H-H2O]+ / [M-H2O+H]+；
+# 甲酸根：[M+FA-H]- / [M+HCOO]- / [M+FA]-（GNPS）/ M+formate（GNPS）；不带方括号时电荷也可能写在末尾：M+Cl- / M+FA-
 _TERM = re.compile(r"([+-])(\d*)([A-Za-z][A-Za-z0-9()]*)")
 _ALIAS = {"FA": "HCOOH", "HFA": "HCOOH", "HAc": "CH3COOH", "Hac": "CH3COOH", "HOAc": "CH3COOH", "AcOH": "CH3COOH",
-          "Ac": "CH3COO", "HCO2": "HCOO", "HCO2H": "HCOOH", "C2H3O2": "CH3COO", "CHO2": "HCOO", "C2H4O2": "CH3COOH"}
+          "Ac": "CH3COO", "HCO2": "HCOO", "HCO2H": "HCOOH", "C2H3O2": "CH3COO", "CHO2": "HCOO", "C2H4O2": "CH3COOH",
+          "formate": "HCOO"}
 # 加上这些就是正电荷（减去则相反）；Cl / Br / HCOO 等是负电荷
 _POS = {"H": 1, "Na": 1, "K": 1, "Li": 1, "NH4": 1, "Cs": 1}
 _NEG = {"Cl": 1, "Br": 1, "I": 1, "F": 1, "HCOO": 1, "CH3COO": 1, "OH": 1, "CF3COO": 1}
@@ -44,6 +46,7 @@ def normalize_adduct(text):
         return None
     s = s.rstrip("*•.")                                       # 自由基标记 [M]+*
     m = re.fullmatch(r"\[(.+?)\](\d*)([+-]*)", s)
+    tail = None
     if m:
         body, digits, signs = m.group(1), m.group(2), m.group(3)
         charge = None
@@ -54,6 +57,10 @@ def normalize_adduct(text):
             return None
     elif re.fullmatch(r"\d*M.*", s):
         body, charge = s, None
+        tail = re.fullmatch(r"(\d*M[+-].*[A-Za-z])([+-]+)", s)        # 不带方括号时末尾的符号是电荷：M+Cl- / M+FA- / M-H-
+        if tail:
+            body, signs = tail.group(1), tail.group(2)
+            charge = len(signs) * (1 if signs[0] == "+" else -1)
     else:
         return None
     head = re.match(r"(\d*)M", body)
@@ -72,6 +79,8 @@ def normalize_adduct(text):
     if pos != len(rest):
         return None
     # 加酸再减 H = 加酸根：+HCOOH −H -> +HCOO，+CH3COOH −H -> +CH3COO
+    # 负离子只写了加酸（[M+FA]- / [M+HCOOH]-）也是酸根加合物：照字面是 M + 酸 + 电子的自由基负离子，ESI 里不出现；
+    # GNPS 的 [M+FA]- 记录（2026-03 版 34,611 条）前体全是 M + 44.9982（甲酸根），不是 M + 46.0060
     for acid, anion in (("HCOOH", "HCOO"), ("CH3COOH", "CH3COO")):
         plus = [t for t in terms if t[0] == "+" and t[2] == acid]
         minus = [t for t in terms if t[0] == "-" and t[2] == "H"]
@@ -79,15 +88,21 @@ def normalize_adduct(text):
             terms.remove(plus[0])
             terms.remove(minus[0])
             terms.append(["+", 1, anion])
+        elif plus and not minus and plus[0][1] == 1 and charge == -1 and _charge_of_terms([t for t in terms if t is not plus[0]]) == 0:
+            terms.remove(plus[0])
+            terms.append(["+", 1, anion])
     # 同名项合并，加项在前、减项在后，各自按名字排序
     merged = {}
     for sign, count, name in terms:
         merged[(sign, name)] = merged.get((sign, name), 0) + count
     ordered = sorted(merged.items(), key=lambda kv: (kv[0][0] == "-", kv[0][1]))
+    implied = _charge_of_terms([(sg, c, nm) for (sg, nm), c in ordered])
     if charge is None:
-        charge = _charge_of_terms([(sg, c, nm) for (sg, nm), c in ordered])
+        charge = implied
         if charge == 0 and ordered:
             return None                                       # 没写电荷又推不出来
+    elif tail and implied != charge:
+        return None                                           # 末尾符号和组成对不上（GNPS 的 M-2H- 其实是 [M-2H]2-，M-Ac-H- 是丢乙酸）：不猜
     text_terms = "".join(f"{sg}{c if c > 1 else ''}{nm}" for (sg, nm), c in ordered)
     mag = abs(charge)
     return f"[{n_m if n_m > 1 else ''}M{text_terms}]{mag if mag > 1 else ''}{'+' if charge > 0 else '-'}"

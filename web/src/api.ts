@@ -1,4 +1,4 @@
-import type { RunResult, Spec } from "./types";
+import type { Job, RunResult, Spec } from "./types";
 
 /** 后端返回的错误：message 给用户看，log 是外部工具（如 MetFrag）的输出末尾。 */
 export class ApiError extends Error {
@@ -23,7 +23,9 @@ const post = <T,>(url: string, body: unknown) =>
 export const BASE = import.meta.env.BASE_URL;
 export const getSpec = () => json<Spec>(`${BASE}api/spec`);
 export const runModule = (id: string, inputs: unknown) => post<RunResult>(`${BASE}api/modules/${id}/run`, inputs);
-export const runPipeline = (id: string, inputs: unknown) => post<any>(`${BASE}api/pipelines/${id}/run`, inputs);
+/** A workflow runs as a background job: start it, then poll getJob until its status is not "running". */
+export const startPipeline = (id: string, inputs: unknown) => post<{ job_id: string; status: string }>(`${BASE}api/pipelines/${id}/run`, inputs);
+export const getJob = (jobId: string) => json<Job>(`${BASE}api/pipelines/jobs/${jobId}`);
 
 /** Page view beacon for the stats page (fire and forget; never shows an error). */
 export function trackView(path: string) {
@@ -44,3 +46,10 @@ export type Stats = {
   errors: { time: string; module: string; status: number }[];
 };
 export const getStats = (password: string, days: number) => post<Stats>(`${BASE}api/stats`, { password, days });
+
+/** The sidebar's Send feedback form. Images are data URLs, already scaled down by the browser. */
+export type FeedbackResult = { ok: boolean; delivered: boolean; note: string };
+export const sendFeedback = (body: {
+  message: string; page: string; website: string;
+  images: { name: string; data: string }[];
+}) => post<FeedbackResult>(`${BASE}api/feedback`, body);

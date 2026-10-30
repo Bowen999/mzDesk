@@ -263,6 +263,52 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.31', date:'2026-10-29', git:'',
+  title:'互联网搜索开关：联网前先确认',
+  note:'侧栏底部新增 Internet search 开关（On/Off，按浏览器记住）。关闭后，需要联网的运行会先弹窗列出这次要联网做什么；Cancel 不执行，Continue 只放行一次，开关保持 Off。',
+  state:[['开关','侧栏底部 · On/Off · 浏览器记住'], ['关闭后','联网运行先确认，逐次放行'], ['覆盖','4 个在线页面 · USI 谱图 · Name/ID 解析 · 深度模型首次下载'], ['版本','0.2.31']],
+  c:{
+   app:['feat','侧栏新增 Internet search 开关（展开为 On/Off 文字，收起为带斜杠的地球图标）；关闭时，模块与 workflow 的 Run 先判断本次输入是否联网，需要则弹窗说明并询问。Cancel 不执行并提示，Continue 只执行这一次；支持 Esc、点遮罩取消、焦点限制与恢复。',false,{w:'web/src/network.ts · web/src/components/NetworkDialog.tsx · web/src/components/Sidebar.tsx · web/src/pages/ModulePage.tsx · web/src/pages/PipelinePage.tsx · web/src/theme.css · web/src/types.ts'}],
+   other:['chg','页面定义增加联网标记：module.network 与字段的 network_modes / network_sources / network / network_options；前端据此判断，不硬编码页面名。',false,{w:'mzdesk/spec.py'}],
+   docs:['doc','版本号 0.2.31，本页加 v0.2.31。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
+ {id:'v0.2.30', date:'2026-10-29', git:'',
+  title:'GNPS2 结果页面整理',
+  note:'长表每页 10 行，可在已返回的预览中筛选；长文本可展开，下载移到结果前部。',
+  state:[['长表','分页 · 预览内筛选 · 长文本展开'], ['完整结果','下载内容不变'], ['限制','筛选只覆盖最多 200 行预览'], ['版本','0.2.30']],
+  c:{
+   app:['chg','GNPS2 三页长表分页并提供预览筛选，保留完整文本与结果下载；合并提示，折叠可选诊断设置，下载区移到前面。',false,{w:'web/src/components/Blocks.tsx · web/src/components/Outputs.tsx · web/src/pages/ModulePage.tsx · web/src/outputs-v2.css · web/src/theme.css'}],
+   other:['chg','结果增加总行数，分页明确区分全量与最多 200 行的预览；过滤和显示不改变计算或下载。',false,{w:'mzdesk/spec.py · mzdesk/api/runners/gnps.py · tests/test_gnps.py'}],
+   docs:['doc','更新 GNPS2 预览、筛选与下载说明。',false,{w:'admin/GNPS2.md'}]
+  }},
+ {id:'v0.2.29', date:'2026-10-29', git:'',
+  title:'GNPS2：fastMASST、Pan-ReDU 与 MassQL',
+  note:'迁移原本地脚本并接入三个页面。MassQL 网页每次一个文件，最大 20 MB；批量和大文件留在本地命令行。示例使用亮氨酸。',
+  state:[['功能','fastMASST · Pan-ReDU · MassQL'], ['ReDU 缓存','2026-10-12；可手动刷新'], ['限制','MassQL 为 MS2 子集；谱图匹配不等于结构确证'], ['版本','0.2.29']],
+  c:{
+   other:['feat','接入 GNPS2 三页及原有本地命令行；网页 ReDU 用流式处理，诊断核对与 ReDU 富集保留。MassQL 支持 MGF、mzML、mzXML；修复原脚本扫描号和缺失元数据的误判。',true,{w:'mzdesk/gnps/ · mzdesk/api/runners/gnps.py · mzdesk/spec.py · tests/test_gnps.py'}],
+   app:['chg','MassQL 上传限 20 MB，独立进程运行；支持结果文件下载；fastMASST 延长网页等待时间。',false,{w:'mzdesk/api/request_limits.py · web/src/components/Fields.tsx · web/src/components/Outputs.tsx · deploy/nginx-location.conf'}],
+   docs:['doc','原文件及历史结果留存 research_inputs/gnps_migration；补充缓存、限制和命令行说明。',false,{w:'admin/GNPS2.md · deploy/README.md'}]
+  }},
+ {id:'v0.2.28', date:'2026-10-29', git:'',
+  title:'Alternative explanations：同分子式与同量异位表接通',
+  note:'页面从 1 张表扩到 3 张：补上同分子式候选和同量异位干扰，删掉未做的“两个 m/z 的关系 / 代谢物 / 脂质酰基”三张表。两张新表走 PubChem（在线），异构体表仍走 MS-FINDER（本机）。结构、分子式、只给 precursor m/z 都能跑。',
+  state:[['表','3 张：同分子式 · 同量异位 · 异构体'], ['数据源','同分子式 / 同量异位：PubChem 在线；异构体：MS-FINDER 本机'], ['已知限制','同分子式表最多考察 PubChem 前 100 个结构；同量异位每个库最多 100 个化合物'], ['版本','0.2.28']],
+  c:{
+   other:['feat','Alternative explanations 补上两张表：同分子式候选（PubChem fastformula 精确式量检索；按 InChIKey 前 14 位折叠立体/同位素变体；标所选库的归属）与同量异位干扰（PubChem 质量窗；每个分子式一行，取 |Δ ppm| 最小的化合物）。删掉未做的两个 m/z 关系、代谢物/转化产物、脂质酰基组合三张表和 Second m/z 输入；输入支持结构、分子式或只有 precursor m/z，只有 m/z 时只跑同量异位。两张在线表失败只给 warning，不影响异构体表。',true,{w:'mzdesk/ms1/exact_mass.py · mzdesk/api/runners/exclusivity.py · mzdesk/spec.py · tests/test_alternatives.py · tests/fake_pubchem.py'}],
+   docs:['doc','版本号 0.2.28，本页加 v0.2.28。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
+ {id:'v0.2.27', date:'2026-10-29', git:'',
+  title:'ESI MS/MS Annotation 流程从头跑到尾',
+  note:'流程 8 步接通：任务 API、实时页面都有了，页面不再锁定；现在只有 DMPK 和 ICP-MS 需要密码。同时补了 Alternative explanations 的 Isomers 表、甲酸加合物的库过滤修复，以及排队、重排提速。页面发布时没有做用户试用。',
+  state:[['流程','8 步可运行（页面已解锁）'], ['GNPS 索引','待重建：python -m mzdesk.ms2.library_setup GNPS --rebuild（约 1,750 行仍无加合物）'], ['已知限制','同分子式候选多时异构体检查常报“cannot be separated”；没有信号时 [M+Na]+ / [M+NH4]+ 仍分不开；FRIGID 每次 20–50 s'], ['版本','0.2.27']],
+  c:{
+   pipe:['feat','流程接通，8 步：1 加合物假设（先验 + MS2 信号 + 同位素 + BUDDY 概率）；2 BUDDY 前 5 个分子式；3 谱库门槛（相似度 ≥ 0.80、≥ 4 个峰、前体、加合物、分子式、同位素都过）→ Level 2a；4 MS-FINDER，每个分子式查一次 → Level 3；5 FRIGID（只做正离子，算假设）；6 合并 + 可检测性；7 异构体检查；8 答案，每行都带 layer 和 level。库命中过了门槛就跳过 4–5 步，但仍走 6–7 步。可检测性（组学 / 可电离 / 加合物合理性）只给得分在最佳 10% 以内的候选排序：全部重排会让 70 条 MassBank 谱的 Top-1 命中从 48 降到 43，只在近平局里排序是 49。',true,{w:'mzdesk/annotation/ · mzdesk/spec.py · mzdesk/api/app.py · tests/test_pipeline.py'}],
+   other:['feat','Alternative explanations 的 Isomers 表接上（MS-FINDER 碎片解释；结论“single answer”或“cannot be separated”；挑战者只作信息，是 owner 原来的规则）。模块不再锁定。',true,{w:'mzdesk/exclusivity/ · mzdesk/api/runners/exclusivity.py · tests/test_isomers.py'}],
+   ms2:['fix','甲酸加合物（[M+HCOO]-、[M+FA-H]-、GNPS 的 [M+HCOOH]-）现在一个库过滤就能找到（之前漏掉 34,611 行 GNPS）；CASMI 2022 的 6 种加合物从头到尾验证过；新增 mzdesk/adducts.py。重排约快 2.5 倍（pKa 缓存），引擎最多收 100 个峰。',true,{w:'mzdesk/adducts.py · mzdesk/ms2/library_parse.py · mzdesk/ms2/library_search.py · tests/test_adducts_casmi.py'}],
+   app:['chg','pipeline 任务一次只跑一个，后到的排队（status queued，页面显示排队说明）。',false,{w:'mzdesk/api/app.py · web/src/pages/PipelinePage.tsx · web/src/types.ts'}],
+   docs:['doc','版本号 0.2.27，本页加 v0.2.27。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.26', date:'2026-10-29', git:'',
   title:'README：对比工具标准 4 定义、组件更正',
   note:'标准 4 定为“最后一次更新在名单冻结日前 3 年内”，正式版本或代码提交都算，避免把没有版本号但仍在维护的研究工具（JESTR、DiffMS 等）排掉；按此 CFM-ID（Bitbucket 源码 2025-08）和 MIST（最后提交 2024-06）都在窗口内。同时更正注释流程的组件名单。只改文档。',

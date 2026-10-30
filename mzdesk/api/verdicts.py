@@ -369,7 +369,7 @@ def mrm(i, o):
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
                                     ms2_structure, ms2_denovo, nca, stability, mrm)}
-NO_VERDICT = {"structure_formats"}    # the page itself is the answer (drawings + formats)
+NO_VERDICT = {"structure_formats", "gnps_fastmasst", "gnps_redu", "gnps_massql"}    # tables / figures are the answer
 
 
 def build(module_id, inputs, outputs):

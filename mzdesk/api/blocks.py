@@ -34,6 +34,11 @@ def hinted(text, help):
     return _keep({"text": text, "help": help})
 
 
+def depicted(text, svg, help=None):
+    """Text (usually a SMILES) whose 2D structure is drawn on hover (svg from common.depiction_svg; no svg -> plain text cell)."""
+    return _keep({"text": text, "hover_svg": svg, "help": help})
+
+
 def row(cells, help=None):
     """A row with its own "?" (shown with spec row_help=True). Without help it is just the list of cells."""
     return {"cells": list(cells), "help": help} if help else list(cells)

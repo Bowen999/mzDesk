@@ -17,8 +17,8 @@ weight_base.pth，由 pka_setup.py 一次性转成 numpy。这里按原代码的
 原代码的氢键供体 / 受体两个特征因为 `int in list-of-tuples` 永远为 False，训练时也是如此，所以这里这两列恒为 0。
 """
 import os
-from dataclasses import dataclass
-from functools import lru_cache
+from dataclasses import dataclass, replace
+from functools import lru_cache, wraps
 
 import numpy as np
 from rdkit import Chem, RDLogger
@@ -242,6 +242,30 @@ class Site:
         return f"{self.element}{self.atom + 1}"          # 1-based, like the atom numbers of the Derivatization page
 
 
+# One MolGpKa pass (every site of one molecule) takes 0.3 s and more, and the Ionization page, the Adducts page and the workflow re-rank all
+# ask for the same molecule, the re-rank once per mobile-phase additive. The sites are kept per molecule. Site numbers are atom indices, so the
+# key is the canonical SMILES together with the canonical rank of every atom index (the same molecule numbered differently is another
+# entry), and the weights file (another file, or none, gives another answer). Callers get copies and may change them.
+_SITES = {}
+_SITES_MAX = 1024
+
+
+def _cache_per_molecule(fn):
+    @wraps(fn)
+    def cached(mol):
+        key = (weights_path(), Chem.MolToSmiles(mol), tuple(Chem.CanonicalRankAtoms(mol, breakTies=True)))
+        sites = _SITES.get(key)
+        if sites is None:
+            sites = tuple(fn(mol))
+            if len(_SITES) >= _SITES_MAX:
+                _SITES.clear()
+            _SITES[key] = sites
+        return [replace(site) for site in sites]
+    cached.cache_clear = _SITES.clear
+    return cached
+
+
+@_cache_per_molecule
 def predict_sites(mol):
     """Ionizable sites of the neutral molecule ``mol`` (no explicit H), sorted by pKa."""
     mol_h = Chem.AddHs(mol)                                # heavy atoms keep their indices; the H atoms come last

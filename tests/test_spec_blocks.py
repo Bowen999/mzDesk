@@ -7,7 +7,7 @@ from mzdesk import spec as S
 from mzdesk.api import blocks as B
 from mzdesk.api.common import clean
 
-KNOWN_TYPES = {"table", "cards", "figure", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable"}
+KNOWN_TYPES = {"table", "cards", "figure", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable", "downloads"}
 
 
 # ---------------------------------------------------------------- backward compatibility
@@ -37,6 +37,9 @@ def test_help_on_every_block_type():
 
 def test_table_row_help_and_cards_style_and_item_help():
     assert S.table(["a"], row_help=True)["row_help"] is True
+    assert S.table(["a"], page_size=10, compact=True)["page_size"] == 10
+    assert S.table(["a"], page_size=10, compact=True)["compact"] is True
+    assert not {"page_size", "compact"} & set(S.table(["a"]))
     c = S.cards([("A", "u", "why"), ("B", "")], style="metric")
     assert c["style"] == "metric" and c["items"] == [{"label": "A", "unit": "u", "help": "why"}, {"label": "B", "unit": ""}]
 

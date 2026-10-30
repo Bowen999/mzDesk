@@ -32,8 +32,12 @@ from functools import lru_cache
 
 ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 PUG = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid"
+FASTFORMULA = "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/fastformula"
 TIMEOUT = 20.0
 MAX_PER_DB = 100        # 每个库最多列出多少个化合物
+FORMULA_CAP = 100       # 同分子式表最多考察多少个 PubChem 结构（再多 xrefs 太慢）
+ISOBARIC_CAP = 50       # 同量异位表最多列多少个分子式
+SOURCE_BUDGET = 8.0     # 同分子式表最多等多少秒拿库归属
 BATCH = 200             # PUG REST 属性每次 POST 的 CID 数
 XREF_BATCH = 15         # xrefs 每次 POST 的 CID 数（小批并发，冷缓存时每个 CID 都要服务器现算）
 XREF_WORKERS = 4
@@ -183,13 +187,14 @@ def _pug_post(path, cids):
 
 
 def _properties(cids):
-    """{cid: {"formula", "mass", "name", "charge"}}"""
+    """{cid: {"formula", "mass", "name", "charge", "inchikey"}}"""
     out = {}
-    for reply in _pug_post("property/MolecularFormula,MonoisotopicMass,Title,Charge/JSON", cids):
+    for reply in _pug_post("property/MolecularFormula,MonoisotopicMass,Title,Charge,InChIKey/JSON", cids):
         for p in (reply.get("PropertyTable") or {}).get("Properties") or []:
             try:
                 out[int(p["CID"])] = {"formula": p.get("MolecularFormula") or "", "mass": float(p["MonoisotopicMass"]),
-                                      "name": p.get("Title") or "", "charge": int(p.get("Charge") or 0)}
+                                      "name": p.get("Title") or "", "charge": int(p.get("Charge") or 0),
+                                      "inchikey": p.get("InChIKey") or ""}
             except (KeyError, TypeError, ValueError):
                 continue
     return out
@@ -234,6 +239,34 @@ def native_ids(registry_ids, member_dbs):
                 ids[db] = found.upper() if db in ("HMDB", "ChEBI") else found
                 break
     return ids
+
+
+def _source_batch(cids):
+    out = {}
+    body = urllib.parse.urlencode({"cid": ",".join(str(c) for c in cids)}).encode()
+    reply = _get_json(f"{PUG}/xrefs/SourceName/JSON", body)
+    for info in (reply.get("InformationList") or {}).get("Information") or []:
+        try:
+            out[int(info["CID"])] = set(info.get("SourceName") or [])
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
+def _source_names(cids, budget=SOURCE_BUDGET):
+    """({cid: {PubChem 来源名, ...}}, 没取到的 CID 数)；与 _registry_ids 相同的分批并发与时间预算。"""
+    chunks = [cids[i:i + XREF_BATCH] for i in range(0, len(cids), XREF_BATCH)]
+    pool = cf.ThreadPoolExecutor(max_workers=XREF_WORKERS)
+    futures = [pool.submit(_source_batch, c) for c in chunks]
+    done, _ = cf.wait(futures, timeout=budget)
+    pool.shutdown(wait=False, cancel_futures=True)
+    out, missing = {}, 0
+    for future, chunk in zip(futures, chunks):
+        if future in done and future.exception() is None:
+            out.update(future.result())
+        else:
+            missing += len(chunk)
+    return out, missing
 
 
 # ---------------------------------------------------------------- masses
@@ -298,11 +331,12 @@ def _pick(term, cap):
     return total, picked
 
 
-def search(mz, adducts, tol_ppm, databases, cap=MAX_PER_DB):
+def search(mz, adducts, tol_ppm, databases, cap=MAX_PER_DB, with_ids=True):
     """观测 m/z 在给定加合物、容差下的数据库命中。
 
     adducts: 要试的加合物（页面上的 Auto 由调用方展开成该离子模式的全部加合物）。databases: SOURCES 里的库名。
     每个化合物只出现一次（按 CID），归到 |Δ ppm| 最小的那个加合物；每个库最多取 cap 个。
+    with_ids=False 时不取各库的原生 ID（只需要库名时省掉最慢的一步）。
     """
     unknown = [d for d in databases if d not in SOURCES]
     if unknown:
@@ -342,7 +376,7 @@ def search(mz, adducts, tol_ppm, databases, cap=MAX_PER_DB):
 
     arrange()
     warnings = []
-    want = [h for h in hits if any(d in _ID_DBS for d in h.dbs)]
+    want = [h for h in hits if any(d in _ID_DBS for d in h.dbs)] if with_ids else []
     if want:
         regs, missing = _registry_ids([h.cid for h in want])
         for h in want:
@@ -357,3 +391,105 @@ def search(mz, adducts, tol_ppm, databases, cap=MAX_PER_DB):
             warnings.append(f"{db}: {totals[db]:,} compounds in the mass window; the {cap} best known are listed. "
                             "Narrow the tolerance or pick one adduct to see fewer.")
     return Result(hits, totals, shown, windows, warnings)
+
+
+# ---------------------------------------------------------------- alternative explanations
+_FORMULA_RE = re.compile(r"^(?:[A-Z][a-z]?\d*)+$")
+_SOURCE_DB = {name: db for db, name in SOURCES.items() if name}
+
+
+def _neutral_formula(formula):
+    """去掉末尾的电荷（C5H14NO+ -> C5H14NO），只用于按分子式比较。"""
+    return re.sub(r"[+-]\d*$", "", (formula or "").strip())
+
+
+def _fastformula(formula, cap):
+    """(CID 列表, 是否超过 cap)。fastformula 是按分子式精确检索，不像 esearch 的文本检索那样把式量当字符串。"""
+    if not _FORMULA_RE.fullmatch(formula or ""):
+        raise ValueError(f"Invalid molecular formula {formula!r}.")
+    url = f"{FASTFORMULA}/{urllib.parse.quote(formula, safe='')}/cids/JSON?MaxRecords={int(cap) + 1}"
+    reply = _get_json(url)
+    try:
+        cids = [int(c) for c in (reply.get("IdentifierList") or {}).get("CID") or []]
+    except (TypeError, ValueError):
+        raise ExactMassError("PubChem sent an unexpected reply. Try again later.") from None
+    return cids[:cap], len(cids) > cap
+
+
+def formula_groups(formula, databases, cap=FORMULA_CAP):
+    """同一分子式的候选结构，按 InChIKey 前 14 位（连接方式）合并。
+
+    返回 {"formula", "rows": [{"key", "name", "names", "databases", "cids", "stereoisomers"}], "examined",
+          "truncated", "warnings"}。databases 是所选库里收录它的库；只选了 PubChem 时写 PubChem。
+    """
+    unknown = [d for d in databases if d not in SOURCES]
+    if unknown:
+        raise ValueError(f"Unknown database: {', '.join(unknown)}.")
+    formula = _neutral_formula(formula)
+    if not formula:
+        raise ValueError("Enter a molecular formula.")
+    chosen = [d for d in SOURCES if d in databases]
+    cids, truncated = _fastformula(formula, cap)
+    props = {cid: p for cid, p in _properties(cids).items() if _neutral_formula(p["formula"]) == formula}
+    sources, missing = _source_names(sorted(props)) if props else ({}, 0)
+
+    groups = {}
+    for cid in sorted(props):
+        p = props[cid]
+        key = (p["inchikey"] or f"cid:{cid}")[:14]
+        g = groups.setdefault(key, {"key": key, "cids": [], "names": [], "dbs": set(), "stereo": set()})
+        g["cids"].append(cid)
+        if p["name"] and p["name"] not in g["names"]:
+            g["names"].append(p["name"])
+        if p["inchikey"]:
+            g["stereo"].add(p["inchikey"])
+        g["dbs"].update(_SOURCE_DB[s] for s in sources.get(cid, ()) if s in _SOURCE_DB)
+
+    rows = []
+    for g in groups.values():
+        member = [db for db in chosen if db != "PubChem" and db in g["dbs"]]
+        if "PubChem" not in chosen and not member:
+            continue
+        rows.append({"key": g["key"], "name": g["names"][0] if g["names"] else "", "names": g["names"][1:],
+                     "databases": member or (["PubChem"] if "PubChem" in chosen else []),
+                     "cids": g["cids"], "stereoisomers": max(0, len(g["stereo"]) - 1)})
+    rows.sort(key=lambda g: (-len([d for d in g["databases"] if d != "PubChem"]), min(g["cids"])))
+
+    warnings = []
+    if truncated:
+        warnings.append(f"PubChem lists more than {cap} structures with {formula}; only the first {cap} it returned were examined.")
+    if missing:
+        warnings.append(f"PubChem was slow: the database membership of {missing} structures is incomplete. Run again in a minute.")
+    return {"formula": formula, "rows": rows, "examined": len(props), "truncated": truncated, "warnings": warnings}
+
+
+def isobaric(mz, adducts, tol_ppm, databases, exclude_formula=None, cap=ISOBARIC_CAP):
+    """同一 m/z 窗口里分子式不同的化合物，按分子式合并（每式一行，取 |Δ ppm| 最小的化合物）。
+
+    exclude_formula: 查询物自己的（中性）分子式；同式的命中不列在这里。with_ids 永远是 False：这里只要库名。
+    """
+    res = search(mz, adducts, tol_ppm, databases, with_ids=False)
+    exclude = _neutral_formula(exclude_formula) if exclude_formula else None
+    groups, same = {}, 0
+    for h in res.hits:
+        f = _neutral_formula(h.formula)
+        if exclude and f == exclude:
+            same += 1
+            continue
+        g = groups.setdefault(f, {"formula": h.formula, "hits": [], "names": []})
+        g["hits"].append(h)
+        if h.name and h.name not in g["names"]:
+            g["names"].append(h.name)
+
+    rows = []
+    for g in groups.values():
+        best = min(g["hits"], key=lambda h: (abs(h.ppm), h.order))
+        dbs = [db for db in SOURCES if db in {d for h in g["hits"] for d in h.dbs}]
+        rows.append({"formula": g["formula"], "name": best.name, "names": [n for n in g["names"] if n != best.name],
+                     "databases": dbs or (["PubChem"] if "PubChem" in databases else []),
+                     "mz": best.mz, "ppm": best.ppm, "adduct": best.adduct, "compounds": len(g["hits"])})
+    rows.sort(key=lambda r: (round(abs(r["ppm"]), 3), r["formula"]))
+    warnings = list(res.warnings)
+    if len(rows) > cap:
+        warnings.append(f"{len(rows)} isobaric formulas are within {tol_ppm:g} ppm; the {cap} closest are listed.")
+    return {"rows": rows[:cap], "warnings": warnings, "same_formula": same, "total": len(rows)}

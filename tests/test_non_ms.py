@@ -352,7 +352,7 @@ def test_figure_has_the_chromophore_atoms_highlighted():
 # ---------------------------------------------------------------- API
 def test_spec_matches_engine_and_runner():
     mod = next(m for m in MODULES if m["id"] == "non_ms")
-    assert mod["live"] and mod["example"]["structure"]["value"] == "caffeine"
+    assert mod["live"] and mod["example"]["structure"]["value"] == "quinine"
     phase = next(f for f in mod["inputs"] if f["id"] == "mobile_phase")
     assert phase["options"] == list(R.MOBILE_PHASES) and phase["value"] == R.DEFAULT_MOBILE_PHASE
     ids = {b["id"]: b for b in mod["outputs"]}
@@ -371,12 +371,12 @@ def test_api_fills_every_block():
     assert set(out) == {"detectors", "chromophore_structure", "rule_hits"}
     tiles = out["detectors"]["tiles"]
     assert [t["label"] for t in tiles] == ["UV/PDA", "FLD", "CAD", "ELSD", "RI"]
-    assert [t["status"] for t in tiles] == ["yes", "no", "no", "no", "partial"]            # caffeine: UV yes; no native fluorescence; volatile for CAD / ELSD; RI possible
-    assert tiles[0]["value"] == "strong · ~273 nm" and tiles[1]["value"] == "unlikely" and all(t["help"] for t in tiles)
-    assert "Xanthine" in tiles[0]["help"][0] and tiles[0]["help"][1].startswith("λmax by class table: approximate (±10–20 nm)")      # class, method and caveat in the UV help
-    assert tiles[1]["help"][-1].startswith("a structural alert only") and "heteroaromatic" in tiles[1]["help"][0]                      # reason + quantum-yield caveat in the FLD help
+    assert [t["status"] for t in tiles] == ["yes", "yes", "yes", "yes", "partial"]        # quinine: UV and native fluorescence; non-volatile for CAD / ELSD; RI possible
+    assert tiles[0]["value"] == "strong · ~315 nm" and tiles[1]["value"] == "likely" and all(t["help"] for t in tiles)
+    assert "Quinoline" in tiles[0]["help"][0] and tiles[0]["help"][1].startswith("λmax by class table: approximate (±10–20 nm)")      # class, method and caveat in the UV help
+    assert tiles[1]["help"][-1].startswith("a structural alert only") and "quinoline-type" in tiles[1]["help"][0]                      # reason + quantum-yield caveat in the FLD help
     fig = out["chromophore_structure"]
-    assert fig["svg"] and fig["help"][0].startswith("Xanthine") and "atoms 2–12" in fig["help"][0] and "~273 nm" in fig["help"][0]     # atoms are numbered from 1 as in the SMILES
+    assert fig["svg"] and fig["help"][0].startswith("Quinoline") and "atoms 3–12" in fig["help"][0] and "~315 nm" in fig["help"][0]
     assert out["rule_hits"]["items"]
 
 

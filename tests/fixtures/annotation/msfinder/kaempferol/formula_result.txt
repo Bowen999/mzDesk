@@ -1,0 +1,9 @@
+File path	File name	Title	MS1 count	MSMS count	Precursor mz	Precursor type	Formula	Theoretical mass	Mass error	Formula score	Databases
+/tmp/in/f0.mat	f0	f0	0	100	285.04046	[M-H]-	C15H10O6	286.04773804	1.6E-06	4.211	HMDB,KNApSAcK,ChEBI,DrugBank,YMDB,T3DB,FooDB,NANPDB,STOFF,BMDB,LipidMAPS,Urine,Serum,PubChem,PlantCyc,UNPD,BLEXP,NPA,COCONUT,MINE
+/tmp/in/f1.mat	f1	f1	0	100	285.04115	[M-H]-	C8H10N6O4S	286.0484238	-2.7E-06	3.122	
+/tmp/in/f1.mat	f1	f1	0	100	285.04115	[M-H]-	C7H16N2O6P2	286.048359492	-6.7E-05	2.992	
+/tmp/in/f1.mat	f1	f1	0	100	285.04115	[M-H]-	C16H14OS2	286.048607068	0.0001806	2.126	
+/tmp/in/f2.mat	f2	f2	0	100	285.04108	[M-H]-	C8H10N6O4S	286.0484238	6.73E-05	3.067	
+/tmp/in/f2.mat	f2	f2	0	100	285.04108	[M-H]-	C7H16N2O6P2	286.048359492	3E-06	3.047	
+/tmp/in/f3.mat	f3	f3	0	100	285.03943	[M-H]-	C9H11N4O5P	286.046706082	-4E-07	3.128	
+/tmp/in/f4.mat	f4	f4	0	100	285.03981	[M-H]-	C7H14N2O8S	286.047086408	0	3.098	

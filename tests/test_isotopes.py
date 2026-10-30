@@ -7,7 +7,7 @@ from mzdesk.api.app import app
 from mzdesk.api.runners.ms1 import run_search
 from mzdesk.ms1 import isotopes as iso
 from mzdesk.ms1 import msbuddy_engine as bd
-from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, CAFFEINE_MS1, MODULES, PIPELINES
+from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, CAFFEINE_MS1, METFORMIN_MS1, MODULES, PIPELINES
 
 client = TestClient(app)
 ALL = ADDUCTS_POS[1:] + ADDUCTS_NEG[1:]
@@ -227,6 +227,6 @@ def test_search_permanent_cation_scores():
 
 def test_example_runs_with_isotopes():
     m = next(m for m in MODULES if m["id"] == "ms1_search")
-    assert m["example"]["ms1"] == CAFFEINE_MS1
+    assert m["example"]["ms1"] == METFORMIN_MS1
     body = client.post("/api/modules/ms1_search/run", json=m["example"]).json()
-    assert "isotope 1.00" in _groups(body)["C8H10N4O2 · [M+H]+"]["meta"]
+    assert "isotope 1.00" in _groups(body)["C4H11N5 · [M+H]+"]["meta"]

@@ -2,6 +2,7 @@
 
 两种谱：
   MS/MS  前体 m/z 窗口（ppm）+ 同离子模式 +（可选）同加合物 -> 候选；每个候选算全部所选指标（精确，不做预筛）。
+         加合物按规范写法比（mzdesk/adducts.py）：[M+FA-H]- / [M+HCOO]- / GNPS 的 [M+FA]- 都是 [M+HCOO]-。
          同时选了 MassBank 和 GNPS 时，GNPS 里转存的 MassBank 记录（副本）只要原件也在候选里就不算（只留 MassBank 原件）。
          候选太多时按前体偏差保留最近的 MAX_MSMS_CANDIDATES 个并警告。
   EI     前体不用，碎片容差固定 0.5 Da。第一步：对库里全部 EI 谱算加权谱熵相似度（ms_entropy 原函数，逐对，约 10 µs/对），
@@ -20,10 +21,11 @@ import os
 
 import numpy as np
 
+from mzdesk import adducts
 from mzdesk.ms2 import library_index as lx
 from mzdesk.ms2 import metric_names as mn
 from mzdesk.ms2 import ms2_similarity as sim
-from mzdesk.ms2.library_parse import adduct_charge_sign, normalize_adduct
+from mzdesk.ms2.library_parse import adduct_charge_sign
 
 SPECTRUM_TYPES = ("MS/MS", "EI")
 EI_TOLERANCE = 0.5                 # EI 按单位质量匹配
@@ -299,6 +301,19 @@ def _entropy_step(q_peaks, lib, tol):
     return ids, scores
 
 
+def _msms_candidates(lib, precursor_mz, tol_ppm, positive, canonical):
+    """lib.msms_candidates，但加合物按现在的规范写法比：索引词表里规范化后等于 canonical 的写法都算。
+
+    旧解析器把 GNPS 的 [M+FA]-（甲酸根，2026-03 版 34,611 条）存成了 [M+HCOOH]-；索引重建之前靠这里找回。
+    """
+    ids, ppm = lib.msms_candidates(precursor_mz, tol_ppm, positive)
+    if canonical is None:
+        return ids, ppm
+    wanted = [lib.adduct_id_of(a) for a in lib.meta.get("adducts", ()) if adducts.canonical(a) == canonical]
+    keep = np.isin(np.asarray(lib.adduct_id[ids]), wanted)
+    return ids[keep], ppm[keep]
+
+
 def _hide_massbank_copies(found):
     """[(库, 行号, Δppm)] -> (去掉 GNPS 中 MassBank 副本后的同样结构, 隐藏条数)。
 
@@ -354,7 +369,7 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
         if not (math.isfinite(precursor_tol_ppm) and 0 < precursor_tol_ppm < 1e5):
             raise ValueError("Precursor tolerance must be a positive number of ppm.")
         if adduct is not None:
-            canonical = normalize_adduct(adduct)
+            canonical = adducts.canonical(adduct)
             if canonical is None:
                 raise ValueError(f"Unknown adduct notation: {adduct}.")
             if adduct_charge_sign(canonical) != (1 if positive else -1):
@@ -406,7 +421,7 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
     else:
         found = []
         for lib in loaded:
-            ids, ppm = lib.msms_candidates(q_prec, precursor_tol_ppm, positive, canonical)
+            ids, ppm = _msms_candidates(lib, q_prec, precursor_tol_ppm, positive, canonical)
             found.append((lib, ids, ppm))
         found, hidden = _hide_massbank_copies(found)
         total = sum(len(f[1]) for f in found)
@@ -497,7 +512,8 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
         lib, row, ppm, *_ = cand[k]
         info = meta[int(k)]
         hits.append({"rank": rank, "library": lib.name, "row": row, "accession": info["accession"], "name": info["name"],
-                     "adduct": info["adduct"], "precursor_mz": float(lib.prec_mz[row]) if not ei else None, "ppm": ppm,
+                     "adduct": adducts.canonical(info["adduct"]) or info["adduct"],      # 老索引的 [M+HCOOH]- 报成 [M+HCOO]-
+                     "precursor_mz": float(lib.prec_mz[row]) if not ei else None, "ppm": ppm,
                      "matches": int(M[k]), "scores": {m: (None if np.isnan(S[k, col[m]]) else float(S[k, col[m]])) for m in metrics},
                      "instrument": info["instrument"], "collision_energy": info["collision_energy"],
                      "inchikey": info["inchikey"], "smiles": info["smiles"]})

@@ -373,3 +373,288 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
             "extended": bool(extended), "formulas": formulas["rows"], "structures": structures["rows"],
             "ms1_count": ms1_count if ms1_count is not None else len(ms1 or []), "ms2_count": ms2_count if ms2_count is not None else len(ms2),
             "seconds": seconds, "peak_rss_mb": peak, "log": log}
+
+
+# ---------------------------------------------------------------- given candidate structures (isomer check, mzdesk/exclusivity/isomers.py)
+# A candidate run scores GIVEN structures: they go into a user-defined structure database (IsUserDefinedDB / UserDefinedDbFilePath, a file
+# in the run's temp folder), so any structure can be scored, not only those in MS-FINDER's databases (checked with real runs: a user entry
+# gets the same fragments and score as the same structure in the shipped databases). Structures are scored only for the formulas
+# MS-FINDER itself ranks best, so the run ranks more of them than the shipped file (5) and the caller starts the formula search from the
+# candidates' theoretical precursor m/z. Without local_db the shipped structure databases and MINEs are off: only the candidates are scored.
+STRUCTURE_DB_KEYS = ("HMDB", "YMDB", "PubChem", "SMPDB", "UNPD", "ChEBI", "PlantCyc", "KNApSAcK", "BMDB", "FooDB", "ECMDB", "DrugBank",
+                     "T3DB", "STOFF", "NANPDB", "LipidMAPS", "Urine", "Saliva", "Feces", "Serum", "Csf", "BLEXP", "NPA", "COCONUT")
+NO_MINES = {"MinesNeverUse": "True", "MinesOnlyUseForNecessary": "False", "MinesAllways": "False"}
+CANDIDATE_TOP_FORMULAS = 20
+USER_DB_COLUMNS = ("Title", "InChIKey", "Short InChIKey", "PubChem CID", "Exact mass", "Formula", "SMILES", "Database ID")
+_SFD_FRAGMENTS = re.compile(r"^Num Fragment[^(]*\(([^)]*)\):\s*(\d+)\s*$")
+
+
+def ini_with_values(text, values):
+    """Text of the parameter file with each key of ``values`` set (key match ignores case); every other line stays byte for byte.
+
+    A key that is not in the text is appended. Same rewrite as ini_with_elements, for any key.
+    """
+    wanted = {k.lower(): (k, str(v)) for k, v in values.items()}
+    done, out = set(), []
+    for line in text.splitlines(keepends=True):
+        key, eq, _ = line.partition("=")
+        hit = wanted.get(key.strip().lower()) if eq else None
+        if hit:
+            eol = line[len(line.rstrip("\r\n")):]
+            out.append(f"{hit[0]}={hit[1]}{eol}")
+            done.add(hit[0])
+        else:
+            out.append(line)
+    extra = [f"{name}={value}\n" for name, value in wanted.values() if name not in done]
+    if extra and out and not out[-1].endswith("\n"):
+        out[-1] += "\n"
+    return "".join(out + extra)
+
+
+def _shift_hydrogens(formula, dh):
+    """'C7H6O4', -1 -> 'C7H5O4' (element order kept; H goes after C when the formula has none). Unchanged when it cannot apply."""
+    counts = [(el, int(n) if n else 1) for el, n in re.findall(r"([A-Z][a-z]?)(\d*)", formula or "")]
+    if not dh or not counts:
+        return formula
+    if all(el != "H" for el, _ in counts):
+        counts.insert(1 if counts[0][0] == "C" else 0, ("H", 0))
+    counts = [(el, n + dh if el == "H" else n) for el, n in counts]
+    if any(n < 0 for _, n in counts):
+        return formula
+    return "".join(el + (str(n) if n != 1 else "") for el, n in counts if n)
+
+
+def _sfd_fragment(cells):
+    shift = _num(cells.get("RearrangedHydrogen"))
+    formula = cells.get("Formula", "").strip()
+    adduct = cells.get("AdductString", "").strip()
+    return {"mz": _num(cells.get("M/Z")), "intensity": _num(cells.get("Intensity")),
+            "formula": (_shift_hydrogens(formula, int(shift)) if shift is not None else formula) + (f" ({adduct})" if adduct else ""),
+            "smiles": cells.get("SMILES", "").strip(), "ppm": _num(cells.get("PPM"))}
+
+
+def parse_sfd(text):
+    """Structures of one structure file (<FORMULA>.sfd, one per formula), in file order:
+    [{"name", "inchikey", "smiles", "score", "fragments": [{"mz", "intensity", "formula", "smiles", "ppm"}]}].
+
+    A fragment row is one MS2 peak the structure explains (the precursor peak included). mz / intensity are the peak as the query file gave
+    it; formula is the composition of the ion: the substructure formula with MS-FINDER's rearranged hydrogens applied (a solvent adduct it
+    assigned is named in brackets); smiles is the substructure; ppm the mass error.
+    """
+    out, cur, columns, left = [], None, [], 0
+    for line in text.splitlines():
+        if left:
+            left -= 1
+            cells = dict(zip(columns, line.split("\t")))
+            if cur is not None and _num(cells.get("M/Z")) is not None:
+                cur["fragments"].append(_sfd_fragment(cells))
+            continue
+        head = _SFD_FRAGMENTS.match(line)
+        if head:
+            columns, left = head.group(1).split(), int(head.group(2))
+            continue
+        key, _, value = line.partition(": ")
+        if key == "NAME":
+            cur = {"name": value.strip(), "inchikey": "", "smiles": "", "score": None, "fragments": []}
+            out.append(cur)
+        elif cur is not None and key == "INCHIKEY":
+            cur["inchikey"] = value.strip()
+        elif cur is not None and key == "SMILES":
+            cur["smiles"] = value.strip()
+        elif cur is not None and key == "TotalScore":
+            cur["score"] = _num(value)
+    return out
+
+
+def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_da=0.01, local_db=False,
+                       timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
+    """Which MS2 peaks each given candidate structure explains: one MS-FINDER run for all of them (in-silico fragmenter, tree depth 2).
+
+    candidates: [{"id", "smiles", "inchikey", "formula", "mass"}] with the neutral formula and monoisotopic mass (the caller computes them:
+    this module stays standard-library only). precursor_mz: where the formula search starts; pass the candidates' theoretical m/z so their
+    formula is found within the 1 mDa of the parameter file. tol_da: fragment tolerance (Ms2Tolerance). local_db: keep MS-FINDER's own
+    structure databases on, so the result also holds the structures they have for the same formulas. Halogen / Si switches follow the
+    candidates' formulas. Raises ValueError for input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
+    {"adduct", "structures": [{"id": the candidate's id, or None for a structure of MS-FINDER's databases, "name", "inchikey", "smiles",
+      "formula", "score", "fragments": [...]}] (fragments as parse_sfd gives them), "formulas": [...] (as in predict), "seconds",
+     "peak_rss_mb", "log"}. A candidate MS-FINDER did not score is missing from "structures".
+    """
+    adduct = resolve_adduct(positive, adduct)
+    if not precursor_mz or precursor_mz <= 0:
+        raise ValueError("Precursor m/z must be positive.")
+    if not candidates:
+        raise ValueError("No candidate structure to score.")
+    if not tol_da or tol_da <= 0:
+        raise ValueError("The fragment tolerance must be positive.")
+    if len(ms2) > MAX_PEAKS:
+        raise ValueError(f"MS-FINDER takes at most {MAX_PEAKS} peaks per spectrum; clean the spectrum first.")
+    query = build_query(precursor_mz, positive, adduct, ms2)
+    mono, exe, ini = check_msfinder()
+
+    titles = {f"mzdesk_candidate_{n}": c["id"] for n, c in enumerate(candidates)}
+    rows = ["\t".join(USER_DB_COLUMNS)] + ["\t".join((title, c["inchikey"], c["inchikey"][:14], "N/A", f"{c['mass']:.6f}", c["formula"], c["smiles"], "N/A"))
+                                           for title, c in zip(titles, candidates)]
+    elements = set(re.findall(r"[A-Z][a-z]?", "".join(c["formula"] for c in candidates)))
+    switches = {"IsUserDefinedDB": "True", "Ms2Tolerance": f"{tol_da:g}", "TryTopNMolecularFormulaSearch": CANDIDATE_TOP_FORMULAS}
+    if not local_db:
+        switches.update({key: "False" for key in STRUCTURE_DB_KEYS}, **NO_MINES)
+
+    if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
+        if _RUN_LOCK.holder == "FRIGID":
+            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
+        raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
+    try:
+        t0 = time.monotonic()
+        with tempfile.TemporaryDirectory(prefix="mzdesk-msfinder-") as tmp:
+            in_dir, out_dir, db = Path(tmp) / "in", Path(tmp) / "out", Path(tmp) / "candidates.txt"
+            in_dir.mkdir()
+            out_dir.mkdir()
+            (in_dir / "query.mat").write_text(query, encoding="ascii")
+            db.write_text("\n".join(rows) + "\n", encoding="ascii")
+            run_ini = Path(tmp) / INI_PATH.name                    # this run only; the shipped file stays as it is
+            text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=bool(elements & {"F", "Cl", "Br", "I"}), silicon="Si" in elements)
+            run_ini.write_bytes(ini_with_values(text, {**switches, "UserDefinedDbFilePath": db}).encode("utf-8"))
+            env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
+            cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
+            _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
+            formula_files = sorted(out_dir.glob("Formula result-*.txt"))
+            if not formula_files:
+                raise MsFinderError("MS-FINDER finished without writing a result file.", log)
+            formulas = parse_formula_results(_read(formula_files[0]))["rows"]
+            structures = [{**s, "id": titles.get(s["name"]), "formula": path.stem}
+                          for path in sorted((in_dir / "query").glob("*.sfd")) for s in parse_sfd(_read(path))]
+        seconds = time.monotonic() - t0
+    finally:
+        _RUN_LOCK.release()
+    return {"adduct": adduct, "structures": structures, "formulas": formulas, "seconds": seconds, "peak_rss_mb": peak, "log": log}
+
+
+# ---------------------------------------------------------------- several spectra in one run (ESI MS/MS Annotation workflow, mzdesk/annotation/msfinder_step.py)
+# The console app reads every query file of the input folder and loads its databases once, so n spectra cost one load (about 4 s) plus the
+# work of each. The workflow writes one query per molecular formula of its shared list, with the precursor set to that formula's theoretical
+# m/z and a narrow Ms1Tolerance, because MS-FINDER cannot take a formula list: its formula search then finds that formula and (almost) nothing else.
+# The structures are read from the .sfd files (<query>/<FORMULA>.sfd), which hold every sub-score the "Structure result" table leaves out.
+SFD_SCORES = (("TotalHrRulesScore", "hr_rules"), ("TotalBondCleavageScore", "bond_cleavage"), ("TotalMassAccuracyScore", "mass_accuracy"),
+              ("TotalFragmentLinkageScore", "fragment_linkage"), ("TotalBondDissociationEnergyScore", "bond_energy"),
+              ("DatabaseScore", "database"), ("SubstructureAssignmentScore", "substructure"))
+_QUERY_KEY = re.compile(r"[A-Za-z0-9_]+")
+
+
+def parse_sfd_headers(text):
+    """Structures of one structure file (<FORMULA>.sfd) with their scores, in file order, fragment tables skipped:
+    [{"name", "inchikey", "smiles", "databases": [(db, id)], "ontology", "score", "subscores": {SFD_SCORES names: value}}].
+
+    "subscores" are the parts of "score" MS-FINDER reports (hydrogen-rearrangement rules, bond cleavage, mass accuracy, fragment linkage,
+    bond dissociation energy, database, substructure assignment); the retention-time / CCS scores are unused here and left out.
+    """
+    names = dict(SFD_SCORES)
+    out, cur, left = [], None, 0
+    for line in text.splitlines():
+        if left:
+            left -= 1
+            continue
+        head = _SFD_FRAGMENTS.match(line)
+        if head:
+            left = int(head.group(2))
+            continue
+        key, _, value = line.partition(": ")
+        if key == "NAME":
+            cur = {"name": value.strip(), "inchikey": "", "smiles": "", "databases": [], "ontology": "", "score": None, "subscores": {}}
+            out.append(cur)
+        elif cur is None:
+            continue
+        elif key == "INCHIKEY":
+            cur["inchikey"] = value.strip()
+        elif key == "SMILES":
+            cur["smiles"] = value.strip()
+        elif key == "RESOURCES":
+            cur["databases"] = _databases(value)
+        elif key == "Ontology":
+            cur["ontology"] = value.strip()
+        elif key == "TotalScore":
+            cur["score"] = _num(value)
+        elif key in names:
+            cur["subscores"][names[key]] = _num(value)
+    return out
+
+
+def _search_seconds(path):
+    """Wall time of one structure search: MS-FINDER creates the .sfd file when the search starts and writes it when the search ends.
+    None where the file system keeps no creation time (st_birthtime: macOS)."""
+    st = path.stat()
+    born = getattr(st, "st_birthtime", None)
+    return None if born is None else max(0.0, st.st_mtime - born)
+
+
+def _file_rows(text, key):
+    """A result file's text cut down to its header line and the rows of the query file `key` (column "File name")."""
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    return "\n".join(lines[:1] + [ln for ln in lines[1:] if ln.split("\t")[1:2] == [key]])
+
+
+def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB):
+    """Formula and structure candidates for several spectra in ONE MS-FINDER run (the databases are loaded once).
+
+    queries: [{"key": letters, digits or _ (names the query file), "precursor_mz", "positive", "adduct": MS-FINDER name, "ms2": [(m/z, intensity)],
+    "ms1": optional}]; each query may have its own mode and adduct. halogen: also search formulas with F, Cl, Br, I (as in predict, for the
+    whole run). values: parameter-file keys to set for this run (for example {"Ms2Tolerance": 0.02, "TryTopNMolecularFormulaSearch": 10}). Raises
+    ValueError for input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
+    {"results": {key: {"formulas": [as in predict], "structures": [as parse_sfd_headers, plus "formula"; score > 0, best first],
+                       "searches": {formula as MS-FINDER writes it: wall seconds of that formula's structure search, None off macOS}}},
+     "seconds", "peak_rss_mb", "log", "stopped"}.
+    A structure search runs at most StructurePredictionTimeOut minutes (parameter file, -1 = no limit; checked after each scored structure)
+    and then keeps what it has scored. A run that is stopped (time or memory limit) is not lost: "stopped" holds the reason, "formulas" are
+    empty and "peak_rss_mb" is None, and the structures are those of the searches that had finished; when none had, the error is raised.
+    """
+    if not queries:
+        raise ValueError("No query to run.")
+    texts = {}
+    for q in queries:
+        key, ms2, ms1 = str(q["key"]), q["ms2"], q.get("ms1")
+        if not _QUERY_KEY.fullmatch(key) or key in texts:
+            raise ValueError(f"The query key {key!r} must be unique and made of letters, digits and _.")
+        if not q["precursor_mz"] or q["precursor_mz"] <= 0:
+            raise ValueError("Precursor m/z must be positive.")
+        if len(ms2) > MAX_PEAKS or len(ms1 or []) > MAX_PEAKS:
+            raise ValueError(f"MS-FINDER takes at most {MAX_PEAKS} peaks per spectrum; clean the spectrum first.")
+        texts[key] = build_query(q["precursor_mz"], q["positive"], resolve_adduct(q["positive"], q.get("adduct")), ms2, ms1, key)
+    mono, exe, ini = check_msfinder()
+
+    if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
+        if _RUN_LOCK.holder == "FRIGID":
+            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
+        raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
+    try:
+        t0 = time.monotonic()
+        with tempfile.TemporaryDirectory(prefix="mzdesk-msfinder-") as tmp:
+            in_dir, out_dir = Path(tmp) / "in", Path(tmp) / "out"
+            in_dir.mkdir()
+            out_dir.mkdir()
+            for key, text in texts.items():
+                (in_dir / f"{key}.mat").write_text(text, encoding="ascii")
+            run_ini = Path(tmp) / INI_PATH.name                    # this run only; the shipped file stays as it is
+            text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=halogen)
+            run_ini.write_bytes(ini_with_values(text, values or {}).encode("utf-8"))
+            env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
+            cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
+            stopped = None
+            try:
+                _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)     # exit code 1 = success: judge by the files
+            except MsFinderError as exc:                # stopped (time, memory): the .sfd files of the searches that had finished are kept
+                stopped, log, peak = exc, exc.log, None
+            formula_files = sorted(out_dir.glob("Formula result-*.txt"))
+            if stopped is None and not formula_files:
+                raise MsFinderError("MS-FINDER finished without writing a result file.", log)
+            formula_text = _read(formula_files[0]) if formula_files else ""
+            results = {}
+            for key in texts:
+                files = sorted((in_dir / key).glob("*.sfd"))
+                structures = [{**s, "formula": path.stem} for path in files for s in parse_sfd_headers(_read(path)) if (s["score"] or 0) > 0]
+                results[key] = {"formulas": parse_formula_results(_file_rows(formula_text, key))["rows"], "structures": sorted(structures, key=_by_score),
+                                "searches": {path.stem: _search_seconds(path) for path in files}}
+            if stopped is not None and not any(r["structures"] for r in results.values()):
+                raise stopped
+        seconds = time.monotonic() - t0
+    finally:
+        _RUN_LOCK.release()
+    return {"results": results, "seconds": seconds, "peak_rss_mb": peak, "log": log, "stopped": str(stopped) if stopped else None}

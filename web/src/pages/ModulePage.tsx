@@ -4,7 +4,9 @@ import { ApiError, runModule } from "../api";
 import { FieldInput, initialValues, isRequired, missingRequired, summarizeInputs, visibleFields } from "../components/Fields";
 import { RichText } from "../components/Help";
 import { Icon, moduleIcon } from "../components/Icon";
+import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
+import { networkUses } from "../network";
 import type { Field, RunResult, Spec } from "../types";
 
 type Run = { busy: boolean; result: RunResult | null; error: string; log: string; seconds: number | null; signature: string };
@@ -48,6 +50,8 @@ export function ModulePage({ spec }: { spec: Spec }) {
   const [editing, setEditing] = useState(true);     // false = inputs folded into a one-line summary (after a successful run)
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
+  const [netNote, setNetNote] = useState("");       // "cancelled" note under the Run button
+  const guard = useNetworkGuard();                 // asks before an online run while Internet search is off
   const ticket = useRef(0);       // a slow run (ESI MS/MS takes up to minutes) must not land on the page the user has moved to
   const valuesRef = useRef(values);
   valuesRef.current = values;
@@ -59,6 +63,7 @@ export function ModulePage({ spec }: { spec: Spec }) {
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
   const detectability = mod.subgroup === "detectability";
+  const gnps = mod.subgroup === "gnps";
   const signature = JSON.stringify(values);
   const ok = run.result?.status === "ok" && !run.busy;
   const stale = (ok || !!run.error) && run.signature !== signature;
@@ -73,6 +78,7 @@ export function ModulePage({ spec }: { spec: Spec }) {
     setValues(prev => ({ ...prev, [fid]: v }));
     if (errors[fid]) setErrors(prev => { const next = { ...prev }; delete next[fid]; return next; });
     if (formError) setFormError("");
+    if (netNote) setNetNote("");
   };
   const focusField = (fid: string) => {
     const el = document.querySelector<HTMLElement>(`[data-field="${fid}"]`);
@@ -85,6 +91,7 @@ export function ModulePage({ spec }: { spec: Spec }) {
     setEditing(true);
     setErrors({});
     setFormError("");
+    setNetNote("");
   };
   const go = async () => {
     const missing = missingRequired(mod.inputs, values);
@@ -98,6 +105,12 @@ export function ModulePage({ spec }: { spec: Spec }) {
     }
     setErrors({});
     setFormError("");
+    // Internet search off: online runs ask first. Hidden fields are not sent, so they do not trigger the question.
+    if (!(await guard.confirm(networkUses(shown, values, mod.network)))) {
+      setNetNote("Cancelled: internet search is off.");
+      return;
+    }
+    setNetNote("");
     const t0 = performance.now(), mine = ++ticket.current, started = signature;
     // Hidden controls (for example MS/MS-only fields in EI mode) are neither sent nor validated.
     const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
@@ -139,6 +152,7 @@ export function ModulePage({ spec }: { spec: Spec }) {
             {summary.items.map((t, i) => <span key={i} className="input-summary-item">{t}</span>)}
           </div>
           <div className="input-summary-actions">
+            {netNote && <span className="msg">{netNote}</span>}
             {run.seconds !== null && <span className="msg">{run.seconds.toFixed(1)} s</span>}
             <button type="button" className="btn secondary" onClick={() => setEditing(true)}>Edit inputs</button>
             <button type="button" className="btn ghost" onClick={go} disabled={run.busy}>Run again</button>
@@ -160,6 +174,11 @@ export function ModulePage({ spec }: { spec: Spec }) {
               {firstCheck > 0 && <div className="fields">{g.fields.slice(0, firstCheck).map(field)}</div>}
               <div className="check-row">{g.fields.slice(firstCheck).map(field)}</div>
             </> : <div className="fields">{g.fields.map(field)}</div>;
+            if (gnps && g.title === "Optional verification") return (
+              <details className="gnps-advanced" key={g.title}>
+                <summary><span>{g.title}</span><small>Diagnostic ions and verification settings</small></summary>
+                <fieldset className="form-section"><legend className="sr-only">{g.title}</legend>{body}</fieldset>
+              </details>);
             return g.title
               ? <fieldset className="form-section" key={g.title}><legend>{g.title}</legend>{body}</fieldset>
               : <div className="form-plain" key={gi}>{body}</div>;
@@ -169,8 +188,8 @@ export function ModulePage({ spec }: { spec: Spec }) {
             {mod.example && <button className="btn secondary" type="button" disabled={run.busy} onClick={loadExample}>Load example</button>}
             {ok && !stale && <button className="btn ghost" type="button" onClick={() => setEditing(false)}>Hide inputs</button>}
             <span className="msg" aria-live="polite">
-              {run.result?.status === "placeholder" && "Not connected yet: nothing computes on this page."}
-              {stale && "Inputs changed since this result. Run again to update it."}
+              {netNote || (run.result?.status === "placeholder" && "Not connected yet: nothing computes on this page.")
+                || (stale && "Inputs changed since this result. Run again to update it.")}
             </span>
           </div>
         </div>
@@ -198,8 +217,12 @@ export function ModulePage({ spec }: { spec: Spec }) {
         </div>
       )}
       {ok && stale && <div className="alert warn">Inputs changed since this run. The results below belong to the previous inputs; run again to update them.</div>}
-      {ok && run.result!.warnings?.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
+      {ok && gnps && !!run.result!.warnings?.length && <div className="alert warn gnps-notices" role="note">
+        <strong>Notes</strong><ul>{run.result!.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+      </div>}
+      {ok && !gnps && run.result!.warnings?.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
       <OutputList blocks={mod.outputs} outputs={ok ? run.result!.outputs : null} live={mod.live} busy={run.busy} />
+      {guard.dialog}
     </div>
   );
 }

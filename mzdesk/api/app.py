@@ -1,9 +1,14 @@
 """FastAPI：/api/spec 给前端页面定义，/api/modules/{id}/run 运行模块，其余路径托管前端静态文件。
 
-已接引擎的模块（spec 里 live=True）由 mzdesk/api/runners 计算；其余模块和 pipeline 返回 placeholder。
+已接引擎的模块（spec 里 live=True）由 mzdesk/api/runners 计算；其余模块返回 placeholder。
+Pipeline（ESI MS/MS Annotation）跑得久：POST /api/pipelines/{id}/run 起一个后台线程，GET /api/pipelines/jobs/{job_id} 查每一步的进度和结果。
+引擎共用一台机器和一把重任务锁，所以 pipeline 任务一次只跑一个，后到的排队（status "queued"）。
 """
+import copy
 import logging
+import threading
 import time
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -12,6 +17,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from mzdesk import __version__
+from mzdesk.annotation import pipeline as annotation_pipeline
+from mzdesk.api import feedback as feedback_api
+from mzdesk.api.request_limits import MassQLRequestLimit
 from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
@@ -23,6 +31,7 @@ LIB_FILES = {"3Dmol-min.js": ROOT / "lib" / "3Dmol-min.js"}   # 前端按需加�
 log = logging.getLogger("mzdesk.api")
 app = FastAPI(title="mzDesk API", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
+app.add_middleware(MassQLRequestLimit)
 _modules = {m["id"]: m for m in MODULES}
 _pipelines = {p["id"]: p for p in PIPELINES}
 
@@ -91,12 +100,172 @@ def get_stats(body: dict):
     return stats.summary(body.get("days") or 30)
 
 
+@app.post("/api/feedback")
+async def send_feedback(request: Request):
+    """The sidebar's Send feedback form: JSON with a message and up to three images, delivered by email.
+
+    Returns {"ok", "delivered", "note"}: delivered=false means the message was saved as an .eml on the server
+    instead (SMTP not configured, or the mail server was unreachable). See mzdesk/api/feedback.py."""
+    return await feedback_api.submit(request)
+
+
+# ---------------------------------------------------------------- pipeline jobs (in memory, lost on restart)
+JOB_LIMIT, JOB_TTL_S = 20, 3600           # at most 20 jobs are kept; a job is dropped an hour after its last update
+_PIPELINE_RUNNERS = {annotation_pipeline.PIPELINE_ID: annotation_pipeline}     # pipeline id -> module with parse_inputs() and run_query()
+# The engines (BUDDY, MS-FINDER, FRIGID) share one machine and one heavy-job lock that gives up after 20 s, so two workflow runs at once make
+# steps 4-5 fail. Runs therefore go one at a time, first come first served: a job waits with status "queued" until it is first in _order and
+# nothing is _active. _turn wakes the waiting threads whenever _active or _order changes.
+_jobs_lock = threading.Lock()
+_turn = threading.Condition(_jobs_lock)
+_jobs, _order, _active = {}, [], None      # job id -> job; ids that have not started, oldest first; id of the run in progress
+_FINISHED = ("done", "skipped", "failed")
+
+
+def _waiting_note(job_id):
+    return f"waiting for the previous run (position {_order.index(job_id) + 1} in the queue)"
+
+
+def _prune_jobs(now, make_room=False):
+    """Drop jobs older than JOB_TTL_S; with make_room also the oldest finished ones until a new job fits. Call with the lock held."""
+    for job_id in [j for j, job in _jobs.items() if now - job["touched"] > JOB_TTL_S]:
+        del _jobs[job_id]
+    for job_id in sorted((j for j, job in _jobs.items() if job["status"] in ("done", "error")), key=lambda j: _jobs[j]["touched"]):
+        if not make_room or len(_jobs) < JOB_LIMIT:
+            break
+        del _jobs[job_id]
+
+
+def _start_job(pipeline_id, runner, query, request):
+    """Register the job and start its thread -> (job id, "running" | "queued"): queued when another run is in progress or ahead of it."""
+    now = time.time()
+    steps = [{"id": s["id"], "title": s["title"], "status": "queued", "seconds": 0.0, "note": "", "blocks": []} for s in _pipelines[pipeline_id]["stages"]]
+    job_id = uuid.uuid4().hex[:12]
+    with _jobs_lock:
+        _prune_jobs(now, make_room=True)
+        if len(_jobs) >= JOB_LIMIT:
+            raise HTTPException(429, f"{JOB_LIMIT} workflow runs are in progress; try again in a minute.")
+        queued = _active is not None or bool(_order)
+        _order.append(job_id)
+        _jobs[job_id] = {"status": "queued" if queued else "running", "steps": steps, "result": None, "error": None, "touched": now, "started": {},
+                         "note": _waiting_note(job_id) if queued else ""}
+        steps[0]["note"] = _jobs[job_id]["note"]
+    threading.Thread(target=_run_job, args=(job_id, pipeline_id, runner, query, request), daemon=True, name=f"job-{job_id}").start()
+    return job_id, "queued" if queued else "running"
+
+
+def _wait_for_turn(job_id):
+    """Block until it is this job's turn, then mark it as the active run. False if the job was dropped while it waited."""
+    global _active
+    with _turn:
+        while job_id in _jobs and (_active is not None or _order[0] != job_id):
+            job = _jobs[job_id]
+            job["note"] = job["steps"][0]["note"] = _waiting_note(job_id)
+            _turn.wait()
+        _order.remove(job_id)
+        if job_id not in _jobs:
+            _turn.notify_all()
+            return False
+        _active = job_id
+        job = _jobs[job_id]
+        job.update(status="running", note="", touched=time.time())
+        job["steps"][0]["note"] = ""
+        _turn.notify_all()                              # the others move up one position
+        return True
+
+
+def _release_turn():
+    global _active
+    with _turn:
+        _active = None
+        _turn.notify_all()
+
+
+def _job_progress(job_id):
+    """The progress(step_id, status, note, blocks) callback of one job."""
+    def progress(step_id, status, note, blocks):
+        now = time.time()
+        with _jobs_lock:
+            job = _jobs.get(job_id)
+            step = next((s for s in job["steps"] if s["id"] == step_id), None) if job else None
+            if step is None:
+                return
+            if status == "running":
+                job["started"].setdefault(step_id, now)
+            step["status"] = status
+            if note is not None:
+                step["note"] = note
+            if blocks is not None:
+                step["blocks"] = blocks
+            if status in _FINISHED:
+                step["seconds"] = round(now - job["started"].get(step_id, now), 3)
+            job["touched"] = now
+    return progress
+
+
+def _run_job(job_id, pipeline_id, runner, query, request):
+    if not _wait_for_turn(job_id):
+        return
+    try:
+        _run_job_now(job_id, pipeline_id, runner, query, request)
+    finally:
+        _release_turn()
+
+
+def _run_job_now(job_id, pipeline_id, runner, query, request):
+    t0, error, result = time.perf_counter(), None, None
+    try:
+        result = clean(runner.run_query(query, _job_progress(job_id)))
+    except Exception as exc:  # noqa: BLE001 - the job reports it; the thread must not die silently
+        log.exception("pipeline %s failed", pipeline_id)
+        error = f"{pipeline_id} failed: {type(exc).__name__}: {exc}"
+    stats.record(request, "run", module=pipeline_id, status=500 if error else 200, ms=round(1000 * (time.perf_counter() - t0)))
+    with _jobs_lock:                                      # last: a client that sees "done" knows the run is over
+        job = _jobs.get(job_id)
+        if job:
+            for step in job["steps"]:
+                done = next((s for s in result["steps"] if s["id"] == step["id"]), None) if result else None
+                if done:                                  # the run's own timing and note are exact
+                    step.update(status=done["status"], seconds=done["seconds"], note=done["note"])
+                elif step["status"] == "running":
+                    step.update(status="failed", note=error or "")
+            job.update(status="error" if error else "done", result=result, error=error, touched=time.time())
+
+
 @app.post("/api/pipelines/{pipeline_id}/run")
-def run_pipeline(pipeline_id: str, inputs: dict):
-    if pipeline_id not in _pipelines:
+def run_pipeline(pipeline_id: str, inputs: dict, request: Request):
+    """Check the form, start the run in a background thread and return its job id; progress and result: GET /api/pipelines/jobs/{job_id}."""
+    runner = _PIPELINE_RUNNERS.get(pipeline_id)
+    if pipeline_id not in _pipelines or runner is None:
         raise HTTPException(404, f"unknown pipeline {pipeline_id}")
-    stages = [{"title": s["title"], "modules": s["modules"], "status": "queued"} for s in _pipelines[pipeline_id]["stages"]]
-    return {"status": "placeholder", "pipeline": pipeline_id, "query": inputs, "stages": stages}
+    try:
+        query = runner.parse_inputs(inputs)
+    except InputError as exc:
+        raise HTTPException(400, str(exc)) from None
+    except Exception as exc:  # noqa: BLE001
+        log.exception("pipeline %s: reading the form failed", pipeline_id)
+        raise HTTPException(500, f"{pipeline_id} failed: {type(exc).__name__}: {exc}") from None
+    job_id, status = _start_job(pipeline_id, runner, query, request)
+    return {"job_id": job_id, "status": status}
+
+
+@app.get("/api/pipelines/jobs/{job_id}")
+def get_pipeline_job(job_id: str):
+    """{"status": queued | running | done | error, "note": why it waits (queued) else "",
+    "steps": [{id, title, status: queued | running | done | skipped | failed, seconds, note, blocks}],
+    "result": the pipeline's Result when done, else null, "error": message or null}.
+    Runs go one at a time: a job behind another one is "queued" (note "waiting for the previous run (position n in the queue)"; the same
+    text is the note of step 1) until it starts."""
+    with _jobs_lock:
+        now = time.time()
+        _prune_jobs(now)
+        job = _jobs.get(job_id)
+        if job is None:
+            raise HTTPException(404, "unknown or expired job")
+        steps = copy.deepcopy(job["steps"])
+        for step in steps:                                 # a running step shows its elapsed time
+            if step["status"] == "running":
+                step["seconds"] = round(now - job["started"].get(step["id"], now), 1)
+        return {"status": job["status"], "note": job["note"], "steps": steps, "result": copy.deepcopy(job["result"]), "error": job["error"]}
 
 
 @app.get("/lib/{name}")

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type React from "react";
-import type { Block, BlockData, CardValue } from "../types";
+import type { Block, BlockData, CardValue, Cell, Row } from "../types";
 import "../outputs-v2.css";
 import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
 import { FigureView } from "./Figure";
@@ -57,6 +57,51 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
     </div>);
 }
 
+/** Pagination and search operate only on the rows returned for the preview, never on the full download. */
+function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const rows = data?.rows ?? [];
+  const columns = data?.columns ?? block.columns ?? [];
+  const size = block.page_size && block.page_size > 0 ? block.page_size : 0;
+  const [page, setPage] = useState(0);
+  const [filter, setFilter] = useState("");
+  useEffect(() => { setPage(0); setFilter(""); }, [data]);
+  if (!size) return <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} empty={empty} compact={block.compact} />;
+  const cellText = (cell: Cell) => {
+    if (cell === null || cell === undefined) return "";
+    if (typeof cell !== "object") return String(cell);
+    return "img" in cell ? "" : String(cell.text ?? cell.badge ?? "");
+  };
+  const searchable = (row: Row) => (Array.isArray(row) ? row : row.cells).map(cellText).join(" ").toLocaleLowerCase();
+  const needle = filter.trim().toLocaleLowerCase();
+  const filtered = needle ? rows.filter(row => searchable(row).includes(needle)) : rows;
+  const pages = Math.max(1, Math.ceil(filtered.length / size));
+  const current = Math.min(page, pages - 1);
+  const start = current * size;
+  const total = typeof data?.count === "number" ? data.count : rows.length;
+  const limited = total > rows.length;
+  const controls = rows.length > size;
+  return <div className="result-table">
+    {controls && <div className="result-table-tools">
+      <label className="result-table-filter"><span>Filter preview</span>
+        <input type="search" value={filter} placeholder="Search these rows" aria-label={`Filter ${block.title ?? "table"} preview`}
+          onChange={e => { setFilter(e.target.value); setPage(0); }} />
+      </label>
+      <span className="result-table-count" aria-live="polite">
+        {filtered.length ? `${start + 1}–${Math.min(start + size, filtered.length)} of ${filtered.length}${needle ? " matching" : ""} preview rows`
+          : needle ? "No matching preview rows" : "No preview rows"}
+      </span>
+    </div>}
+    {limited && <p className="result-table-note">Preview: first {rows.length} of {total.toLocaleString()} results. Filtering only searches this preview.</p>}
+    <RowsTable key={`${current}:${needle}`} columns={columns} rows={filtered.slice(start, start + size)} rowHelp={block.row_help}
+      empty={needle ? "No preview rows match this filter." : empty} compact={block.compact} />
+    {controls && <nav className="result-table-pages" aria-label={`${block.title ?? "Table"} pages`}>
+      <span aria-live="polite">Page {current + 1} of {pages}</span>
+      <div><button type="button" className="page-button" disabled={current === 0} onClick={() => setPage(current - 1)}>Previous</button>
+        <button type="button" className="page-button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>
+    </nav>}
+  </div>;
+}
+
 export function OutputBlock({ block, data, status }: { block: Block; data?: BlockData; status: Status }) {
   const empty = status === "none" ? "no result" : status === "off" ? "not connected yet" : "empty";
   const shown = data ? undefined : status;
@@ -65,7 +110,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
     case "table": return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
-        <RowsTable columns={data?.columns ?? block.columns!} rows={data?.rows ?? []} rowHelp={block.row_help} empty={empty} />
+        <ResultTable block={block} data={data} empty={empty} />
         {block.caption && <small>{block.caption}</small>}
       </div>);
     case "grouptable": return (
@@ -119,6 +164,15 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         <pre className="code">{data?.text ?? `— ${block.label} (${empty}) —`}</pre>
       </div>);
     case "formats": return <FormatsBlock block={block} data={data} empty={empty} />;
+    case "downloads": return (
+      <div className="out">
+        <Title block={block} data={data} status={shown} />
+        <div className="download-list">{data?.files?.map(file => <button key={file.name} type="button" className="btn secondary" onClick={() => {
+          const url = URL.createObjectURL(new Blob([file.content], { type: file.mime ?? "text/plain;charset=utf-8" }));
+          const a = document.createElement("a"); a.href = url; a.download = file.name; a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }}>Download {file.name}</button>)}</div>
+      </div>);
     case "notes": {
       const items = data?.items ?? [];
       if (block.collapsed) {
@@ -154,7 +208,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
  *        "quiet" = no frame, just a title and a hairline (chips, notes, short tables). */
 export function blockLayout(b: Block): { span: "half" | "full"; tier: "hero" | "card" | "quiet" } {
   const narrowTable = (b.type === "table") && (b.columns?.length ?? 0) <= 3;
-  const tier = b.type === "cards" ? "hero" : narrowTable || b.type === "chips" || b.type === "notes" ? "quiet" : "card";
+  const tier = b.type === "cards" ? "hero" : narrowTable || b.type === "chips" || b.type === "notes" || b.type === "downloads" ? "quiet" : "card";
   const span = b.span ?? (narrowTable || b.type === "chips" || b.type === "notes" ? "half" : "full");
   return { span, tier };
 }
@@ -169,6 +223,7 @@ function isEmpty(b: Block, d: BlockData): boolean {
     case "reaction": return !(d.options?.length);
     case "notes": return !(d.items?.length) && !helpLines(d.help).length;
     case "formats": return !Object.keys(d.formats ?? {}).length;
+    case "downloads": return !d.files?.length;
     case "code": return !d.text;
     default: return false;
   }

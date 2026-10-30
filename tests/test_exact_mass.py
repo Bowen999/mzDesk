@@ -241,10 +241,10 @@ def test_summary_cards_and_verdict():
     assert r.status_code == 200, r.text
     body = r.json()
     values = body["outputs"]["summary"]["values"]
-    assert values["Compounds"] == "3" and values["Formulas"] == "1"
-    assert values["Closest hit"]["value"] == "Caffeine" and values["Closest hit"]["note"].startswith("C8H10N4O2 [M+H]+ · ")
-    assert values["Databases searched"] == {"value": "HMDB, PubChem", "note": "HMDB 2 · PubChem 3"}
-    assert body["verdict"].startswith("<b>3 compounds</b> (1 formula) within 5 ppm; closest: <b>Caffeine</b> C8H10N4O2 [M+H]+ (")
+    assert values["Compounds"] == "1" and values["Formulas"] == "1"
+    assert values["Closest hit"]["value"] == "Metformin" and values["Closest hit"]["note"].startswith("C4H11N5 [M+H]+ · ")
+    assert values["Databases searched"] == {"value": "HMDB, PubChem", "note": "HMDB 1 · PubChem 1"}
+    assert body["verdict"].startswith("<b>1 compound</b> (1 formula) within 5 ppm; closest: <b>Metformin</b> C4H11N5 [M+H]+ (")
     assert body["warnings"] == []
 
 
@@ -491,7 +491,7 @@ def test_real_example_page_and_the_pubchem_cap():
     example = next(m for m in MODULES if m["id"] == "ms1_search")["example"]
     result = run_search(example)
     values = result["outputs"]["summary"]["values"]
-    assert values["Closest hit"]["value"] == "Caffeine" and "capped" in values["Compounds"]["note"]
+    assert values["Closest hit"]["value"] == "Metformin" and "capped" in values["Compounds"]["note"]
     assert any("PubChem" in w and "100" in w for w in result["warnings"])
     only_pubchem = run_search({**example, "databases": ["PubChem"], "precursor": {**example["precursor"], "adduct": "[M+H]+"}})
-    assert 2519 in {int(cell_text(r[2])) for _, _, r in rows_of(only_pubchem["outputs"])}      # caffeine survives the 100 limit
+    assert 4091 in {int(cell_text(r[2])) for _, _, r in rows_of(only_pubchem["outputs"])}      # metformin survives the 100 limit

@@ -1,8 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { isLockedModule, lock, useUnlocked } from "../lock";
+import { setInternet, useInternet } from "../network";
 import { useTheme, type ThemePref } from "../themeMode";
 import type { Module, Spec } from "../types";
+import { FeedbackButton } from "./Feedback";
 import { Icon, moduleIcon } from "./Icon";
 import { Logo } from "./Logo";
 import { LockIcon } from "./LockGate";
@@ -64,10 +66,48 @@ function ThemeSwitch({ compact }: { compact: boolean }) {
   return (
     <div className="theme-switch" role="radiogroup" aria-label="Theme">
       {THEMES.map(t => (
-        <button key={t.id} type="button" role="radio" aria-checked={pref === t.id} title={t.label} className={pref === t.id ? "on" : ""} onClick={() => setPref(t.id)}>
-          {glyph(t.icon)}<span>{t.label}</span>
+        <button key={t.id} type="button" role="radio" aria-checked={pref === t.id} aria-label={t.label} data-label={t.label}
+          className={pref === t.id ? "on" : ""} onClick={() => setPref(t.id)}>
+          {glyph(t.icon)}<span className="theme-label">{t.label}</span>
         </button>))}
     </div>
+  );
+}
+
+/** Globe, with a slash when the internet is off. */
+function GlobeIcon({ off = false, size = 16 }: { off?: boolean; size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+      {off && <path d="M4 20 20 4" />}
+    </svg>
+  );
+}
+
+/** Internet search on/off. Off asks before a run that needs the internet (see components/NetworkDialog.tsx).
+ *  In the collapsed rail: a globe button whose slash and dimmed colour say "off". */
+function InternetSwitch({ compact = false }: { compact?: boolean }) {
+  const on = useInternet();
+  const toggle = () => setInternet(!on);
+  const title = on
+    ? "Internet search is on: online lookups run without asking. Click to turn off."
+    : "Internet search is off: a run that needs the internet asks first. Click to turn on.";
+  if (compact) return (
+    <button type="button" className={"rail-btn internet-rail" + (on ? "" : " off")} onClick={toggle} title={title}
+      aria-label={`Internet search: ${on ? "on" : "off"}`} aria-pressed={on}>
+      <GlobeIcon off={!on} size={18} />
+    </button>
+  );
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label="Internet search" className={"internet-switch" + (on ? " on" : "")}
+      onClick={toggle} title={title}>
+      <GlobeIcon off={!on} />
+      <span className="internet-label">Internet search</span>
+      <span className="internet-track" aria-hidden="true"><span className="internet-knob" /></span>
+      <span className="internet-state" aria-hidden="true">{on ? "On" : "Off"}</span>
+    </button>
   );
 }
 
@@ -98,11 +138,11 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
         })}
         <span className="rail-sep" aria-hidden="true" />
         {spec.pipelines.map(p => (
-          <NavLink key={p.id} to={`/pipelines/${p.id}`} title={p.title} className={({ isActive }) => "rail-item placeholder" + (isActive ? " active" : "")}>
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} title={p.title} className={({ isActive }) => "rail-item" + (isActive ? " active" : "")}>
             <Icon name="pipeline" className="nav-icon" />
           </NavLink>))}
       </nav>
-      <div className="sidebar-foot"><ThemeSwitch compact /></div>
+      <div className="sidebar-foot"><InternetSwitch compact /><ThemeSwitch compact /><FeedbackButton rail /></div>
     </aside>
   );
 
@@ -138,14 +178,16 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
       <div className="nav-group">
         <div className="nav-title">Workflows</div>
         {spec.pipelines.map(p => (
-          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link placeholder" + (isActive ? " active" : "")}>
+          <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
             <Icon name="pipeline" className="nav-icon" />
             <span className="nav-link-label">{p.title}</span>
-            {!unlocked && <LockIcon />}
           </NavLink>
         ))}
       </div>
-      <div className="sidebar-foot"><ThemeSwitch compact={false} /></div>
+      <div className="sidebar-foot">
+        <InternetSwitch />
+        <div className="sidebar-foot-row"><ThemeSwitch compact={false} /><FeedbackButton /></div>
+      </div>
     </aside>
   );
 }

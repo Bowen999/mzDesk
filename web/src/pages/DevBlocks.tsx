@@ -33,6 +33,7 @@ const BLOCKS: Block[] = [
   { type: "table", id: "tbl", title: "Methods (links, badges, row help)", columns: ["Method", "Source", "Score", "Note"], row_help: true, help: "Rows may carry their own help (trailing ? column).", caption: "Caption under the table." },
   { type: "grouptable", id: "gt", title: "Methods by compound", columns: ["Method", "Source", "Score"], row_help: true, help: "Groups are collapsed by default; click a header or press Enter / Space on it." },
   { type: "table", id: "legacy", title: "Legacy table (plain strings, {text, href}, {img})", columns: ["Name", "Link", "Structure"] },
+  { type: "table", id: "depict", title: "Cell with a 2D structure on hover ({text, hover_svg})", columns: ["Name", "SMILES"], help: "Hover or Tab to the SMILES: its 2D structure is drawn in the popover; click pins it." },
 
   { type: "reaction", id: "rx_empty", title: "Reaction with options: [] (renders nothing after a run)" },
   { type: "reaction", id: "rx_none", title: "Reaction with no data at all (renders nothing after a run)" },
@@ -82,6 +83,10 @@ const DATA: Record<string, BlockData> = {
     { title: "Theophylline", meta: "0.52 · 2 methods", rows: [["JP18 · theophylline", { badge: "JP", tone: "jp" }, "0.52"], ["RepoRT 0099", { badge: "RepoRT", tone: "report" }, "0.40"]] },
     { title: "Paracetamol", meta: "0.31 · 1 method", help: ["Weak match.", "Shown for completeness."], rows: [["RepoRT 0123", { badge: "RepoRT", tone: "report" }, "0.31"]] } ] },
   legacy: { rows: [["Caffeine", { text: "PubChem", href: "https://pubchem.ncbi.nlm.nih.gov/compound/2519" }, { img: CELL_IMG }], ["Plain", "no link", "no image"]] },
+  depict: { rows: [
+    ["Caffeine", { text: "CN1C=NC2=C1C(=O)N(C)C(=O)N2C", hover_svg: PARENT_SVG }],
+    ["4-Aminophenol", { text: "NC1=CC=C(O)C=C1", hover_svg: PARENT_SVG, help: "hover_svg combines with help: the structure is drawn above the text." }],
+    ["No drawing", "CN1C=NC2=C1C(=O)N(C)C(=O)N2C"] ] },
   n1: { items: ["Basic nitrogen (pKa 9.1) protonates at the chosen pH.", "No acidic site: ESI− weak."] },
   n2: { items: ["Untitled collapsed notes become a small Details disclosure."] },
   n3: { items: ["Visible note one.", "Visible note two."] },

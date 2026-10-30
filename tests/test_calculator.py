@@ -129,10 +129,10 @@ def test_calculator_api_example():
     assert body["status"] == "ok"
     assert body["outputs"]["ppm_error"]["values"]["ppm error"]["value"] == "+2.31"
     assert body["outputs"]["isotope_labels"]["rows"][0][0] == "M (13C3)"
-    assert body["outputs"]["crosstalk"]["rows"][0][2] == "0.05637"
+    assert body["outputs"]["crosstalk"]["rows"][0][2] == "0.1573"
     assert body["outputs"]["concentration"]["values"]["Converted"]["value"] == "100"
     assert body["outputs"]["dilution"]["rows"][0][3] == "1"
-    assert body["outputs"]["collision_energy"]["values"]["NCE ↔ eV"]["value"] == "30 NCE · 11.71 eV"
+    assert body["outputs"]["collision_energy"]["values"]["NCE ↔ eV"]["value"] == "30 NCE · 15.61 eV"
     assert body["outputs"]["kovats"]["values"]["Kovats RI"]["value"] == "950.0"
     assert body["outputs"]["notes"]["items"]
 

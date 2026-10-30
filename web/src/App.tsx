@@ -80,7 +80,7 @@ function Shell({ spec }: { spec: Spec }) {
       <main className="main">
         <Routes>
           <Route path="/" element={<Home spec={spec} />} />
-          <Route path="/pipelines/:id" element={<LockGate required><PipelinePage spec={spec} /></LockGate>} />
+          <Route path="/pipelines/:id" element={<PipelinePage spec={spec} />} />
           <Route path="/modules/:id" element={<ModuleRoute spec={spec} />} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />

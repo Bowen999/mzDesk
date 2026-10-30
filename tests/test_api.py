@@ -6,6 +6,7 @@ Separation 需要 MolGpKa 权重（python -m mzdesk.platform_fit.pka_setup）；
 Structure prediction 需要 Mono + MS-FINDER（python -m mzdesk.ms2.msfinder_setup，只在本机）。没有时相关测试跳过。
 De novo structure 需要 FRIGID（python -m mzdesk.ms2.frigid_setup，只在本机），而且真实运行默认不跑：设 MZDESK_RUN_FRIGID=1 才跑（约 20–40 s、4–5 GB 内存）。
 """
+import json
 import os
 import shutil
 import types
@@ -99,14 +100,11 @@ def test_predicted_spectrum_page_is_gone():
 def test_the_only_workflow_is_esi_ms2_annotation():
     assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation"]
     assert PIPELINES[0]["title"] == "ESI MS/MS Annotation"
-    stages = {s["title"]: s["modules"] for s in PIPELINES[0]["stages"]}
-    assert stages["Spectrum cleanup"] == ["ms2_clean"]
-    assert stages["Library search"] == ["ms2_library", "ms2_similarity"]
-    assert stages["Formula annotation"] == ["ms1_formula"]
-    assert stages["Fragment explanation"] == ["ms2_fragments"]
-    assert stages["Structure candidates"] == ["ms2_structure", "ms2_denovo"]
-    assert stages["Predicted MS/MS"] == ["ms2_esi"]
-    assert PIPELINES[0]["stages"][-1]["modules"] == ["report"]
+    assert [(s["id"], s["title"]) for s in PIPELINES[0]["stages"]] == [
+        (1, "Adduct"), (2, "Formula"), (3, "Library search"), (4, "MS-FINDER structures"), (5, "FRIGID structures"),
+        (6, "Merge and re-rank"), (7, "Isomer check"), (8, "Answer")]
+    assert "structure" not in {f["id"] for f in PIPELINES[0]["inputs"] if f.get("id")}       # the old "Candidate structure" field is gone
+    assert len(PIPELINES[0]["examples"]) == 2
 
 
 def test_molecular_and_detectability_subgroups():
@@ -121,11 +119,11 @@ def test_identity_offers_comptox_and_chembl_inputs():
     assert kinds[-2:] == ["CompTox", "ChEMBL"]
 
 
-def test_pipeline_stages_point_to_existing_modules():
-    ids = {m["id"] for m in MODULES}
+def test_pipeline_examples_match_the_form():
     for p in PIPELINES:
-        for s in p["stages"]:
-            assert s["modules"] and set(s["modules"]) <= ids, (p["id"], s["title"])
+        ids = {f["id"] for f in p["inputs"] if f.get("id")}
+        for example in p["examples"]:
+            assert set(example["values"]) <= ids, (p["id"], example["label"])
 
 
 def test_block_ids_unique_and_examples_match_inputs():
@@ -146,6 +144,9 @@ def test_example_runs_and_fills_every_block(mod, monkeypatch):
         from mzdesk.identity import enrich, resolve
         monkeypatch.setattr(resolve, "resolve", lambda q, kind="Auto", **kw: _fake_resolved(query=q))
         monkeypatch.setattr(enrich, "enrich", lambda r: {"outputs": enrich.empty_outputs(), "warnings": []})
+    if mod["id"] == "exclusivity":          # recorded MS-FINDER answer; real runs: MZDESK_RUN_ISOMERS=1 tests/test_isomers.py
+        run = json.loads((Path(__file__).parent / "fixtures" / "isomers" / "caffeine_local.json").read_text())["explain_candidates"]
+        monkeypatch.setattr(msfinder_engine, "explain_candidates", lambda *a, **kw: run)
     if mod["id"] == "ms2_fragments" and not HAS_JAVA:
         pytest.skip("MetFrag needs Java")
     if mod["id"] == "ms2_esi" and NO_DOCKER:
