@@ -108,16 +108,17 @@ def _extras(block, **extra):
 # help (every block): string or list of strings, shown in a "?" popover after the block title (after the label for figure / code / formats).
 #   A list renders as bullets. The page may add runtime text in data["help"] (string or list); static and runtime text are merged.
 #   Text may use <sub> <sup> <i> <b>. Items inside cards / chips / portal tiles / table rows / groups take their own "help" in the data.
-def table(columns, title=None, caption=None, key=None, id=None, help=None, row_help=False, page_size=None, compact=False):
+def table(columns, title=None, caption=None, key=None, id=None, help=None, row_help=False, page_size=None, compact=False, column_help=None):
     """Table. data: {"rows": [row, ...], "count"?: int, "columns"?: [str, ...]}   count -> small pill next to the title.
     data["columns"] replaces the spec columns for that run (the spec columns are what the page shows before a run); each row then has one cell per data column.
     cell: "text" | {"text", "url"} link (new tab) | {"badge": text, "tone": jp|report|good|warn|bad|neutral} | {"text", "help"} inline "?"
           | {"text", "hover_svg": svg} the 2D structure is drawn on hover over the text | {"img": data-URL}; badge / text cells may also carry
           "url" and "help".   (the old {"text", "href"} link still works)
     row:  [cell, ...] | {"cells": [cell, ...], "help": str|list}.  row_help=True adds a trailing "?" column that shows each row's help.
-    page_size paginates and filters returned preview rows; compact lets long text expand without changing the data."""
+    page_size paginates and filters returned preview rows; compact lets long text expand without changing the data.
+    column_help: {column name: short text} puts a small "?" after that column's name."""
     return _extras({"type": "table", "title": title, "columns": columns, "caption": caption, "key": key, "id": id},
-                   help=help, row_help=row_help, page_size=page_size, compact=compact)
+                   help=help, row_help=row_help, page_size=page_size, compact=compact, column_help=column_help)
 def cards(items, title=None, key=None, id=None, help=None, style=None):
     """Cards. items: (label, unit) or (label, unit, help). data: {"values": {label: "value" | {"value", "note"?, "help"?}}}
     style="metric": compact metric cards (muted label, 20px value, small note / unit line). The "?" sits after each label."""
@@ -662,8 +663,14 @@ MODULES = [
                      "selected databases (online); one row per formula, closest first, at most 50.",
                      "Exact m/z and Δ ppm use the compound's closest adduct. Same-formula hits are in the table above, not here.",
                      "At most 100 compounds per database are examined, so a crowded m/z window is not exhaustive."]),
-         table(["Isomer", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Explained only by the isomer", "Fragments"], "Isomers",
+         table(["Isomer", "Fragments", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Atoms covered"], "Isomers",
                id="isomers",
+               column_help={
+                   "Explained peaks": "Peaks MetFrag explains for this structure, and their share of the intensity.",
+                   "Distinguishable by MS2": "yes: a peak of at least 5 % is explained for your compound but not for this isomer. A model result, not proof.",
+                   "Distinguishing fragments": "Those peaks, each with the fragment that explains it.",
+                   "Atoms covered": "Share of this structure's non-hydrogen atoms inside the coloured fragments (the 8 strongest explained peaks): how much of it the MS2 accounts for.",
+                   "Fragments": "View: the explained peaks drawn on the structure. Computed when you click."},
                help=["PubChem same-formula candidates (online), independent of the Databases field: at most its first 100 CIDs are retrieved, "
                      "and at most 9 other usable connectivities are compared with your compound. The run reports truncation; the set is not exhaustive. "
                      "Structures with the same connectivity are collapsed, so stereoisomers are not assessed.",
@@ -672,7 +679,6 @@ MODULES = [
                      "Requires Java and mzdesk/lib/MetFragCommandLine-2.5.2.jar; the comparison is limited to 120 seconds.",
                      "Peaks: at least 1 % of the base peak, without the precursor and its isotope peaks; a distinguishing peak must be at least 5 %. "
                      "Explained peaks: how many of those peaks the structure explains · their share of the intensity.",
-                     "Explained only by the isomer: information only, it does not change the answer.",
                      "For structures recognised as lipids this check is skipped: conventional MS/MS usually cannot reliably determine C=C or sn-positions; "
                      "specific methods or additional evidence may distinguish them.",
                      "Fragments: View opens that structure with the peaks MetFrag explains for it, each fragment in its own colour on the structure and in the "

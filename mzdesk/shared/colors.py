@@ -33,6 +33,25 @@ def _rgb(hex_color, mix=0.0):
     return tuple(round(int(h[i:i + 2], 16) / 255 * (1 - mix) + mix, 3) for i in (0, 2, 4))
 
 
+# ---- fragment view (mzdesk/ms2/fragment_view.py): one colour per explained fragment, drawn the same in the structure, the spectrum and the card.
+# Equal lightness and chroma in OKLCH (L 0.70, C 0.11), hues spread so neighbours differ: none outweighs another on a white or a dark page.
+# FRAGMENT_TEXT is the same hue darker (L 0.52), for the m/z labels on a white page. The whole structure and the unmarked peaks are PURE_INK.
+def _oklch_hex(lightness, chroma, hue):
+    import math
+    a, b = chroma * math.cos(math.radians(hue)), chroma * math.sin(math.radians(hue))
+    l, m, s = ((lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3, (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3,
+               (lightness - 0.0894841775 * a - 1.2914855480 * b) ** 3)
+    linear = (4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+              -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s)
+    encode = lambda x: 12.92 * x if x <= 0.0031308 else 1.055 * x ** (1 / 2.4) - 0.055
+    return "#%02X%02X%02X" % tuple(round(255 * encode(max(0.0, min(1.0, v)))) for v in linear)
+
+
+FRAGMENT_HUES = (255, 50, 150, 330, 95, 200, 295, 20)          # blue, orange, green, magenta, gold, teal, violet, coral
+FRAGMENT_COLORS = tuple(_oklch_hex(0.70, 0.11, h) for h in FRAGMENT_HUES)
+FRAGMENT_TEXT = tuple(_oklch_hex(0.52, 0.11, h) for h in FRAGMENT_HUES)
+PURE_INK = "#000000"          # the page turns it into pure white in the dark theme (web/src/darkColors.ts)
+
 # ---- RDKit atom highlights: the data colours as soft tints, so the structure stays readable on top of them
 HL_ACID = _rgb(DATA_CORAL, .55)
 HL_BASE = _rgb(DATA_TEAL, .55)

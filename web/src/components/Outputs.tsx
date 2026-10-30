@@ -81,7 +81,7 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("");
   useEffect(() => { setPage(0); setFilter(""); }, [data]);
-  if (!size) return <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} empty={empty} compact={block.compact} />;
+  if (!size) return <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} columnHelp={block.column_help} empty={empty} compact={block.compact} />;
   const cellText = (cell: Cell) => {
     if (cell === null || cell === undefined) return "";
     if (typeof cell !== "object") return String(cell);
@@ -108,7 +108,7 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
       </span>
     </div>}
     {limited && <p className="result-table-note">Preview: first {rows.length} of {total.toLocaleString()} results. Filtering only searches this preview.</p>}
-    <RowsTable key={`${current}:${needle}`} columns={columns} rows={filtered.slice(start, start + size)} rowHelp={block.row_help}
+    <RowsTable key={`${current}:${needle}`} columns={columns} rows={filtered.slice(start, start + size)} rowHelp={block.row_help} columnHelp={block.column_help}
       empty={needle ? "No preview rows match this filter." : empty} compact={block.compact} />
     {controls && <nav className="result-table-pages" aria-label={`${block.title ?? "Table"} pages`}>
       <span aria-live="polite">Page {current + 1} of {pages}</span>

@@ -354,10 +354,10 @@ def test_isomer_table_shows_each_smiles_with_its_structure_on_hover(rig):
     pipeline.run(form(), progress=lambda *e: events.append(e))
     table = next(b for e in events if e[3] for b in e[3] if b["id"] == "isomer_table")
     top, other = table["data"]["rows"]
-    assert table["columns"][1] == "SMILES" and top[1]["text"] == ETHANOL and other[1]["text"] == ETHER
-    assert "<svg" in other[1]["hover_svg"]                                                    # the 2D structure is drawn on hover
-    assert top[5] == "—" and other[5]["text"] == "1"                                          # how many peaks only the top-1 explains
-    assert other[5]["help"] == ["m/z 45.0334 · 30.0 % · C2H5O+ · CCO"]                        # m/z, intensity, ion formula, fragment SMILES
+    assert table["columns"][:3] == ["Candidate", "Fragments", "SMILES"] and top[2]["text"] == ETHANOL and other[2]["text"] == ETHER
+    assert "<svg" in other[2]["hover_svg"]                                                    # the 2D structure is drawn on hover
+    assert top[6] == "—" and other[6]["text"] == "1"                                          # how many peaks only the top-1 explains
+    assert other[6]["help"] == ["m/z 45.0334 · 30.0 % · C2H5O+ · CCO"]                        # m/z, intensity, ion formula, fragment SMILES
 
 
 def test_isomer_table_survives_a_smiles_that_cannot_be_drawn(rig, monkeypatch):
@@ -367,7 +367,7 @@ def test_isomer_table_survives_a_smiles_that_cannot_be_drawn(rig, monkeypatch):
     events = []
     pipeline.run(form(), progress=lambda *e: events.append(e))
     table = next(b for e in events if e[3] for b in e[3] if b["id"] == "isomer_table")
-    assert [row[1] for row in table["data"]["rows"]] == [ETHANOL, ETHER]                      # plain SMILES, no hover structure
+    assert [row[2] for row in table["data"]["rows"]] == [ETHANOL, ETHER]                      # plain SMILES, no hover structure
 
 
 def test_isomer_indistinguishable_gives_a_group_answer_and_keeps_the_level(rig):
@@ -481,6 +481,18 @@ def test_result_carries_what_the_view_button_needs(rig):
     assert query["precursor_mz"] == 195.0877 and query["tol_da"] == 0.02 and query["peaks"]
     assert all(0 < rel <= 100 and mz < 195.0877 for mz, rel in query["peaks"])           # the precursor is not a fragment peak
     assert [c["fragment_adduct"] for c in result["candidates"]] == ["[M+H]+"]
+
+
+def test_isomer_check_table_has_the_fragments_column_next_to_the_candidate(rig):
+    two_candidates(rig)
+    rig.isomers(isomer_result("single", "c1"))
+    events = []
+    pipeline.run(form(), progress=lambda *e: events.append(e))
+    table = next(b for e in events if e[3] for b in e[3] if b["id"] == "isomer_table")
+    assert table["columns"][:2] == ["Candidate", "Fragments"]
+    top, other = table["data"]["rows"]
+    assert top[1]["fragment"]["smiles"] == ETHANOL and other[1]["fragment"] == {"smiles": ETHER, "adduct": "[M+H]+", "name": other[0]}
+    assert table["data"]["fragments"]["precursor_mz"] == 195.0877 and table["data"]["fragments"]["peaks"]
 
 
 def test_candidates_without_a_structure_or_a_metfrag_adduct_get_no_view_button(rig):

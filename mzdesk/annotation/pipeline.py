@@ -123,8 +123,8 @@ def parse_inputs(inputs):
 
 
 # ---------------------------------------------------------------- blocks (shown while the job runs)
-def _table(block_id, title, columns, rows):
-    return {"type": "table", "id": block_id, "title": title, "columns": columns, "data": blk.table_data(rows, count=len(rows))}
+def _table(block_id, title, columns, rows, fragments=None):
+    return {"type": "table", "id": block_id, "title": title, "columns": columns, "data": blk.table_data(rows, count=len(rows), fragments=fragments)}
 
 
 def _notes(block_id, title, items):
@@ -212,7 +212,8 @@ def _ranked_blocks(ranked):
     return [_table("ranked_table", "Ranked candidates", columns, rows), _notes("ranked_note", "How the rank is set", [note])]
 
 
-def _isomer_blocks(res):
+def _isomer_blocks(res, view_query=None, view_adduct=None):
+    """view_query / view_adduct: fragment_view.query() and MetFrag's spelling of the adduct; with both, every row gets a "View" button (second column)."""
     by_id = {i["id"]: i for i in res["isomers"]}
     challengers = {ch["id"] for ch in res["challengers"]}
     rows = []
@@ -224,15 +225,30 @@ def _isomer_blocks(res):
             role = "not separated"
         else:
             role = "separated" if iso and iso["distinguished"] else "not scored"
-        rows.append([c["name"] or c["smiles"] or c["id"], _smiles_cell(c["smiles"]), c["source"],
+        view = blk.fragment_cell(c["smiles"], view_adduct, c["name"]) if view_query and view_adduct and c["smiles"] else "—"
+        rows.append([c["name"] or c["smiles"] or c["id"], view, _smiles_cell(c["smiles"]), c["source"],
                      role + (" · challenger" if c["id"] in challengers else ""),
                      fmt(c["explained_fraction"], 2), _peaks_cell(iso["distinguishing_peaks"]) if iso else "—"])
     items = list(res["notes"])
     for ch in reversed(res["challengers"]):
         mzs = ", ".join(f"{p['mz']:.4f}" for p in ch["peaks"])
         items.insert(0, f"Another isomer explains peaks the top-1 cannot: {ch['name'] or ch['id']} (m/z {mzs}).")
-    blocks = [_table("isomer_table", "Isomers compared", ["Candidate", "SMILES", "Source", "Role", "Explained intensity", "Peaks only the top-1 explains"], rows)]
+    blocks = [_table("isomer_table", "Isomers compared",
+                     ["Candidate", "Fragments", "SMILES", "Source", "Role", "Explained intensity", "Peaks only the top-1 explains"], rows,
+                     fragments=view_query if view_adduct else None)]
     return blocks + [_notes("isomer_notes", "Notes", items)]
+
+
+def _view_query(ms2, q, adduct):
+    """(fragment_view.query(), MetFrag's adduct) for the "View" buttons of a table; (None, None) when there is nothing to show or the display fails."""
+    try:
+        from mzdesk.ms2 import fragment_view
+
+        used = fragment_view.metfrag_adduct(adduct)
+        return (fragment_view.query(ms2, q.precursor_mz, adduct, tol_da=q.tol_da, tol_ppm=q.tol_ppm) if used else None), used
+    except Exception:  # noqa: BLE001 - display only
+        log.exception("fragment view query failed")
+        return None, None
 
 
 # ---------------------------------------------------------------- the run
@@ -402,7 +418,7 @@ def run_query(q, progress=None):
                     else f"{len(res['group'])} structures cannot be separated by the spectrum.")
             if res["challengers"]:
                 note += " Another isomer explains peaks the top-1 cannot."
-            return STATUS_DONE, note, _isomer_blocks(res), res
+            return STATUS_DONE, note, _isomer_blocks(res, *_view_query(ms2_engine, q, top.adduct or top_adduct)), res
         iso = steps.guarded(7, isomer_check)
         if iso is None:
             iso = {"verdict": isomers.INSUFFICIENT, "top_id": ranked[0].id, "group": [], "isomers": [], "challengers": [], "candidates": [],

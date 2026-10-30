@@ -22,6 +22,7 @@ export type Block = {
   help?: Help;              // any block: static "?" popover next to the title (runtime data.help is added to it)
   style?: string;           // cards: "metric" = compact metric cards
   row_help?: boolean;       // table / grouptable: trailing "?" column for per-row help
+  column_help?: Record<string, Help>;   // table: a small "?" after the named column heads
   page_size?: number;       // opt-in pagination and preview-only filtering for large tables
   compact?: boolean;        // long text can be expanded without losing the full value
   collapsed?: boolean;      // notes: items live behind a "?" next to the title (or a "Details" disclosure without a title)
@@ -54,8 +55,8 @@ export type StatusChip = { label: string; level: string; value?: string; help?: 
 export type RxStep = { from: string; reagent?: string; to: string; count?: number };
 export type RxOption = { label: string; steps: RxStep[]; formula?: string; mass?: string | number; heavy?: string | number; help?: Help; svg?: string; product_svg?: string };
 export type RowGroup = { title: string; meta?: string; help?: Help; rows: Row[] };
-/** color / label: a peak drawn in its fragment's colour with its own two-line label (m/z, Δ ppm) in the fragment view (Figure.tsx). */
-export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string; color?: string; label?: string };
+/** color / ink / label: a peak drawn in its fragment's colour with its own two-line label (m/z, Δ ppm) in the fragment view (Figure.tsx); ink = the darker hue for text on a white page. */
+export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string; color?: string; ink?: string; label?: string };
 /** Fragment view (mzdesk/ms2/fragment_view.py): a "View" cell names one structure; the table's `fragments` is the spectrum they share. */
 export type FragmentTarget = { smiles: string; adduct: string; name?: string };
 export type FragmentQuery = { peaks: [number, number][]; precursor_mz: number; tol_da: number };
@@ -65,7 +66,8 @@ export type FragmentItem = {
 };
 export type FragmentView = {
   name: string; smiles: string; formula: string; adduct: string; ion_formula: string; precursor_mz: number; theo_mz: number; positive: boolean;
-  peaks: number; explained: number; explained_fraction: number; overview: string; fragments: FragmentItem[];
+  peaks: number; explained: number; explained_fraction: number; coverage: { atoms: number; heavy: number; fraction: number };
+  overview: string; fragments: FragmentItem[];
   figure: { plotly: { data: any[]; layout: any }; peaks: PeakCard[] }; notes: string[];
   settings: { tol_da: number; tol_ppm: number; tree_depth: number; engine: string }; seconds: number;
 };

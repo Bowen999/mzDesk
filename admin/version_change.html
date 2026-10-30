@@ -263,6 +263,17 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.38', date:'2026-10-30', git:'',
+  title:'Fragments 列紧贴 Isomer 列并冻结；新增 Atoms covered；碎片视图配色与纯黑 / 纯白',
+  note:'Alternative explanations 的 Isomers 表和 ESI MS/MS Annotation 的 Isomer check 表、排名表：Fragments 都放在第二列，和第一列一样横向滚动时冻结。Isomers 表的“Explained only by the isomer”换成 Atoms covered：结构中被彩色碎片覆盖的非氢原子占比（取最强的 8 个已解释峰，与弹窗里的数字一致）；该表五个列名后加了小问号，给一句话解释。碎片视图重新配色：8 个颜色亮度、饱和度一致；完整结构和未标记的峰是纯黑（暗色主题为纯白），不再用氧红氮蓝，避免和色块冲突。',
+  state:[['列顺序','Isomer（冻结）· Fragments（冻结）· 其余'], ['Atoms covered','非氢原子占比 · 最强 8 个已解释峰 · 表与弹窗一致'], ['配色','OKLCH L 0.70 / C 0.11 · 8 色相 · 结构与峰纯黑 / 纯白'], ['ESI','Isomer check 表也有 Fragments'], ['版本','0.2.38']],
+  c:{
+   ms2:['chg','fragment_view：新增 atom_coverage（与弹窗共用“最强 8 个碎片”的规则）；结构图改单色（不再按元素上色），未标记的峰用纯黑，未解释的更淡；8 色调色板放进 shared/colors.py（OKLCH 等亮度），另有同色相的深色版用于浅色主题下的文字；弹窗新增 Atoms covered。',true,{w:'mzdesk/ms2/fragment_view.py · mzdesk/shared/colors.py · tests/test_fragment_view.py'}],
+   other:['chg','Alternative explanations 的 Isomers 表：列顺序改为 Isomer · Fragments · Source · SMILES · Explained peaks · Distinguishable by MS2 · Distinguishing fragments · Atoms covered；“Explained only by the isomer”换成 Atoms covered（“62 % · 13/21”）；Explained peaks、Distinguishable by MS2、Distinguishing fragments、Atoms covered、Fragments 的列名后加问号说明。表格块新增 column_help。',true,{w:'mzdesk/api/runners/exclusivity.py · mzdesk/exclusivity/pubchem_isomers.py · mzdesk/spec.py · tests/test_pubchem_isomer_check.py'}],
+   pipe:['chg','Isomer check 步骤的 Isomers compared 表加 Fragments 列（第二列，用该步骤考虑的同一批峰）；排名表的 Fragments 从最后一列移到第二列。',true,{w:'mzdesk/annotation/pipeline.py · web/src/pages/PipelinePage.tsx · tests/test_pipeline.py'}],
+   app:['chg','宽表格：Fragments 在第二列时与第一列一起冻结；表头支持 column_help（列名后小问号）。暗色主题：纯黑 #000000 变纯白，碎片色保持原样不被重着色；谱图标签在浅色主题用深色版文字。弹窗重新设计：中性底色、四项摘要并成一条、碎片卡用色点而不是彩色文字。',true,{w:'web/src/components/FragmentDialog.tsx · web/src/components/fragment-view.css · web/src/components/Blocks.tsx · web/src/components/Outputs.tsx · web/src/components/Figure.tsx · web/src/darkColors.ts · web/src/types.ts'}],
+   docs:['doc','版本号 0.2.38，本页加 v0.2.38。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.37', date:'2026-10-30', git:'',
   title:'Properties & groups：官能团增至 176 条，并画在输入结构上',
   note:'官能团库分 9 个家族（羰基、含氧、含氮、含硫、P / B / Si / Se / As、卤素、烃、环系、生物分子），含具体与通用两层，会互相重叠（如 Alcohol 与 Secondary alcohol）。点击一个官能团：左边是该官能团本身的结构（R = 分子其余部分），右边是输入结构，命中的位点上色；有多个位点时可看全部（各一种颜色）或单个位点（标原子序号，从 1 开始）。库不是“全部官能团”：化学上没有公认的穷尽清单。Fingerprint 没加：它是给相似度检索和建模用的，不是给人读的，页面上的官能团列表已经起到同样作用。',

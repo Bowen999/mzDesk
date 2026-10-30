@@ -76,6 +76,42 @@ def test_a_fragment_carrying_an_adduct_is_checked_against_its_own_formula():
     assert place and len(place["atoms"]) == 9
 
 
+# ---------------------------------------------------------------- atom coverage (the Isomers table's "Atoms covered")
+def test_coverage_counts_the_non_hydrogen_atoms_inside_the_fragments():
+    rows = [{"mz": 109.0295, "intensity": 29.0, "smiles": "C1=CC(=C(C=C1)O)O", "metfrag_ion": ""}]               # the catechol ring: 8 of 41 atoms
+    assert fv.atom_coverage(DIMER, rows) == {"atoms": 8, "heavy": 41, "fraction": pytest.approx(8 / 41, abs=1e-4)}
+
+
+def test_overlapping_fragments_are_counted_once_and_an_unplaced_one_covers_nothing():
+    rows = [{"mz": 109.0, "intensity": 5.0, "smiles": "C1=CC(=C(C=C1)O)O", "metfrag_ion": ""},
+            {"mz": 110.0, "intensity": 4.0, "smiles": "C1=CC(=C(C=C1)O)O", "metfrag_ion": ""},                  # the same place again
+            {"mz": 111.0, "intensity": 3.0, "smiles": "", "metfrag_ion": ""},                                   # MetFrag gave no structure
+            {"mz": 112.0, "intensity": 2.0, "smiles": "CC(C)(C)C", "metfrag_ion": ""}]                          # no carbon with four carbon neighbours
+    assert fv.atom_coverage(DIMER, rows)["atoms"] == 8
+
+
+def test_coverage_uses_the_strongest_eight_fragments_like_the_view():
+    ring = "C1=CC(=C(C=C1)O)O"
+    weak = {"mz": 500.0, "intensity": 0.1, "smiles": "Oc1ccc(O)cc1", "metfrag_ion": ""}                         # a hydroquinone ring elsewhere
+    rows = [{"mz": 100.0 + i, "intensity": 10.0 + i, "smiles": ring, "metfrag_ion": ""} for i in range(8)] + [weak]
+    assert [r["mz"] for r in fv.shown_rows(rows)] == [100.0 + i for i in range(8)]                              # the weakest is not shown ...
+    assert fv.atom_coverage(DIMER, rows)["atoms"] == 8                                                          # ... and does not count
+
+
+def test_coverage_of_an_unreadable_structure_is_none():
+    assert fv.atom_coverage("not a smiles", []) is None
+
+
+@pytest.mark.skipif(not HAS_JAVA, reason="MetFrag needs Java")
+def test_the_coverage_in_the_table_is_the_one_in_the_view():
+    q = fv.query(DIMER_PEAKS + [(561.14, 5)], 561.14, "[M-H]-", tol_da=0.01, tol_ppm=5)
+    run = mf.run_metfrag(DIMER, q["peaks"], "[M-H]-", q["precursor_mz"], 2, 0.01, 0.0)
+    rows = [r for r in run["annotation"] if r["annotated"] and r["kind"] == "fragment"]
+    view = fv.build(DIMER, q["peaks"], "[M-H]-", q["precursor_mz"], tol_da=0.01)
+    assert fv.atom_coverage(DIMER, rows) == view["coverage"]
+    assert 0.5 < view["coverage"]["fraction"] <= 1 and view["coverage"]["heavy"] == 41                          # the six fragments of the attached figure cover most of it
+
+
 # ---------------------------------------------------------------- the peaks
 def test_the_peaks_are_the_ones_the_isomer_check_considers():
     peaks = [(30.0, 4.0), (40.0, 100.0), (50.0, 20.0), (60.0, 0.5), (61.0653, 10.0), (62.07, 2.0), (80.0, 5.0)]    # precursor 61.0653 [M+H]+ of C3H8O
@@ -287,11 +323,14 @@ def test_isomers_table_has_a_view_column_and_the_spectrum_for_it(monkeypatch):
         "structure": {"mode": "SMILES / InChI", "value": "CC(O)C"}, "precursor": {"ion_mode": "Positive", "adduct": "[M+H]+"}, "databases": ["HMDB"],
         "ms2": {"source": "Paste", "value": "\n".join(f"{x} {y}" for x, y in peaks)}}).json()
     block = next(b for b in next(m for m in MODULES if m["id"] == "exclusivity")["outputs"] if b.get("id") == "isomers")
-    assert block["columns"][-1] == "Fragments"
+    assert block["columns"][:2] == ["Isomer", "Fragments"]                 # right after the frozen first column
+    assert block["columns"][-1] == "Atoms covered" and "Explained only by the isomer" not in block["columns"]
+    assert set(block["column_help"]) <= set(block["columns"]) and "Atoms covered" in block["column_help"]
     data = body["outputs"]["isomers"]
     assert all(len(r) == len(block["columns"]) for r in data["rows"])
-    cells = [r[-1]["fragment"] for r in data["rows"]]
+    cells = [r[1]["fragment"] for r in data["rows"]]
     assert [c["adduct"] for c in cells] == ["[M+H]+", "[M+H]+"] and {c["smiles"] for c in cells} == {"CC(C)O", "CCCO"}
+    assert all(re.fullmatch(r"\d+ % · \d+/\d+|—", r[-1]) for r in data["rows"])      # Atoms covered: "62 % · 13/21", or a dash when nothing was scored
     query = data["fragments"]                                           # no precursor given: the theoretical m/z of C3H8O [M+H]+ is used
     assert query["peaks"] == [[30.0, 4.0], [40.0, 100.0], [50.0, 20.0]] and query["precursor_mz"] == pytest.approx(61.0648, abs=1e-4) and query["tol_da"] == 0.01
 

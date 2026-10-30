@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ApiError, getFragmentJob, startFragments } from "../api";
-import { darkColors } from "../darkColors";
-import { useTheme } from "../themeMode";
 import type { FragmentItem, FragmentJob, FragmentQuery, FragmentTarget, FragmentView } from "../types";
 import { FigureView, ThemedSvg } from "./Figure";
 import "./fragment-view.css";
@@ -10,8 +8,10 @@ import "./fragment-view.css";
 /**
  * Fragment view: the "View" button of a table row and the pop-up it opens (backend: mzdesk/ms2/fragment_view.py, mzdesk/api/fragments.py).
  * The table says which spectrum its rows share (FragmentProvider); a cell says which structure. The pop-up starts a MetFrag job when it opens,
- * polls it, shows its progress, then draws the structure with every explained fragment in its own colour, the spectrum in the same colours and
- * one card per fragment. Nothing is computed before the click.
+ * polls it, shows its progress, then draws the structure with every explained fragment in its own colour, the spectrum in the same colours
+ * and one card per fragment. Nothing is computed before the click.
+ * Colour: the whole structure and the unmarked peaks are pure black (pure white in the dark theme); only the fragments carry a colour, and the
+ * text around them stays neutral, so nothing competes with the colour blocks.
  */
 type Shared = { query: FragmentQuery; note?: string };
 const SharedContext = createContext<Shared | null>(null);
@@ -59,7 +59,7 @@ const signed = (v: number | null, digits: number) => {
   return Number(text) === 0 ? text : `${v > 0 ? "+" : "−"}${text}`;
 };
 
-/** Start the job and poll it until it ends. `attempt` changes to run it again (the Retry button). */
+/** Start the job and poll it until it ends. `attempt` changes to run it again (the Try again button). */
 function useFragmentJob(target: FragmentTarget, query: FragmentQuery, attempt: number) {
   const [job, setJob] = useState<FragmentJob | null>(null);
   const [error, setError] = useState<{ message: string; log: string } | null>(null);
@@ -96,7 +96,7 @@ function useFragmentJob(target: FragmentTarget, query: FragmentQuery, attempt: n
   return { job, error };
 }
 
-/** Elapsed seconds while `running`, ticking; the job's own figure once it has ended. */
+/** Percent, stage and elapsed seconds (ticking). */
 function Progress({ job, startedAt }: { job: FragmentJob | null; startedAt: number }) {
   const [now, setNow] = useState(() => performance.now());
   useEffect(() => { const h = window.setInterval(() => setNow(performance.now()), 200); return () => window.clearInterval(h); }, []);
@@ -112,46 +112,49 @@ function Progress({ job, startedAt }: { job: FragmentJob | null; startedAt: numb
     </div>);
 }
 
-function FragmentCard({ f }: { f: FragmentItem }) {
-  const { dark } = useTheme();
-  const tone = dark ? darkColors(f.color) : f.color;
+function FragmentCard({ f, colors }: { f: FragmentItem; colors: string[] }) {
   return (
-    <article className="fv-frag" style={{ borderTopColor: tone }}>
-      <h4 style={{ color: tone }}><Formula text={f.ion_formula || "?"} /><span className="fv-frag-mz">m/z {f.mz.toFixed(4)}</span></h4>
-      <div className="fv-frag-sub">Δ {signed(f.ppm, 1)} ppm · {f.rel.toFixed(1)} %</div>
-      {f.svg ? <ThemedSvg svg={f.svg} className="fv-frag-img" alt={`Fragment ${f.ion_formula} marked on the structure`} />
+    <article className="fv-frag">
+      <header>
+        <span className="fv-dot" style={{ background: f.color }} aria-hidden="true" />
+        <Formula text={f.ion_formula || "?"} />
+        <span className="fv-frag-mz">{f.mz.toFixed(4)}</span>
+      </header>
+      <div className="fv-frag-sub">Δ {signed(f.ppm, 1)} ppm · {f.rel.toFixed(1)} % of base peak</div>
+      {f.svg ? <ThemedSvg svg={f.svg} keep={colors} className="fv-frag-img" alt={`Fragment ${f.ion_formula} marked on the structure`} />
         : f.img ? <img className="fv-frag-img raster" src={f.img} alt={`Fragment ${f.ion_formula}`} /> : null}
       {!f.placed && <p className="fv-frag-note warn">Not placed on the structure: its own structure is drawn.</p>}
       {f.placed && f.alternatives > 0 && <p className="fv-frag-note">Also fits {f.alternatives} other place{f.alternatives === 1 ? "" : "s"}; the best one is drawn.</p>}
     </article>);
 }
 
-function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
-  return <div className="fv-stat"><div className="fv-stat-label">{label}</div><div className="fv-stat-value">{value}</div>{note && <div className="fv-stat-note">{note}</div>}</div>;
+function Fact({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
+  return <div className="fv-fact"><div className="fv-fact-label">{label}</div><div className="fv-fact-value">{value}</div>{note && <div className="fv-fact-note">{note}</div>}</div>;
 }
 
 function Result({ view, extra }: { view: FragmentView; extra?: string }) {
-  const { settings: s } = view;
+  const { settings: s, coverage } = view;
+  const colors = view.fragments.map(f => f.color);
   const lines = [...view.notes];
   if (extra) lines.push(extra);
   lines.push(`${s.engine}: in-silico fragmentation, tree depth ${s.tree_depth}, fragment tolerance ${s.tol_da} Da. The fragments are predictions, not proof of identity; an unexplained peak is not evidence against the structure.`);
   return (
     <>
-      <div className="fv-stats">
-        <Stat label="Explained peaks" value={`${view.explained} / ${view.peaks}`} note="fragment peaks, precursor and isotopes left out" />
-        <Stat label="Explained intensity" value={`${(view.explained_fraction * 100).toFixed(1)} %`} note="of those peaks" />
-        <Stat label="Precursor m/z" value={view.theo_mz.toFixed(4)} note={view.adduct} />
-        <Stat label="Ion formula" value={<Formula text={view.ion_formula} positive={view.positive} />} note={view.formula} />
+      <div className="fv-facts">
+        <Fact label="Explained peaks" value={`${view.explained} / ${view.peaks}`} note="fragment peaks; precursor and isotopes left out" />
+        <Fact label="Explained intensity" value={`${(view.explained_fraction * 100).toFixed(1)} %`} note="of those peaks" />
+        <Fact label="Atoms covered" value={`${(coverage.fraction * 100).toFixed(0)} %`} note={`${coverage.atoms} of ${coverage.heavy} non-hydrogen atoms, by the coloured fragments`} />
+        <Fact label="Ion formula" value={<Formula text={view.ion_formula} positive={view.positive} />} note={view.formula} />
       </div>
       {view.fragments.length === 0 && <div className="alert warn">MetFrag explained no peak with this structure, so there is nothing to mark. The spectrum is shown below.</div>}
       <div className="fv-main">
         {view.fragments.length > 0 && <figure className="fv-overview">
-          <ThemedSvg svg={view.overview} className="fv-overview-img" alt="Structure with every explained fragment in its colour" />
-          <figcaption>Each colour is one fragment; where fragments overlap the colours share the atoms.</figcaption>
+          <ThemedSvg svg={view.overview} keep={colors} className="fv-overview-img" alt="Structure with every explained fragment in its colour" />
+          <figcaption>One colour per fragment; where fragments overlap, the colours share the atoms.</figcaption>
         </figure>}
         <div className="fv-spectrum"><FigureView data={view.figure} /></div>
       </div>
-      {view.fragments.length > 0 && <div className="fv-frags">{view.fragments.map(f => <FragmentCard f={f} key={f.mz} />)}</div>}
+      {view.fragments.length > 0 && <div className="fv-frags">{view.fragments.map(f => <FragmentCard f={f} colors={colors} key={f.mz} />)}</div>}
       <ul className="fv-notes">{lines.map((n, i) => <li key={i}>{n}</li>)}</ul>
     </>);
 }
@@ -188,13 +191,13 @@ function FragmentDialog({ target, shared, onClose }: { target: FragmentTarget; s
   const retry = () => { startedAt.current = performance.now(); setAttempt(n => n + 1); };
   const title = target.name || view?.name || target.smiles;
   return createPortal(
-    <div className="dialog-overlay fv-overlay" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="dialog-overlay fv-overlay" onMouseDown={e => { if (e.target === e.currentTarget) closeRef.current(); }}>
       <div className="fv-card" role="dialog" aria-modal="true" aria-labelledby="fv-title" tabIndex={-1} ref={card}>
         <header className="fv-head">
           <div className="fv-head-text">
-            <div className="fv-kicker">Fragment explanation · {target.adduct}</div>
+            <div className="fv-kicker">Fragment explanation</div>
             <h2 id="fv-title" title={title}>{title}</h2>
-            {view && <div className="fv-sub"><Formula text={view.formula} /> · {view.smiles}</div>}
+            <div className="fv-sub">{view ? <><Formula text={view.formula} /> · {view.adduct} {view.theo_mz.toFixed(4)} · {view.smiles}</> : target.adduct}</div>
           </div>
           <button type="button" className="fv-close" onClick={onClose} aria-label="Close">×</button>
         </header>

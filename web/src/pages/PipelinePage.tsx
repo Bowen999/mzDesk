@@ -74,9 +74,9 @@ const FRAGMENT_NOTE = "The isomer comparison on this page uses MS-FINDER; this v
 
 function rankedRows(candidates: AnnotationCandidate[]): Row[] {
   return candidates.map(c => [
-    c.rank ?? "—", c.name || "—", c.smiles || "—", c.formula || "—", c.adduct || "—", c.layer_label,
+    c.rank ?? "—", fragmentCell(c), c.name || "—", c.smiles || "—", c.formula || "—", c.adduct || "—", c.layer_label,
     c.level ? { badge: levelName(c.level_label), tone: LEVEL_TONE[c.level] ?? "neutral", help: c.level_reason } : "—",
-    c.final_score === null ? "—" : c.final_score.toFixed(3), detectText(c), isomerCell(c), fragmentCell(c),
+    c.final_score === null ? "—" : c.final_score.toFixed(3), detectText(c), isomerCell(c),
   ]);
 }
 
@@ -251,7 +251,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           <IsomerEvidence result={result} />
           <div className="results-head"><h2 className="panel-title">Ranked candidates</h2><span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
           <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
-            <RowsTable columns={["Rank", "Name", "SMILES", "Formula", "Adduct", "Layer", "Level", "Final score", "Detectability (omics / ionizable / adduct)", "Isomer role", "Fragments"]}
+            <RowsTable columns={["Rank", "Fragments", "Name", "SMILES", "Formula", "Adduct", "Layer", "Level", "Final score", "Detectability (omics / ionizable / adduct)", "Isomer role"]}
               rows={rankedRows(result.candidates)} empty="no candidates" />
           </FragmentProvider>
           <div className="meta">Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.</div>

@@ -87,8 +87,8 @@ def test_page_uses_pubchem_even_when_only_hmdb_selected_and_reports_scope(monkey
     assert response.status_code == 200, response.text
     body = response.json()
     rows = body["outputs"]["isomers"]["rows"]
-    assert len(rows) == 3 and rows[1][1] == "PubChem CID 2" and rows[2][1] == "PubChem CID 3"
-    assert [r[4]["badge"] for r in rows] == ["your compound", "yes", "yes"]
+    assert len(rows) == 3 and rows[1][2] == "PubChem CID 2" and rows[2][2] == "PubChem CID 3"
+    assert [r[5]["badge"] for r in rows] == ["your compound", "yes", "yes"]
     assert "not a unique identification" in body["verdict"] and "Not exhaustive" in body["verdict"]
     assert "3 CIDs retrieved (limit 100; not truncated" in body["verdict"]
     assert "2 other connectivities selected (limit 9, not truncated)" in body["verdict"]
@@ -137,7 +137,7 @@ def test_partial_metfrag_failure_is_not_a_unique_answer(monkeypatch, failed):
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
     assert "Not distinguished or not scored" in body["verdict"]
     assert any("not scored" in w.lower() and "not ruled out" in w.lower() for w in body["warnings"])
-    assert "not scored" in [r[4]["badge"] for r in body["outputs"]["isomers"]["rows"]]
+    assert "not scored" in [r[5]["badge"] for r in body["outputs"]["isomers"]["rows"]]
 
 
 def test_total_comparison_timeout_leaves_the_unscored_candidate_in_the_group(monkeypatch):

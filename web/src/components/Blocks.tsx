@@ -1,5 +1,5 @@
-import { useId, useState, type ReactNode } from "react";
-import type { Cell, Row, RowGroup, RxOption, StatusChip, Tile } from "../types";
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import type { Cell, Help, Row, RowGroup, RxOption, StatusChip, Tile } from "../types";
 import { FragmentButton } from "./FragmentDialog";
 import { ThemedSvg } from "./Figure";
 import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
@@ -73,15 +73,34 @@ function CompactText({ text, column }: { text: string; column: string }) {
   </span>;
 }
 
-/** The shared table body: header + rows (+ trailing "?" column when `rowHelp`). */
-export function RowsTable({ columns, rows, rowHelp = false, empty, compact = false }: { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string; compact?: boolean }) {
+/** The shared table body: header + rows (+ trailing "?" column when `rowHelp`; `columnHelp` puts a small "?" after a column's name).
+ *  A wide table freezes its first column (theme.css); a "Fragments" column right after it is frozen too (fragment-view.css), so the View button
+ *  stays in reach next to the compound while the rest scrolls. */
+export function RowsTable({ columns, rows, rowHelp = false, empty, compact = false, columnHelp }:
+  { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string; compact?: boolean; columnHelp?: Record<string, Help> }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const wide = columns.length > 6;
+  const frozen2 = wide && columns[1] === "Fragments";
+  // the second frozen column sticks right after the first, so it needs the first one's width
+  useLayoutEffect(() => {
+    const el = wrap.current, first = el?.querySelector("th:first-child");
+    if (!frozen2 || !el || !first) return;
+    const set = () => el.style.setProperty("--col1-w", `${first.getBoundingClientRect().width}px`);
+    set();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(set) : null;
+    ro?.observe(first);
+    return () => ro?.disconnect();
+  }, [frozen2, columns, rows]);
+  const fix = (j: number) => (frozen2 && j === 1 ? " col-frozen" : "");
   return (
     <>
-    {compact && columns.length > 6 && <small className="table-scroll-hint">Scroll sideways to see all columns.</small>}
-    <div className={"table-wrap" + (columns.length > 6 ? " wide" : "") + (compact ? " compact-table" : "")} tabIndex={0}
+    {compact && wide && <small className="table-scroll-hint">Scroll sideways to see all columns.</small>}
+    <div ref={wrap} className={"table-wrap" + (wide ? " wide" : "") + (frozen2 ? " has-frozen2" : "") + (compact ? " compact-table" : "")} tabIndex={0}
       role="region" aria-label={`Results table, ${columns.length} columns; scroll horizontally for more`}>
       <table className="out-table">
-        <thead><tr>{columns.map(c => <th key={c}>{c}</th>)}{rowHelp && <th className="help-col" aria-label="Help" />}</tr></thead>
+        <thead><tr>{columns.map((c, j) => <th key={c} className={fix(j).trim() || undefined}>{c}
+          {columnHelp?.[c] && <HelpButton lines={helpLines(columnHelp[c])} className="inline" label={`Help: ${c}`} />}</th>)}
+          {rowHelp && <th className="help-col" aria-label="Help" />}</tr></thead>
         <tbody>
           {rows.length
             ? rows.map((r, i) => {
@@ -89,7 +108,7 @@ export function RowsTable({ columns, rows, rowHelp = false, empty, compact = fal
               const lines = helpLines(help);
               return (
                 <tr key={i}>
-                  {cells.map((c, j) => <td key={j} className={isMultiline(c) ? "long lines" : isLong(c) ? "long" : undefined}>
+                  {cells.map((c, j) => <td key={j} className={(isMultiline(c) ? "long lines" : isLong(c) ? "long" : "") + fix(j) || undefined}>
                     {compact && typeof c === "string" && c.length > 80 ? <CompactText text={c} column={columns[j] ?? "text"} /> : <CellView cell={c} />}
                   </td>)}
                   {rowHelp && <td className="help-col">{lines.length > 0 && <HelpButton lines={lines} label="Row help" />}</td>}

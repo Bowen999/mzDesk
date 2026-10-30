@@ -30,9 +30,10 @@ function load3Dmol(): Promise<any> {
 }
 
 /** An SVG drawn for a white page (RDKit structures), recoloured in the dark theme. */
-export function ThemedSvg({ svg, className = "fig-img svg", alt = "" }: { svg: string; className?: string; alt?: string }) {
+export function ThemedSvg({ svg, className = "fig-img svg", alt = "", keep }: { svg: string; className?: string; alt?: string; keep?: string[] }) {
   const { dark } = useTheme();
-  const src = useMemo(() => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(dark ? darkColors(svg) : svg)}`, [svg, dark]);
+  const keepKey = keep?.join(",") ?? "";          // `keep`: colours that stay as drawn in the dark theme (the fragment view's palette)
+  const src = useMemo(() => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(dark ? darkColors(svg, false, keep) : svg)}`, [svg, dark, keepKey]);
   return <img className={className} alt={alt} src={src} />;
 }
 
@@ -48,7 +49,7 @@ export function FigureView({ data }: { data: BlockData }) {
 const mzDecimals = (peaks: PeakCard[]) => (peaks.every(p => Number.isInteger(p.mz)) ? 0 : 4);
 
 /** m/z 标签：重要的峰优先（已解释，再按强度）；标签不与别的标签重叠，也不压住别的峰。缩放后重算。 */
-function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: number) {
+function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: number, dark = false) {
   const { xaxis: xa, yaxis: ya } = gd._fullLayout;
   const x0 = Math.min(...xa.range), x1 = Math.max(...xa.range), yTop = ya.range[1];
   const vis = peaks.map((_, i) => i).filter(i => peaks[i].mz >= x0 && peaks[i].mz <= x1);
@@ -84,7 +85,8 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
     }
     if (!b) continue;
     boxes.push(b);
-    const font = { family: MONO, size: 10, color: p.color ?? (p.on ? INK : MUTED) };
+    // a fragment's label is written in its darker hue on a white page (`ink`), in its own hue on a dark one
+    const font = { family: MONO, size: 10, color: p.color ? (dark ? p.color : p.ink ?? p.color) : p.on ? INK : MUTED };
     const base = { x: p.mz, y: p.rel, xref: "x", yref: "y", text: txt, yanchor: "bottom", font };
     anns.push(lift
       ? { ...base, showarrow: true, arrowhead: 0, arrowwidth: 0.8, arrowcolor: p.color, ax: side * (w / 2 + 3), ay: -(lift + 2), xanchor: "center" }
@@ -97,7 +99,8 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
   const ref = useRef<HTMLDivElement>(null);
   const { dark } = useTheme();
   // the backend draws for a white page; in the dark theme every colour of the figure (and of the peak labels) is remapped
-  const fig = useMemo(() => (dark ? JSON.parse(darkColors(JSON.stringify(raw), true)) : raw), [raw, dark]);
+  const keep = useMemo(() => (peaks ?? []).map(p => p.color).filter((c): c is string => !!c), [peaks]);       // fragment colours are not remapped
+  const fig = useMemo(() => (dark ? JSON.parse(darkColors(JSON.stringify(raw), true, keep)) : raw), [raw, dark, keep]);
   const [hover, setHover] = useState<{ p: PeakCard; x: number; y: number } | null>(null);
   const [err, setErr] = useState("");
   const [ready, setReady] = useState(false);
@@ -123,8 +126,8 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
         if (!alive || !peaks?.length) return;
         const relabel = () => {
           busy = true;
-          const anns = peakLabels(el, peaks, staticAnn, precursor);
-          Plotly.relayout(el, { annotations: dark ? JSON.parse(darkColors(JSON.stringify(anns), true)) : anns }).finally(() => { busy = false; });
+          const anns = peakLabels(el, peaks, staticAnn, precursor, dark);
+          Plotly.relayout(el, { annotations: dark ? JSON.parse(darkColors(JSON.stringify(anns), true, keep)) : anns }).finally(() => { busy = false; });
         };
         relabel();
         el.on("plotly_hover", (ev: any) => {
@@ -141,7 +144,7 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
       });
     }).catch(e => alive && setErr(String(e)));
     return () => { alive = false; ro?.disconnect(); if (Plotly) Plotly.purge(el); };
-  }, [fig, peaks]);   // fig changes with the theme too
+  }, [fig, peaks, keep]);   // fig changes with the theme too
   if (err) return <div className="out placeholder-box">Figure failed: {err}</div>;
   return (
     <div className="fig" onMouseLeave={() => setHover(null)}>

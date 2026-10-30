@@ -8,6 +8,7 @@ import time
 
 from mzdesk import adducts
 from mzdesk.exclusivity import isomers
+from mzdesk.ms2 import fragment_view
 from mzdesk.ms2 import metfrag_engine as mf
 
 MAX_CANDIDATES = 10              # query plus at most nine different connectivities
@@ -137,7 +138,10 @@ def discriminate(top, search, peaks, precursor_mz, adduct, *, tol_da=0.01, tol_p
         e = explanations.get(c["id"])
         result["candidates"].append({"id": c["id"], "name": c.get("name", ""), "smiles": c["smiles"], "source": c["source"],
                                      "evaluated": e is not None, "explained": [peak(i, f) for i, f in sorted((e or {}).items())],
-                                     "explained_fraction": round(sum(considered[i][1] for i in e) / total, 4) if e is not None else None})
+                                     "explained_fraction": round(sum(considered[i][1] for i in e) / total, 4) if e is not None else None,
+                                     # share of the structure's non-hydrogen atoms inside the coloured fragments of its fragment view
+                                     "atom_coverage": (fragment_view.atom_coverage(c["smiles"], list(e.values()), allow_charge=canonical == "[M]+")
+                                                       if e is not None else None)})
     if len(explanations) < 2:
         return stop("MetFrag did not score any of the other candidates; no isomer verdict is possible.")
     mine = explanations[top["id"]]

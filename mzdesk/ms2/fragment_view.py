@@ -32,9 +32,8 @@ MAX_FRAGMENTS = 8               # explained peaks drawn in colour (the most inte
 MAX_MATCHES = 2000              # substructure matches examined per fragment
 OVERVIEW_SIZE = (440, 330)
 CARD_SIZE = (250, 190)
-HIGHLIGHT_ALPHA = 0.62
-# eight muted colours that stay apart on white and dark pages (the labels in the spectrum use the same ones)
-PALETTE = ["#B8993E", "#5E9A5B", "#C46FA6", "#E0804F", "#5A9AC8", "#8C78C4", "#3FA39A", "#C95A5A"]
+HIGHLIGHT_ALPHA = 0.6
+PALETTE = list(theme.FRAGMENT_COLORS)            # equal-weight colours (mzdesk/shared/colors.py); the labels use the darker FRAGMENT_TEXT
 Y_HEADROOM = 1.45               # y axis top = tallest peak x this: room for the two-line labels
 
 
@@ -127,13 +126,34 @@ def fragment_atoms(parent, fragment_smiles, fragment_formula=""):
     return {"atoms": list(best[1]), "alternatives": sum(1 for s in scored if s[0] == best[0]) - 1}
 
 
+def shown_rows(rows):
+    """The explained fragment peaks that get a colour: the MAX_FRAGMENTS most intense, in m/z order. rows: MetFrag annotation rows."""
+    return sorted(sorted(rows, key=lambda r: -r.get("intensity", 0))[:MAX_FRAGMENTS], key=lambda r: r["mz"])
+
+
+def atom_coverage(smiles, rows, *, allow_charge=False):
+    """How much of the structure the coloured fragments cover -> {"atoms": covered, "heavy": all, "fraction"} (non-hydrogen atoms), or None when
+    the structure cannot be read. rows: the explained fragment rows of a MetFrag run; the same rule as the fragment view (shown_rows), so the
+    Isomers table and the pop-up give the same number. A fragment that cannot be placed covers nothing."""
+    parent, _dropped, _error = mf._prepare_molecule(smiles, allow_charge=allow_charge)
+    if parent is None or not parent.GetNumHeavyAtoms():
+        return None
+    covered = set()
+    for row in shown_rows(rows):
+        place = fragment_atoms(parent, row.get("smiles", ""), fragment_formula(row.get("metfrag_ion", "")))
+        if place:
+            covered.update(place["atoms"])
+    heavy = parent.GetNumHeavyAtoms()
+    return {"atoms": len(covered), "heavy": heavy, "fraction": round(len(covered) / heavy, 4)}
+
+
 # ---------------------------------------------------------------- drawing
 def _rgba(color):
     return theme._rgb(color) + (HIGHLIGHT_ALPHA,)
 
 
 def _draw(mol, groups, size):
-    """SVG of the (prepared) structure with each group (hex colour, atom indices) highlighted in its colour; bonds inside a group too."""
+    """SVG of the (prepared) structure in pure black with each group (hex colour, atom indices) highlighted in its colour; bonds inside a group too."""
     atom_colors, bond_colors = {}, {}
     for color, atoms in groups:
         inside = set(atoms)
@@ -144,6 +164,7 @@ def _draw(mol, groups, size):
                 bond_colors.setdefault(b.GetIdx(), []).append(_rgba(color))
     drawer = depict.svg_drawer(*size)
     opts = drawer.drawOptions()
+    opts.useBWAtomPalette()                         # the whole structure in one ink: oxygen red and nitrogen blue would fight the colour blocks
     opts.fillHighlights = True
     opts.highlightBondWidthMultiplier = 14
     drawer.DrawMoleculeWithHighlights(mol, "", atom_colors, bond_colors, {a: 0.38 for a in atom_colors}, {}, -1)
@@ -157,10 +178,10 @@ def _figure(ann, colors, theo_mz, adduct, y_top):
 
     fig = go.Figure()
     plain = [(a, "dark" if a["annotated"] else "light") for i, a in enumerate(ann) if i not in colors]
-    for key, color, name in (("light", ms2_plot.LIGHT, "unexplained"), ("dark", ms2_plot.DARK, "explained")):
+    for key, opacity, name in (("light", 0.28, "unexplained"), ("dark", 0.8, "explained")):          # the whole spectrum in pure ink, paler when unexplained
         rows = [a for a, k in plain if k == key]
         if rows:
-            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], color, name))
+            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], theme.PURE_INK, name).update(opacity=opacity))
     for i, color in colors.items():
         a = ann[i]
         fig.add_trace(ms2_plot.stick_trace([a["mz"]], [a["rel"]], color, f"{a['mz']:.4f}"))
@@ -198,6 +219,7 @@ def _card(a, color=None):
         card["img"] = f"data:image/png;base64,{a['b64']}"
     if color:
         card["color"] = color
+        card["ink"] = theme.FRAGMENT_TEXT[PALETTE.index(color)]
         card["label"] = f"{a['mz']:.4f}" + (f"<br>Δ {_ppm(a['ppm'])} ppm" if a["ppm"] is not None else "")
     return card
 
@@ -230,7 +252,7 @@ def build(smiles, peaks, adduct, precursor_mz, *, tol_da=0.01, tol_ppm=0.0, tree
     total = sum(a["intensity"] for a in ann) or 1.0
 
     # the shown fragments: the most intense explained peaks, colours in m/z order
-    shown = sorted(sorted(explained, key=lambda i: -ann[i]["intensity"])[:MAX_FRAGMENTS])
+    shown = [ann.index(r) for r in shown_rows([ann[i] for i in explained])]
     if len(explained) > len(shown):
         notes.append(f"Colour is given to the {len(shown)} most intense of {len(explained)} explained peaks; the others are dark in the spectrum.")
     colors = {i: PALETTE[n] for n, i in enumerate(shown)}
@@ -238,7 +260,7 @@ def build(smiles, peaks, adduct, precursor_mz, *, tol_da=0.01, tol_ppm=0.0, tree
     tick(0.82, "Placing fragments on the structure")
     drawn = Chem.Mol(parent)
     rdMolDraw2D.PrepareMolForDrawing(drawn)        # one set of coordinates for every drawing, so all views have the same orientation
-    fragments, placed_groups = [], []
+    fragments, placed_groups, covered_atoms = [], [], set()
     for n, i in enumerate(shown):
         a = ann[i]
         place = fragment_atoms(parent, a["smiles"], fragment_formula(a["metfrag_ion"]))
@@ -247,6 +269,7 @@ def build(smiles, peaks, adduct, precursor_mz, *, tol_da=0.01, tol_ppm=0.0, tree
         if place:
             item["svg"] = _draw(drawn, [(colors[i], place["atoms"])], CARD_SIZE)
             placed_groups.append((colors[i], place["atoms"]))
+            covered_atoms.update(place["atoms"])
         else:
             item["img"] = f"data:image/png;base64,{a['b64']}" if a["b64"] else ""
         fragments.append(item)
@@ -270,6 +293,7 @@ def build(smiles, peaks, adduct, precursor_mz, *, tol_da=0.01, tol_ppm=0.0, tree
         "precursor_mz": res["precursor_mz"], "theo_mz": res["theo_precursor_mz"], "positive": res["positive"],
         "peaks": len(ann), "explained": len(explained),
         "explained_fraction": round(sum(ann[i]["intensity"] for i in explained) / total, 4),
+        "coverage": {"atoms": len(covered_atoms), "heavy": parent.GetNumHeavyAtoms(), "fraction": round(len(covered_atoms) / max(1, parent.GetNumHeavyAtoms()), 4)},
         "overview": _draw(drawn, placed_groups, OVERVIEW_SIZE), "fragments": fragments, "figure": figure, "notes": notes,
         "settings": {"tol_da": tol_da, "tol_ppm": tol_ppm, "tree_depth": tree_depth, "engine": "MetFrag 2.5.2"},
         "seconds": round(time.monotonic() - t0, 2),
