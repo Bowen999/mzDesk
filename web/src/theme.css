@@ -437,6 +437,28 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .fig-img.svg { background: transparent; }
 .outputs .out .fig-img:not(.svg) { padding: 6px; background: var(--image-bg); }
 
+/* ---------------------------------------------------------------- compound comparison (Structure & formats, components/CompoundCompare.tsx) */
+.compare-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; }
+.compare-col { flex: 1 1 240px; min-width: 0; max-width: 380px; }
+.compare-grid.single { max-width: 900px; margin-inline: auto; }
+.compare-grid.single .compare-col { flex: 1 1 100%; max-width: none; }
+.compare-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-height: 21px; margin-bottom: 8px; }
+.compare-name { color: var(--ink); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.compare-formula { color: var(--faint); font-family: var(--mono); font-size: 12px; }
+.compare-views { display: flex; flex-direction: column; gap: 12px; }
+.compare-grid.single .compare-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.compare-label { margin-bottom: 5px; color: var(--muted); font-size: 11.5px; }
+.compare-box { display: grid; place-items: center; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+:root[data-theme="dark"] .compare-box { background: #181b21; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .compare-box { background: #181b21; } }
+.compare-svg { display: block; width: 100%; height: 100%; object-fit: contain; }
+.compare-box .mol3d { width: 100%; height: 100%; max-width: none; border: 0; border-radius: 0; background: transparent; }
+.compare-empty { padding: 10px; color: var(--faint); font-size: 12px; text-align: center; }
+@media (max-width: 640px) {
+  .compare-grid.single .compare-views { grid-template-columns: 1fr; }
+  .compare-col { max-width: none; }
+}
+
 
 /* ---------------------------------------------------------------- brand lockup: mzDesk + (Beta / version) stacked on its right */
 .brand { display: flex; align-items: flex-end; gap: 8px; margin: 0; line-height: 1; }

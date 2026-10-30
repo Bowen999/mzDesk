@@ -53,6 +53,9 @@ export type RxStep = { from: string; reagent?: string; to: string; count?: numbe
 export type RxOption = { label: string; steps: RxStep[]; formula?: string; mass?: string | number; heavy?: string | number; help?: Help; svg?: string; product_svg?: string };
 export type RowGroup = { title: string; meta?: string; help?: Help; rows: Row[] };
 export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string };
+/** Structure & formats: one card per compound (2D SVG + 3D molblock) and the formats of each compound. */
+export type CompareCompound = { label: string; formula?: string; svg?: string; mol3d?: string };
+export type FormatSet = { label: string; formats: Record<string, string> };
 export type BlockData = {
   rows?: Row[]; values?: Record<string, CardValue>; text?: string; formats?: Record<string, string>; items?: string[];
   files?: { name: string; content: string; mime?: string }[];
@@ -60,6 +63,8 @@ export type BlockData = {
   help?: Help; count?: number | string;                       // any block: runtime "?" text; table / grouptable: count pill next to the title
   columns?: string[];                                          // table: replaces the spec columns for this run (rows then have one cell per data column)
   tiles?: Tile[]; chips?: StatusChip[]; options?: RxOption[]; groups?: RowGroup[];   // portal / chips / reaction (svg above) / grouptable
+  compounds?: CompareCompound[];                               // compare: one card per compound
+  sets?: FormatSet[];                                          // formats: one tab per compound (single compound = the old shape)
 };
 /** verdict: the one-line answer shown above the results (may use <b>); none for pages whose output is the answer. */
 export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, BlockData>; warnings: string[]; verdict?: string | null };

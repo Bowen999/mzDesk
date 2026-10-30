@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.32', date:'2026-10-29', git:'',
+  title:'Structure & formats：最多三个分子并排对比',
+  note:'页面支持 1–3 个结构：每个分子一张卡片，2D 和 3D 都是等宽正方形；单个分子时两者并排。格式区按分子切换，所选格式保持不变。',
+  state:[['输入','最多 3 个结构 · Compound 1 必需，2/3 可选'], ['布局','2D / 3D 等宽等高；多分子按列对比'], ['格式','按分子切换，格式标签保持'], ['版本','0.2.32']],
+  c:{
+   app:['feat','Structure & formats 支持最多三个结构并排对比：每个分子一张卡片，2D 与 3D 为等宽等高正方形，单个分子时两者并排；格式区增加分子标签，切换分子时保持所选格式。3D 画面随卡片尺寸重算并留出边距。',true,{w:'web/src/components/CompoundCompare.tsx · web/src/components/Outputs.tsx · web/src/components/Figure.tsx · web/src/types.ts · web/src/theme.css'}],
+   other:['chg','compare 输出块（每个分子：名称 / 分子式 / 正方形 2D SVG / 3D molblock）与 formats 的 sets；spec 增加三个结构字段和 compare 块。',true,{w:'mzdesk/api/runners/structure.py · mzdesk/spec.py · tests/test_api.py'}],
+   docs:['doc','版本号 0.2.32，本页加 v0.2.32。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.31', date:'2026-10-29', git:'',
   title:'互联网搜索开关：联网前先确认',
   note:'侧栏底部新增 Internet search 开关（On/Off，按浏览器记住）。关闭后，需要联网的运行会先弹窗列出这次要联网做什么；Cancel 不执行，Continue 只放行一次，开关保持 Off。',

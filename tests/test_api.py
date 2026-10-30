@@ -373,10 +373,32 @@ def test_identity_runner_forwards_the_comptox_kind(monkeypatch):
 
 def test_structure_formats_has_four_tabs():
     body = _run("structure_formats", {"structure": {"mode": "SMILES / InChI", "value": CAFFEINE}}).json()
-    fm = body["outputs"]["formats"]["formats"]
+    compounds = body["outputs"]["compare"]["compounds"]
+    assert len(compounds) == 1 and compounds[0]["formula"] == "C8H10N4O2"
+    assert "width='420px'" in compounds[0]["svg"] and "height='420px'" in compounds[0]["svg"]   # square 2D canvas
+    assert compounds[0]["mol3d"]                                                                  # square 3D box in the page
+    fm = body["outputs"]["formats"]["sets"][0]["formats"]
     assert list(fm) == ["SMILES", "InChI", "InChIKey", "MOL block"]
     assert fm["InChIKey"] == "RYYVLZVUVIJVGH-UHFFFAOYSA-N" and fm["InChI"].startswith("InChI=1S/C8H10N4O2")
-    assert body["outputs"]["depiction"]["svg"] and "viewer3d" in body["outputs"]
+
+
+def test_structure_formats_compares_up_to_three_compounds():
+    body = _run("structure_formats", {
+        "structure": {"mode": "SMILES / InChI", "value": CAFFEINE},
+        "structure_2": {"mode": "SMILES / InChI", "value": spec.ASPIRIN},
+        "structure_3": {"mode": "SMILES / InChI", "value": spec.TESTOSTERONE},
+    }).json()
+    compounds = body["outputs"]["compare"]["compounds"]
+    assert [c["formula"] for c in compounds] == ["C8H10N4O2", "C9H8O4", "C19H28O2"]
+    assert [s["label"] for s in body["outputs"]["formats"]["sets"]] == ["Compound 1", "Compound 2", "Compound 3"]
+    assert all(c["svg"] and c["mol3d"] for c in compounds)
+    # holes are allowed: only the first and the third compound
+    body = _run("structure_formats", {
+        "structure": {"mode": "SMILES / InChI", "value": CAFFEINE},
+        "structure_3": {"mode": "SMILES / InChI", "value": spec.TESTOSTERONE},
+    }).json()
+    assert [c["formula"] for c in body["outputs"]["compare"]["compounds"]] == ["C8H10N4O2", "C19H28O2"]
+    assert _run("structure_formats", {}).status_code == 400
 
 
 def test_properties_page_has_no_duplicates():

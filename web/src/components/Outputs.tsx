@@ -3,6 +3,7 @@ import type React from "react";
 import type { Block, BlockData, CardValue, Cell, Row } from "../types";
 import "../outputs-v2.css";
 import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
+import { CompoundCompare } from "./CompoundCompare";
 import { FigureView } from "./Figure";
 import { HelpButton, RichText, emphasize, helpLines } from "./Help";
 
@@ -39,16 +40,27 @@ function CopyButton({ text }: { text: string }) {
   return <button type="button" className="copy" onClick={() => navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1200); })}>{done ? "Copied" : "Copy"}</button>;
 }
 
-/** 同一内容的多种格式：一排小标签 + 一个代码框；记住上次选的标签。 */
+/** 同一内容的多种格式：一排小标签 + 一个代码框；记住上次选的标签。
+ *  Several compounds (Structure & formats) add a compound tab row; the format tab stays selected when switching. */
 function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
   const [tab, setTab] = useState("");
-  const names = Object.keys(data?.formats ?? {});
+  const [setIndex, setSetIndex] = useState(0);
+  useEffect(() => setSetIndex(0), [data]);
+  const sets = data?.sets ?? [];
+  const active = sets.length ? (sets[Math.min(setIndex, sets.length - 1)] ?? sets[0]) : null;
+  const formats = active?.formats ?? data?.formats ?? {};
+  const names = Object.keys(formats);
   const cur = names.includes(tab) ? tab : names[0];
-  const text = cur ? data!.formats![cur] : undefined;
+  const text = cur ? formats[cur] : undefined;
   const title = block.title ?? block.label;
   return (
     <div className="out">
       <h4 className="out-title">{title}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${title}`} />{text !== undefined && <CopyButton text={text} />}</h4>
+      {sets.length > 1 && (
+        <div className="tabs compound-tabs" role="tablist" aria-label="Compound">
+          {sets.map((s, i) => <button key={`${s.label}-${i}`} type="button" role="tab" aria-selected={i === Math.min(setIndex, sets.length - 1)}
+            className={"tab" + (i === Math.min(setIndex, sets.length - 1) ? " on" : "")} onClick={() => setSetIndex(i)}>{s.label}</button>)}
+        </div>)}
       {names.length > 0 && (
         <div className="tabs" role="tablist">
           {names.map(n => <button key={n} type="button" role="tab" aria-selected={n === cur} className={"tab" + (n === cur ? " on" : "")} onClick={() => setTab(n)}>{n}</button>)}
@@ -158,6 +170,11 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
           <FigureView data={data} />
         </div>);
       return <div className="out placeholder-box">[{empty}] {block.label}</div>;
+    case "compare": return (
+      <div className="out">
+        <Title block={block} data={data} status={shown} />
+        {data?.compounds?.length ? <CompoundCompare items={data.compounds} /> : <div className="placeholder-box">{empty}</div>}
+      </div>);
     case "code": return (
       <div className="out">
         <h4 className="out-title">{block.title ?? block.label}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${block.title ?? block.label}`} />{data?.text && <CopyButton text={data.text} />}</h4>
@@ -222,7 +239,8 @@ function isEmpty(b: Block, d: BlockData): boolean {
     case "portal": return !(d.tiles?.length);
     case "reaction": return !(d.options?.length);
     case "notes": return !(d.items?.length) && !helpLines(d.help).length;
-    case "formats": return !Object.keys(d.formats ?? {}).length;
+    case "formats": return !Object.keys(d.formats ?? {}).length && !d.sets?.some(s => Object.keys(s.formats ?? {}).length);
+    case "compare": return !(d.compounds?.length);
     case "downloads": return !d.files?.length;
     case "code": return !d.text;
     default: return false;

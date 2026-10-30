@@ -149,23 +149,30 @@ function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: n
   );
 }
 
-function Mol3D({ molblock }: { molblock: string }) {
+/** 3Dmol viewer. `className` lets the compare block make the canvas fill a square box. */
+export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [err, setErr] = useState("");
   const { dark } = useTheme();
   useEffect(() => {
-    let viewer: any = null, alive = true;
+    let viewer: any = null, alive = true, ro: ResizeObserver | null = null;
     load3Dmol().then($3Dmol => {
       if (!alive || !ref.current) return;
       ref.current.innerHTML = "";
       viewer = $3Dmol.createViewer(ref.current, { backgroundColor: dark ? "#181B21" : "white" });
       viewer.addModel(molblock, "mol");
       viewer.setStyle({}, { stick: { radius: 0.14 }, sphere: { scale: 0.22 } });
-      viewer.zoomTo();
-      viewer.render();
+      // a little margin: zoomTo() fits the atom centres, so terminal atoms would touch the box
+      const fit = () => { viewer.zoomTo(); viewer.zoom(0.85); viewer.render(); };
+      fit();
+      // the compare cards follow the sidebar / window: 3Dmol does not resize its canvas by itself
+      if (alive && typeof ResizeObserver !== "undefined") {
+        ro = new ResizeObserver(() => { if (alive) { viewer.resize(); fit(); } });
+        ro.observe(ref.current);
+      }
     }).catch(e => alive && setErr(String(e)));
-    return () => { alive = false; viewer?.clear?.(); };
+    return () => { alive = false; ro?.disconnect(); viewer?.clear?.(); };
   }, [molblock, dark]);
   if (err) return <div className="out placeholder-box">3D viewer failed: {err}</div>;
-  return <div ref={ref} className="mol3d" />;
+  return <div ref={ref} className={className} />;
 }

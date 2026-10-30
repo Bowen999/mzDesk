@@ -129,6 +129,11 @@ def cards(items, title=None, key=None, id=None, help=None, style=None):
 def figure(label, key=None, id=None, help=None, span=None):
     """span="half": a structure drawing or other compact figure; the page puts it next to another block on wide screens."""
     return _extras({"type": "figure", "label": label, "key": key, "id": id}, help=help, span=span)
+def compare(title=None, id=None, help=None):
+    """One card per compound, for side-by-side comparison (Structure & formats).
+    data: {"compounds": [{"label", "formula"?, "svg"?: square 2D SVG, "mol3d"?: molblock}, ...]} (1-3 items).
+    Each card shows the 2D depiction and the 3D viewer in equal square boxes; one compound puts them side by side."""
+    return _extras({"type": "compare", "title": title, "id": id}, help=help)
 def code(label, title=None, key=None, id=None, help=None):
     return _extras({"type": "code", "title": title, "label": label, "key": key, "id": id}, help=help)
 def formats(label, title=None, key=None, id=None, help=None):
@@ -345,10 +350,16 @@ MODULES = [
         subgroup="molecular", live=True, example={"structure": _name("aspirin"), "kind": "Auto"},
         network="Identity looks the compound up in PubChem and UniChem, then loads classification and background from public sources."),
 
-    module("structure_formats", "Structure & formats", "B", "Draw the structure in <b>2D / 3D</b> and export it as <b>SMILES, InChI, InChIKey or MOL</b>.",
-        [structure()],
-        [figure("2D depiction", id="depiction", span="half"), figure("3D viewer", id="viewer3d", span="half"),
-         formats("Structure in every format", "Structure formats", id="formats")],
+    module("structure_formats", "Structure & formats", "B", "Enter up to <b>three structures</b>, compare them in <b>2D / 3D</b>, and export each as <b>SMILES, InChI, InChIKey or MOL</b>.",
+        [dict(structure(label="Compound 1"), required=True),
+         structure("structure_2", "Compound 2", optional=True),
+         structure("structure_3", "Compound 3", optional=True)],
+        [compare("Compounds", id="compare",
+                 help=["One card per compound, with the 2D depiction and the 3D viewer in boxes of the same width and height, so the columns line up.",
+                       "With one compound the two boxes sit side by side; with two or three they stack in one column per compound.",
+                       "The 3D viewer shows one low-energy conformer (ETKDG + MMFF), not an ensemble; when the embedding fails the card keeps the 2D depiction."]),
+         formats("Structure in every format", "Structure formats", id="formats",
+                 help="Pick the compound above the format tabs; the same format stays selected when you switch.")],
         subgroup="molecular", live=True, example={"structure": _name("testosterone")}),
 
     module("properties", "Properties & groups", "B", "<b>Formula</b>, <b>masses</b>, physicochemical descriptors and <b>functional groups</b>.",

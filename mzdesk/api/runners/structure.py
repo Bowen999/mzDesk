@@ -16,24 +16,37 @@ def _check_parts(p, warnings, noun):
 
 
 def run_structure_formats(inputs):
+    """Up to three compounds: one square 2D depiction + one square 3D viewer each, plus every format per compound."""
     from mzdesk.platform_fit import molecular_properties as mp
 
-    warnings = []
-    smiles = common.structure(inputs)["smiles"]
-    p = mp.from_smiles(smiles)
-    if not p.valid:
-        raise InputError("Structure: RDKit could not parse it.")
-    _check_parts(p, warnings, "formats cover")
-    mol3d = mp.structure_3d(smiles)
-    if mol3d is None:
-        warnings.append("3D embedding failed for this structure; only the 2D depiction is shown.")
-    texts = {"SMILES": p.canonical_smiles, "InChI": p.inchi, "InChIKey": p.inchikey,
-             "MOL block": Chem.MolToMolBlock(Chem.MolFromSmiles(smiles))}
-    outputs = {"depiction": {"svg": common.depiction_svg(smiles)},
-               "formats": {"formats": {k: v for k, v in texts.items() if v}}}
-    if mol3d:
-        outputs["viewer3d"] = {"mol3d": mol3d}
-    return {"outputs": outputs, "warnings": warnings}
+    warnings, compounds, sets = [], [], []
+    for n, key in ((1, "structure"), (2, "structure_2"), (3, "structure_3")):
+        label = f"Compound {n}"
+        parsed = common.structure(inputs, key, label, required=(n == 1))
+        if parsed is None:
+            continue
+        smiles = parsed["smiles"]
+        p = mp.from_smiles(smiles)
+        if not p.valid:
+            raise InputError(f"{label}: RDKit could not parse it.")
+        local = []
+        _check_parts(p, local, "formats cover")
+        mol3d = mp.structure_3d(smiles)
+        if mol3d is None:
+            local.append("3D embedding failed for this structure; only the 2D depiction is shown.")
+        value = inputs.get(key) if isinstance(inputs.get(key), dict) else {}
+        typed = str(value.get("value") or "").strip() if value.get("mode") == "Name / ID / Formula" else ""
+        name = typed or label
+        mol = Chem.MolFromSmiles(smiles)
+        texts = {"SMILES": p.canonical_smiles, "InChI": p.inchi, "InChIKey": p.inchikey,
+                 "MOL block": Chem.MolToMolBlock(mol) if mol is not None else ""}
+        compounds.append({"label": name, "formula": p.formula or "",
+                          "svg": common.depiction_svg(smiles, size=(420, 420)) or "", "mol3d": mol3d or ""})
+        sets.append({"label": name, "formats": {k: v for k, v in texts.items() if v}})
+        warnings.extend(f"{name}: {w}" for w in local)
+    if not compounds:
+        raise InputError("Enter at least one compound.")
+    return {"outputs": {"compare": {"compounds": compounds}, "formats": {"sets": sets}}, "warnings": warnings}
 
 
 def run_properties(inputs):
