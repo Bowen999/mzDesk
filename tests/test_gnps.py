@@ -79,9 +79,16 @@ def small_redu(tmp_path, monkeypatch):
 
 
 def test_spec_has_three_live_submodules():
-    spec = client.get("/api/spec").json()
-    assert {m["id"] for m in spec["modules"] if m["subgroup"] == "gnps" and m["live"]} == {
-        "gnps_fastmasst", "gnps_redu", "gnps_massql"}
+    response = client.get("/api/spec")
+    assert response.status_code == 200
+    spec = response.json()
+    assert [s for s in spec["subgroups"] if s["id"] == "gnps"] == [{"id": "gnps", "title": "GNPS2"}]
+    modules = [m for m in spec["modules"] if m["subgroup"] == "gnps"]
+    assert [(m["id"], m["title"]) for m in modules] == [
+        ("gnps_fastmasst", "fastMASST"), ("gnps_redu", "Pan-ReDU"), ("gnps_massql", "MassQL")]
+    assert all(m["group"] == "modules" and m["live"] is True and m["example"] for m in modules)
+    icons = (Path(__file__).parents[1] / "web" / "src" / "assets" / "icons.svg").read_text()
+    assert 'symbol id="gnps"' in icons
     example = next(m for m in spec["modules"] if m["id"] == "gnps_fastmasst")["example"]
     assert example["name"] == "L-leucine" and example["precursor_mz"] == "132.102"
     blocks = {m["id"]: {b["id"]: b for b in m["outputs"] if b.get("id")} for m in spec["modules"] if m["subgroup"] == "gnps"}
@@ -100,6 +107,16 @@ def test_redu_streamed_search_matches_original(small_redu):
     assert output["summary"]["values"]["Passed datasets"] == "1"
     assert output["summary"]["values"]["Undetermined"] == "1"
     assert len(output["downloads"]["files"]) == 2
+
+
+def test_redu_example_runs_offline(small_redu):
+    module = next(m for m in MODULES if m["id"] == "gnps_redu")
+    response = _post(module["id"], **module["example"])
+    assert response.status_code == 200, response.text
+    outputs = response.json()["outputs"]
+    assert set(outputs) == {block["id"] for block in module["outputs"]}
+    assert outputs["summary"]["values"]["Matched files"] == "4"
+    assert outputs["summary"]["values"]["Passed datasets"] == "0"
 
 
 @pytest.mark.parametrize("background", g.REDU_BG_MODES)
@@ -143,6 +160,17 @@ def test_massql_mgf_and_download(tmp_path, monkeypatch):
     downloads = {f["name"]: f["content"] for f in out["downloads"]["files"]}
     assert "first" in downloads["massql-matches.mgf"] and "second" not in downloads["massql-matches.mgf"]
     assert "42\t300" in downloads["massql-matches.tsv"]
+
+
+def test_massql_example_runs_offline(tmp_path, monkeypatch):
+    monkeypatch.setenv("MZDESK_CACHE_DIR", str(tmp_path))
+    module = next(m for m in MODULES if m["id"] == "gnps_massql")
+    response = _post(module["id"], **module["example"])
+    assert response.status_code == 200, response.text
+    outputs = response.json()["outputs"]
+    assert set(outputs) == {block["id"] for block in module["outputs"]}
+    assert outputs["summary"]["values"] == {"Input file": "leucine-example.mgf", "MS2 spectra": "1", "Matches": "1"}
+    assert outputs["matches"]["rows"][0][0] == "42"
 
 
 def test_massql_large_result_count_and_full_download(tmp_path, monkeypatch):

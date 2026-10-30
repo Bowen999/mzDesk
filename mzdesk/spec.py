@@ -651,20 +651,22 @@ MODULES = [
                      "selected databases (online); one row per formula, closest first, at most 50.",
                      "Exact m/z and Δ ppm use the compound's closest adduct. Same-formula hits are in the table above, not here.",
                      "At most 100 compounds per database are examined, so a crowded m/z window is not exhaustive."]),
-         table(["Isomer", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Explained only by the isomer"], "Isomers",
+         table(["Isomer", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Explained only by the isomer"], "Isomers",
                id="isomers",
-               help=["Your compound against the best-scoring structures with the same formula in MS-FINDER's local databases (the ones Structure "
-                     "prediction uses; offline). The Databases field is not used by this table. Stereoisomers are not compared: MS/MS does not tell them apart.",
-                     "Distinguishable: some observed peak is explained by your compound and not by the isomer (MS-FINDER's in-silico fragmenter, "
-                     "tree depth 2). Distinguishable from every isomer = a single answer; the 'no' rows cannot be separated from it.",
+               help=["PubChem same-formula candidates (online), independent of the Databases field: at most its first 100 CIDs are retrieved, "
+                     "and at most 9 other usable connectivities are compared with your compound. The run reports truncation; the set is not exhaustive. "
+                     "Structures with the same connectivity are collapsed, so stereoisomers are not assessed.",
+                     "Distinguishable: MetFrag predicts an observed peak for your compound but not the isomer (local in-silico fragmentation, tree depth 2). "
+                     "This is model-dependent and does not establish a unique identity; not-scored candidates are not ruled out. "
+                     "Requires Java and mzdesk/lib/MetFragCommandLine-2.5.2.jar; the comparison is limited to 120 seconds.",
                      "Peaks: at least 1 % of the base peak, without the precursor and its isotope peaks; a distinguishing peak must be at least 5 %. "
                      "Explained peaks: how many of those peaks the structure explains · their share of the intensity.",
                      "Explained only by the isomer: information only, it does not change the answer.",
-                     "The answer only holds for the isomers listed; a structure that is not in the local databases is not ruled out. "
-                     "Local version only: needs MS-FINDER (python -m mzdesk.ms2.msfinder_setup); one run takes about 5-12 s."])],
+                     "For structures recognised as lipids this check is skipped: conventional MS/MS usually cannot reliably determine C=C or sn-positions; "
+                     "specific methods or additional evidence may distinguish them."])],
         subgroup="tools", live=True,
         example={"structure": _name("caffeine"), "precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
-        network="The same-formula and isobaric-interference tables query PubChem; the isomer table and the MS-FINDER run stay local."),
+        network="Name / ID inputs are resolved online. The same-formula and isobaric tables and isomer candidate search query PubChem with the formula or mass; MetFrag runs locally."),
 
     # ---- Orthogonal ----
     module("rt", "RT / RI", "A", "Does the <b>retention</b> agree: RT / RI prediction and projection across systems.",
@@ -986,9 +988,9 @@ _configure_forms("exclusivity",
     help={"structure": "Draw or paste a structure, or choose Name / ID / Formula and type a formula (e.g. C8H10N4O2). "
                        "With only a precursor m/z, only isobaric interferences are searched.",
           "precursor": "Blank = the theoretical m/z of the structure or formula (used for the isobaric search and the isomer check).",
-          "databases": "Used by the same-formula and isobaric tables (PubChem, online). The isomer table always uses MS-FINDER's local databases.",
+          "databases": "Used by the same-formula and isobaric tables (PubChem, online). The isomer check searches PubChem independently of this selection.",
           "ms2": "Optional. Without it the isomer check is skipped; the two database tables still run.",
-          "tol_da": "Fragment tolerance for MS-FINDER's in-silico fragments (isomer table only)."})
+          "tol_da": "Absolute fragment tolerance for MetFrag's in-silico fragments (isomer table only; relative tolerance 0 ppm)."})
 
 # Also expose the formula capability on the pages whose runners pass allow_formula=True.
 for _mid, _fid in (("ms1_theory", "structure"), ("met_shift", "structure")):

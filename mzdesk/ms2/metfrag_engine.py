@@ -309,7 +309,7 @@ DEFAULT_SPECTRUM = """139.00977 3
 773.53589 416"""
 
 
-def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_ppm):
+def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_ppm, *, timeout_s=METFRAG_TIMEOUT_S):
     """Run MetFrag on one candidate and return per-peak annotations.
 
     ``precursor_mz`` is the measured precursor (None = use the theoretical m/z of the
@@ -384,12 +384,12 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         try:
             proc = subprocess.run(
                 ["java", "-jar", str(JAR), str(param_path)],
-                capture_output=True, text=True, timeout=METFRAG_TIMEOUT_S)
+                capture_output=True, text=True, timeout=timeout_s)
         except FileNotFoundError:
             raise MetFragError("Java was not found on PATH — MetFrag needs a Java 8+ runtime.") from None
         except subprocess.TimeoutExpired:
             raise MetFragError(
-                f"MetFrag timed out after {METFRAG_TIMEOUT_S} s — try a lower tree depth.") from None
+                f"MetFrag timed out after {timeout_s:g} s — try a lower tree depth.") from None
         log = ((proc.stdout or "") + (proc.stderr or "")).strip()
         if proc.returncode != 0:
             raise MetFragError(f"MetFrag failed (exit code {proc.returncode}).", log[-4000:])
@@ -434,7 +434,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         "mol_formula": mol_formula, "mono_mass": mono_mass, "ion_formula": ion_formula,
         "adduct": adduct, "theo_precursor_mz": theo_mz,
         "precursor_mz": precursor_mz, "precursor_given": precursor_given,
-        "positive": positive, "tree_depth": tree_depth, "tol_abs": tol_abs, "tol_ppm": tol_ppm,
+        "positive": positive, "tree_depth": tree_depth, "tol_abs": tol_abs, "tol_ppm": tol_ppm, "scored": n_rows >= 2,
         "annotation": annotation, "warnings": warnings,
         "warning": warnings[0] if warnings else None}
 

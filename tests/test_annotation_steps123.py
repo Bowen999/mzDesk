@@ -276,6 +276,40 @@ def test_a_close_second_adduct_gets_formulas_too(buddy):
     assert adduct.hypotheses[1].score >= low
 
 
+def test_formula_order_preserves_adduct_priority_and_unrounded_buddy_ranks_after_filtering(buddy):
+    buddy({"[M+H]+": [("C10H20N2O5", 0.900004, 0.5, None), ("C8H20O5", 0.900003, 12.0, None),
+                       ("C9H16N4O4", 0.900002, -0.3, None)],
+           "[M+Na]+": [("C11H16N3O3", 0.99, 0.2, None)]})
+    adduct, result = F.run_adduct_and_formula(300.0, True, peaks_with(300.0, base=SPARSE), tol_ppm=10.0)
+    assert result.adducts == ["[M+H]+", "[M+Na]+"] == adduct.retained_adducts[:2]
+    assert [(f.adduct, f.formula, f.rank) for f in result.formulas] == [
+        ("[M+H]+", "C10H20N2O5", 1), ("[M+H]+", "C9H16N4O4", 3), ("[M+Na]+", "C11H16N3O3", 1)]
+    assert [r.formula for r in formula_only_candidates([f.to_dict() for f in result.formulas])] == [f.formula for f in result.formulas]
+
+
+@pytest.mark.parametrize("second, include", [(0.24996, False), (0.25, True), (0.25004, True)])
+def test_second_adduct_formula_cut_uses_unrounded_scores(buddy, monkeypatch, second, include):
+    names = ["[M+H]+", "[M+Na]+", "[M+NH4]+", "[M+K]+"]
+    shares = dict(zip(names, [0.5, second, 0.125, 0.375 - second]))
+    monkeypatch.setattr(A, "master_adducts", lambda positive: names)
+    monkeypatch.setattr(A, "prior_shares", lambda universe: shares)
+    monkeypatch.setattr(A, "ms2_evidence", lambda *a, **k: {"factor": 1.0, "signals": []})
+    buddy({name: [("C10H20N2O5", 1.0, 0.1, None)] for name in names})
+    adduct, result = F.run_adduct_and_formula(300.0, True, peaks_with(300.0))
+    assert ("[M+Na]+" in result.adducts) is include
+    assert adduct.hypotheses[1].score == pytest.approx(second, rel=0, abs=1e-10)
+
+
+def test_adduct_rank_uses_full_precision_even_when_displayed_scores_tie(monkeypatch):
+    names = ["[M+Na]+", "[M+H]+"]  # the higher score is second in input order
+    monkeypatch.setattr(A, "prior_shares", lambda universe: {"[M+Na]+": 0.499996, "[M+H]+": 0.500004})
+    monkeypatch.setattr(A, "ms2_evidence", lambda *a, **k: {"factor": 1.0, "signals": []})
+    result = A.score_adducts(300.0, True, peaks_with(300.0), candidates=names)
+    assert [h.adduct for h in result.hypotheses] == list(reversed(names))
+    assert result.hypotheses[0].score > result.hypotheses[1].score
+    assert [f"{h.score:.3f}" for h in result.hypotheses] == ["0.500", "0.500"]
+
+
 def test_with_ms1_buddy_runs_for_every_retained_adduct_and_the_isotope_fit_feeds_the_ranking(buddy):
     fake = buddy(TABLE)
     adduct, formula = F.run_adduct_and_formula(300.0, True, peaks_with(300.0), MS1_PATTERN)

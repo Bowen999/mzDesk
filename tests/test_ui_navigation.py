@@ -61,7 +61,7 @@ def browser():
         window.__workflowPolls++;
         return response({status:'done', note:'', steps:[], error:null, result:{
           answer:{type:'none', ids:[], statement:'Workflow result retained', top_id:null, isomer_verdict:'not run'},
-          candidates:[], warnings:[], context:{precursor_mz:195.0877, polarity:'Positive', libraries:[], gate_passed:false},
+          candidates:[], steps:[], warnings:[], context:{precursor_mz:195.0877, polarity:'Positive', libraries:[], gate_passed:false},
           isomer:null
         }});
       }

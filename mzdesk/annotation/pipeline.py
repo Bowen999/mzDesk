@@ -144,8 +144,13 @@ def _adduct_blocks(res):
 
 
 def _formula_blocks(res):
-    rows = [[f.adduct, f.formula, f.rank, fmt(f.prob, 3), fmt(f.ppm, 2), fmt(f.isotope_sim, 2)] for f in res.formulas]
-    return [_table("formula_table", "Formulas", ["Adduct", "Formula", "Rank", "BUDDY probability", "Error (ppm)", "Isotope fit"], rows)] if rows else []
+    rows = [[i, f.adduct, f.formula, f.rank, fmt(f.prob, 3), fmt(f.ppm, 2), fmt(f.isotope_sim, 2)] for i, f in enumerate(res.formulas, 1)]
+    if not rows:
+        return []
+    table = _table("formula_table", "Formulas", ["Rank", "Adduct", "Formula", "BUDDY rank (within adduct)", "BUDDY probability", "Error (ppm)", "Isotope fit"], rows)
+    table["caption"] = ("Rank is the list position, not a joint probability: adduct rank comes first, then BUDDY rank within that adduct. "
+                        "Filtered formulas can leave gaps in BUDDY rank.")
+    return [table]
 
 
 def _library_blocks(layer, gate):

@@ -25,13 +25,18 @@ export function WorkflowOverview({ job }: { job: Job }) {
 export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
   const figures = result.visualization;
   const [view, setView] = useState<"query" | "library">(figures?.library ? "library" : "query");
-  if (!figures?.query && !figures?.library) return null;
-  const library = figures.library;
-  const showLibrary = view === "library" && !!library;
+  // The query figure is generated even when no search was run. Step 3 records
+  // whether the library step completed, failed, or was skipped (e.g. no installed library).
+  const libraryStep = result.steps?.find(s => s.id === 3);
+  if (!libraryStep || !["done", "failed"].includes(libraryStep.status)) return null;
+  const query = figures?.query;
+  const library = figures?.library;
+  const showLibrary = !!library && (!query || view === "library");
   return <section className="workflow-evidence" aria-labelledby="workflow-spectrum-title">
     <div className="workflow-heading"><div><h2 id="workflow-spectrum-title">Spectrum evidence</h2>
       <p>Measured m/z {result.context.precursor_mz.toFixed(4)} · {result.context.polarity}</p></div></div>
-    {figures.query && library && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
+    <p className="workflow-caption">Library search: {libraryStep.status}.{libraryStep.note && <> {libraryStep.note}</>}</p>
+    {query && library && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
       <button type="button" className={showLibrary ? "" : "selected"} aria-pressed={!showLibrary} onClick={() => setView("query")}>Experimental spectrum</button>
       <button type="button" className={showLibrary ? "selected" : ""} aria-pressed={showLibrary} onClick={() => setView("library")}>Library comparison</button>
     </div>}
@@ -39,11 +44,12 @@ export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
       <p className="workflow-caption">Best judged library hit: <b>{library.name || library.accession}</b> · {library.library} · {library.accession}. This may not be the top-ranked final candidate.</p>
       <FigureView data={library.figure} />
       <p className="workflow-caption">Top: experimental. Bottom: library. Dark peaks are paired by greedy matching; the library similarity uses its own metric.</p>
-    </> : figures.query && <>
-      <FigureView data={figures.query} />
+    </> : query && <>
+      <FigureView data={query} />
       <p className="workflow-caption">Parsed experimental spectrum. Library search uses all peaks when run; engine steps use at most the 100 most intense peaks.</p>
-      {!library && <p className="workflow-caption">No library spectrum is available for comparison.</p>}
+      {!library && <p className="workflow-caption">Library comparison figure unavailable.</p>}
     </>}
+    {!query && !library && <p className="workflow-caption">Spectrum figures are unavailable.</p>}
   </section>;
 }
 

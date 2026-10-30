@@ -1,0 +1,22 @@
+.wf-progress { margin: 20px 0; padding: 20px 22px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-sm); }
+.wf-progress-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 10px; }
+.wf-progress-heading h2 { margin: 0; color: var(--ink); font-size: 14px; font-weight: 600; }
+.wf-progress-heading > span { color: var(--ink-2); font-size: 12px; font-weight: 600; }
+.wf-progress-bar { position: relative; height: 8px; overflow: hidden; background: var(--accent-bg); border-radius: 8px; }
+.wf-progress-bar > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .2s ease; }
+.wf-progress-bar.is-indeterminate > span { position: absolute; width: 30%; animation: wf-progress-indeterminate 1.3s ease-in-out infinite; }
+.wf-progress-bar.is-indeterminate.is-idle > span { left: 35%; animation: none; }
+@keyframes wf-progress-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(335%); } }
+.wf-progress-caption, .wf-progress-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+.wf-progress-state { margin: 12px 0 0; color: var(--ink-2); font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.wf-progress-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0 0; padding: 0; list-style: none; }
+.wf-progress-node a { display: flex; align-items: center; gap: 9px; height: 100%; min-height: 55px; padding: 8px 10px; color: var(--ink-2); background: var(--panel-soft); border: 1px solid var(--line); border-radius: 8px; text-decoration: none; }
+.wf-progress-node a:hover { border-color: var(--accent-line); }
+.wf-progress-symbol { display: grid; place-items: center; width: 25px; height: 25px; flex: none; color: var(--muted); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 50%; font-size: 13px; font-weight: 600; }
+.wf-progress-node.is-done .wf-progress-symbol { color: var(--ov-green-ink); background: var(--ov-green-bg); border-color: var(--ov-green-line); }
+.wf-progress-node.is-running .wf-progress-symbol { color: var(--accent-ink); background: var(--accent-bg); border-color: var(--accent-line); }
+.wf-progress-node.is-failed .wf-progress-symbol { color: var(--ov-red-ink); background: var(--ov-red-bg); border-color: var(--ov-red-line); }
+.wf-progress-node-text { min-width: 0; font-size: 12px; line-height: 1.25; overflow-wrap: anywhere; }
+.wf-progress-node-text small { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+@media (max-width: 700px) { .wf-progress { padding: 16px; } .wf-progress-track { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) { .wf-progress-bar > span { transition: none; } .wf-progress-bar.is-indeterminate > span { animation: none; left: 35%; } }

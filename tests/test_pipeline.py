@@ -256,6 +256,27 @@ def test_no_structure_but_formulas_gives_a_formula_answer(rig):
     assert result["context"]["retained_adducts"] == ["[M+H]+", "[M+Na]+"]
 
 
+def test_formula_table_rank_matches_result_order_and_preserves_buddy_rank_per_adduct(rig):
+    formulas = FormulaResult(formulas=[
+        FormulaCandidate("C10H20N2O5", "[M+H]+", 1, prob=0.900004, ppm=0.2),
+        FormulaCandidate("C9H16N4O4", "[M+H]+", 3, prob=0.900003, ppm=-0.4),  # rank 2 was outside the tolerance
+        FormulaCandidate("C11H16N3O3", "[M+Na]+", 1, prob=0.99, ppm=0.1),
+    ], adducts=["[M+H]+", "[M+Na]+"], note="formulas found")
+    rig.mp.setattr(pipeline.formula_step, "run_adduct_and_formula", lambda *a, **k: (adduct_result("[M+H]+", "[M+Na]+"), formulas))
+    events = []
+    result = pipeline.run(form(), progress=lambda *e: events.append(e))
+    table = next(b for e in events if e[3] for b in e[3] if b["id"] == "formula_table")
+    cols = table["columns"]
+    rows = table["data"]["rows"]
+    assert [r[cols.index("Rank")] for r in rows] == [c["rank"] for c in result["candidates"]] == [1, 2, 3]
+    assert [r[cols.index("Formula")] for r in rows] == [c["formula"] for c in result["candidates"]]
+    assert [r[cols.index("BUDDY rank (within adduct)")] for r in rows] == [1, 3, 1]
+    assert [r[cols.index("BUDDY probability")] for r in rows] == ["0.900", "0.900", "0.990"]
+    assert "adduct" in table["caption"] and "not a joint probability" in table["caption"]
+    assert result["answer"]["ids"] == [c["id"] for c in result["candidates"]]
+    assert rig.calls["frigid"][0][0][3] == "C10H20N2O5"  # no score-based pooling across adducts
+
+
 def test_steps_1_and_2_failing_still_gives_a_mass_answer(rig):
     rig.mp.setattr(pipeline.formula_step, "run_adduct_and_formula", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("buddy gone")))
     result = pipeline.run(form())

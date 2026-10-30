@@ -1,4 +1,4 @@
-"""Isomer check (mzdesk/exclusivity/isomers.py on MS-FINDER candidate runs) and the Isomers table of Alternative explanations.
+"""Workflow MS-FINDER isomer check and the Alternative explanations page wiring.
 
 Unit tests replay recorded MS-FINDER output or hand-made fragment lists; no MS-FINDER starts. Fixtures in tests/fixtures/isomers/ come from
 real runs (2026-10-28): kaempferol / luteolin on MassBank MSBNK-LCSB-LU089855 (CC BY) with only the two candidates, and the page example
@@ -335,29 +335,46 @@ def test_page_is_live_open_and_has_three_tables():
     assert [b.get("id") for b in mod["outputs"]] == ["same_formula", "isobaric", "isomers"]
 
 
-def test_page_example_fills_the_isomers_table_and_says_what_cannot_be_separated(engine):
+def test_page_example_uses_pubchem_and_metfrag_not_the_workflow_engine(engine, monkeypatch):
+    from mzdesk.ms1 import exact_mass as em
+    from mzdesk.ms2 import metfrag_engine
     calls = engine(CAFFEINE_RUN["structures"], CAFFEINE_RUN["formulas"])
+    other = CAFFEINE_RUN["structures"][1]
+    monkeypatch.setattr(em, "formula_structures", lambda formula: {
+        "formula": formula, "retrieved": 1, "cap": 100, "truncated": False, "missing": 0, "wrong_formula": 0,
+        "candidates": [{"id": "pubchem:1", "name": other["name"], "smiles": other["smiles"], "source": "PubChem CID 1"}]})
+    monkeypatch.setattr(metfrag_engine, "run_metfrag", lambda smiles, peaks, *a, **kw: {
+        "scored": True, "annotation": [{"annotated": True, "kind": "fragment", "ion_formula": "C", "smiles": "C"} for _ in peaks]})
     body = _run(EXAMPLE).json()
-    assert body["status"] == "ok" and set(body["outputs"]) == {"same_formula", "isobaric", "isomers"} and calls[0]["local_db"] is True
-    assert len(body["outputs"]["same_formula"]["rows"]) == 3 and body["outputs"]["isobaric"]["rows"] == []
+    assert body["status"] == "ok" and set(body["outputs"]) == {"same_formula", "isobaric", "isomers"} and calls == []
     table = body["outputs"]["isomers"]
     rows = table["rows"]
-    assert len(rows) == 10 and table["count"] == 9 and rows[0][0] == "caffeine" and rows[0][3] == {"badge": "your compound", "tone": "neutral"}
-    assert all(r[1]["text"] and "<svg" in r[1]["hover_svg"] for r in rows)                      # hovering a SMILES draws its 2D structure
-    assert [r[3]["badge"] for r in rows[1:]].count("no") == 6 and [r[3]["badge"] for r in rows[1:]].count("yes") == 3
-    enprofylline = next(r for r in rows if r[0] == "Enprofylline")
-    assert enprofylline[4]["text"] == "83.0603 (31.6 %) · 109.0396 (9.0 %)" and len(enprofylline[4]["help"]) == 2
-    assert body["verdict"].startswith("<b>These cannot be separated</b> by this spectrum: <b>caffeine</b> and cyclo(gly-his)")
-    assert "and 3 more (of 9 isomers considered)" in body["verdict"] and table["help"][0].startswith("Relative to the 10 candidates")
+    assert len(rows) == 2 and table["count"] == 1 and rows[0][0] == "caffeine" and rows[0][4]["badge"] == "your compound"
+    assert rows[1][1] == "PubChem CID 1" and rows[1][4]["badge"] == "no"
+    assert all(r[2]["text"] and "<svg" in r[2]["hover_svg"] for r in rows)
+    assert "Not distinguished or not scored" in body["verdict"] and "Not exhaustive" in body["verdict"]
 
 
-def test_page_single_answer(engine):
-    engine(_kaempferol_structures())
+def test_page_distinguishes_only_the_tested_candidates(engine, monkeypatch):
+    from mzdesk.ms1 import exact_mass as em
+    from mzdesk.ms2 import metfrag_engine
+    calls = engine(_kaempferol_structures())
+    other = KAEMPFEROL["candidates"][1]
+    monkeypatch.setattr(em, "formula_structures", lambda formula: {
+        "formula": formula, "retrieved": 1, "cap": 100, "truncated": False, "missing": 0, "wrong_formula": 0,
+        "candidates": [{**other, "source": "PubChem CID 1"}]})
+    def predict(smiles, peaks, *a, **kw):
+        from rdkit import Chem
+        top = Chem.MolToSmiles(Chem.MolFromSmiles(KAEMPFEROL["candidates"][0]["smiles"]))
+        return {"scored": True, "annotation": [{"annotated": smiles == top and abs(mz - 195.0451) < 1e-4,
+                    "kind": "fragment", "ion_formula": "C13H7O2", "smiles": "C"} for mz, _ in peaks]}
+    monkeypatch.setattr(metfrag_engine, "run_metfrag", predict)
     peaks = "\n".join(f"{mz} {i}" for mz, i in KAEMPFEROL["peaks"])
     body = _run({"structure": {"mode": "SMILES / InChI", "value": KAEMPFEROL["candidates"][0]["smiles"]},
                  "precursor": {"precursor_mz": "285.0405", "ion_mode": "Negative", "adduct": "Auto"},
                  "ms2": {"source": "Paste", "value": peaks}}).json()
-    assert body["verdict"] == "<b>C15H10O6</b> is the single answer: the one isomer considered fails to explain at least one of its fragments."
+    assert "can be distinguished from 1 tested isomer" in body["verdict"]
+    assert "not a unique identification" in body["verdict"] and calls == []
 
 
 def test_page_without_ms2_gives_no_verdict_and_a_bare_mz_still_runs(engine):
@@ -371,10 +388,19 @@ def test_page_without_ms2_gives_no_verdict_and_a_bare_mz_still_runs(engine):
     assert r.status_code == 400 and "compound or formula" in r.json()["detail"]
 
 
-def test_page_engine_failure_is_502_with_the_log(engine):
-    engine(error=mf.MsFinderError("MS-FINDER is not installed.", log="no mono"))
+def test_page_metfrag_failure_reports_no_verdict(monkeypatch):
+    from mzdesk.ms1 import exact_mass as em
+    from mzdesk.ms2 import metfrag_engine
+    other = CAFFEINE_RUN["structures"][1]
+    monkeypatch.setattr(em, "formula_structures", lambda formula: {
+        "formula": formula, "retrieved": 1, "cap": 100, "truncated": False, "missing": 0, "wrong_formula": 0,
+        "candidates": [{"id": "pubchem:1", "name": other["name"], "smiles": other["smiles"], "source": "PubChem CID 1"}]})
+    def fail(*args, **kwargs):
+        raise metfrag_engine.MetFragError("MetFrag is unavailable", log="no java")
+    monkeypatch.setattr(metfrag_engine, "run_metfrag", fail)
     r = _run(EXAMPLE)
-    assert r.status_code == 502 and r.json() == {"detail": "MS-FINDER is not installed.", "log": "no mono"}
+    assert r.status_code == 200 and "No isomer verdict" in r.json()["verdict"]
+    assert any("MetFrag is unavailable" in w for w in r.json()["warnings"])
 
 
 # ---------------------------------------------------------------- the real thing (opt-in)
@@ -418,6 +444,7 @@ def test_real_leucine_and_isoleucine_cannot_be_separated(accession):
 
 
 @real
-def test_real_page_example():
-    body = _run(EXAMPLE).json()
-    assert body["status"] == "ok" and body["verdict"] and len(body["outputs"]["isomers"]["rows"]) >= 2
+def test_real_workflow_local_database_check():
+    res = isomers.discriminate([{"id": "compound", "smiles": CAFFEINE, "name": "caffeine"}],
+                               CAFFEINE_PEAKS, 195.0877, "[M+H]+", tol_ppm=5, local_isomers=True)
+    assert res["verdict"] != "insufficient" and res["isomers"]

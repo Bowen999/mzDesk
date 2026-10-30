@@ -2,10 +2,10 @@
 
 1. Same-formula candidates：PubChem 里分子式完全相同的结构（在线），按 InChIKey 前 14 位合并连接方式，可看库归属。
 2. Isobaric interferences：同一 m/z 窗口里分子式不同的化合物（PubChem 精确质量检索，在线），每个分子式一行。
-3. Isomers：MS2 能不能把化合物和它的同分子式异构体分开（MS-FINDER 本地库，离线；规则见 mzdesk/exclusivity/isomers.py）。
+3. Isomers：PubChem 同分子式候选（在线），用本地 MetFrag 碎片预测比较；脂质不做此检查。
 
 输入可以是结构、分子式，或只有 precursor m/z：只有 m/z 时跳过前两张表的分子式部分和异构体表。两张在线表失败只给 warning，
-不影响异构体表；异构体表需要结构和 MS2。
+异构体表需要结构、MS2 和可用的 PubChem 候选。
 """
 import html
 import re
@@ -15,7 +15,7 @@ from rdkit.Chem import rdMolDescriptors
 
 from mzdesk.api import common
 from mzdesk.api.blocks import badge, depicted, hinted, table_data
-from mzdesk.api.common import EngineError, InputError, fmt, signed
+from mzdesk.api.common import InputError, fmt, signed
 from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, DATABASES
 
 PEAKS_SHOWN = 4         # fragments written in a cell; all of them are in the cell's "?"
@@ -47,12 +47,12 @@ def _rows(res):
                      if c["evaluated"] else "not scored")
         name = c["name"] or common.MISSING
         if c["id"] == res["top_id"]:
-            rows.append([name, _smiles_cell(c["smiles"]), explained, badge("your compound"), common.MISSING, common.MISSING])
+            rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, badge("your compound"), common.MISSING, common.MISSING])
             continue
-        iso = by_id[c["id"]]
-        verdict = (badge("not scored", help="MS-FINDER did not score this structure, so it cannot be ruled out.") if iso["distinguished"] is None
+        iso = by_id.get(c["id"], {"distinguished": None, "distinguishing_peaks": [], "isomer_only_peaks": []})
+        verdict = (badge("not scored", help="MetFrag did not score this structure, so it cannot be ruled out.") if iso["distinguished"] is None
                    else badge("yes", "good") if iso["distinguished"] else badge("no", "warn"))
-        rows.append([name, _smiles_cell(c["smiles"]), explained, verdict, _peaks_cell(iso["distinguishing_peaks"]), _peaks_cell(iso["isomer_only_peaks"])])
+        rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, verdict, _peaks_cell(iso["distinguishing_peaks"]), _peaks_cell(iso["isomer_only_peaks"])])
     return rows
 
 
@@ -85,13 +85,14 @@ def _verdict(res, compound):
     me = f"<b>{html.escape(compound)}</b>"
     n = len(res["isomers"])
     if res["verdict"] == "single":
-        who = "the one isomer considered fails" if n == 1 else f"each of the {n} isomers considered fails"
-        return f"{me} is the single answer: {who} to explain at least one of its fragments."
-    if res["verdict"] == "indistinguishable":
+        text = f"MetFrag predicts {me} can be distinguished from {n} tested isomer{'s' if n != 1 else ''}; this is not a unique identification."
+    elif res["verdict"] == "indistinguishable":
         others = [names[i] for i in res["group"][1:]]
         shown = ", ".join(others[:NAMES_IN_VERDICT]) + (f" and {len(others) - NAMES_IN_VERDICT} more" if len(others) > NAMES_IN_VERDICT else "")
-        return f"<b>These cannot be separated</b> by this spectrum: {me} and {shown} (of {n} isomer{'s' if n != 1 else ''} considered)."
-    return f"<b>No isomer verdict</b>: {html.escape(res['notes'][0].rstrip('.'))}."
+        text = f"<b>Not distinguished or not scored</b> by MetFrag: {me} and {shown} (of {n} isomer{'s' if n != 1 else ''} considered)."
+    else:
+        text = f"<b>No isomer verdict</b>: {html.escape(res['notes'][0].rstrip('.'))}."
+    return text + (" " + html.escape(res["source_summary"]) if res.get("source_summary") else "")
 
 
 def _neutral_formula(smiles, warnings):
@@ -119,7 +120,7 @@ def _databases(inputs):
 
 
 def run_exclusivity(inputs):
-    from mzdesk.exclusivity import isomers
+    from mzdesk.exclusivity import isomers, pubchem_isomers
     from mzdesk.ms1 import exact_mass as em
 
     warnings = []
@@ -162,7 +163,7 @@ def run_exclusivity(inputs):
             warnings.append(f"No precursor m/z: the theoretical m/z {theoretical:.4f} ({used}) is used.")
 
     # ---- same formula (PubChem, online)
-    same_rows, same_notes = [], []
+    same_rows, same_notes, same_ok = [], [], False
     if formula:
         try:
             same = em.formula_groups(formula, dbs)
@@ -172,6 +173,7 @@ def run_exclusivity(inputs):
         except ValueError as exc:
             raise InputError(str(exc)) from None
         else:
+            same_ok = True
             same_rows = _same_rows(same)
             warnings.extend(same["warnings"])
             same_notes.extend(same["warnings"])
@@ -183,7 +185,7 @@ def run_exclusivity(inputs):
         same_notes.append("Enter a structure or a molecular formula to search same-formula candidates.")
 
     # ---- isobaric interferences (PubChem, online)
-    iso_rows, iso_notes = [], []
+    iso_rows, iso_notes, isobaric_ok = [], [], False
     if precursor_mz is not None:
         adducts = pool if adduct is None else [adduct]
         if not em.mass_windows(precursor_mz, adducts, tol_ppm):
@@ -196,6 +198,7 @@ def run_exclusivity(inputs):
                 warnings.append(f"Isobaric interferences: {exc}")
                 iso_notes.append(f"PubChem could not be reached: {exc}")
             else:
+                isobaric_ok = True
                 iso_rows = _isobaric_rows(iso)
                 warnings.extend(iso["warnings"])
                 iso_notes.extend(iso["warnings"])
@@ -204,35 +207,49 @@ def run_exclusivity(inputs):
     else:
         iso_notes.append("Enter a precursor m/z to search isobaric interferences.")
 
-    # ---- isomers (MS-FINDER, local)
+    # ---- isomers (PubChem online candidates, local MetFrag)
     iso_res, iso_note = None, None
+    lipid = False
+    if struct and struct["kind"] == "smiles":
+        from mzdesk.platform_fit import lipid_metabolite_classifier as clf
+        lipid = bool(clf.extract_features(struct["smiles"]).lipid_class)
     if struct is None:
         iso_note = "No structure: the isomer check needs a structure and an MS2 spectrum."
     elif struct["kind"] == "formula":
         iso_note = "Formula input: the isomer check needs a structure."
+    elif lipid:
+        iso_note = ("Isomer check skipped for this structure recognised as a lipid. Conventional MS/MS usually cannot reliably determine "
+                    "C=C double-bond or sn-positions; specific methods or additional evidence may distinguish them.")
     elif not peaks:
         iso_note = "No MS2 peaks: the isomer check needs an MS2 spectrum."
     else:
-        iso_res = isomers.discriminate([{"id": "compound", "smiles": struct["smiles"], "name": name}], peaks, precursor_mz,
-                                       adduct or ("[M+H]+" if positive else "[M-H]-"), tol_da=tol_da, tol_ppm=tol_ppm, local_isomers=True)
-        if iso_res["error"]:
-            raise EngineError(iso_res["error"], iso_res["log"])
+        try:
+            candidates = em.formula_structures(formula)
+        except em.ExactMassError as exc:
+            iso_note = f"PubChem isomer candidate search failed: {exc} Other isomers are not ruled out."
+            warnings.append(iso_note)
+        except ValueError as exc:
+            iso_note = f"PubChem isomer candidate search could not run: {exc} Other isomers are not ruled out."
+        else:
+            iso_res = pubchem_isomers.discriminate({"id": "compound", "smiles": struct["smiles"], "name": name}, candidates, peaks,
+                                                   precursor_mz, adduct or ("[M+H]+" if positive else "[M-H]-"),
+                                                   tol_da=tol_da, tol_ppm=tol_ppm)
+            warnings.extend(n for n in iso_res["notes"] if n.startswith(("Unavailable or unusable", "Not scored")))
 
     if iso_res:
         verdict = _verdict(iso_res, name)
     else:
         counts = []
-        if formula:
-            what = "other structure" if struct and struct["kind"] == "smiles" else "structure"
-            counts.append(f"{len(same_rows)} {what}{'s' if len(same_rows) != 1 else ''} share {formula}")
-        if precursor_mz is not None:
+        if formula and same_ok:
+            counts.append(f"{len(same_rows)} connectivity group{'s' if len(same_rows) != 1 else ''} listed for {formula}")
+        if precursor_mz is not None and isobaric_ok:
             counts.append(f"{len(iso_rows)} isobaric formula{'s' if len(iso_rows) != 1 else ''} within {tol_ppm:g} ppm")
         verdict = ("; ".join(counts) + ". " if counts else "") + f"<b>No isomer verdict</b>: {html.escape(iso_note or 'the isomer check did not run.')}"
 
     return {"outputs": {
         "same_formula": table_data(same_rows, count=len(same_rows), help=same_notes),
         "isobaric": table_data(iso_rows, count=len(iso_rows), help=iso_notes),
-        "isomers": table_data(_rows(iso_res) if iso_res else [], count=len(iso_res["isomers"]) if iso_res else 0,
+        "isomers": table_data(_rows(iso_res) if iso_res else [], count=max(0, len(iso_res["candidates"]) - 1) if iso_res else 0,
                               help=(iso_res["notes"] if iso_res else [iso_note])),
     }, "warnings": warnings, "verdict": verdict}
 

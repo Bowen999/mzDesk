@@ -16,7 +16,7 @@ def _finite(score):
     return isinstance(score, (int, float)) and math.isfinite(score)
 
 
-_Y_TITLE = {"None": "Intensity", "Base peak = 100": "Relative intensity (%)"}
+_Y_TITLE = {"None": "Intensity"}
 
 
 def run_clean(inputs):
@@ -53,14 +53,26 @@ def run_clean(inputs):
     if not res["n_out"]:
         warnings.append("Every peak was removed.")
     fig, cards = ms2_plot.spectrum_figure(
-        [(r["mz"], r["intensity"]) for r in rows], precursor_mz=precursor_mz, y_title=_Y_TITLE.get(normalize, "Normalized intensity"),
+        [(r["mz"], r["intensity"]) for r in rows], precursor_mz=precursor_mz, precursor_tol=tol,
+        y_title=_Y_TITLE.get(normalize, "Intensity (cleanup scale)"),
         dim={i: r["reason"] for i, r in enumerate(rows) if not r["kept"]})
+    for card, row in zip(cards, rows):
+        card["rows"][1] = ["Rel. int. (input base)", f"{ms2_plot.fmt_rel(row['rel'])} %"]
+    if normalize == "None":
+        scale_help = "The axis and Intensity use input intensities; no normalization was requested."
+    else:
+        scale_help = (f"The axis and Intensity use the cleanup output scale ({normalize}). When possible, "
+                      "normalization is based on kept peaks; removed peaks use the same scale and can exceed "
+                      "the largest kept peak.")
+    figure_help = [scale_help, "Rel. int. (input base) is the percentage of the input base peak before removal."]
+    if normalize != "None" and not res["n_out"]:
+        figure_help.append("No peaks were kept, so there is no kept-peak normalization reference.")
     return {"outputs": {
         "summary": {"values": {
             "Detected format": detected, "Peaks in": str(res["n_in"]), "Peaks out": str(res["n_out"]),
             "Removed": {"value": str(res["n_in"] - res["n_out"]), "note": f"{n_noise} noise · {n_prec} precursor"}}},
-        "spectrum": common.plotly(fig, peaks=cards),
-        "peaks": {"rows": [[fmt(r["mz"], 4), ms2_plot.fmt_intensity(r["intensity"]), fmt(r["rel"], 1),
+        "spectrum": common.plotly(fig, peaks=cards, help=figure_help),
+        "peaks": {"rows": [[ms2_plot.fmt_mz(r["mz"]), ms2_plot.fmt_intensity(r["intensity"]), ms2_plot.fmt_rel(r["rel"]),
                             "yes" if r["kept"] else "no", r["reason"] or common.MISSING] for r in rows]},
         "formats": {"formats": ms2_formats.all_formats(res["peaks"], precursor_mz=precursor_mz, ion_mode=ion_mode,
                                                        name=first_record(raw)["name"])},

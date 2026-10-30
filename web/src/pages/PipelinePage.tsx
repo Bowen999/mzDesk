@@ -5,7 +5,8 @@ import { FieldInput, initialValues, missingRequired, visibleFields } from "../co
 import { Icon, pipelineIcon } from "../components/Icon";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
-import { IsomerEvidence, SpectrumEvidence, WorkflowOverview } from "../components/PipelineVisuals";
+import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
+import { WorkflowProgress } from "../components/WorkflowProgress";
 import { networkUses } from "../network";
 import type { AnnotationCandidate, AnnotationResult, Cell, Field, Job, JobStep, Row, Spec } from "../types";
 
@@ -38,11 +39,12 @@ function StepView({ step, index }: { step: JobStep; index: number }) {
   const blocks = step.blocks ?? [];
   const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
   const shown = step.status !== "queued";
+  const hasSeconds = typeof step.seconds === "number" && Number.isFinite(step.seconds) && step.seconds >= 0;
   return (
     <details id={`workflow-step-${step.id}`} className="stage" open={shown && blocks.length > 0 && step.status !== "skipped"}>
       <summary>
-        {index + 1}. {step.title} <StatusChip status={step.status} />
-        {step.status !== "queued" && step.status !== "skipped" && <span className="meta"> {step.seconds.toFixed(1)} s</span>}
+        {index + 1}. {step.title || "Unnamed stage"} <StatusChip status={step.status || "unknown"} />
+        {step.status !== "queued" && step.status !== "skipped" && hasSeconds && <span className="meta"> {step.seconds.toFixed(1)} s</span>}
         {step.note && <span className="meta"> {step.note}</span>}
       </summary>
       {blocks.length > 0 && <OutputList blocks={blocks} outputs={outputs} live />}
@@ -114,6 +116,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(pipe ? pipe.inputs : []));
   const [job, setJob] = useState<Job | null>(null);
   const [busy, setBusy] = useState(false);
+  const [hasStartedJob, setHasStartedJob] = useState(false);
   const [error, setError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestedAdduct, setRequestedAdduct] = useState<string | null>(null);
@@ -124,7 +127,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   const confirming = useRef(false);
   useEffect(() => {
     ticket.current++;
-    setValues(initialValues(pipe ? pipe.inputs : [])); setJob(null); setBusy(false); setError(""); setErrors({}); setRequestedAdduct(null);
+    setValues(initialValues(pipe ? pipe.inputs : [])); setJob(null); setBusy(false); setHasStartedJob(false); setError(""); setErrors({}); setRequestedAdduct(null);
     return () => { ticket.current++; };
   }, [id]);
   useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
@@ -138,13 +141,13 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   };
   const loadExample = (example: Record<string, any>) => {
     ticket.current++; confirming.current = false; guard.cancel();
-    setValues({ ...initialValues(pipe.inputs), ...example }); setJob(null); setBusy(false); setError(""); setErrors({}); setRequestedAdduct(null); setNetNote("");
+    setValues({ ...initialValues(pipe.inputs), ...example }); setJob(null); setBusy(false); setHasStartedJob(false); setError(""); setErrors({}); setRequestedAdduct(null); setNetNote("");
   };
   const clear = () => {
     ticket.current++;
     confirming.current = false;
     guard.cancel();
-    setValues(initialValues(pipe.inputs)); setJob(null); setBusy(false); setError("");
+    setValues(initialValues(pipe.inputs)); setJob(null); setBusy(false); setHasStartedJob(false); setError("");
     setErrors({}); setRequestedAdduct(null);
     setNetNote(busy ? "Cleared. The previous workflow may still finish on the server." : "");
     setFormVersion(n => n + 1);
@@ -169,13 +172,14 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     }
     if (ticket.current !== mine) return;
     setNetNote("");
-    setBusy(true); setError(""); setErrors({}); setJob(null);
+    setBusy(true); setHasStartedJob(false); setError(""); setErrors({}); setJob(null);
     try {
       const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
       const adduct = payload.precursor?.adduct;
       setRequestedAdduct(adduct && adduct !== "Auto" ? adduct : null);
       const { job_id } = await startPipeline(pipe.id, payload);
       if (ticket.current !== mine) return;
+      setHasStartedJob(true);
       let failures = 0;
       for (;;) {
         let j: Job;
@@ -193,7 +197,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
         if (ticket.current !== mine) return;
       }
     } catch (e: any) {
-      if (ticket.current === mine) setError(e.message ?? String(e));
+      if (ticket.current === mine) setError(e?.message || String(e) || "An unknown error occurred.");
     } finally {
       if (ticket.current === mine) setBusy(false);
     }
@@ -229,10 +233,9 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           <span className="msg" aria-live="polite">{netNote}</span>
         </div>
       </div>
-      {busy && <div className="run-progress" role="progressbar" aria-label="Running"><span /></div>}
-      {busy && job?.status === "queued" && job.note && <div className="meta">{job.note}</div>}
       {error && <div className="alert error" role="alert">{error}</div>}
-      {job && <WorkflowOverview job={job} />}
+      {(busy || job || (hasStartedJob && error)) && <WorkflowProgress job={job} awaitingFirstUpdate={hasStartedJob}
+        trackingStopped={!!error && !busy && hasStartedJob && (!job || job.status === "running" || job.status === "queued")} />}
       {result && (
         <>
           <AnswerCard result={result} requestedAdduct={requestedAdduct} />
@@ -246,7 +249,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
       {job && (
         <>
           <div className="results-head"><h2 className="panel-title">Steps</h2></div>
-          {job.steps.map((s, i) => <StepView step={s} index={i} key={s.id} />)}
+          {(Array.isArray(job.steps) ? job.steps : []).map((s, i) => <StepView step={s} index={i} key={s.id} />)}
         </>)}
       {guard.dialog}
     </div>

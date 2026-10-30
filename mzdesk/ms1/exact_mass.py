@@ -463,6 +463,37 @@ def formula_groups(formula, databases, cap=FORMULA_CAP):
     return {"formula": formula, "rows": rows, "examined": len(props), "truncated": truncated, "warnings": warnings}
 
 
+def formula_structures(formula, cap=FORMULA_CAP):
+    """PubChem's first same-formula CIDs with their structures, independent of database filters.
+
+    The result is a bounded sample, not an exhaustive list. Missing properties are
+    counted explicitly; callers must not treat missing structures as ruled out.
+    """
+    formula = _neutral_formula(formula)
+    cids, truncated = _fastformula(formula, cap)
+    props = {}
+    for reply in _pug_post("property/MolecularFormula,CanonicalSMILES,IsomericSMILES,InChIKey,Title/JSON", cids):
+        for p in (reply.get("PropertyTable") or {}).get("Properties") or []:
+            try:
+                cid = int(p["CID"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            props[cid] = p
+    rows, missing, wrong_formula = [], 0, 0
+    for cid in cids:
+        p = props.get(cid) or {}
+        smiles = p.get("SMILES") or p.get("IsomericSMILES") or p.get("ConnectivitySMILES") or p.get("CanonicalSMILES")
+        if not smiles or not p.get("MolecularFormula"):
+            missing += 1
+        elif _neutral_formula(p["MolecularFormula"]) != formula:
+            wrong_formula += 1
+        else:
+            rows.append({"id": f"pubchem:{cid}", "cid": cid, "name": p.get("Title") or f"PubChem CID {cid}",
+                         "smiles": smiles, "source": f"PubChem CID {cid}"})
+    return {"formula": formula, "candidates": rows, "retrieved": len(cids), "truncated": truncated,
+            "missing": missing, "wrong_formula": wrong_formula, "cap": cap}
+
+
 def isobaric(mz, adducts, tol_ppm, databases, exclude_formula=None, cap=ISOBARIC_CAP):
     """同一 m/z 窗口里分子式不同的化合物，按分子式合并（每式一行，取 |Δ ppm| 最小的化合物）。
 

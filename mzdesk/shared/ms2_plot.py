@@ -1,4 +1,6 @@
 """MS2 谱图基础可视化（x = m/z，y = 强度）。清洗页、镜像图、MetFrag 图都从这里取样式、棒图、悬停点和前体离子标记。"""
+import math
+
 import numpy as np
 import plotly.graph_objects as go
 
@@ -10,7 +12,7 @@ FONT, MONO = theme.PLOT_FONT, theme.PLOT_MONO
 HEIGHT = 460
 STICK_PX = 2
 HEADROOM = 1.15               # y axis top = tallest peak x this, room for the m/z labels
-PRECURSOR_MATCH = 0.05        # a peak this close (Da) to the precursor m/z is the precursor ion
+PRECURSOR_MATCH = 0.05        # default window (Da) for indicating a peak near the precursor m/z
 
 
 def axis_style():
@@ -80,16 +82,35 @@ def fmt_intensity(y):
     return f"{y:,.0f}" if abs(y) >= 1e4 else f"{y:.4g}"
 
 
-def spectrum_figure(peaks, *, precursor_mz=None, y_title="Intensity", dim=None, height=HEIGHT):
+def fmt_mz(value):
+    """Keep distinct float values distinct, with at least four decimal places when practical."""
+    text = repr(float(value))
+    if "e" in text:
+        return text  # Avoid an unwieldy run of zeros for very small or large values.
+    whole, fraction = text.split(".")
+    return whole + "." + fraction.ljust(4, "0")
+
+
+def fmt_rel(value):
+    """A small positive percentage must not be rounded to zero."""
+    return f"{value:.3g}" if 0 < abs(value) < 1 else f"{value:.1f}"
+
+
+def spectrum_figure(peaks, *, precursor_mz=None, precursor_tol=PRECURSOR_MATCH, y_title="Intensity", dim=None, height=HEIGHT):
     """Stick spectrum of ``peaks`` [(mz, y)] -> ``(fig, cards)``; pass cards to ``common.plotly(fig, peaks=cards)``.
 
     ``dim`` marks removed peaks (drawn light, card kind "Removed"): a list of indices, a bool mask,
     or {index: reason} (kind "Removed: reason"). The y axis starts at 0 with headroom for labels
-    and uses SI ticks for large raw intensities. A dotted line + label marks ``precursor_mz``.
+    and uses SI ticks for large raw intensities. A dotted line + label marks ``precursor_mz``;
+    ``precursor_tol`` controls the window used to indicate a nearby peak, not peak processing.
+    Zero-height peaks keep their positions and cards; their relative intensity is undefined when
+    every peak is zero. Invalid peak values are rejected rather than silently changing indices.
     """
     peaks = [(float(m), float(y)) for m, y in peaks]
     if not peaks:
         return go.Figure(), []
+    if any(not math.isfinite(m) or not math.isfinite(y) or m <= 0 or y < 0 for m, y in peaks):
+        raise ValueError("peaks must have positive finite m/z and non-negative finite intensity")
     n = len(peaks)
     if isinstance(dim, dict):
         off = {int(i): str(r) for i, r in dim.items()}
@@ -100,7 +121,7 @@ def spectrum_figure(peaks, *, precursor_mz=None, y_title="Intensity", dim=None, 
         off = {int(i): "" for i in (np.flatnonzero(arr) if arr.dtype == bool else arr)}
     mz, ys = [p[0] for p in peaks], [p[1] for p in peaks]
     ymax = max(ys)
-    top = ymax * HEADROOM
+    top = ymax * HEADROOM if ymax > 0 else 1.0
     xr = mz_range(mz + ([precursor_mz] if precursor_mz else []))
 
     fig = go.Figure()
@@ -111,19 +132,26 @@ def spectrum_figure(peaks, *, precursor_mz=None, y_title="Intensity", dim=None, 
 
     shapes, annotations, prec = [], [], None
     if precursor_mz:
-        near = [i for i in range(n) if abs(mz[i] - precursor_mz) <= PRECURSOR_MATCH]
+        near = [i for i in range(n) if abs(mz[i] - precursor_mz) <= precursor_tol]
         prec = min(near, key=lambda i: abs(mz[i] - precursor_mz)) if near else None
         y0 = 0.0 if prec is None else ys[prec] + 0.08 * top      # start above the precursor peak's label
         if y0 < top:
             shapes.append(precursor_line(precursor_mz, y0, top))
-        annotations.append(precursor_label(precursor_mz, f"precursor {precursor_mz:.4f}", xr))
+        annotations.append(precursor_label(precursor_mz, f"precursor {fmt_mz(precursor_mz)}", xr))
     fig.update_layout(**base_layout(
         height, x_range=xr, y_range=[0, top], y_title=y_title, shapes=shapes, annotations=annotations,
         yaxis=dict(tickformat="~s") if ymax >= 1e4 else None))
 
     cards = []
     for i, (m, y) in enumerate(peaks):
-        kind = ("Removed: " + off[i] if off[i] else "Removed") if i in off else ("Precursor ion" if i == prec else "Peak")
+        kind = (("Removed: " + off[i] if off[i] else "Removed") if i in off else
+                ("Precursor ion" if m == precursor_mz else "Near precursor m/z") if i == prec else "Peak")
+        rows = [["Intensity", fmt_intensity(y)],
+                ["Rel. intensity", f"{fmt_rel(y / ymax * 100)} %" if ymax > 0 else "—"]]
+        # Figure.tsx displays four decimals in its heading. Keep the stored m/z and expose
+        # extra digits in the card without changing the shared frontend's contract.
+        if float(f"{m:.4f}") != m:
+            rows.append(["m/z (more precision)", fmt_mz(m)])
         cards.append({"mz": m, "rel": y, "on": i not in off, "kind": kind,
-                      "rows": [["Intensity", fmt_intensity(y)], ["Rel. intensity", f"{y / ymax * 100:.1f} %"]]})
+                      "rows": rows})
     return fig, cards

@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from mzdesk.shared import colors as theme
 from mzdesk.shared import ms2_plot as base
 
-MIN_STICK = 1.6
 Y_TOP = 118.0
 LABELS_PER_HALF = 8
 LABEL_MIN_REL = 5.0
@@ -102,15 +101,15 @@ def _tip_markers(mz, heights, rel, label, is_matched, precursor_mz, partners):
     for mass, intensity, matched, partner in zip(mz, rel, is_matched, partners):
         loss = ""
         if precursor_mz is not None and precursor_mz - mass > 0:
-            loss = f"<br>Neutral loss {precursor_mz - mass:.4f} Da"
+            loss = f"<br>Precursor − peak m/z {precursor_mz - mass:.6g}"
         title = f"{label} · {'matched' if matched else 'unmatched'}"
-        customdata.append([title, float(mass), round(float(intensity), 1), loss, partner])
+        customdata.append([title, base.fmt_mz(mass), base.fmt_rel(intensity), loss, partner])
     return base.hover_markers(
         mz, heights, name=f"{label} peaks", customdata=customdata,
         hovertemplate=(
             "<b>%{customdata[0]}</b><br>"
-            "m/z %{customdata[1]:.4f}<br>"
-            "Rel. intensity %{customdata[2]:.1f}%"
+            "m/z %{customdata[1]}<br>"
+            "Rel. intensity %{customdata[2]}%"
             "%{customdata[3]}%{customdata[4]}"
             "<extra></extra>"
         ))
@@ -154,11 +153,11 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
     for mz, rel, sign, label, precursor, partner, other_mz, other_label in halves:
         if mz.size == 0:
             continue
-        heights = sign * np.maximum(rel, MIN_STICK)
+        heights = sign * rel
         is_matched = np.array([index in partner for index in range(mz.size)], dtype=bool)
         partners = [
-            f"<br>Matched ↔ {other_label} m/z {other_mz[partner[index]]:.4f} "
-            f"(Δ {other_mz[partner[index]] - mz[index]:+.4f} Da)" if index in partner else ""
+            f"<br>Matched ↔ {other_label} m/z {base.fmt_mz(other_mz[partner[index]])} "
+            f"(Δ {other_mz[partner[index]] - mz[index]:+.4g} Da)" if index in partner else ""
             for index in range(mz.size)
         ]
         for mask, color, suffix in ((~is_matched, base.LIGHT, "unmatched"), (is_matched, base.DARK, "matched")):
@@ -170,12 +169,11 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
             annotations.append(dict(
                 x=float(mz[index]), y=float(heights[index]), xref="x", yref="y",
                 yanchor="bottom" if sign > 0 else "top", yshift=3 * sign, showarrow=False,
-                text=f"{mz[index]:.4f}", font=dict(family=base.MONO, size=10, color=theme.INK),
+                text=base.fmt_mz(mz[index]), font=dict(family=base.MONO, size=10, color=theme.INK),
             ))
 
     shapes = []
-    same_precursor = (precursor_a is not None and precursor_b is not None and
-                      abs(precursor_a - precursor_b) < 1e-6)
+    same_precursor = precursor_a is not None and precursor_a == precursor_b
     for precursor, sign, text in (
             (precursor_a, +1, "precursor" if same_precursor else f"{label_a} precursor"),
             (None if same_precursor else precursor_b, -1, f"{label_b} precursor")):
@@ -184,7 +182,7 @@ def build_mirror_figure(peaks_a, peaks_b, precursor_mz1=None, precursor_mz2=None
         y0, y1 = (-100.0, 100.0) if same_precursor else (0.0, sign * 100.0)
         shapes.append(base.precursor_line(precursor, y0, y1))
         annotations.append(base.precursor_label(
-            precursor, f"{text} {precursor:.4f}", x_range, y=sign * Y_TOP, yref="y",
+            precursor, f"{text} {base.fmt_mz(precursor)}", x_range, y=sign * Y_TOP, yref="y",
             yanchor="top" if sign > 0 else "bottom", yshift=0))
 
     half_label = dict(

@@ -275,7 +275,8 @@ def score_adducts(precursor_mz, positive, ms2_peaks, *, adduct=None, tol_da=0.02
     for rank, (raw, name, share, ms2_f, form_f, iso_f, evidence) in enumerate(ranked, start=1):
         score = raw / total
         retained = rank <= RETAIN_MAX and score >= RETAIN_RATIO * best
-        hypotheses.append(AdductHypothesis(adduct=name, score=round(score, 4), rank=rank, retained=retained,
+        # Keep the full score for downstream formula selection; formatting is display-only.
+        hypotheses.append(AdductHypothesis(adduct=name, score=score, rank=rank, retained=retained,
                                            ambiguous=retained and (rank == 1 or best < AMBIGUOUS_RATIO * score),
                                            prior=round(share, 4), ms2_factor=round(ms2_f, 4), formula_factor=round(form_f, 4),
                                            isotope_factor=round(iso_f, 4), evidence=evidence))
