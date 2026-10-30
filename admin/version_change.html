@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.34', date:'2026-10-30', git:'',
+  title:'CCS 页接通；删除 RT / RI 页；GNPS2 分组按用途改名',
+  note:'CCS 只比同一化合物、同一加合物、N₂ 标度的值；He、用 He 参考值校准的 TWIMS、FAIMS / DMS 一律"不可比"。没有实测参考值时才用本地模型预测（只作粗查）。只报告，不进 ESI MS/MS 注释流程。RT 不再做。',
+  state:[['CCS 数据','14,898 条 N₂ 实测值 · 5,347 个化合物 · DT / TW / TIMS'], ['预测误差','测试集中位 1.19 %，95 分位 6.44 %（容差 ±6.5 %）'], ['RT','页面删除'], ['Dataset Search','原 GNPS2，3 页按用途改名'], ['版本','0.2.34']],
+  c:{
+   other:['feat','CCS（id ccs，已接）：数据为 CCSbase 源数据（c3sdb，固定提交 5f1393e，MIT，26 个数据集，全部 N₂），一次性运行 python -m mzdesk.orthogonal.ccs_setup 建本地索引并训练模型。同一化合物（InChIKey 前 14 位）+ 同一加合物才比较；容差按观测平台与参考值平台：同类 ±1 %，DT↔TIMS ±1 %，DT↔TW ±2 %，TIMS↔TW ±3 %（推算）。超出只标"不一致"，不排除化合物。无参考值时用 RBF-SVR（m/z、加合物、42 个 MQN；按化合物分组留出测试）预测，容差 = 测试集 95 分位 6.5 %；与训练集最大 Tanimoto < 0.5 标"训练范围外"。示例：咖啡因 [M+H]+ 140.4 Å²（DTIMS 单场）对参考 140.5，Δ −0.07 %，一致。删除未接的 RT / RI 页，MRM 页去掉 Predicted RT 卡片。',true,{w:'mzdesk/orthogonal/ccs.py · mzdesk/orthogonal/ccs_setup.py · mzdesk/orthogonal/__init__.py · mzdesk/api/runners/ccs.py · mzdesk/api/runners/__init__.py · mzdesk/api/runners/mrm.py · mzdesk/api/verdicts.py · mzdesk/spec.py · requirements.txt · tests/test_ccs.py · tests/test_mrm.py'}],
+   app:['chg','侧栏 GNPS2 分组改名 Dataset Search；fastMASST → Spectrum in which set，Pan-ReDU → Dataset finder，MassQL → Fragment pattern。工具名移到每页一句话说明里；id、接口和下载文件名不变。',false,{w:'mzdesk/spec.py'}],
+   docs:['doc','版本号 0.2.34，本页加 v0.2.34；To-do 去掉 RT、CCS 标记完成；GNPS2.md 页面名同步。',false,{w:'mzdesk/__init__.py · admin/version_change.html · admin/To-do.md · admin/GNPS2.md'}]
+  }},
  {id:'v0.2.33', date:'2026-10-29', git:'',
   title:'页面风格统一，切页保留结果并可清空',
   note:'Compound、MS1、Spectrum、GNPS2、Utilities 和 ESI MS/MS Annotation 按 Detectability 风格统一。切换页面时保留各自输入与结果；刷新或关闭页面后不保留。Clear 恢复当前页面初始状态，不影响其他页面；运行中清空不会取消服务器任务。',

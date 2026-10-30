@@ -203,7 +203,6 @@ def _notes(path_note, predicted, instrument):
         "choice; confirm the transitions with a standard and the sample matrix.",
         "Product ions are limited to peaks below the precursor m/z, so the precursor ion is never a product. "
         "Relative intensity is normalised to the base peak of the chosen spectrum (100).",
-        "RT / RI is not predicted (the RT / RI page is not connected), so Predicted RT is blank.",
     ]
     if predicted:
         items.append("The predicted fragments are a CFM-ID model output, not a measured spectrum.")
@@ -229,7 +228,6 @@ def run_mrm(inputs):
             rows, path_note = _library(warnings, smiles, precursor_mz, adduct, positive, n_transitions, ce_unit)
     outputs = {
         "summary": {"values": {
-            "Predicted RT": {"value": MISSING, "note": "RT / RI page is not connected"},
             "Polarity": mode,
             "Transitions": str(len(rows))}},
         "transitions": blocks.table_data(rows, count=len(rows)),

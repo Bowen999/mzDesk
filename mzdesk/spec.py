@@ -267,7 +267,7 @@ _MASSQL_EXAMPLE = base64.b64encode(b"BEGIN IONS\nTITLE=example\nPEPMASS=132.102\
 
 
 MODULES = [
-    module("gnps_fastmasst", "fastMASST", "A", "Search a spectrum in <b>public datasets</b> and the <b>GNPS reference library</b>.",
+    module("gnps_fastmasst", "Spectrum in which set", "A", "Search a spectrum in <b>public datasets</b> and the <b>GNPS reference library</b> (GNPS2 fastMASST).",
         [dict(spectrum("spectrum", "MS2 spectrum"), required=True, section="Query"),
          dict(number("precursor_mz", "Precursor m/z", step=0.0001), header_fallback=True, section="Query"),
          dict(text("name", "Query name"), section="Query"),
@@ -300,7 +300,7 @@ MODULES = [
         example={"spectrum": _paste(LEUCINE_GNPS_MS2), "precursor_mz": "132.102", "name": "L-leucine"},
         network="The spectrum is sent to GNPS2 fastMASST, and hits are verified through the public GNPS USI service."),
 
-    module("gnps_redu", "Pan-ReDU", "B", "Find <b>public datasets</b> by sample metadata and ion polarity.",
+    module("gnps_redu", "Dataset finder", "B", "Find <b>public datasets</b> by sample metadata and ion polarity (GNPS2 Pan-ReDU).",
         [text("organism", "Organism name or NCBI taxid", placeholder="Mus musculus or 10090"),
          text("body_part", "Body part", placeholder="brain"),
          dict(textarea("where", "Other filters (one column=value per line)", placeholder="SampleType=animal", rows=3),
@@ -313,7 +313,7 @@ MODULES = [
          table(["Column", "Value", "Files"], "Matched metadata values", id="values", page_size=10, compact=True)],
         subgroup="gnps", live=True, example={"organism": "Mus musculus", "body_part": "brain", "min_files": 13, "polarity": "both"}),
 
-    module("gnps_massql", "MassQL", "A", "Find MS2 spectra by <b>fragment, neutral-loss and precursor patterns</b> in one uploaded file.",
+    module("gnps_massql", "Fragment pattern", "A", "Find MS2 spectra by <b>fragment, neutral-loss and precursor patterns</b> in one uploaded file (MassQL).",
         [dict(textarea("query", "MassQL query", "QUERY scaninfo(MS2DATA) WHERE MS2PROD=44.04942:TOLERANCEMZ=0.01", rows=4), required=True),
          dict(file("input_file", "mzML / mzXML / MGF file (one, max 20 MB)", ".mzml,.mzxml,.mgf"), required=True, binary=True, max_bytes=20_000_000,
               help="Only the migrated MS2 subset is supported. Files are processed on the mzDesk server, not sent to GNPS2.")],
@@ -667,22 +667,35 @@ MODULES = [
         network="The same-formula and isobaric-interference tables query PubChem; the isomer table and the MS-FINDER run stay local."),
 
     # ---- Orthogonal ----
-    module("rt", "RT / RI", "A", "Does the <b>retention</b> agree: RT / RI prediction and projection across systems.",
-        [structure(), select("system", "Chromatographic system", ["RP C18 generic", "HILIC generic", "GC (Kovats)", "Custom (upload calibration)"]),
-         number("rt_min", "Observed RT (min, optional)", step=0.01), file("calibration", "Calibration set for projection (optional, CSV: compound, RT)", ".csv")],
-        [cards([("Predicted RT / RI", ""), ("Observed", ""), ("Δ", "")], "Retention"), table(["System", "Predicted", "Projected", "Observed", "Δ"])],
-        subgroup="orthogonal"),
-
-    module("ccs", "CCS", "A", "Does the <b>ion mobility</b> agree: CCS prediction and lookup.",
-        [structure(), select("adduct", "Adduct", ADDUCTS_POS[1:] + ADDUCTS_NEG[1:]), number("ccs", "Observed CCS (Å², optional)", step=0.1)],
-        [cards([("Predicted CCS", "Å²"), ("Database CCS", "Å²"), ("Observed", "Å²"), ("Δ", "%")], "CCS"), table(["Adduct", "Predicted", "Database", "Observed", "Δ %"])],
-        subgroup="orthogonal"),
+    module("ccs", "CCS", "A", "Does the <b>ion mobility</b> agree: the <b>reference CCS</b> of the same compound and adduct, or a model prediction if there is none.",
+        [structure(), select("adduct", "Adduct", ADDUCTS_POS[1:] + ADDUCTS_NEG[1:]),
+         text("observed", "Observed CCS (Å², optional; several values comma-separated, e.g. two conformers)", placeholder="152.3 or 152.3, 160.1"),
+         select("platform", "Platform", ["DTIMS (stepped field)", "DTIMS (single field)", "TIMS", "TWIMS", "FAIMS / DMS"]),
+         select("gas", "Drift gas", ["N₂", "He"]),
+         select("tw_calibration", "TWIMS calibration (TWIMS only)", ["N₂ reference values", "He reference values (N₂→He)"])],
+        [cards([("Reference CCS", "Å²", "The reference value used: the one closest to your observed value, or the median of the measured values when there is nothing to compare. "
+                                         "If the index has no value for this compound and adduct, the model prediction."),
+                ("Source", "", "Measured: a published N₂ value from the CCSbase source data (CCS type and dataset in the note). Predicted: a model, weaker than a measurement."),
+                ("Observed", "Å²", "Your value(s). With several, the one closest to each reference is used."),
+                ("Δ", "%", "(observed − reference) / reference × 100, with the tolerance for this platform pair."),
+                ("Verdict", "", "Consistent: within the tolerance. Inconsistent: outside it; this never excludes the compound. Not comparable: He, TWIMS calibrated with He, or FAIMS / DMS. "
+                                "No observed value, or no reference value for this compound and adduct.")], "Summary", id="summary", style="metric",
+               help="Observed CCS against the N₂ reference CCS of the same compound and adduct."),
+         table(["Source dataset", "CCS type", "Method", "CCS (Å²)", "Δ %", "Tolerance %", "Verdict"], "Reference values", id="reference", row_help=True,
+               help=["Every measured N₂ value in the index for this compound and adduct. Δ is taken against the observed value closest to that reference.",
+                     "The tolerance depends on the platform of your measurement and the CCS type of the row. The ? on a row gives the publication and the name in the source."]),
+         table(["Adduct", "CCS (Å²)", "CCS type", "Source dataset"], "Other ions of this compound", id="other_ions",
+               help="The same compound as other adducts. Information only: a CCS depends on the adduct, so these are not compared."),
+         table(["Predicted CCS (Å²)", "Tolerance %", "Test median error %", "Test 95th percentile %", "Training domain"], "Prediction", id="prediction", row_help=True,
+               help="Only when the index has no value for this compound and adduct. A model prediction, weaker than a measured value; the ? gives the model and its test error."),
+         notes("Assumptions", id="notes", help="Comparison rules, tolerances with their sources, the prediction model, and the data source with its licence and citation.")],
+        subgroup="orthogonal", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+", "observed": "140.4", "platform": "DTIMS (single field)", "gas": "N₂"}),
 
     module("mrm", "MRM transitions", "B", "Pick <b>precursor–product pairs</b> and <b>collision energies</b> for a targeted method.",
         [radio("start_from", "Start from", ["Structure (predicted fragments)", "Library spectrum", "My spectrum"]), structure(optional=True), spectrum(label="MS2 spectrum (if starting from my spectrum)"),
          radio("ion_mode", "Ion mode", ["Positive", "Negative"]), select("instrument", "Instrument", ["Triple quadrupole (generic)", "QTRAP", "Q-TOF (PRM)", "Orbitrap (PRM)"]),
          number("n_transitions", "Transitions", 3, 1), select("ce_unit", "CE unit", ["eV", "NCE"])],
-        [cards([("Predicted RT", "min"), ("Polarity", ""), ("Transitions", "n")], id="summary", style="metric"),
+        [cards([("Polarity", ""), ("Transitions", "n")], id="summary", style="metric"),
          table(["Precursor m/z", "Product m/z", "CE", "Role", "Fragment formula", "Source", "Relative intensity"],
                caption="Role: quantifier / qualifier. Source: library spectrum or predicted", id="transitions"),
          button("Export method table (CSV)"),
@@ -1047,7 +1060,7 @@ GROUPS = [{"id": "modules", "title": "Modules"}, {"id": "pipelines", "title": "W
 # Modules 下的小类，侧栏按这里的顺序列出（组内已接引擎的模块排前面）；Workflows 排在 Modules 之后
 SUBGROUPS = [{"id": "molecular", "title": "Compound"}, {"id": "detectability", "title": "Detectability"},
              {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "Spectrum"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"},
-             {"id": "inorganic", "title": "ICP-MS"}, {"id": "gnps", "title": "GNPS2"}, {"id": "tools", "title": "Utilities & reporting"}]
+             {"id": "inorganic", "title": "ICP-MS"}, {"id": "gnps", "title": "Dataset Search"}, {"id": "tools", "title": "Utilities & reporting"}]
 
 
 def spec():

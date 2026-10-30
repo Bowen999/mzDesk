@@ -174,9 +174,7 @@ def test_example_is_the_my_spectrum_path():
     body = response.json()
     assert body["status"] == "ok"
     out = body["outputs"]
-    assert out["summary"]["values"] == {
-        "Predicted RT": {"value": "—", "note": "RT / RI page is not connected"},
-        "Polarity": "Positive", "Transitions": "3"}
+    assert out["summary"]["values"] == {"Polarity": "Positive", "Transitions": "3"}
     assert out["transitions"]["rows"] == [
         ["195.0877", "138.0663", "—", "Quantifier", "—", "My spectrum", "100.0 %"],
         ["195.0877", "110.0713", "—", "Qualifier", "—", "My spectrum", "10.1 %"],
