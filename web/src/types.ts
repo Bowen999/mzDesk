@@ -7,6 +7,7 @@ export type Field = {
   // form metadata (Spectrum pages; optional everywhere)
   section?: string; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
   header_fallback?: boolean; auto_label?: string; ion_modes?: string[]; allow_formula?: boolean; help?: Help;
+  label_field?: boolean;           // structure: an optional label input inside the field names the compound on the result cards
   // internet use (spec.py): the frontend asks before running online while the sidebar switch is off
   network?: boolean;               // checkbox: ticking it uses the internet
   network_sources?: string[];      // spectrum: these input sources are fetched online

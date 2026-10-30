@@ -50,7 +50,9 @@ DATABASES = ["HMDB", "PubChem", "LIPID MAPS", "KEGG", "ChEBI", "DrugBank", "NORM
 # ---- 字段 ----
 def structure(id="structure", label="Compound", optional=False):
     """network_modes: input modes the backend resolves online (SMILES / InChI and formulas are parsed locally).
-    The frontend asks before using the internet when the switch is off; the wire value is components/Fields.tsx NAME_MODE."""
+    The frontend asks before using the internet when the switch is off; the wire value is components/Fields.tsx NAME_MODE.
+    label_field=True adds an optional label input inside the field, whose text names the compound on the result cards
+    (read from the field value's "label" key by mzdesk/api/runners/structure.py)."""
     return {"type": "structure", "id": id, "label": label, "optional": optional, "network_modes": ["Name / ID / Formula"]}
 def precursor(id="precursor", adduct=True, label="Precursor m/z", adducts=None, mz=True):
     """mz=False: 不显示 m/z 输入框（只选离子模式和加合物）；该字段的加合物列表里没有 Auto 时，默认取列表第一项。"""
@@ -351,9 +353,9 @@ MODULES = [
         network="Identity looks the compound up in PubChem and UniChem, then loads classification and background from public sources."),
 
     module("structure_formats", "Structure & formats", "B", "Enter up to <b>three structures</b>, compare them in <b>2D / 3D</b>, and export each as <b>SMILES, InChI, InChIKey or MOL</b>.",
-        [dict(structure(label="Compound 1"), required=True),
-         structure("structure_2", "Compound 2", optional=True),
-         structure("structure_3", "Compound 3", optional=True)],
+        [dict(structure(label="Compound 1"), required=True, label_field=True),
+         {**structure("structure_2", "Compound 2", optional=True), "label_field": True},
+         {**structure("structure_3", "Compound 3", optional=True), "label_field": True}],
         [compare("Compounds", id="compare",
                  help=["One card per compound, with the 2D depiction and the 3D viewer in boxes of the same width and height, so the columns line up.",
                        "With one compound the two boxes sit side by side; with two or three they stack in one column per compound.",

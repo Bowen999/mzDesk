@@ -24,7 +24,7 @@ export function initialValues(fields: Field[]): Record<string, any> {
   for (const f of fields) {
     if (!f.id) continue;
     switch (f.type) {
-      case "structure": v[f.id] = { mode: NAME_MODE, value: "", buffers: {} }; break;
+      case "structure": v[f.id] = { mode: NAME_MODE, value: "", label: "", buffers: {} }; break;
       case "precursor": {
         const mode = f.ion_modes?.[0] ?? POSITIVE;
         v[f.id] = { precursor_mz: "", ion_mode: mode, adduct: f.adducts?.[mode]?.[0] ?? "Auto" };
@@ -296,6 +296,13 @@ function StructureInput({ field, value, onChange, error }: P) {
         <input type="text" aria-required={field.required || undefined} aria-invalid={error ? true : undefined}
           placeholder={namePlaceholder} value={value.value} onChange={e => set({ value: e.target.value })} />
       )}
+      {field.label_field && (
+        <label className="structure-label">
+          <span>Label (optional)</span>
+          <input type="text" placeholder={`Shown on the cards and tabs instead of “${field.label ?? "Compound"}”`}
+            value={value.label ?? ""} onChange={e => set({ label: e.target.value })} />
+        </label>
+      )}
       <Note text={typeof field.help === "string" ? field.help : undefined} error={error} />
     </div>
   );
@@ -396,7 +403,7 @@ export function summarizeInputs(fields: Field[], values: Record<string, any>): {
     let text = "";
     switch (f.type) {
       case "structure":
-        text = v?.value ? (v.mode === "Draw" ? "drawn structure" : short(String(v.value))) : "";
+        text = v?.label ? short(String(v.label)) : v?.value ? (v.mode === "Draw" ? "drawn structure" : short(String(v.value))) : "";
         if (text && !lead) { lead = text; continue; }
         break;
       case "precursor": {

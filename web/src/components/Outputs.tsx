@@ -6,6 +6,7 @@ import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
 import { CompoundCompare } from "./CompoundCompare";
 import { FigureView } from "./Figure";
 import { HelpButton, RichText, emphasize, helpLines } from "./Help";
+import { MiddleEllipsis } from "./MiddleEllipsis";
 
 /** 一个输出块。有数据就画结果；没数据时画格式（空表只有表头，卡片是 —，图是虚线框）。
  *  status：pending = 还没运行；none = 运行了但这个块没有结果；off = 这个块还没接引擎。
@@ -59,7 +60,8 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
       {sets.length > 1 && (
         <div className="tabs compound-tabs" role="tablist" aria-label="Compound">
           {sets.map((s, i) => <button key={`${s.label}-${i}`} type="button" role="tab" aria-selected={i === Math.min(setIndex, sets.length - 1)}
-            className={"tab" + (i === Math.min(setIndex, sets.length - 1) ? " on" : "")} onClick={() => setSetIndex(i)}>{s.label}</button>)}
+            className={"tab" + (i === Math.min(setIndex, sets.length - 1) ? " on" : "")} onClick={() => setSetIndex(i)}>
+            <MiddleEllipsis text={s.label} maxWidth={216} /></button>)}
         </div>)}
       {names.length > 0 && (
         <div className="tabs" role="tablist">

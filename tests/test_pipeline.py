@@ -67,7 +67,8 @@ def structure_candidate(layer, cid, smiles, score_norm, formula="C8H10N4O2", add
 def isomer_result(verdict, top_id, *, group=None, challengers=(), notes=("Relative to the 2 candidates considered.",), error=None):
     ids = {"single": [top_id], "indistinguishable": group or [top_id]}.get(verdict, [])
     return {"verdict": verdict, "top_id": top_id, "group": ids, "engine": "MS-FINDER", "log": "engine log", "error": error, "notes": list(notes),
-            "isomers": [{"id": i, "name": i, "smiles": ETHER, "evaluated": True, "distinguished": verdict == "single", "distinguishing_peaks": [{"mz": 1.0}]}
+            "isomers": [{"id": i, "name": i, "smiles": ETHER, "evaluated": True, "distinguished": verdict == "single",
+                         "distinguishing_peaks": [{"mz": 45.0334, "rel": 30.0, "formula": "C2H5O+", "smiles": "CCO"}]}
                         for i in ("c2",)] if verdict != "insufficient" else [],
             "challengers": [{"id": i, "name": f"isomer {i}", "peaks": [{"mz": 45.0334, "rel": 30.0}]} for i in challengers],
             "candidates": [{"id": top_id, "name": "top", "smiles": ETHANOL, "source": "input", "explained_fraction": 0.8},
@@ -344,6 +345,29 @@ def test_isomer_single_verdict(rig):
     assert [c["isomer"]["role"] for c in result["candidates"]] == ["top", "separated", None]
     assert result["steps"][6]["status"] == "done" and "tell the top-1 apart" in result["steps"][6]["note"]
     assert result["isomer"]["verdict"] == "single" and "log" not in result["isomer"]
+
+
+def test_isomer_table_shows_each_smiles_with_its_structure_on_hover(rig):
+    two_candidates(rig)
+    rig.isomers(isomer_result("single", "c1"))
+    events = []
+    pipeline.run(form(), progress=lambda *e: events.append(e))
+    table = next(b for e in events if e[3] for b in e[3] if b["id"] == "isomer_table")
+    top, other = table["data"]["rows"]
+    assert table["columns"][1] == "SMILES" and top[1]["text"] == ETHANOL and other[1]["text"] == ETHER
+    assert "<svg" in other[1]["hover_svg"]                                                    # the 2D structure is drawn on hover
+    assert top[5] == "—" and other[5]["text"] == "1"                                          # how many peaks only the top-1 explains
+    assert other[5]["help"] == ["m/z 45.0334 · 30.0 % · C2H5O+ · CCO"]                        # m/z, intensity, ion formula, fragment SMILES
+
+
+def test_isomer_table_survives_a_smiles_that_cannot_be_drawn(rig, monkeypatch):
+    two_candidates(rig)
+    rig.isomers(isomer_result("single", "c1"))
+    monkeypatch.setattr(pipeline, "depiction_svg", lambda *a, **k: (_ for _ in ()).throw(ValueError("drawing broke")))
+    events = []
+    pipeline.run(form(), progress=lambda *e: events.append(e))
+    table = next(b for e in events if e[3] for b in e[3] if b["id"] == "isomer_table")
+    assert [row[1] for row in table["data"]["rows"]] == [ETHANOL, ETHER]                      # plain SMILES, no hover structure
 
 
 def test_isomer_indistinguishable_gives_a_group_answer_and_keeps_the_level(rig):

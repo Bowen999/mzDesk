@@ -82,10 +82,10 @@ def test_spec_has_three_live_submodules():
     response = client.get("/api/spec")
     assert response.status_code == 200
     spec = response.json()
-    assert [s for s in spec["subgroups"] if s["id"] == "gnps"] == [{"id": "gnps", "title": "GNPS2"}]
+    assert [s for s in spec["subgroups"] if s["id"] == "gnps"] == [{"id": "gnps", "title": "Dataset Search"}]
     modules = [m for m in spec["modules"] if m["subgroup"] == "gnps"]
     assert [(m["id"], m["title"]) for m in modules] == [
-        ("gnps_fastmasst", "fastMASST"), ("gnps_redu", "Pan-ReDU"), ("gnps_massql", "MassQL")]
+        ("gnps_fastmasst", "Spectrum in which set"), ("gnps_redu", "Dataset finder"), ("gnps_massql", "Fragment pattern")]
     assert all(m["group"] == "modules" and m["live"] is True and m["example"] for m in modules)
     icons = (Path(__file__).parents[1] / "web" / "src" / "assets" / "icons.svg").read_text()
     assert 'symbol id="gnps"' in icons

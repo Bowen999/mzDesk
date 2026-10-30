@@ -382,6 +382,23 @@ def test_structure_formats_has_four_tabs():
     assert fm["InChIKey"] == "RYYVLZVUVIJVGH-UHFFFAOYSA-N" and fm["InChI"].startswith("InChI=1S/C8H10N4O2")
 
 
+def test_structure_formats_labels_name_the_compounds():
+    body = _run("structure_formats", {
+        "structure": {"mode": "SMILES / InChI", "value": CAFFEINE, "label": "  Caffeine\n  citrate "},
+        "structure_2": {"mode": "Name / ID / Formula", "value": "CCO"},        # no label: the searched name is shown
+        "structure_3": {"mode": "SMILES / InChI", "value": spec.TESTOSTERONE, "label": "   "},
+    }).json()
+    labels = [s["label"] for s in body["outputs"]["formats"]["sets"]]
+    assert labels == ["Caffeine citrate", "CCO", "Compound 3"]                                     # label > searched name > Compound n
+    assert [c["label"] for c in body["outputs"]["compare"]["compounds"]] == labels
+
+
+def test_structure_formats_has_a_label_input_on_every_compound():
+    fields = next(m for m in spec.MODULES if m["id"] == "structure_formats")["inputs"]
+    assert [f["id"] for f in fields if f.get("label_field")] == ["structure", "structure_2", "structure_3"]
+    assert all(f["type"] == "structure" for f in fields if f.get("label_field"))
+
+
 def test_structure_formats_compares_up_to_three_compounds():
     body = _run("structure_formats", {
         "structure": {"mode": "SMILES / InChI", "value": CAFFEINE},

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Package the corrected CASMI 2022 key and extracted spectra as JSON Lines.
+"""Export the official CASMI 2022 final key as one CSV row per challenge.
 
-The generated ``inputs`` object is a blind mzDesk ESI MS/MS Annotation form;
-the official answer is kept separately in ``ground_truth``.  Requires the 500
-locally extracted SIRIUS .ms files, which are not tracked in git.
+Only fields from the official key are exported; analysis settings and locally
+processed spectra are not part of the CSV. The earlier spectrum-packaging
+helper remains available as ``build_extracted_records``.
 """
 from __future__ import annotations
 
@@ -15,10 +15,37 @@ from pathlib import Path
 
 
 BASE = Path(__file__).resolve().parent
-OUTPUT = BASE / "casmi2022_ground_truth.jsonl"
+OUTPUT = BASE / "casmi2022_ground_truth.csv"
 CANONICAL_ADDUCTS = {
     "[M+H]+": "[M+H]+", "[M-H]-": "[M-H]-", "[M+NH4]+": "[M+NH4]+",
     "[M+Na]+": "[M+Na]+", "[M+Cl]-": "[M+Cl]-", "[M+FA-H]-": "[M+HCOO]-",
+}
+
+# CSV names and types. Each maps directly to a field in the official final key.
+COLUMNS: tuple[tuple[str, str], ...] = (
+    ("challenge_id", "int"),
+    ("formula", "str"),
+    ("adduct_official", "str"),
+    ("inchikey", "str"),
+    ("smiles_official", "str"),
+    ("monoisotopic_mass", "float"),
+    ("priority", "str"),
+    ("file", "str"),
+    ("rt_min_given", "float"),
+    ("precursor_mz_given", "float"),
+    ("collection", "str"),
+    ("rack_id", "str"),
+    ("well_id", "str"),
+    ("mix_or_set", "str"),
+)
+KIND = dict(COLUMNS)
+NAMES = [name for name, _ in COLUMNS]
+OFFICIAL_HEADERS = {
+    "challenge_id": "Compound Number", "formula": "Formula", "adduct_official": "Adduct",
+    "inchikey": "InChIKey", "smiles_official": "SMILES", "monoisotopic_mass": "Monoisotopic Mass",
+    "priority": "Priority/Bonus", "file": "File", "rt_min_given": "RT [min]",
+    "precursor_mz_given": "Precursor m/z (Da)", "collection": "Collection",
+    "rack_id": "Rack ID or UCD Barcode", "well_id": "Well ID", "mix_or_set": "Mix or Set Number",
 }
 
 
@@ -84,7 +111,81 @@ def check_equal(left, right, fields, cid):
             raise ValueError(f"challenge {cid}: {field} differs between metadata and key")
 
 
-def build_records():
+def encode_cell(value, kind, name):
+    """Serialise one value; ``str`` of a float round-trips through ``float``."""
+    if value is None:
+        if kind.endswith("?"):
+            return ""
+        raise ValueError(f"column {name}: missing value")
+    if kind in ("int", "float", "float?"):
+        return str(value)
+    if kind == "bool":
+        return "true" if value else "false"
+    if kind in ("list", "floatlist"):
+        return ";".join(str(item) for item in value)
+    if kind == "json":
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+    return value
+
+
+def decode_cell(text, kind, name):
+    if text is None:
+        raise ValueError(f"column {name}: row has too few fields")
+    if kind == "int":
+        return int(text)
+    if kind == "bool":
+        if text not in ("true", "false"):
+            raise ValueError(f"column {name}: {text!r} is not a boolean")
+        return text == "true"
+    if kind in ("float", "float?"):
+        if not text:
+            if kind == "float?":
+                return None
+            raise ValueError(f"column {name}: empty numeric cell")
+        return float(text)
+    if kind == "list":
+        return text.split(";") if text else []
+    if kind == "floatlist":
+        return [float(item) for item in text.split(";")] if text else []
+    if kind == "json":
+        return json.loads(text)
+    return text
+
+
+def flatten(record):
+    """Serialise one official record in ``NAMES`` order."""
+    cid = record.get("challenge_id")
+    if set(record) != set(NAMES):
+        raise ValueError(f"challenge {cid}: fields differ from the columns: {sorted(set(record) ^ set(NAMES))}")
+    return {name: encode_cell(record[name], KIND[name], name) for name in NAMES}
+
+
+def unflatten(row):
+    """Decode one CSV row without adding non-official fields."""
+    return {name: decode_cell(row[name], kind, name) for name, kind in COLUMNS}
+
+
+def write_records(records, path=OUTPUT):
+    """Write the official records as CSV."""
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.writer(handle, lineterminator="\n")
+        writer.writerow(NAMES)
+        for record in records:
+            writer.writerow(flatten(record).values())
+
+
+def load_records(path=OUTPUT):
+    with path.open(encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if reader.fieldnames != NAMES:
+            raise ValueError(f"{path}: header differs from the column list")
+        rows = list(reader)
+    if any(row.get(None) for row in rows):
+        raise ValueError(f"{path}: a row has the wrong number of fields")
+    return [unflatten(row) for row in rows]
+
+
+def build_extracted_records():
     meta = table(BASE / "metadata/casmi2022_challenges.csv", "challenge_id", ",")
     truth = table(BASE / "sirius_run/results/truth.tsv", "challenge_id", "\t")
     report = table(BASE / "sirius_run/ms/extraction_report.tsv", "id", "\t")
@@ -164,11 +265,56 @@ def build_records():
     return records
 
 
+def build_records():
+    """Read the 14 official fields directly from the final answer workbook."""
+    from openpyxl import load_workbook
+
+    source = BASE / "metadata/source/casmi2022_key_final.xlsx"
+    book = load_workbook(source, read_only=True, data_only=True)
+    try:
+        rows = book["CHALLENGES & KEY ALL"].iter_rows(values_only=True)
+        next(rows)  # Share / DO NOT SHARE banner
+        headers = next(rows)
+        if len(set(headers)) != len(headers) or set(OFFICIAL_HEADERS.values()) != set(headers):
+            raise ValueError(f"{source}: unexpected official key columns")
+        indices = {name: headers.index(header) for name, header in OFFICIAL_HEADERS.items()}
+        records = []
+        for row in rows:
+            if row[indices["challenge_id"]] is None:
+                continue
+            record = {}
+            for name, kind in COLUMNS:
+                value = row[indices[name]]
+                if value is None:
+                    raise ValueError(f"{source}: missing {name} for challenge {row[indices['challenge_id']]}")
+                if kind == "int":
+                    if int(value) != value:
+                        raise ValueError(f"{source}: invalid challenge ID {value!r}")
+                    value = int(value)
+                elif kind == "float":
+                    value = float(value)
+                    if not math.isfinite(value):
+                        raise ValueError(f"{source}: non-finite {name}")
+                else:
+                    # Some official identifiers are stored as integral Excel numbers.
+                    if name in ("rack_id", "mix_or_set") and isinstance(value, (int, float)) and value == int(value):
+                        value = int(value)
+                    value = str(value).strip()
+                    if not value:
+                        raise ValueError(f"{source}: empty {name}")
+                record[name] = value
+            records.append(record)
+        records.sort(key=lambda record: record["challenge_id"])
+        if [record["challenge_id"] for record in records] != list(range(1, 501)):
+            raise ValueError(f"{source}: expected each challenge ID from 1 through 500 exactly once")
+        return records
+    finally:
+        book.close()
+
+
 def main():
     records = build_records()  # validate everything before touching the output
-    with OUTPUT.open("w", encoding="utf-8", newline="\n") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n")
+    write_records(records)
     print(f"Wrote {len(records)} challenges to {OUTPUT}")
 
 

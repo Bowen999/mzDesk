@@ -149,13 +149,23 @@ function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: n
   );
 }
 
-/** 3Dmol viewer. `className` lets the compare block make the canvas fill a square box. */
+/**
+ * 3Dmol viewer with a reset button (top-right) that goes back to the fitted view: the fitted
+ * orientation and scale, because the user can rotate, pan and zoom the model. `className` lets
+ * the compare block make the canvas fill a square box.
+ */
 export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<any>(null);
+  const homeRef = useRef<number[] | null>(null);
   const [err, setErr] = useState("");
+  const [ready, setReady] = useState(false);
   const { dark } = useTheme();
   useEffect(() => {
     let viewer: any = null, alive = true, ro: ResizeObserver | null = null;
+    setReady(false);
+    viewerRef.current = null;
+    homeRef.current = null;
     load3Dmol().then($3Dmol => {
       if (!alive || !ref.current) return;
       ref.current.innerHTML = "";
@@ -163,16 +173,36 @@ export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; cla
       viewer.addModel(molblock, "mol");
       viewer.setStyle({}, { stick: { radius: 0.14 }, sphere: { scale: 0.22 } });
       // a little margin: zoomTo() fits the atom centres, so terminal atoms would touch the box
-      const fit = () => { viewer.zoomTo(); viewer.zoom(0.85); viewer.render(); };
+      const fit = () => { viewer.zoomTo(); viewer.zoom(0.85); viewer.render(); homeRef.current = viewer.getView(); };
       fit();
+      viewerRef.current = viewer;
+      if (alive) setReady(true);
       // the compare cards follow the sidebar / window: 3Dmol does not resize its canvas by itself
       if (alive && typeof ResizeObserver !== "undefined") {
         ro = new ResizeObserver(() => { if (alive) { viewer.resize(); fit(); } });
         ro.observe(ref.current);
       }
     }).catch(e => alive && setErr(String(e)));
-    return () => { alive = false; ro?.disconnect(); viewer?.clear?.(); };
+    return () => { alive = false; ro?.disconnect(); viewer?.clear?.(); viewerRef.current = null; homeRef.current = null; };
   }, [molblock, dark]);
+
+  const reset = () => {
+    const viewer = viewerRef.current;
+    if (!viewer) return;
+    if (homeRef.current) { viewer.setView(homeRef.current); viewer.render(); }
+    else { viewer.zoomTo(); viewer.zoom(0.85); viewer.render(); }
+  };
+
   if (err) return <div className="out placeholder-box">3D viewer failed: {err}</div>;
-  return <div ref={ref} className={className} />;
+  return (
+    <div className="mol3d-holder">
+      <div ref={ref} className={className} />
+      {ready && <button type="button" className="mol3d-reset" onClick={reset} title="Reset the view to the fitted scale" aria-label="Reset the 3D view">
+        <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false">
+          <path d="M13.2 8a5.2 5.2 0 1 1-1.5-3.7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+          <path d="M13.2 2.6v3h-3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>}
+    </div>
+  );
 }

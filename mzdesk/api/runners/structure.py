@@ -21,7 +21,10 @@ def run_structure_formats(inputs):
 
     warnings, compounds, sets = [], [], []
     for n, key in ((1, "structure"), (2, "structure_2"), (3, "structure_3")):
-        label = f"Compound {n}"
+        value = inputs.get(key) if isinstance(inputs.get(key), dict) else {}
+        # the optional label input of the structure field; without it the searched name, then "Compound n"
+        given = " ".join(str(value.get("label") or "").split())
+        label = given or f"Compound {n}"
         parsed = common.structure(inputs, key, label, required=(n == 1))
         if parsed is None:
             continue
@@ -34,9 +37,8 @@ def run_structure_formats(inputs):
         mol3d = mp.structure_3d(smiles)
         if mol3d is None:
             local.append("3D embedding failed for this structure; only the 2D depiction is shown.")
-        value = inputs.get(key) if isinstance(inputs.get(key), dict) else {}
         typed = str(value.get("value") or "").strip() if value.get("mode") == "Name / ID / Formula" else ""
-        name = typed or label
+        name = given or typed or label
         mol = Chem.MolFromSmiles(smiles)
         texts = {"SMILES": p.canonical_smiles, "InChI": p.inchi, "InChIKey": p.inchikey,
                  "MOL block": Chem.MolToMolBlock(mol) if mol is not None else ""}

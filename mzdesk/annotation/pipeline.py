@@ -37,7 +37,7 @@ from mzdesk.annotation.merge import formula_only_candidates, merge_candidates
 from mzdesk.annotation.rerank import DEFAULT_PH, rerank
 from mzdesk.annotation.schema import LAYER_LABELS, STATUS_DONE, STATUS_FAILED, STATUS_SKIPPED
 from mzdesk.api import blocks as blk
-from mzdesk.api.common import InputError, flag, fmt, number, precursor, spectrum, text
+from mzdesk.api.common import InputError, depiction_svg, flag, fmt, number, precursor, spectrum, text
 from mzdesk.exclusivity import isomers
 from mzdesk.shared.spectrum import parse_spectrum
 from mzdesk.spec import LIBRARIES, PIPELINES
@@ -53,6 +53,7 @@ MAX_INPUT_PEAKS = 5000          # a longer MS2 spectrum is rejected (400): it is
 MSFINDER_TOP_N = 10
 FRIGID_TOP_N = 5
 LEVEL_TONES = {"2a": "good", "3": "neutral", "H": "warn", "4": "neutral", "5": "neutral"}
+SMILES_DRAWING = (260, 182)     # 2D structure drawn on hover over a SMILES cell (same size as mzdesk/api/runners/exclusivity.py)
 
 
 # ---------------------------------------------------------------- inputs
@@ -132,6 +133,28 @@ def _level_cell(cand):
     return blk.badge(level_name(cand.level), LEVEL_TONES.get(cand.level, "neutral")) if cand.level else "—"
 
 
+def _smiles_cell(smiles):
+    """The SMILES text with its 2D structure drawn on hover, as in the Isomers table of Alternative explanations; plain text when there
+    is nothing to draw (a drawing failure must not fail step 7)."""
+    if not smiles:
+        return "—"
+    try:
+        svg = depiction_svg(smiles, size=SMILES_DRAWING)
+    except Exception:               # noqa: BLE001 - display only
+        log.exception("structure depiction failed")
+        svg = None
+    return blk.depicted(smiles, svg) if svg else smiles
+
+
+def _peaks_cell(peaks):
+    """The number of peaks, with m/z, intensity, ion formula and fragment SMILES of each in the "?"."""
+    if not peaks:
+        return "—"
+    items = [f"m/z {p['mz']:.4f}" + (f" · {p['rel']:.1f} %" if p.get("rel") is not None else "")
+             + (f" · {p['formula']}" if p.get("formula") else "") + (f" · {p['smiles']}" if p.get("smiles") else "") for p in peaks]
+    return blk.hinted(str(len(peaks)), items)
+
+
 def _adduct_blocks(res):
     rows = []
     for h in res.hypotheses:
@@ -199,8 +222,9 @@ def _isomer_blocks(res):
             role = "not separated"
         else:
             role = "separated" if iso and iso["distinguished"] else "not scored"
-        rows.append([c["name"] or c["smiles"], c["smiles"], c["source"], role + (" · challenger" if c["id"] in challengers else ""),
-                     fmt(c["explained_fraction"], 2), len(iso["distinguishing_peaks"]) if iso else "—"])
+        rows.append([c["name"] or c["smiles"] or c["id"], _smiles_cell(c["smiles"]), c["source"],
+                     role + (" · challenger" if c["id"] in challengers else ""),
+                     fmt(c["explained_fraction"], 2), _peaks_cell(iso["distinguishing_peaks"]) if iso else "—"])
     items = list(res["notes"])
     for ch in reversed(res["challengers"]):
         mzs = ", ".join(f"{p['mz']:.4f}" for p in ch["peaks"])
