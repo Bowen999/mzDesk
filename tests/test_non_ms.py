@@ -457,7 +457,7 @@ def test_api_name_input_uses_the_resolver(monkeypatch):
 def test_jp18_dataset_regression():
     import re
 
-    recs = [json.loads(line) for line in gzip.open(JP_FILE, "rt")]
+    recs = [json.loads(line) for line in gzip.open(JP_FILE, "rt", encoding="utf-8")]
     cache = {}
 
     def run(smiles):

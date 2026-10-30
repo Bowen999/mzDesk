@@ -157,6 +157,8 @@ def test_at_most_six_formulas_are_searched_and_the_rest_is_said(engine):
     layer, summary = run(formulas, tol_ppm=1e9)
     assert len(calls[0]["queries"]) == 6 and [s["formula"] for s in summary["skipped"]] == formulas[6:]
     assert all("only the first 6 formulas are searched" in s["reason"] for s in summary["skipped"]) and "2 formulas not searched" in layer.note
+    (warning,) = summary["warnings"]                                                            # one warning for the whole group, not one per formula
+    assert warning == f"Only the first 6 formulas are searched; 2 were not searched: {formulas[6]}, {formulas[7]}."
 
 
 def test_adducts_go_to_msfinder_in_its_spelling_and_negative_mode_works(engine):
@@ -235,12 +237,25 @@ def test_no_structure_at_all_is_a_done_layer_with_no_candidates_and_a_plain_note
 
 
 def test_a_run_that_was_stopped_keeps_what_had_finished(engine):
-    engine(answer("C8H10N4O2", struct("Caffeine", CAFFEINE_KEY, 8.0), seconds=3.0), {"formulas": [], "structures": [], "searches": {"C8H18OS2": 0.0}},
+    unfinished = {"formulas": [], "structures": [], "searches": {}}                              # no result file: the search did not end
+    engine(answer("C8H10N4O2", struct("Caffeine", CAFFEINE_KEY, 8.0), seconds=3.0), unfinished,
            stopped="MS-FINDER used more than 6 GB of memory and was stopped.")
     layer, summary = run(("C8H10N4O2", "C8H18OS2"))
     assert layer.status == "done" and [c.name for c in layer.candidates] == ["Caffeine"] and "MS-FINDER was stopped early" in layer.note
     assert [(f["formula"], f["status"], f["accepted"]) for f in summary["formulas"]] == [("C8H10N4O2", "searched", None), ("C8H18OS2", "not finished", None)]
-    assert any("stopped before it finished" in w for w in summary["warnings"]) and any("C8H18OS2 did not finish" in w for w in summary["warnings"])
+    (warning,) = summary["warnings"]                                                            # one warning names both groups
+    assert "stopped before it finished" in warning and "Finished: C8H10N4O2." in warning and "Not finished: C8H18OS2 (" in warning
+
+
+def test_a_stopped_run_tells_a_finished_search_without_structures_from_an_unfinished_one(engine):
+    engine(answer("C8H10N4O2"), {"formulas": [], "structures": [], "searches": {}}, stopped="MS-FINDER used more than 6 GB of memory and was stopped.")
+    _, summary = run(("C8H10N4O2", "C8H18OS2"))
+    assert [f["status"] for f in summary["formulas"]] == ["no structures", "not finished"]
+    (warning,) = summary["warnings"]
+    assert "Finished: C8H10N4O2." in warning and "Not finished: C8H18OS2" in warning
+    engine(answer("C8H10N4O2"), stopped="MS-FINDER used more than 6 GB of memory and was stopped.")
+    _, summary = run(("C8H10N4O2",))
+    assert "Finished: C8H10N4O2." in summary["warnings"][0] and "Not finished" not in summary["warnings"][0]
 
 
 @pytest.mark.parametrize("adduct,peaks,why", [("[M+Li-H]-", CAFFEINE_PEAKS, "cannot use the adduct [M+Li-H]-"), ("Auto", CAFFEINE_PEAKS, "cannot use the adduct Auto"),
@@ -382,6 +397,25 @@ def test_a_run_that_is_stopped_keeps_the_searches_that_had_finished(replay):
     replay("kaempferol", error=stop)
     with pytest.raises(mf.MsFinderError, match="was stopped"):                      # nothing had finished: the error is the answer
         mf.predict_queries([_query("f1", 285.04115, False, "[M-H]-")])
+
+
+@pytest.mark.parametrize("stop,searched", [(True, {"C8H10N4O2"}), (False, {"C8H10N4O2", "C8H18OS2"})])
+def test_a_0_byte_structure_file_is_unfinished_in_a_stopped_run_and_empty_in_a_finished_one(replay, monkeypatch, stop, searched):
+    replay("caffeine")                                                          # installs the fake install; run_watched is replaced below
+
+    def fake_run(cmd, cwd, env, timeout, rss_cap_mb, **kw):
+        in_dir, out_dir = Path(cmd[cmd.index("-i") + 1]), Path(cmd[cmd.index("-o") + 1])
+        (in_dir / "f0").mkdir()
+        (in_dir / "f0" / "C8H10N4O2.sfd").write_text((FIX / "msfinder" / "caffeine" / "f0" / "C8H10N4O2.sfd").read_text())
+        (in_dir / "f0" / "C8H18OS2.sfd").write_text("")                         # created at the start of a search, written at its end
+        (out_dir / "Formula result-2099.txt").write_text((FIX / "msfinder" / "caffeine" / "formula_result.txt").read_text())
+        if stop:
+            raise mf.MsFinderError("MS-FINDER did not finish within 90 s and was stopped.", "tail")
+        return 1, "log", 2300.0
+    monkeypatch.setattr(mf, "run_watched", fake_run)
+    res = mf.predict_queries([_query("f0")])
+    assert set(res["results"]["f0"]["searches"]) == searched and bool(res["stopped"]) is stop
+    assert res["results"]["f0"]["structures"]
 
 
 def test_a_run_without_any_result_file_is_an_error(replay, monkeypatch):

@@ -1,7 +1,7 @@
 """Confidence levels of an annotation (Schymanski et al., Environ. Sci. Technol. 2014) as the workflow uses them.
 
-  2a  a library spectrum passed the Level-2 gate (step 3)
-  3   an MS-FINDER candidate, or a library hit that failed the gate
+  2a  a library spectrum passed the Level-2 gate (step 3) and the entry has a structure
+  3   an MS-FINDER candidate, or a library hit that failed the gate or has no structure (it cannot be verified)
   H   a FRIGID structure hypothesis: formula-level evidence only, so Level 4 at most
   4   nothing structural, but a molecular formula
   5   only an exact mass
@@ -34,9 +34,9 @@ def level_label(level):
 
 
 def contribution_level(layer, evidence):
-    """Level that one layer's finding earns. `evidence` is that layer's evidence dict (library: gate_passed decides 2a against 3)."""
+    """Level that one layer's finding earns. `evidence` is that layer's evidence dict (library: gate_passed decides 2a against 3; has_structure False caps it at 3)."""
     if layer == LAYER_LIBRARY:
-        return LEVEL_2A if evidence.get("gate_passed") else LEVEL_3
+        return LEVEL_2A if evidence.get("gate_passed") and evidence.get("has_structure") is not False else LEVEL_3
     if layer == LAYER_MSFINDER:
         return LEVEL_3
     if layer == LAYER_FRIGID:
@@ -53,7 +53,9 @@ def fallback_level(has_formulas, has_mass):
 
 def _reason(level, layer, ev, others):
     """One sentence for the winning contribution; `others` are the other contributing layers."""
-    if layer == LAYER_LIBRARY and level == LEVEL_2A:
+    if layer == LAYER_LIBRARY and level == LEVEL_3 and ev.get("gate_passed"):
+        text = "Library spectrum passed the Level-2 gate, but the library entry has no structure to verify, so it stays at Level 3"
+    elif layer == LAYER_LIBRARY and level == LEVEL_2A:
         detail = [f"similarity {ev['similarity']:.2f}"] if isinstance(ev.get("similarity"), (int, float)) else []
         if ev.get("matched_peaks") is not None:
             detail.append(f"{ev['matched_peaks']} matched peaks")

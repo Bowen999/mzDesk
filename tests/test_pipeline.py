@@ -11,7 +11,7 @@ import time
 import pytest
 from fastapi.testclient import TestClient
 
-from mzdesk.annotation import frigid_step, pipeline
+from mzdesk.annotation import frigid_step, library_step, pipeline
 from mzdesk.annotation.adduct_step import AdductHypothesis, AdductResult
 from mzdesk.annotation.formula_step import FormulaCandidate, FormulaResult
 from mzdesk.annotation.library_step import GateSummary
@@ -164,6 +164,30 @@ def test_gate_passed_skips_steps_4_and_5_but_runs_rerank_and_isomers(rig):
     # the pool for step 7: the top-1 and the same-formula candidates only (dimethyl ether is C2H6O)
     pool = rig.calls["isomers"][0][0][0]
     assert [c["id"] for c in pool] == ["c1"] and rig.calls["isomers"][0][1]["local_isomers"] is False
+
+
+def test_the_library_step_gets_the_similarity_algorithm_and_gate_threshold_from_the_form(rig):
+    rig.library([library_candidate("lib1", CAFFEINE, "Caffeine", 0.93, True)], passed=True)
+    rig.isomers(isomer_result("single", "c1"))
+    pipeline.run(form(libraries=["MassBank"]))
+    assert (rig.calls["library"][0][1]["metric"], rig.calls["library"][0][1]["gate_similarity"]) == ("SpectralEntropy (weighted)", 0.8)
+    pipeline.run(form(libraries=["MassBank"], lib_metric="CosineGreedy", lib_threshold=0.9))
+    assert (rig.calls["library"][1][1]["metric"], rig.calls["library"][1][1]["gate_similarity"]) == ("CosineGreedy", 0.9)
+
+
+def test_gate_passed_only_on_a_structureless_hit_still_runs_steps_4_and_5(rig):
+    bare = library_candidate("lib1", None, "No structure", 0.95, True)
+    bare.evidence["library"]["has_structure"] = False                                                   # the gate passed, but the entry cannot be verified
+    rig.library([bare], passed=True)
+    rig.msfinder([structure_candidate("msfinder", "m1", CAFFEINE, 0.3)], good_enough=False)
+    rig.frigid([structure_candidate("frigid", "f1", ETHER, 0.2, formula="C8H10N4O2")])
+    result = pipeline.run(form(libraries=["MassBank"]))
+    assert [s["status"] for s in result["steps"]][2:5] == ["done", "done", "done"] and "msfinder" in rig.calls and "frigid" in rig.calls
+    assert result["context"]["gate_passed"] is True                                                    # the gate verdict itself is unchanged
+    assert any("passed only for entries without a structure" in w for w in result["warnings"])
+    assert not any("re-ranking put a candidate" in w for w in result["warnings"])
+    assert next(c for c in result["candidates"] if c["name"] == "No structure")["level"] == "3"
+    assert "no structure to verify" in next(c for c in result["candidates"] if c["name"] == "No structure")["level_reason"]
 
 
 def test_gate_failed_msfinder_good_enough_skips_frigid(rig):
@@ -511,6 +535,10 @@ def test_parse_inputs_reads_the_form():
     assert q.halogen and q.local_isomers and q.tol_ppm == 5 and q.tol_da == 0.02
     d = pipeline.parse_inputs({k: v for k, v in form().items() if k in ("precursor", "ms2")})              # the defaults
     assert (d.tol_ppm, d.tol_da, d.omics, d.additive, d.alkali, d.ph, d.halogen, d.local_isomers) == (10.0, 0.02, "Either / unknown", "Unknown", None, 2.7, False, False)
+    assert (d.lib_metric, d.lib_threshold) == ("SpectralEntropy (weighted)", 0.8)
+    q = pipeline.parse_inputs(form(lib_metric="ModifiedCosineGreedy", lib_threshold="0.9"))
+    assert (q.lib_metric, q.lib_threshold) == ("ModifiedCosineGreedy", 0.9)
+    assert pipeline.parse_inputs(form(lib_threshold=0)).lib_threshold == 0 and pipeline.parse_inputs(form(lib_threshold=1)).lib_threshold == 1
 
 
 def test_parse_inputs_uses_the_header_precursor():
@@ -524,7 +552,9 @@ def test_parse_inputs_uses_the_header_precursor():
     ({"precursor": {"precursor_mz": "195.0877", "ion_mode": "Positive", "adduct": "nonsense"}}, "Unknown adduct"),
     ({"libraries": ["NIST"]}, "Libraries must be"), ({"libraries": "MassBank"}, "Libraries must be"),
     ({"omics": "Proteomics"}, "Omics must be"), ({"additive": "Water"}, "additive must be"), ({"alkali": "maybe"}, "Sodium / potassium"),
-    ({"ph": 15}, "at most 14"), ({"tol_da": 0}, "must be positive"), ({"halogen": "yes"}, "true or false"),
+    ({"ph": 15}, "at most 14"),
+    ({"lib_metric": "Spec2Vec"}, "Similarity algorithm must be"), ({"lib_threshold": 1.5}, "at most 1"), ({"lib_threshold": -0.1}, "at least 0"),
+    ({"lib_threshold": "high"}, "must be a number"), ({"tol_da": 0}, "must be positive"), ({"halogen": "yes"}, "true or false"),
     ({"ms2": {"source": "Paste", "value": "no peaks"}}, "no valid peaks")])
 def test_parse_inputs_rejects_bad_forms(over, message):
     with pytest.raises(InputError, match=message):
@@ -537,12 +567,16 @@ def test_spec_form_matches_the_pipeline():
     pipe = PIPELINES[0]
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
-                                                         "additive", "alkali", "ph"}
+                                                         "additive", "alkali", "ph", "lib_metric", "lib_threshold"}
     assert fields["tol_da"]["value"] == 0.02 and fields["omics"]["options"][0] == "Either / unknown" and fields["omics"]["options"] == list(pipeline.OMICS_CHOICES)
     assert fields["additive"]["options"] == ["Unknown", *adduct_rules.ADDITIVES] and spec.PIPELINE_ADDITIVES == list(adduct_rules.ADDITIVES)
     assert fields["halogen"]["label"] == "Allow Cl/Br in formulas" and fields["halogen"]["value"] is False and fields["local_isomers"]["value"] is False
     assert fields["local_isomers"]["label"] == "Also compare with database isomers (slower, stricter)"
-    assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph")} == {"Advanced"}
+    assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metric", "lib_threshold")} == {"Advanced"}
+    assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"] == ["additive", "alkali", "ph", "lib_metric", "lib_threshold"]
+    assert fields["lib_metric"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and fields["lib_metric"]["value"] == library_step.PRIMARY_METRIC
+    assert fields["lib_threshold"]["type"] == "number" and fields["lib_threshold"]["value"] == library_step.GATE_SIMILARITY == 0.8
+    assert (fields["lib_threshold"]["step"], fields["lib_threshold"]["min"], fields["lib_threshold"]["max"]) == (0.01, 0, 1)
     assert list(pipeline.STEP_TITLES) == list(range(1, 9)) and [s["id"] for s in pipe["stages"]] == list(range(1, 9))
     assert set(pipeline.ALKALI_CHOICES) == {o.lower() for o in fields["alkali"]["options"]}
 

@@ -232,8 +232,8 @@ def normalise_massbank(rec):
     if peaks is None:
         return None, "no valid peaks"
     ce = rec.get("Collision_energy", "")
-    return {"accession": rec.get("DB#", ""), "name": rec.get("Name", ""), "inchikey": rec.get("InChIKey", ""),
-            "smiles": rec.get("SMILES", ""), "adduct": adduct, "adduct_raw": adduct_raw,
+    return {"accession": rec.get("DB#", ""), "name": rec.get("Name", ""), "inchikey": _gnps_na(rec.get("InChIKey")),
+            "smiles": _gnps_na(rec.get("SMILES")), "adduct": adduct, "adduct_raw": adduct_raw,
             "precursor_mz": precursor, "ion_mode": _ion_mode(rec.get("Ion_mode"), adduct), "kind": kind,
             "instrument": " · ".join(x for x in (itype, rec.get("Instrument", "")) if x),
             "collision_energy": ce, "copy_of": None, "mz": peaks[0], "intensity": peaks[1]}, None
@@ -272,6 +272,35 @@ def _gnps_na(value):
 
 
 _INCHIKEY = re.compile(r"[A-Z]{14}-[A-Z]{10}-[A-Z]")
+_INCHI = re.compile(r"InChI=1S?/\S+")
+
+
+def _inchi_of(rec):
+    """记录里的完整 InChI 串（INCHI / INCHIAUX 字段，容忍引号和空白）；没有则 ""。"""
+    for k in ("INCHI", "INCHIAUX"):
+        v = _gnps_na(rec.get(k)).strip("\"'` \t")
+        if _INCHI.fullmatch(v):
+            return v
+    return ""
+
+
+def _inchi_structure(inchi):
+    """InChI -> (SMILES, InChIKey)，用 RDKit；转不动的部分给 ""，不抛异常。"""
+    from rdkit import Chem
+    from rdkit.Chem import inchi as rd_inchi
+    from rdkit.rdBase import BlockLogs
+    smiles = key = ""
+    with BlockLogs():
+        try:
+            mol = Chem.MolFromInchi(inchi)
+            if mol is not None and mol.GetNumAtoms():          # InchiToInchiKey 会给乱码 InChI 也算出一个 key，所以先要能解析
+                smiles = Chem.MolToSmiles(mol)
+                key = rd_inchi.InchiToInchiKey(inchi) or ""
+        except Exception:
+            smiles = key = ""
+    return smiles, (key if _INCHIKEY.fullmatch(key) else "")
+
+
 # GNPS 里转存的 MassBank 记录：NAME 以 "Massbank:LU119903 ..." / "MassbankEU:SM866601 ..." 开头，ORGANISM 是 MASSBANK / MASSBANKEU
 _MB_COPY_NAME = re.compile(r"^\s*MassBank(?:EU)?\s*:\s*([^\s|]+)", re.I)
 MASSBANK_ORGANISMS = ("MASSBANK", "MASSBANKEU")
@@ -304,10 +333,16 @@ def normalise_gnps(rec):
         return None, "no valid peaks"
     # GNPS 的 InChIKey 有时放在 INCHI / INCHIAUX 字段里
     inchikey = next((v for v in (_gnps_na(rec.get(k)) for k in ("INCHIKEY", "INCHI", "INCHIAUX")) if _INCHIKEY.fullmatch(v)), "")
+    smiles = _gnps_na(rec.get("SMILES"))
+    inchi = _inchi_of(rec) if not (smiles and inchikey) else ""     # SMILES=N/A 但带完整 InChI 的记录（约 36k 条）：由 InChI 补结构
+    if inchi:
+        from_inchi = _inchi_structure(inchi)
+        smiles = smiles or from_inchi[0]
+        inchikey = inchikey or from_inchi[1]                       # 只有 SMILES 的记录不在这里算 key（太慢），检索命中时再算
     m = _MB_COPY_NAME.match(name)
     is_copy = bool(m) or str(rec.get("ORGANISM", "")).strip().upper() in MASSBANK_ORGANISMS
     return {"accession": rec.get("SPECTRUMID", ""), "name": name, "inchikey": inchikey,
-            "smiles": _gnps_na(rec.get("SMILES")), "adduct": adduct, "adduct_raw": adduct_raw,
+            "smiles": smiles, "adduct": adduct, "adduct_raw": adduct_raw,
             "precursor_mz": precursor, "ion_mode": _ion_mode(rec.get("IONMODE"), adduct), "kind": kind,
             "instrument": instrument, "collision_energy": _gnps_na(rec.get("COLLISION_ENERGY")),
             "copy_of": (m.group(1) if m else "") if is_copy else None, "mz": peaks[0], "intensity": peaks[1]}, None

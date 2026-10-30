@@ -250,7 +250,7 @@ def buddy(monkeypatch):
 
 MS1_PATTERN = [(300.0, 100.0), (301.003, 12.0), (302.006, 1.0)]
 TABLE = {"[M+H]+": [("C10H20N2O5", 0.9, 0.5, 0.99), ("C9H16N4O4", 0.05, -3.0, 0.97)], "[M+Na]+": [("C11H16N3O3", 0.01, 4.0, 0.85)],
-         "[M+NH4]+": [("C10H17NO5", 0.9, 0.5, 0.99)], "[M+K]+": [("C9H12N2O6", 0.01, 2.0, 0.99)]}
+         "[M+NH4]+": [("C10H17NO5", 0.89, 0.5, 0.99)], "[M+K]+": [("C9H12N2O6", 0.01, 2.0, 0.99)]}
 
 
 def test_buddy_runs_for_every_retained_adduct_but_only_the_best_gets_formulas_when_the_second_is_far_behind(buddy):
@@ -270,8 +270,8 @@ def test_a_close_second_adduct_gets_formulas_too(buddy):
     fake = buddy(table)
     adduct, formula = F.run_adduct_and_formula(300.0, True, peaks_with(300.0, base=SPARSE))     # sparse: [M+Na]+ is 0.78 x [M+H]+
     assert {c["adduct"] for c in fake.calls} == set(adduct.retained_adducts) and formula.adducts == ["[M+H]+", "[M+Na]+"]
-    assert [f.adduct for f in formula.formulas] == ["[M+H]+", "[M+H]+", "[M+Na]+"]            # best adduct first
-    assert formula.formula_strings == ["C10H20N2O5", "C9H16N4O4", "C11H16N3O3"]
+    assert [f.adduct for f in formula.formulas] == ["[M+H]+", "[M+Na]+", "[M+H]+"]            # interleaved by BUDDY rank, best adduct first
+    assert formula.formula_strings == ["C10H20N2O5", "C11H16N3O3", "C9H16N4O4"]
     low = F.SECOND_ADDUCT_RATIO * adduct.hypotheses[0].score
     assert adduct.hypotheses[1].score >= low
 
@@ -283,7 +283,7 @@ def test_formula_order_preserves_adduct_priority_and_unrounded_buddy_ranks_after
     adduct, result = F.run_adduct_and_formula(300.0, True, peaks_with(300.0, base=SPARSE), tol_ppm=10.0)
     assert result.adducts == ["[M+H]+", "[M+Na]+"] == adduct.retained_adducts[:2]
     assert [(f.adduct, f.formula, f.rank) for f in result.formulas] == [
-        ("[M+H]+", "C10H20N2O5", 1), ("[M+H]+", "C9H16N4O4", 3), ("[M+Na]+", "C11H16N3O3", 1)]
+        ("[M+H]+", "C10H20N2O5", 1), ("[M+Na]+", "C11H16N3O3", 1), ("[M+H]+", "C9H16N4O4", 3)]
     assert [r.formula for r in formula_only_candidates([f.to_dict() for f in result.formulas])] == [f.formula for f in result.formulas]
 
 
@@ -294,7 +294,7 @@ def test_second_adduct_formula_cut_uses_unrounded_scores(buddy, monkeypatch, sec
     monkeypatch.setattr(A, "master_adducts", lambda positive: names)
     monkeypatch.setattr(A, "prior_shares", lambda universe: shares)
     monkeypatch.setattr(A, "ms2_evidence", lambda *a, **k: {"factor": 1.0, "signals": []})
-    buddy({name: [("C10H20N2O5", 1.0, 0.1, None)] for name in names})
+    buddy({name: [("C10H20N2O5", 0.89, 0.1, None)] for name in names})            # prob < EXTRA_ADDUCT_PROB: only the ratio rule decides
     adduct, result = F.run_adduct_and_formula(300.0, True, peaks_with(300.0))
     assert ("[M+Na]+" in result.adducts) is include
     assert adduct.hypotheses[1].score == pytest.approx(second, rel=0, abs=1e-10)
@@ -544,8 +544,8 @@ def test_the_library_match_confirms_an_adduct_only_when_everything_else_holds():
     assert failing(gate(**{**base, "precursor_mz": CAFFEINE_MZ}))["precursor"] == "fail"                # 195.0877 is [M+H]+, not [M+Na]+, of caffeine
     only_library_mz = failing(gate(**base), smiles=None, ppm=0.0)                                       # no structure: no error under its own adduct
     assert only_library_mz["precursor"] == "pass"
-    listed = {**base, "formulas": [{"formula": "C7H14O6", "adduct": "[M+Na]+"}]}
-    assert failing(gate(**listed))["formula"] == "fail"                                                 # BUDDY spoke for that adduct and disagrees
+    listed = {**base, "formulas": [{"formula": "C7H14O6", "adduct": "[M+Na]+"}], "precursor_mz": theo + 0.01}       # BUDDY disagrees and the mass does not fit
+    assert failing(gate(**listed))["formula"] == "fail"
     assert failing(gate(**base, ms1=[(theo, 100.0), (theo + 1.003, 80.0), (theo + 2.006, 60.0)]))["isotope"] == "fail"
     assert not gate(**base, positive=True).judge(hit(adduct="[M-H]-"))["passed"]                         # the other polarity
     assert gate(**base).judge(hit(adduct="[M-H]-"))["checks"][3]["status"] == "fail"
@@ -568,7 +568,8 @@ def test_gate_formula_check_is_not_evaluated_when_buddy_gave_no_formula_for_the_
     assert status(v)["formula"] == "not evaluated" and "BUDDY gave no formula for [M+Na]+" in v["checks"][4]["detail"]
     assert gate(formulas=[]).judge(hit(smiles=None))["checks"][4]["status"] == "not evaluated"      # no list at all: the mass check stands in
     assert status(gate(formulas=["C8H10N4O2"]).judge(hit(adduct="[M+H]+")))["formula"] == "pass"   # a plain string counts for every adduct
-    assert status(gate(formulas=["C7H14O6"]).judge(hit()))["formula"] == "fail"
+    assert status(gate(formulas=["C7H14O6"]).judge(hit()))["formula"] == "not evaluated"             # not listed, but the mass fits (tests/test_library_gate.py)
+    assert status(gate(formulas=["C7H14O6"], precursor_mz=CAFFEINE_MZ + 0.01).judge(hit()))["formula"] == "fail"      # not listed and the mass does not fit
 
 
 def test_gate_formula_check_leaves_what_buddy_cannot_produce_to_the_mass_check():
@@ -577,6 +578,8 @@ def test_gate_formula_check_leaves_what_buddy_cannot_produce_to_the_mass_check()
     v = gate(precursor_mz=mz).judge(hit(smiles=diazepam))
     assert status(v)["formula"] == "not evaluated" and "outside BUDDY's search space" in v["checks"][4]["detail"] and v["passed"]
     v = gate(precursor_mz=mz, halogen=True).judge(hit(smiles=diazepam))                          # with halogens on, BUDDY could have listed it
+    assert status(v)["formula"] == "not evaluated" and "not among BUDDY's top 1 formulas" in v["checks"][4]["detail"] and v["passed"]   # listed formulas miss it, its mass fits
+    v = gate(precursor_mz=mz + 0.01, halogen=True).judge(hit(smiles=diazepam))
     assert status(v)["formula"] == "fail" and not v["passed"]
     assert F.buddy_covers("C8H10N4O2") and not F.buddy_covers("C16H13ClN2O") and F.buddy_covers("C16H13ClN2O", halogen=True)
     assert not F.buddy_covers("C81H100") and not F.buddy_covers("C4H12Si", halogen=True) and not F.buddy_covers("") and F.buddy_covers("C80H150N20O30P10S15")
@@ -744,8 +747,10 @@ def test_a_spectrum_that_matches_nothing_gives_no_candidate(tiny):
 
 
 def test_each_requirement_can_fail_on_its_own(tiny):
-    layer, _ = run(formulas=[F.FormulaCandidate("C7H14O6", "[M+H]+", 1)])
-    assert failed_labels(caffeine(layer)) == ["Formula"] and "C7H14O6" in caffeine(layer).evidence["library"]["failed_checks"][0]
+    layer, summary = run(formulas=[F.FormulaCandidate("C7H14O6", "[M+H]+", 1)])      # not in BUDDY's list, but its mass fits the precursor: not a failure
+    assert summary.passed and failed_labels(caffeine(layer)) == [] and summary.checks[4]["status"] == "not evaluated"
+    layer, _ = run(formulas=[F.FormulaCandidate("C7H14O6", "[M+H]+", 1)], tol_ppm=0.1)    # ... unless the mass is off too
+    assert failed_labels(caffeine(layer)) == ["Precursor m/z", "Formula"] and "C7H14O6" in caffeine(layer).evidence["library"]["failed_checks"][1]
     layer, _ = run(tol_ppm=0.1)                              # the record is inside the 0.1 ppm window, but caffeine [M+H]+ is 0.25 ppm from the query
     assert failed_labels(caffeine(layer)) == ["Precursor m/z"] and caffeine(layer).mz_error_ppm == pytest.approx(0.2459, abs=1e-3)
     layer, _ = run(peaks=[p for p in CAFFEINE_MS2 if abs(p[0] - 138.0663) > 0.01])
@@ -763,8 +768,8 @@ def test_a_library_match_confirms_an_adduct_step_1_missed(tiny):
     assert summary.checks[3]["status"] == "pass" and "the library match confirms it" in summary.checks[3]["detail"]
     assert merge_candidates([layer])[0].level == "2a" and merge_candidates([layer])[0].adduct == "[M+H]+"
     assert caffeine(run()[0]).evidence["library"]["adduct_source"] == "step1"
-    layer, summary = run(adducts_=("[M+Na]+",), formulas=[F.FormulaCandidate("C7H14O6", "[M+H]+", 1)])        # ... but not if another check fails
-    assert not summary.passed and failed_labels(caffeine(layer)) == ["Adduct", "Formula"]
+    layer, summary = run(adducts_=("[M+Na]+",), peaks=[p for p in CAFFEINE_MS2 if abs(p[0] - 138.0663) > 0.01])        # ... but not if another check fails
+    assert not summary.passed and failed_labels(caffeine(layer)) == ["Similarity", "Adduct"]
     assert caffeine(layer).evidence["library"]["adduct_source"] == "step1"
 
 
@@ -867,6 +872,27 @@ def test_entropy_that_cannot_be_computed_falls_back_to_cosine(tiny, monkeypatch)
     assert seen == [L.PRIMARY_METRIC, L.FALLBACK_METRIC] and summary.passed and summary.thresholds["metric"] == "CosineGreedy"
     ev = layer.candidates[0].evidence["library"]
     assert ev["metric"] == "CosineGreedy" and "CosineGreedy" in ev["checks"][0]["detail"]
+
+
+def test_the_search_gets_the_chosen_metric_the_precursor_and_the_list_threshold(tiny, monkeypatch):
+    real = ls.search
+    seen = []
+
+    def search(peaks, kind, libraries, metrics, threshold, **kw):
+        seen.append((metrics, threshold, kw["precursor_mz"]))
+        return real(peaks, kind, libraries, metrics, threshold, **kw)
+    monkeypatch.setattr(ls, "search", search)
+    layer, summary = run(metric="ModifiedCosineGreedy", gate_similarity=0.95)
+    assert seen == [(["ModifiedCosineGreedy"], 0.85, CAFFEINE_MZ)]
+    ev = layer.candidates[0].evidence["library"]
+    assert ev["metric"] == "ModifiedCosineGreedy" and summary.passed and "ModifiedCosineGreedy" in ev["checks"][0]["detail"]
+    assert summary.thresholds["metric"] == "ModifiedCosineGreedy" and summary.thresholds["similarity"] == 0.95 and summary.thresholds["list"] == 0.85
+
+
+def test_a_higher_gate_threshold_than_any_hit_scores_keeps_the_hits_but_fails_the_gate(tiny):
+    layer, summary = run(metric="CosineGreedy", gate_similarity=1.0)
+    assert layer.candidates and summary.thresholds["list"] == 0.9
+    assert summary.passed == all(c.evidence["library"]["gate_passed"] for c in layer.candidates[:1])
 
 
 def test_a_crashing_search_is_a_failed_step_not_an_exception(tiny, monkeypatch):

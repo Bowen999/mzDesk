@@ -230,7 +230,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
             ? <div className="check-row">{g.fields.map(field)}</div>
             : <div className="fields">{g.fields.map(field)}</div>;
           return g.title === "Advanced"
-            ? <details className="form-section" key={g.title}><summary>Advanced (mobile phase context for the ranking)</summary>{body}</details>
+            ? <details className="form-section" key={g.title}><summary>Advanced</summary>{body}</details>
             : g.title ? <fieldset className="form-section" key={g.title}><legend>{g.title}</legend>{body}</fieldset> : <div key="plain">{body}</div>;
         })}
         <div className="actions">

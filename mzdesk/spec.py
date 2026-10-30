@@ -1047,17 +1047,24 @@ def _section(title, *fields):
 
 # adduct_rules.ADDITIVES (tests/test_pipeline.py checks they agree; spec does not import the rule engine)
 PIPELINE_ADDITIVES = ["Formic acid", "Ammonium formate", "Ammonium acetate", "Acetic acid", "None"]
+# library_step.METRIC_CHOICES (tests/test_pipeline.py checks they agree)
+PIPELINE_LIBRARY_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.ENTROPY_UNWEIGHTED, METRIC_NAMES.COSINE_GREEDY, METRIC_NAMES.MOD_COSINE_GREEDY]
 _PIPELINE_ADVANCED = [
     {**select("additive", "Mobile phase additive", ["Unknown"] + PIPELINE_ADDITIVES), "help": "Unknown = the best additive counts for each candidate's adduct."},
     {**select("alkali", "Sodium / potassium present", ["Unknown", "Present", "Absent"]), "help": "Glassware, salts, biological matrix. Unknown counts as present."},
-    {**number("ph", "Mobile phase pH", 2.7, 0.1), "help": "For the ionization check of each candidate (default: 0.1 % formic acid)."}]
+    {**number("ph", "Mobile phase pH", 2.7, 0.1), "help": "For the ionization check of each candidate (default: 0.1 % formic acid)."},
+    {**select("lib_metric", "Library similarity algorithm", PIPELINE_LIBRARY_METRICS),
+     "help": "Scores the library hits and decides the Level-2 gate. Falls back to CosineGreedy if it cannot be computed."},
+    {**number("lib_threshold", "Level-2 gate similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
+     "help": "A library hit needs this similarity to pass the gate. Hits join the candidate pool from this value minus 0.10."}]
 _PIPELINE_SPECTRUM = _section("Spectrum", {**precursor(), "required": True, "header_fallback": True, "auto_label": "Auto (rank the adducts)"},
                               {**spectrum(label="MS2 spectrum"), "required": True}, ms1())
 
 
 def _caffeine_example(libraries, ms2):
     return {"precursor": _prec("195.0877"), "ms2": _paste(ms2), "ms1": CAFFEINE_MS1, "libraries": libraries, "tol_ppm": 10.0, "tol_da": 0.02,
-            "omics": "Either / unknown", "halogen": False, "local_isomers": False, "additive": "Unknown", "alkali": "Unknown", "ph": 2.7}
+            "omics": "Either / unknown", "halogen": False, "local_isomers": False, "additive": "Unknown", "alkali": "Unknown", "ph": 2.7,
+            "lib_metric": METRIC_NAMES.ENTROPY_WEIGHTED, "lib_threshold": 0.80}
 
 
 PIPELINES = [

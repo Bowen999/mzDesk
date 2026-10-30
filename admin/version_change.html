@@ -263,6 +263,17 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.39', date:'2026-10-30', git:'',
+  title:'ESI MS/MS Annotation：按 CASMI 2022 十题试跑修正加合物、分子式、MS-FINDER、FRIGID 和谱库门控',
+  note:'起因是 CASMI 2022 随机十题试跑暴露的问题。修正如下：正确加合物进了保留列表，却没拿到分子式（146、328）；分子式按加合物分组排队，被 6 个上限截掉（093）；FRIGID 只用总表第一名，加合物排错时必错（093、370）；正确的谱库命中因“不在 BUDDY 前 5”被门控拒绝（227）；无结构的谱库命中拿到 2a 并跳过结构搜索（274）；大分子在 MS-FINDER 中 TreeDepth=2 跑不完、超时后什么都不剩（497）；GNPS 约 3.6 万条带 InChI 的谱被当成无结构。谱库索引需重建（python -m mzdesk.ms2.library_setup GNPS MassBank --rebuild，约 4 分钟）。',
+  state:[['加合物','prob ≥ 0.9 的保留加合物也拿分子式 · 按 BUDDY 名次交错'], ['FRIGID','每个加合物的第 1 个分子式 · 最多 2 个'], ['MS-FINDER','超时未完成的分子式用 TreeDepth=1 重跑一次（120 s）'], ['门控','不在 BUDDY 列表但质量吻合 = 未评估 · 无结构最高 Level 3'], ['谱库','相似度算法与门控阈值进 Advanced'], ['版本','0.2.39']],
+  c:{
+   ms2:['fix','library_parse：GNPS 记录 SMILES=N/A 但有完整 InChI 时，用 RDKit 补 SMILES 和 InChIKey（GNPS 无结构谱 92,272 → 55,876）；MassBank 的 "N/A" 视为空。msfinder_engine：被中止的运行里 0 字节的 .sfd 算“未完成”（MS-FINDER 开始搜索时建文件、结束时才写入）。',true,{w:'mzdesk/ms2/library_parse.py · mzdesk/ms2/msfinder_engine.py · tests/test_library_parse.py'}],
+   pipe:['fix','第 2 步：保留加合物中最佳 BUDDY 分子式 prob ≥ 0.9 的也拿分子式（原规则 ≥ 0.5×最佳分数保留），列表按 BUDDY 名次在各加合物间交错（试跑复算：真值位置 093 7→5，146/328 无→2，370 6→2）。第 3 步：分子式不在 BUDDY 列表但理论 m/z 在容差内为“未评估”而非失败；无结构的命中最高 Level 3，门控只由无结构命中通过时仍跑第 4、5 步；可选相似度算法（加权熵 / 未加权熵 / CosineGreedy / ModifiedCosineGreedy）和门控阈值（默认 0.80，入池阈值 = 门控 − 0.10）。第 4 步：超时未完成的分子式以 TreeDepth=1 重跑一次并标注；重复的“未搜索”警告合并，中止时列出哪些分子式完成。第 5 步：FRIGID 对前 2 个加合物各跑第 1 个分子式，结果合并去重。',true,{w:'mzdesk/annotation/formula_step.py · library_step.py · levels.py · msfinder_step.py · frigid_step.py · pipeline.py · tests/test_formula_targets.py · test_library_gate.py · test_msfinder_retry.py · test_frigid_adducts.py · test_annotation_steps123.py · test_annotation_steps45.py · test_pipeline.py'}],
+   app:['chg','ESI MS/MS Annotation 表单：Advanced 标题去掉括号说明；Advanced 新增 Library similarity algorithm 与 Level-2 gate similarity threshold。',true,{w:'mzdesk/spec.py · web/src/pages/PipelinePage.tsx'}],
+   other:['fix','test_non_ms 读 JP 数据集时指定 UTF-8，全量测试中不再受默认编码影响。',false,{w:'tests/test_non_ms.py'}],
+   docs:['doc','版本号 0.2.39，本页加 v0.2.39。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.38', date:'2026-10-30', git:'',
   title:'Fragments 列紧贴 Isomer 列并冻结；新增 Atoms covered；碎片视图配色与纯黑 / 纯白',
   note:'Alternative explanations 的 Isomers 表和 ESI MS/MS Annotation 的 Isomer check 表、排名表：Fragments 都放在第二列，和第一列一样横向滚动时冻结。Isomers 表的“Explained only by the isomer”换成 Atoms covered：结构中被彩色碎片覆盖的非氢原子占比（取最强的 8 个已解释峰，与弹窗里的数字一致）；该表五个列名后加了小问号，给一句话解释。碎片视图重新配色：8 个颜色亮度、饱和度一致；完整结构和未标记的峰是纯黑（暗色主题为纯白），不再用氧红氮蓝，避免和色块冲突。',

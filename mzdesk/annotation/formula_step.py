@@ -7,8 +7,10 @@ adduct ranking to know which adducts get a formula list. run_adduct_and_formula(
   2. run BUDDY for every retained adduct and feed back what it found for the best formula (its probability, and its isotope fit when
      a usable MS1 pattern is given), until every retained adduct has been evaluated (a hypothesis that is not yet evaluated must not
      win over an evaluated one just because nothing lowered it);
-  3. the shared formula list for steps 3-5: BUDDY's top-5 formulas for the best adduct, and for the second one if its score is at
-     least SECOND_ADDUCT_RATIO x the best (those that miss the user's precursor tolerance are dropped).
+  3. the shared formula list for steps 3-5: BUDDY's top-5 formulas for the best adduct, for the second one if its score is at least
+     SECOND_ADDUCT_RATIO x the best, and for any other retained adduct whose own best formula has a BUDDY probability >= EXTRA_ADDUCT_PROB
+     (auto mode; formulas that miss the user's precursor tolerance are dropped). The list is interleaved by BUDDY rank across these adducts
+     (A#1, B#1, C#1, A#2, ...), so the consumers that take only the first formulas (MS-FINDER: 6, FRIGID: 1) see every target adduct.
 
 Mind that [M+NH4]+ and [M+H-H2O]+ give the same ion composition as [M+H]+ of another neutral (M+NH3, M-H2O): BUDDY's score and the
 isotope fit are then identical, and only the MS2 loss (NH3 17.0265) and the prior can tell these hypotheses apart.
@@ -31,6 +33,7 @@ from mzdesk.annotation import adduct_step
 from mzdesk.annotation.adduct_step import clean_peaks
 
 SECOND_ADDUCT_RATIO = 0.5       # owner's design: the second adduct also gets formulas if its score >= 0.5 x the best
+EXTRA_ADDUCT_PROB = 0.9         # owner's design 2026-10-30: any retained adduct whose best BUDDY formula has prob >= 0.9 also gets formulas
 MIN_MS1_PEAKS = 2               # an isotope pattern is the monoisotopic peak and at least one more (BUDDY needs two as well)
 # What BUDDY can produce: the element ranges of msbuddy 0.3.9 MsbuddyConfig; the halogens only with halogen=True. A formula outside this
 # space cannot be in BUDDY's list, so a list says nothing about it (library_step then judges it by the precursor mass).
@@ -66,9 +69,10 @@ class FormulaCandidate:
 
 @dataclass
 class FormulaResult:
-    """Step 2 result: the shared formula list (best adduct first, BUDDY order within an adduct).
+    """Step 2 result: the shared formula list, interleaved by BUDDY rank across the adducts (best adduct first within a rank).
 
-    adducts   the adducts a list was asked for (the best one, and the second if it scored high enough)
+    adducts   the adducts a list was asked for, in adduct-score order (the best one, the second if it scored high enough, and any other
+              retained adduct with a confident BUDDY formula)
     status    done | skipped (BUDDY does not apply: unsupported adduct, precursor outside its range) | failed (BUDDY missing or crashed)
     ms1_used  the MS1 list had a usable isotope pattern and was given to BUDDY
     An empty list (any status) means: the library formula check uses the precursor mass instead.
@@ -213,20 +217,30 @@ def run_adduct_and_formula(precursor_mz, positive, ms2_peaks, ms1_peaks=None, *,
 
     started = time.perf_counter()
     kept = adduct_result.retained
-    targets = [kept[0].adduct]
+    wanted = {kept[0].adduct}
     if len(kept) > 1 and kept[1].score >= SECOND_ADDUCT_RATIO * kept[0].score:
-        targets.append(kept[1].adduct)
-    formulas, problems = [], []
+        wanted.add(kept[1].adduct)
+    if adduct_result.mode == "auto":                    # these runs are cached from the evaluation above: no extra BUDDY cost
+        wanted |= {h.adduct for h in kept if (_buddy_fit(buddy.run(h.adduct), tol_ppm)["prob"] or 0.0) >= EXTRA_ADDUCT_PROB}
+    targets = [h.adduct for h in kept if h.adduct in wanted]
+    lists, problems = [], []
     for name in targets:
         status, payload = buddy.run(name)
         if status == "ok":
-            formulas += _candidates(name, payload, tol_ppm)
+            lists.append(_candidates(name, payload, tol_ppm))
         else:
             problems.append((name, status, payload))
+    # owner's design 2026-10-30: round-robin by BUDDY rank over the adducts (A#1, B#1, C#1, A#2, ...), not adduct after adduct
+    formulas = [lst[i] for i in range(max(map(len, lists), default=0)) for lst in lists if i < len(lst)]
     result = FormulaResult(formulas=formulas, adducts=targets, ms1_used=use_ms1)
     result.status, result.note = _summary(result, targets, problems, use_ms1, tol_ppm)
     result.seconds = time.perf_counter() - started
     return adduct_result, result
+
+
+def _join(items, word):
+    """'a', 'a and b', 'a, b and c'."""
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} {word} {items[-1]}"
 
 
 def _summary(result, targets, problems, use_ms1, tol_ppm):
@@ -241,7 +255,7 @@ def _summary(result, targets, problems, use_ms1, tol_ppm):
     how = "BUDDY" + (" with the MS1 isotope pattern" if use_ms1 else "")
     if result.formulas:
         parts = [f"{n} formula{'' if n == 1 else 's'} for {a}" for a in asked for n in [sum(f.adduct == a for f in result.formulas)]]
-        note = f"{how}: {' and '.join(parts)}."
+        note = f"{how}: {_join(parts, 'and')}, interleaved by BUDDY rank." if len(parts) > 1 else f"{how}: {parts[0]}."
     else:
-        note = f"{how} found no formula within {tol_ppm:g} ppm for {' or '.join(asked)}; {fallback}."
+        note = f"{how} found no formula within {tol_ppm:g} ppm for {_join(asked, 'or')}; {fallback}."
     return "done", note + "".join(f" {name}: {text}" for name, _, text in problems)

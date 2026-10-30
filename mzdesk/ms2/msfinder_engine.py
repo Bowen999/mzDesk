@@ -605,6 +605,8 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
     A structure search runs at most StructurePredictionTimeOut minutes (parameter file, -1 = no limit; checked after each scored structure)
     and then keeps what it has scored. A run that is stopped (time or memory limit) is not lost: "stopped" holds the reason, "formulas" are
     empty and "peak_rss_mb" is None, and the structures are those of the searches that had finished; when none had, the error is raised.
+    In a stopped run a 0-byte .sfd (a search that had started) is not listed in "searches"; the few searches that had finished with no
+    structure are lost with it (the caller reruns them, which is cheap). In a run that was not stopped a 0-byte .sfd is a search without structures.
     """
     if not queries:
         raise ValueError("No query to run.")
@@ -649,6 +651,8 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
             results = {}
             for key in texts:
                 files = sorted((in_dir / key).glob("*.sfd"))
+                if stopped is not None:                 # MS-FINDER creates a formula's .sfd when its search starts and writes it when it ends (0 bytes
+                    files = [f for f in files if f.stat().st_size > 0]      # after a kill): in a stopped run an empty file is an unfinished search
                 structures = [{**s, "formula": path.stem} for path in files for s in parse_sfd_headers(_read(path)) if (s["score"] or 0) > 0]
                 results[key] = {"formulas": parse_formula_results(_file_rows(formula_text, key))["rows"], "structures": sorted(structures, key=_by_score),
                                 "searches": {path.stem: _search_seconds(path) for path in files}}

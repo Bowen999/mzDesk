@@ -76,6 +76,8 @@ class Query:
     ph: float
     halogen: bool
     local_isomers: bool
+    lib_metric: str = library_step.PRIMARY_METRIC
+    lib_threshold: float = library_step.GATE_SIMILARITY
     warnings: list = field(default_factory=list)
 
     @property
@@ -112,6 +114,9 @@ def parse_inputs(inputs):
     alkali = text(inputs, "alkali").lower() or "unknown"
     if alkali not in ALKALI_CHOICES:
         raise InputError("Sodium / potassium must be Unknown, Present or Absent.")
+    lib_metric = text(inputs, "lib_metric") or library_step.PRIMARY_METRIC
+    if lib_metric not in library_step.METRIC_CHOICES:
+        raise InputError(f"Similarity algorithm must be one of: {', '.join(library_step.METRIC_CHOICES)}.")
     return Query(
         precursor_mz=mz, positive=positive, adduct=adduct, ms2=ms2, ms1=parse_spectrum(text(inputs, "ms1")), libraries=list(dict.fromkeys(libraries)),
         tol_ppm=number(inputs, "tol_ppm", "Precursor tolerance (ppm)", default=10.0, positive=True),
@@ -119,7 +124,9 @@ def parse_inputs(inputs):
         omics=omics, additive=additive, alkali=ALKALI_CHOICES[alkali],
         ph=number(inputs, "ph", "Mobile phase pH", default=DEFAULT_PH, minimum=0, maximum=14),
         halogen=flag(inputs, "halogen", "Allow Cl/Br in formulas"),
-        local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), warnings=warnings)
+        local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metric=lib_metric,
+        lib_threshold=number(inputs, "lib_threshold", "Level-2 gate similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
+        warnings=warnings)
 
 
 # ---------------------------------------------------------------- blocks (shown while the job runs)
@@ -173,7 +180,7 @@ def _formula_blocks(res):
     if not rows:
         return []
     table = _table("formula_table", "Formulas", ["Rank", "Adduct", "Formula", "BUDDY rank (within adduct)", "BUDDY probability", "Error (ppm)", "Isotope fit"], rows)
-    table["caption"] = ("Rank is the list position, not a joint probability: adduct rank comes first, then BUDDY rank within that adduct. "
+    table["caption"] = ("Rank is the list position, not a joint probability: the list is interleaved by BUDDY rank across the adducts (best adduct first within each rank). "
                         "Filtered formulas can leave gaps in BUDDY rank.")
     return [table]
 
@@ -332,7 +339,8 @@ def run_query(q, progress=None):
     else:
         def library():
             layer, summary = library_step.run_library(q.ms2, q.precursor_mz, q.positive, q.libraries, adducts=retained, formulas=formulas,
-                                                      ms1_peaks=q.ms1 or None, tol_ppm=q.tol_ppm, tol_da=q.tol_da, halogen=q.halogen)
+                                                      ms1_peaks=q.ms1 or None, tol_ppm=q.tol_ppm, tol_da=q.tol_da, halogen=q.halogen,
+                                                      metric=q.lib_metric, gate_similarity=q.lib_threshold)
             return layer.status, layer.note, _library_blocks(layer, summary), (layer, summary)
         got = steps.guarded(3, library)
         if got:
@@ -340,9 +348,13 @@ def run_query(q, progress=None):
             gate = got[1]
             warnings += gate.warnings
     gate_passed = bool(gate and gate.passed)
+    best_hit = next((c for lay in layers if lay.layer == "library" for c in lay.candidates if c.id == gate.best_id), None) if gate_passed else None
+    unverifiable = bool(best_hit and best_hit.evidence["library"].get("has_structure") is False)     # passed, but only entries without a structure (Level 3)
+    if unverifiable:
+        warnings.append("The library gate passed only for entries without a structure, which stay at Level 3, so the structure search ran as well.")
 
     # ---- steps 4 + 5
-    if gate_passed:
+    if gate_passed and not unverifiable:
         steps.skip(4, "Library gate passed.")
         steps.skip(5, "Library gate passed.")
     else:
@@ -358,15 +370,15 @@ def run_query(q, progress=None):
         if good_enough:
             steps.skip(5, "MS-FINDER result good enough.")
         else:
-            formula = formulas[0].formula if formulas else None
-            adduct5 = formulas[0].adduct if formulas else top_adduct
+            targets = frigid_step.pick_targets(formulas, retained, top_adduct)      # the #1 formula of each of the best 2 adducts (owner's design 2026-10-30)
 
             def frigid():
-                layer = frigid_step.run_frigid_layer(q.precursor_mz, adduct5, ms2_engine, formula, top_n=FRIGID_TOP_N)
-                return layer.status, layer.note, _engine_blocks("frigid", "FRIGID structures (hypotheses)", layer), layer
-            layer = steps.guarded(5, frigid)
-            if layer:
-                layers.append(layer)
+                layer, warns = frigid_step.run_frigid_layers(q.precursor_mz, targets, ms2_engine, top_n=FRIGID_TOP_N)
+                return layer.status, layer.note, _engine_blocks("frigid", "FRIGID structures (hypotheses)", layer), (layer, warns)
+            got = steps.guarded(5, frigid)
+            if got:
+                layers.append(got[0])
+                warnings += got[1]
     for n in (3, 4, 5):
         if steps.records[n]["status"] == STATUS_FAILED:
             warnings.append(f"Step {n} ({STEP_TITLES[n]}) failed: {steps.records[n]['note']}")
@@ -395,7 +407,7 @@ def run_query(q, progress=None):
         return status, note, _ranked_blocks(ranked), (ranked, [])
     got = steps.guarded(6, merge_rerank)
     ranked, formula_rows = got if got else ([], formula_only_candidates(formula_dicts))
-    if gate_passed and ranked and ranked[0].level != "2a":
+    if gate_passed and not unverifiable and ranked and ranked[0].level != "2a":
         warnings.append("The library gate passed, but re-ranking put a candidate that did not pass the gate first; the answer follows the ranking.")
 
     # ---- step 7

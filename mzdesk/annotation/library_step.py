@@ -3,8 +3,9 @@
 run_library() searches the selected local libraries (MassBank, GNPS; mzdesk.ms2.library_search) with the query spectrum and judges every
 hit that scores at least LIST_THRESHOLD against the gate. A hit passes only if ALL six checks hold:
 
-  similarity  >= GATE_SIMILARITY on the primary metric: weighted spectral entropy (the Similarity page's primary score), CosineGreedy
-              if entropy cannot be computed. evidence["library"]["metric"] says which one was used.
+  similarity  >= the gate threshold (default GATE_SIMILARITY) on the chosen metric (default: weighted spectral entropy, the Similarity
+              page's primary score; METRIC_CHOICES), CosineGreedy if it cannot be computed. evidence["library"]["metric"] says which
+              one was used. Hits join the pool from the gate threshold - LIST_MARGIN (default LIST_THRESHOLD).
   peaks       >= GATE_MIN_MATCHED matched peaks (greedy 1:1 pairing at the fragment tolerance); all of them if the query has fewer
   precursor   |observed - theoretical m/z of the hit's formula + adduct| <= tol_ppm; for a hit without a structure the library's own
               recorded precursor m/z stands in
@@ -12,12 +13,15 @@ hit that scores at least LIST_THRESHOLD against the gate. A hit passes only if A
               or step 1 missed it but the library match confirms it: a known adduct of the polarity whose own formula + adduct fits the
               precursor within tol_ppm while every other check passes (adduct_source = "library"). The candidate keeps its own adduct.
   formula     the hit's formula is in the shared formula list of step 2 (the formulas BUDDY gave for the hit's adduct); when BUDDY gave
-              none for that adduct (failed, not asked: only the best adduct and a close second get formulas), or the formula is outside
-              BUDDY's search space (formula_step.buddy_covers: halogens, metals, huge molecules), the precursor check stands in
+              none for that adduct (failed, not asked: only the best adduct, a close second and any retained adduct whose best BUDDY
+              formula has prob >= 0.9 get formulas), the formula is outside BUDDY's search space (formula_step.buddy_covers: halogens,
+              metals, huge molecules), or it is not in BUDDY's short list but its own mass fits the precursor, the check is "not
+              evaluated" and the precursor check stands in
   isotope     cosine similarity (isotopes.py) of the hit's theoretical isotope pattern against the MS1 peaks >= GATE_ISOTOPE.
               "not evaluated" without a usable MS1 pattern; that never blocks.
 
-A hit that passes is Level 2a; one that fails still joins the pool as a Level 3 candidate with the failed checks listed. The library
+A hit that passes is Level 2a; one that fails still joins the pool as a Level 3 candidate with the failed checks listed. A hit without
+a structure (no usable SMILES or InChIKey) can pass but is capped at Level 3 (levels.py). The library
 index has no formula column, so a hit's formula is computed from its SMILES (largest fragment, neutralised); a hit without a SMILES is
 kept with smiles=None and no formula, and then cannot pass the formula check when BUDDY gave formulas for its adduct.
 
@@ -49,8 +53,10 @@ from mzdesk.ms2 import metric_names as mn
 # ---------------------------------------------------------------- constants (owner's design unless a comment says otherwise)
 PRIMARY_METRIC = mn.ENTROPY_WEIGHTED        # the Similarity page's primary score (api/runners/ms2.py PRIMARY_METHOD)
 FALLBACK_METRIC = mn.COSINE_GREEDY          # used when entropy cannot be computed (ms_entropy missing)
-LIST_THRESHOLD = 0.70                       # hits scoring at least this join the pool, gate passed or not
+LIST_MARGIN = 0.10                          # hits scoring at least (gate similarity - this) join the pool, gate passed or not
 GATE_SIMILARITY = 0.80
+LIST_THRESHOLD = round(GATE_SIMILARITY - LIST_MARGIN, 4)      # the default list threshold, 0.70
+METRIC_CHOICES = (mn.ENTROPY_WEIGHTED, mn.ENTROPY_UNWEIGHTED, mn.COSINE_GREEDY, mn.MOD_COSINE_GREEDY)     # spec.py _PIPELINE_ADVANCED offers these
 GATE_MIN_MATCHED = 4
 GATE_ISOTOPE = 0.80
 MAX_CANDIDATES = 20                         # compounds returned; a crowded precursor window can hold dozens of look-alike spectra
@@ -111,9 +117,23 @@ def hit_formula(smiles):
 _INCHIKEY = re.compile(r"[A-Z]{14}-[A-Z]{10}-[A-Z]")
 
 
+@lru_cache(maxsize=4096)
+def _key_of_smiles(smiles):
+    return structure_keys(smiles)[0]
+
+
 def _inchikey(hit):
-    """The hit's InChIKey if it is one (the libraries also store "N/A" and the like), else None."""
-    return hit["inchikey"] if _INCHIKEY.fullmatch(hit.get("inchikey") or "") else None
+    """The hit's InChIKey if it is one (the libraries also store "N/A" and the like), else the one derived from its SMILES
+    (GNPS rows carry a SMILES but no key), else None."""
+    given = hit.get("inchikey") or ""
+    if _INCHIKEY.fullmatch(given):
+        return given
+    return _key_of_smiles(hit["smiles"]) if hit.get("smiles") else None
+
+
+def _has_structure(hit):
+    """True when the hit carries a usable SMILES or an InChIKey; without either it cannot be verified (Level 3 at most, see levels.py)."""
+    return has_structure(hit.get("smiles")) or bool(_inchikey(hit))
 
 
 def _element_counts(formula):
@@ -165,12 +185,28 @@ def _isotope_similarity(formula, adduct, ms1, resolution, tol_ppm):
         return None
 
 
+def list_threshold(gate_similarity):
+    """Hits from this similarity on join the pool: the gate threshold minus LIST_MARGIN, not below 0."""
+    return max(0.0, round(gate_similarity - LIST_MARGIN, 4))
+
+
+def check_settings(metric, gate_similarity):
+    """Raise ValueError (a clear message) for a metric outside METRIC_CHOICES or a gate threshold outside 0-1."""
+    if metric not in METRIC_CHOICES:
+        raise ValueError(f"The library similarity algorithm must be one of: {', '.join(METRIC_CHOICES)} (got {metric!r}).")
+    if isinstance(gate_similarity, bool) or not isinstance(gate_similarity, (int, float)) or not 0 <= gate_similarity <= 1:
+        raise ValueError(f"The Level-2 gate similarity threshold must be a number from 0 to 1 (got {gate_similarity!r}).")
+
+
 # ---------------------------------------------------------------- the gate
 class _Gate:
     """The gate of one query. judge(hit) runs the six checks on one library hit and returns them with what was derived on the way."""
 
-    def __init__(self, *, precursor_mz, tol_ppm, n_query, adducts, formulas, ms1, positive=True, halogen=False):
-        self.precursor_mz, self.tol_ppm, self.metric, self.halogen = precursor_mz, tol_ppm, PRIMARY_METRIC, halogen
+    def __init__(self, *, precursor_mz, tol_ppm, n_query, adducts, formulas, ms1, positive=True, halogen=False, metric=PRIMARY_METRIC,
+                 gate_similarity=GATE_SIMILARITY):
+        self.precursor_mz, self.tol_ppm, self.metric, self.halogen = precursor_mz, tol_ppm, metric, halogen
+        self.requested_metric, self.gate_similarity = metric, gate_similarity          # self.metric becomes the fallback if the search had to use it
+        self.list_threshold = list_threshold(gate_similarity)
         self.polarity = "Positive" if positive else "Negative"
         self.min_matched = min(GATE_MIN_MATCHED, n_query)                      # "all of them" when the query has fewer peaks
         self.adducts = [a for a in (canonical(getattr(x, "adduct", x)) for x in adducts or []) if a]
@@ -179,8 +215,8 @@ class _Gate:
         self.resolution = "Orbitrap 60k" if tol_ppm <= ISOTOPE_RESOLUTION_PPM else "Q-TOF 30k"
 
     def thresholds(self):
-        return {"metric": self.metric, "similarity": GATE_SIMILARITY, "min_matched_peaks": self.min_matched,
-                "precursor_ppm": self.tol_ppm, "isotope": GATE_ISOTOPE, "list": LIST_THRESHOLD}
+        return {"metric": self.metric, "similarity": self.gate_similarity, "min_matched_peaks": self.min_matched,
+                "precursor_ppm": self.tol_ppm, "isotope": GATE_ISOTOPE, "list": self.list_threshold}
 
     def judge(self, hit):
         similarity = hit["scores"].get(self.metric)
@@ -194,8 +230,9 @@ class _Gate:
         iso = _isotope_similarity(formula, adduct, self.ms1, self.resolution, self.tol_ppm) if self.ms1 and formula and adduct else None
 
         res = {}
-        ok = similarity is not None and similarity >= GATE_SIMILARITY
-        res["similarity"] = (PASS if ok else FAIL, f"{self.metric} {similarity:.2f} {'>=' if ok else '<'} {GATE_SIMILARITY:.2f}")
+        ok = similarity is not None and similarity >= self.gate_similarity
+        res["similarity"] = (PASS if ok else FAIL, f"{self.metric} {'n/a' if similarity is None else format(similarity, '.2f')} "
+                                                   f"{'>=' if ok else '<'} {self.gate_similarity:.2f}")
         ok = hit["matches"] >= self.min_matched
         res["peaks"] = (PASS if ok else FAIL, f"{hit['matches']} matched, {self.min_matched} needed")
         ok = abs(error) <= self.tol_ppm
@@ -209,6 +246,10 @@ class _Gate:
             res["formula"] = (NOT_EVALUATED, f"{formula} is outside BUDDY's search space; the precursor check stands in for it")
         elif any(same_formula(formula, f) for f in listed):
             res["formula"] = (PASS, f"{formula} is among the BUDDY formulas for {adduct}")
+        elif theoretical and abs(error) <= self.tol_ppm:
+            # BUDDY lists at most 5 formulas, so a formula missing from that short list is weak evidence when its own mass fits the precursor
+            res["formula"] = (NOT_EVALUATED, f"{formula} is not among BUDDY's top {len(listed)} formulas for {adduct} ({', '.join(listed)}), "
+                                             f"but it matches the precursor at {error:+.1f} ppm; the precursor check stands in for it")
         else:
             res["formula"] = (FAIL, f"{formula} is not among the BUDDY formulas for {adduct} ({', '.join(listed)})")
         if self.ms1 is None:
@@ -240,16 +281,19 @@ class _Gate:
 
 
 # ---------------------------------------------------------------- the step
-def _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da):
-    """library_search.search with the primary metric; with the fallback metric when the primary one cannot be computed. -> (result, metric)"""
-    def run(metric):
-        return ls.search(peaks, "MS/MS", libraries, [metric], LIST_THRESHOLD, precursor_mz=precursor_mz, positive=positive, adduct=None,
+def _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da, metric=PRIMARY_METRIC, threshold=LIST_THRESHOLD):
+    """library_search.search with `metric` (it gets the precursor m/z, which ModifiedCosineGreedy needs); with the fallback metric when
+    that one cannot be computed. -> (result, metric used)"""
+    def run(name):
+        return ls.search(peaks, "MS/MS", libraries, [name], threshold, precursor_mz=precursor_mz, positive=positive, adduct=None,
                          precursor_tol_ppm=tol_ppm, tolerance=tol_da, top_n=SEARCH_TOP_N)
 
+    if metric == FALLBACK_METRIC:
+        return run(metric), metric
     try:
-        res = run(PRIMARY_METRIC)
+        res = run(metric)
         if not res["n_candidates"] or res["n_metrics_scored"]:
-            return res, PRIMARY_METRIC
+            return res, metric
     except ImportError:                          # ms_entropy is not installed
         pass
     return run(FALLBACK_METRIC), FALLBACK_METRIC
@@ -268,7 +312,8 @@ def _reference_spectrum(hit):
         return None
 
 
-def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formulas, ms1_peaks=None, tol_ppm=10.0, tol_da=0.02, halogen=False):
+def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formulas, ms1_peaks=None, tol_ppm=10.0, tol_da=0.02, halogen=False,
+                metric=PRIMARY_METRIC, gate_similarity=GATE_SIMILARITY):
     """Step 3 -> (LayerResult, GateSummary).
 
     ms2_peaks     [(mz, intensity)] query spectrum
@@ -283,17 +328,22 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     tol_ppm       precursor tolerance (ppm): the library window and the gate's precursor check
     tol_da        fragment tolerance (Da) for the spectrum comparison
     halogen       the halogen setting step 2 used (run_adduct_and_formula(halogen=...)): without it BUDDY cannot list a Cl / Br / F / I formula
+    metric        the similarity algorithm of the gate and the search, one of METRIC_CHOICES (CosineGreedy replaces it if it cannot be computed)
+    gate_similarity  the gate's similarity threshold, 0-1; hits from this minus LIST_MARGIN (not below 0) on join the pool
+    Raises ValueError for a metric outside METRIC_CHOICES or a threshold outside 0-1.
 
     LayerResult: layer "library"; candidates best first, each with evidence["library"] = {gate_passed, failed_checks, similarity, metric,
-    matched_peaks, precursor_error_ppm, isotope ("pass" | "fail" | "not evaluated"), isotope_similarity, adduct_source ("step1" | "library"),
+    matched_peaks, has_structure (False caps the level at 3), precursor_error_ppm, isotope ("pass" | "fail" | "not evaluated"), isotope_similarity, adduct_source ("step1" | "library"),
     checks, library, accession, ...}.
     status: skipped (no library selected or installed, no peaks), failed (the search crashed), done.
     """
+    check_settings(metric, gate_similarity)
     started = time.perf_counter()
     peaks = clean_peaks(ms2_peaks)
     ms1_ok, _ = ms1_usable(ms1_peaks, precursor_mz, tol_ppm)
     gate = _Gate(precursor_mz=precursor_mz, tol_ppm=tol_ppm, n_query=len(peaks), adducts=adducts, formulas=formulas,
-                 ms1=clean_peaks(ms1_peaks) if ms1_ok else None, positive=positive, halogen=halogen)
+                 ms1=clean_peaks(ms1_peaks) if ms1_ok else None, positive=positive, halogen=halogen, metric=metric,
+                 gate_similarity=gate_similarity)
 
     def finish(status, note, candidates=(), summary=None):
         layer = LayerResult("library", status, note, time.perf_counter() - started, list(candidates))
@@ -305,7 +355,7 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     if not peaks:
         return finish(STATUS_SKIPPED, "The MS2 spectrum has no peaks, so no library spectrum was searched.")
     try:
-        res, gate.metric = _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da)
+        res, gate.metric = _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da, gate.metric, gate.list_threshold)
     except lx.LibraryMissing as exc:
         return finish(STATUS_SKIPPED, str(exc))
     except Exception as exc:                                                    # a broken library must not stop the workflow
@@ -316,7 +366,7 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
         verdict = gate.judge(hit)
         key = (structure_keys(hit.get("smiles"))[1] or (_inchikey(hit) or "")[:14] or (hit.get("name") or "").strip().lower()
                or (hit["library"], hit["accession"]))
-        order = (not verdict["passed"], -round(verdict["similarity"], 4), -hit["matches"], verdict["formula"] is None, abs(verdict["error"]))
+        order = (not verdict["passed"], verdict["passed"] and not _has_structure(hit), -round(verdict["similarity"], 4), -hit["matches"], verdict["formula"] is None, abs(verdict["error"]))
         if key not in best:
             best[key] = [order, hit, verdict, 1]
             continue
@@ -328,12 +378,14 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
 
     passing = [c for c in candidates if c.evidence["library"]["gate_passed"]]
     warnings = list(res["warnings"]) + [f"{name}: {text}" for name, text in res["notes"].items()]
+    if gate.metric != gate.requested_metric:
+        warnings.append(f"{gate.requested_metric} could not be computed, so {gate.metric} was used for the library search and the gate.")
     if res["n_kept"] > SEARCH_TOP_N:
-        warnings.append(f"{res['n_kept']:,} library spectra scored {LIST_THRESHOLD:.2f} or higher; only the best {SEARCH_TOP_N} were judged by the gate.")
+        warnings.append(f"{res['n_kept']:,} library spectra scored {gate.list_threshold:.2f} or higher; only the best {SEARCH_TOP_N} were judged by the gate.")
     summary = GateSummary(passed=bool(passing), best_id=passing[0].id if passing else None, top_id=candidates[0].id if candidates else None,
                           thresholds=gate.thresholds(), checks=chosen[0][2]["checks"] if chosen else [], warnings=warnings,
                           reference=_reference_spectrum(chosen[0][1]) if chosen else None)
-    return finish(STATUS_DONE, _note(res, candidates, passing, tol_ppm, precursor_mz), candidates, summary)
+    return finish(STATUS_DONE, _note(res, candidates, passing, tol_ppm, precursor_mz, gate), candidates, summary)
 
 
 def _candidate(cid, hit, verdict, n_spectra, metric):
@@ -344,7 +396,7 @@ def _candidate(cid, hit, verdict, n_spectra, metric):
     evidence = {"gate_passed": verdict["passed"], "failed_checks": failed, "similarity": verdict["similarity"], "metric": metric,
                 "matched_peaks": hit["matches"], "precursor_error_ppm": verdict["error"], "precursor_error_basis": verdict["error_basis"],
                 "isotope": verdict["isotope"], "isotope_similarity": verdict["isotope_similarity"], "adduct_source": verdict["adduct_source"],
-                "checks": verdict["checks"],
+                "checks": verdict["checks"], "has_structure": _has_structure(hit),
                 "library": hit["library"], "accession": hit["accession"], "instrument": hit["instrument"],
                 "collision_energy": hit["collision_energy"], "library_adduct": hit.get("adduct") or None,
                 "library_precursor_mz": hit["precursor_mz"], "n_spectra": n_spectra}
@@ -354,12 +406,13 @@ def _candidate(cid, hit, verdict, n_spectra, metric):
                      layer_score_norm=min(1.0, max(0.0, verdict["similarity"])), evidence={"library": evidence})
 
 
-def _note(res, candidates, passing, tol_ppm, precursor_mz):
+def _note(res, candidates, passing, tol_ppm, precursor_mz, gate):
     if not res["n_candidates"]:
         return f"No library spectrum within {tol_ppm:g} ppm of m/z {precursor_mz:.4f}."
     if not candidates:
-        return f"{res['n_candidates']:,} library spectra compared; none scored {LIST_THRESHOLD:.2f} or higher."
-    text = f"{res['n_kept']:,} library spectra scored {LIST_THRESHOLD:.2f} or higher ({len(candidates)} compounds listed)."
+        return f"{res['n_candidates']:,} library spectra compared; none scored {gate.list_threshold:.2f} or higher on {gate.metric}."
+    text = (f"{res['n_kept']:,} library spectra scored {gate.list_threshold:.2f} or higher on {gate.metric} ({len(candidates)} compounds listed); "
+            f"the gate needs {gate.gate_similarity:.2f}.")
     if passing:
         ev = passing[0].evidence["library"]
         return text + f" Gate passed by {passing[0].name or passing[0].id} (similarity {ev['similarity']:.2f}, {ev['matched_peaks']} matched peaks)."

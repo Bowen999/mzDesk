@@ -32,6 +32,13 @@ Other settings
   * A structure search starts no new structure after SEARCH_MINUTES and keeps the partial result (reported as "time limit"); structures already
     in flight finish, so a search ends up to ~20 s later. Heavy formulas (C20H30O2: slow, 100 structures) can reach it. The run is stopped
     after ENGINE_TIMEOUT_S or RSS_CAP_MB and keeps the searches that had finished.
+  * The shipped parameter file has TreeDepth=2 (owner's design). For large glycosides (CASMI 497, C48H76O20, m/z 971; also 236, 328) the fragment
+    enumeration of ONE structure runs for minutes: the time limit above is checked only after a structure is scored, and a formula's .sfd is
+    written only when its search ends, so the ENGINE_TIMEOUT_S kill leaves nothing for the unfinished formulas. A run stopped by the TIME limit
+    is therefore repeated ONCE for the unfinished formulas only (the whole run without a formula list) with TreeDepth=1 and RETRY_TIMEOUT_S;
+    the same 497 search took ~50 s at TreeDepth=1. Memory stops are not repeated: the retry's marker says "timed out", and a memory stop (a
+    wide spectrum, not the tree) was not shown to depend on the depth. Retry candidates are marked (formula info "tree_depth"/"note",
+    candidate evidence "tree_depth"), because TreeDepth=1 scores are not on the TreeDepth=2 scale.
   * Fragment tolerance = tol_da; the halogen switch follows the formulas (BUDDY has no Si); everything else is the shipped parameter file.
   * Typical run: 5-12 s for 3-5 formulas on a quiet machine (about 2.3 GB); a 600 Da glycoside takes ~50 s and up to 4 GB.
 
@@ -66,7 +73,7 @@ from mzdesk.ms2 import msfinder_engine as mf
 # ---------------------------------------------------------------- constants
 GOOD_ENOUGH = 0.6                   # owner's design: the best normalised score at or above this means FRIGID (step 5) is not needed
 SCORE_LOW, SCORE_HIGH = 5.0, 9.0    # the Total scores where layer_score_norm is 0 and 1 (calibration table above)
-MAX_FORMULAS = 6                    # formulas searched in one run (the shared list holds at most 5 + 5)
+MAX_FORMULAS = 6                    # formulas searched in one run (the shared list holds up to 5 per target adduct, interleaved by rank)
 MAX_PEAKS = 100                     # most intense MS2 peaks sent to MS-FINDER
 FORMULA_WINDOW_DA = 0.0002          # Ms1Tolerance of a per-formula query: MS-FINDER sees that formula and (almost) nothing else
 DEFAULT_WINDOW_DA = 0.001           # Ms1Tolerance of the shipped parameter file; the floor for the run without a formula list
@@ -74,6 +81,9 @@ FORMULAS_PER_QUERY = 2              # TryTopNMolecularFormulaSearch of a per-for
 OWN_FORMULAS = 5                    # the same for the run without a formula list (the shipped value)
 SEARCH_MINUTES = 0.5                # StructurePredictionTimeOut: no new structure is started after this long
 ENGINE_TIMEOUT_S = 90               # the whole run
+RETRY_TIMEOUT_S = 120               # owner's design 2026-10-30: the rerun of the unfinished formulas with TreeDepth=1
+RETRY_TREE_DEPTH = 1                # owner's design 2026-10-30: the shipped parameter file has 2
+RETRY_NOTE = "scored with TreeDepth=1 after the TreeDepth=2 search timed out"
 RSS_CAP_MB = 6144                   # memory cap of the run (the engine's 4096 stops 600 Da glycosides)
 DEFAULT_TOL_DA = 0.01               # MS-FINDER's own fragment tolerance
 HALOGENS = {"F", "Cl", "Br", "I"}
@@ -160,11 +170,14 @@ def run_msfinder_layer(precursor_mz, adduct, ms2_peaks, formulas, *, tol_ppm, to
        "n_candidates", "mode": "formula_list" | "own_formulas",
        "formulas": [{"formula", "adduct", "mz_theoretical", "ppm", "accepted": MS-FINDER's formula rules took it (None: run stopped),
                      "n_structures", "best_score", "search_seconds", "status": searched | no structures | time limit | not accepted | not finished}],
-       "skipped": [{"formula", "reason"}], "warnings": [plain sentences for the result], "seconds", "engine_seconds", "peak_rss_mb"}
+       "skipped": [{"formula", "reason"}], "warnings": [plain sentences for the result], "seconds", "engine_seconds", "peak_rss_mb",
+       "retried": formulas rerun with TreeDepth=1 after a time-limit stop (None: no rerun; [] with "own_formulas": the whole run)}
+    Each entry of "formulas" also has "tree_depth" (1 for a rerun formula, else None: the shipped value) and "note" (RETRY_NOTE for a formula
+    that finished in the rerun).
     """
     started = time.perf_counter()
     summary = {"good_enough": False, "best_norm": None, "best_score": None, "margin": None, "n_candidates": 0, "mode": None, "formulas": [],
-               "skipped": [], "warnings": [], "seconds": 0.0, "engine_seconds": None, "peak_rss_mb": None}
+               "skipped": [], "warnings": [], "seconds": 0.0, "engine_seconds": None, "peak_rss_mb": None, "retried": None}
     try:
         status, note, candidates = _search(summary, precursor_mz, adduct, ms2_peaks, formulas, tol_ppm, tol_da, top_n, ms1_peaks)
     except mf.MsFinderError as exc:
@@ -218,25 +231,34 @@ def _search(summary, precursor_mz, adduct, ms2_peaks, formulas, tol_ppm, tol_da,
                     "ms2": peaks, "ms1": clean_peaks(ms1_peaks, mf.MAX_PEAKS) or None}]
         values.update(Ms1Tolerance=max(DEFAULT_WINDOW_DA, (tol_ppm or 0) * 1e-6 * precursor_mz), TryTopNMolecularFormulaSearch=OWN_FORMULAS)
         elements = set()
-    res = mf.predict_queries(queries, halogen=bool(elements & HALOGENS), values=values, timeout=ENGINE_TIMEOUT_S, rss_cap_mb=RSS_CAP_MB)
-    summary["engine_seconds"], summary["peak_rss_mb"] = res["seconds"], res["peak_rss_mb"]
-    stopped = res["stopped"]
-    if stopped:
-        summary["warnings"].append("MS-FINDER was stopped before it finished (time or memory limit); only the searches that had finished are used.")
+    halogen = bool(elements & HALOGENS)
+    res = _engine(queries, halogen, values, ENGINE_TIMEOUT_S)
+    stopped, runs = res["stopped"], [res]
+    groups = _groups(res, queries, plan, canonical, precursor_mz, tol_ppm)
 
-    groups = []                                 # per formula: its candidates and how its search went
-    if plan:
-        groups = [_group(res["results"][q["key"]], p, stopped) for q, p in zip(queries, plan)]
-    else:                                       # own formulas: one group per formula that has structures
-        got = res["results"]["own"]
-        for formula in dict.fromkeys(s["formula"] for s in got["structures"]):
-            theo = _ion_mz(formula, canonical)
-            ppm = None if not theo else (precursor_mz - theo) / theo * 1e6
-            if theo and not (tol_ppm and abs(ppm) > tol_ppm):
-                groups.append(_group(got, {"formula": formula, "adduct": canonical, "theo": theo, "ppm": ppm}, stopped))
+    if _timed_out(stopped):                     # a time-limit stop: rerun what did not finish, ONCE, with the coarser fragment tree
+        todo = [n for n, g in enumerate(groups) if g["info"]["status"] == "not finished"] if plan else ([] if groups else [0])
+        if todo:
+            rq = [queries[n] for n in todo]
+            retry = _engine(rq, halogen, {**values, "TreeDepth": RETRY_TREE_DEPTH}, RETRY_TIMEOUT_S, any_error=True)
+            if res["failed"] and retry["failed"]:           # nothing finished in either run: the step fails with both reasons
+                raise mf.MsFinderError(f"{stopped} The rerun with TreeDepth={RETRY_TREE_DEPTH} failed too: {retry['stopped']}")
+            runs.append(retry)
+            again = _groups(retry, rq, [plan[n] for n in todo] if plan else [], canonical, precursor_mz, tol_ppm, RETRY_TREE_DEPTH)
+            if plan:
+                for n, g in zip(todo, again):
+                    groups[n] = g
+            else:
+                groups = again
+            summary["retried"] = [plan[n]["formula"] for n in todo] if plan else []
+            stopped = retry["stopped"]
+    summary["engine_seconds"] = sum(r["seconds"] for r in runs if r["seconds"] is not None) or None
+    summary["peak_rss_mb"] = max((r["peak_rss_mb"] for r in runs if r["peak_rss_mb"] is not None), default=None)
     summary["formulas"] = [g["info"] for g in groups]
+    if res["stopped"]:
+        summary["warnings"].append(_stopped_warning(groups, plan, summary["retried"], res["stopped"], stopped))
     summary["warnings"] += [g["warning"] for g in groups if g["warning"]]
-    summary["warnings"] += [f"{s['reason'][0].upper() + s['reason'][1:]}; it was not searched." for s in summary["skipped"]]
+    summary["warnings"] += _skipped_warnings(summary["skipped"])
 
     candidates, seen = [], set()
     for c in sorted((c for g in groups for c in g["candidates"]), key=lambda c: -c.layer_score):         # stable: formula order breaks ties
@@ -250,17 +272,89 @@ def _search(summary, precursor_mz, adduct, ms2_peaks, formulas, tol_ppm, tol_da,
     return STATUS_DONE, _note(candidates, groups, summary, stopped), candidates
 
 
-def _group(got, p, stopped):
+def _timed_out(reason):
+    """True for the engine's time-limit stop (run_watched: "... did not finish within N s and was stopped."); a memory stop, busy or missing is not."""
+    return bool(reason) and "did not finish within" in reason
+
+
+def _engine(queries, halogen, values, timeout, any_error=False):
+    """mf.predict_queries; a run stopped by the time limit with nothing finished (the engine raises then) comes back as an empty answer
+    with "failed": True. Any other MsFinderError (busy, missing, memory limit) is raised; with any_error (the rerun) it is returned the same way."""
+    try:
+        res = mf.predict_queries(queries, halogen=halogen, values=values, timeout=timeout, rss_cap_mb=RSS_CAP_MB)
+        return {**res, "failed": False}
+    except mf.MsFinderError as exc:
+        if not (any_error or _timed_out(str(exc))):
+            raise
+        empty = {"formulas": [], "structures": [], "searches": {}}
+        return {"results": {q["key"]: empty for q in queries}, "seconds": None, "peak_rss_mb": None, "log": "", "stopped": str(exc), "failed": True}
+
+
+def _groups(res, queries, plan, canonical, precursor_mz, tol_ppm, depth=None):
+    """The per-formula groups of one engine answer (depth: TreeDepth of a rerun, else None)."""
+    if plan:
+        return [_group(res["results"][q["key"]], p, res["stopped"], depth) for q, p in zip(queries, plan)]
+    groups = []                                 # own formulas: one group per formula that has structures
+    got = res["results"]["own"]
+    for formula in dict.fromkeys(s["formula"] for s in got["structures"]):
+        theo = _ion_mz(formula, canonical)
+        ppm = None if not theo else (precursor_mz - theo) / theo * 1e6
+        if theo and not (tol_ppm and abs(ppm) > tol_ppm):
+            groups.append(_group(got, {"formula": formula, "adduct": canonical, "theo": theo, "ppm": ppm}, res["stopped"], depth))
+    return groups
+
+
+def _stopped_warning(groups, plan, retried, first, last):
+    """The warning of a run that hit a limit: which formulas finished (and at which TreeDepth) and which did not, after the rerun if there was one.
+    A formula finished when its search wrote a result file (status is not "not finished"); the unfinished ones have lost their candidates.
+    retried: the formulas rerun (None: no rerun); first, last: the stop reasons of the first run and of the last one (None: it finished)."""
+    done = [g["info"] for g in groups if g["info"]["status"] != "not finished"]
+    lost = [g["info"]["formula"] for g in groups if g["info"]["status"] == "not finished"]
+    names = lambda infos: ", ".join(i["formula"] for i in infos) or "none"          # noqa: E731
+    text = "MS-FINDER was stopped before it finished (time or memory limit)"
+    if retried is None:
+        text += "; only the searches that had finished are used."
+        text += f" Finished: {names(done)}."
+        if lost:
+            text += f" Not finished: {', '.join(lost)} (MS-FINDER writes a formula's structures only when its search ends, so they are lost)."
+        elif not plan:
+            text += " Any formula still being searched is lost, as MS-FINDER writes a formula's structures only when its search ends."
+        return text
+    shallow = [i for i in done if i["tree_depth"] == RETRY_TREE_DEPTH]
+    text += f"; the unfinished {'formulas' if plan else 'run'} {'were' if plan else 'was'} repeated once with TreeDepth={RETRY_TREE_DEPTH} (the shipped file has 2)."
+    text += f" Finished at the shipped TreeDepth: {names([i for i in done if i['tree_depth'] != RETRY_TREE_DEPTH])}."
+    text += f" Finished at TreeDepth={RETRY_TREE_DEPTH}: {names(shallow)}" + (" (their scores come from a coarser fragment search and are marked)." if shallow else ".")
+    if lost or (not plan and not done):
+        text += f" Still not finished: {', '.join(lost) or 'the whole run'}" + (f" ({last.rstrip('.')})." if last else ".")
+    return text
+
+
+def _skipped_warnings(skipped):
+    """One warning per reason: formulas skipped for the same reason (e.g. the formula limit) are listed together."""
+    by_reason = {}
+    for s in skipped:
+        by_reason.setdefault(s["reason"], []).append(s["formula"])
+    out = []
+    for reason, formulas in by_reason.items():
+        formulas = list(dict.fromkeys(formulas))
+        head = reason[0].upper() + reason[1:]
+        out.append(f"{head}; it was not searched." if len(formulas) == 1 else f"{head}; {len(formulas)} were not searched: {', '.join(formulas)}.")
+    return out
+
+
+def _group(got, p, stopped, depth=None):
     """One formula's structure search: its candidates, a summary entry and, when something went wrong, a warning.
-    got: the engine's result for the query; p: {"formula", "adduct", "theo", "ppm"}; stopped: the engine's "stopped" reason or None."""
+    got: the engine's result for the query; p: {"formula", "adduct", "theo", "ppm"}; stopped: the engine's "stopped" reason or None;
+    depth: the TreeDepth of a rerun (the group is then marked with RETRY_NOTE), None for the shipped value."""
     formula = p["formula"]
     rows = [s for s in got["structures"] if _same(s["formula"], formula)]
     fscore = next((f["score"] for f in got["formulas"] if _same(f["formula"], formula)), None)
     accepted = None if stopped else fscore is not None
     seconds = next((v for k, v in got["searches"].items() if _same(k, formula)), None)
     how, warning = "searched", None
-    if not rows and stopped:
-        how, warning = "not finished", f"The structure search for {formula} did not finish."
+    finished = any(_same(k, formula) for k in got["searches"])      # a result file exists: MS-FINDER writes it when the search ends
+    if not rows and stopped and not finished:
+        how = "not finished"
     elif accepted is False:
         how, warning = "not accepted", f"MS-FINDER's element rules do not accept {formula}, so no structure was searched for it."
     elif not rows:
@@ -277,17 +371,30 @@ def _group(got, p, stopped):
             layer_score_norm=score_norm(s["score"]),
             evidence={LAYER_MSFINDER: {"total_score": s["score"], "subscores": dict(s["subscores"]), "databases": [db for db, _ in s["databases"]],
                                        "database_ids": {db: ident.split(";")[0] for db, ident in s["databases"]}, "ontology": s["ontology"] or None,
-                                       "formula_score": fscore, "rank_in_formula": rank, "formula_structures": len(rows)}},
+                                       "formula_score": fscore, "rank_in_formula": rank, "formula_structures": len(rows),
+                                       **({"tree_depth": depth, "note": RETRY_NOTE} if depth else {})}},
             hypothesis=False))
     info = {"formula": formula, "adduct": p["adduct"], "mz_theoretical": p["theo"], "ppm": p["ppm"], "accepted": accepted, "n_structures": len(rows),
-            "best_score": rows[0]["score"] if rows else None, "search_seconds": seconds, "status": how}
+            "best_score": rows[0]["score"] if rows else None, "search_seconds": seconds, "status": how, "tree_depth": None, "note": None}
+    if depth:                                   # a rerun: never silently mixed with the shipped TreeDepth
+        info["tree_depth"] = depth
+        info["note"] = RETRY_NOTE if how != "not finished" else f"not finished at TreeDepth={depth} either"
     return {"candidates": candidates, "info": info, "warning": warning}
 
 
 def _note(candidates, groups, summary, stopped):
     """The one-sentence note of the step table."""
     caveats = []
-    if stopped:
+    lost = [g["info"]["formula"] for g in groups if g["info"]["status"] == "not finished"]
+    if summary["retried"] is not None:          # what finally happened: depth 2, depth 1 or nothing for each formula
+        shallow = [g["info"]["formula"] for g in groups if g["info"]["tree_depth"] and g["info"]["status"] != "not finished"]
+        if shallow:
+            caveats.append(f"TreeDepth={RETRY_TREE_DEPTH} for {', '.join(shallow)} after the TreeDepth=2 search timed out")
+        if lost:
+            caveats.append(f"still not finished at TreeDepth={RETRY_TREE_DEPTH}: {', '.join(lost)}")
+        elif stopped:
+            caveats.append("MS-FINDER was stopped early")
+    elif stopped:
         caveats.append("MS-FINDER was stopped early")
     limit = [g["info"]["formula"] for g in groups if g["info"]["status"] == "time limit"]
     if limit:
