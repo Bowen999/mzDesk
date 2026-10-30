@@ -263,16 +263,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
- {id:'v0.2.34', date:'2026-10-29', git:'',
-  title:'异构体检查、工作流进度与谱图显示优化',
-  note:'异构体检查最多读取 PubChem 前 100 个 CID、比较 9 个其他连接结构，限时 120 秒；立体异构体折叠，未检查的结构不能排除。识别为脂质时跳过检查并提示位置判定的限制。工作流百分比按阶段数计算，不代表耗时。',
-  state:[['异构体','PubChem 前 100 个 CID · MetFrag 最多比较 9 个其他结构'], ['工作流','阶段进度 · 当前阶段'], ['版本','0.2.34']],
+ {id:'v0.2.34', date:'2026-10-30', git:'',
+  title:'异构体检查与 CCS 页接通；删除 RT / RI 页；工作流与谱图显示优化',
+  note:'异构体检查最多读取 PubChem 前 100 个 CID、比较 9 个其他结构，限时 120 秒；立体异构体折叠，未检查的结构不能排除。CCS 只比同一化合物、同一加合物、N₂ 标度的值；没有实测参考值时才用本地模型预测（只作粗查），只报告，不进 ESI MS/MS 注释流程；RT 不再做。',
+  state:[['异构体','PubChem 前 100 个 CID · MetFrag 最多比较 9 个其他结构'], ['CCS 数据','14,898 条 N₂ 实测值 · 5,347 个化合物 · DT / TW / TIMS'], ['预测误差','中位 1.19 %，95 分位 6.44 %（容差 ±6.5 %）'], ['RT / RI','页面删除'], ['版本','0.2.34']],
   c:{
-   other:['chg','Alternative explanations 从 PubChem 获取同式候选并用 MetFrag 比较；报告截断、失败和未评分，不把预测当作唯一鉴定。识别为脂质时隐藏异构体表，提示常规 MS/MS 通常不足以可靠确定 C=C / sn 位置。',true,{w:'mzdesk/exclusivity/pubchem_isomers.py · mzdesk/api/runners/exclusivity.py · mzdesk/ms1/exact_mass.py · mzdesk/ms2/metfrag_engine.py · mzdesk/spec.py'}],
+   other:['feat','CCS（id ccs，已接）：数据为 CCSbase 源数据（c3sdb，固定提交 5f1393e，MIT，26 个数据集，全部 N₂），一次性运行 python -m mzdesk.orthogonal.ccs_setup 建本地索引并训练模型。同一化合物（InChIKey 前 14 位）+ 同一加合物才比较；容差按观测平台与参考值平台：同类 ±1 %，DT↔TIMS ±1 %，DT↔TW ±2 %，TIMS↔TW ±3 %（推算）。超出只标"不一致"，不排除化合物。无参考值时用 RBF-SVR（m/z、加合物、42 个 MQN；按化合物分组留出测试）预测，容差 = 测试集 95 分位 6.5 %；与训练集最大 Tanimoto < 0.5 标"训练范围外"。示例：咖啡因 [M+H]+ 140.4 Å²（DTIMS 单场）对参考 140.5，Δ −0.07 %，一致。删除未接的 RT / RI 页，MRM 页去掉 Predicted RT 卡片。异构体检查改从 PubChem 获取同式候选并用 MetFrag 比较，报告截断、失败和未评分，不把预测当作唯一鉴定；识别为脂质时隐藏异构体表，提示常规 MS/MS 通常不足以可靠确定 C=C / sn 位置。',true,{w:'mzdesk/orthogonal/ccs.py · mzdesk/orthogonal/ccs_setup.py · mzdesk/orthogonal/__init__.py · mzdesk/api/runners/ccs.py · mzdesk/api/runners/__init__.py · mzdesk/api/runners/mrm.py · mzdesk/api/verdicts.py · mzdesk/exclusivity/pubchem_isomers.py · mzdesk/api/runners/exclusivity.py · mzdesk/ms1/exact_mass.py · mzdesk/ms2/metfrag_engine.py · mzdesk/spec.py · requirements.txt · tests/test_ccs.py · tests/test_mrm.py'}],
    pipe:['fix','Formulas 区分总体顺序与各加合物内 BUDDY 排名，不在判断加合物阈值前舍入；工作流进度条合并阶段状态，标明百分比是阶段计数；未进行谱库搜索时隐藏 Spectrum evidence。',true,{w:'mzdesk/annotation/adduct_step.py · mzdesk/annotation/pipeline.py · web/src/pages/PipelinePage.tsx · web/src/components/WorkflowProgress.tsx · web/src/components/PipelineVisuals.tsx'}],
    ms2:['fix','镜像谱不再抬高低丰度峰；增加质量和强度显示精度，前体附近峰不冒称前体离子，清洗图说明归一化基准。',false,{w:'mzdesk/shared/ms2_plot.py · mzdesk/ms2/mirror_plot.py · mzdesk/api/runners/ms2.py'}],
-   app:['fix','修正 GNPS2 分组的过期测试。',false,{w:'tests/test_inorganic.py · tests/test_gnps.py'}],
-   docs:['doc','版本号 0.2.34，本页加 v0.2.34。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+   app:['chg','侧栏 GNPS2 分组改名 Dataset Search：fastMASST → Spectrum in which set，Pan-ReDU → Dataset finder，MassQL → Fragment pattern；工具名移到每页一句话说明里，id、接口和下载文件名不变。修正该分组的过期测试。',false,{w:'mzdesk/spec.py · tests/test_inorganic.py · tests/test_gnps.py'}],
+   docs:['doc','版本号 0.2.34，本页加 v0.2.34；To-do 去掉 RT、CCS 标记完成；GNPS2.md 页面名同步。',false,{w:'mzdesk/__init__.py · admin/version_change.html · admin/To-do.md · admin/GNPS2.md'}]
   }},
  {id:'v0.2.33', date:'2026-10-29', git:'',
   title:'页面风格统一，切页保留结果并可清空',

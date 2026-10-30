@@ -366,9 +366,39 @@ def mrm(i, o):
     return text + (f", CE {_b(ce)}" if ce and ce != "—" else "") + "."
 
 
+def ccs(i, o):
+    verdict, source = _card(o, "summary", "Verdict"), _card(o, "summary", "Source")
+    ref, ref_note = _card(o, "summary", "Reference CCS"), _note(o, "summary", "Reference CCS")
+    adduct = i.get("adduct") or "[M+H]+"
+    if source == "Not installed":
+        return "CCS reference data is not installed: run <code>python -m mzdesk.orthogonal.ccs_setup</code>."
+    if not verdict:
+        return None
+    measured = source == "Measured"
+    what = "measured N₂ reference" if measured else "predicted N₂ value"
+    if verdict in ("Consistent", "Inconsistent"):
+        delta, delta_note = _card(o, "summary", "Δ"), _note(o, "summary", "Δ") or ""
+        closest = re.search(r"closest ([\d.]+)", delta_note)
+        obs = closest.group(1) if closest else (_card(o, "summary", "Observed") or "")
+        tol = re.search(r"tolerance (±[\d.]+)", delta_note)
+        text = (f"CCS {_b(obs + ' Å²')} is {_b(verdict.lower())} with the {what} {ref} Å² "
+                f"(Δ {delta.replace('-', MINUS)} %{', tolerance ' + tol.group(1) + ' %' if tol else ''}).")
+        if verdict == "Inconsistent":
+            text += " This does not exclude the compound."
+        return text if measured else text + " A prediction is weaker than a measured value."
+    if verdict == "Not comparable":
+        why = ((o.get("summary") or {}).get("values", {}).get("Verdict") or {}).get("help") or _note(o, "summary", "Verdict") or "different CCS scale"
+        return f"{_b('Not comparable')}. {why}"
+    if verdict == "No observed value":
+        if measured:
+            return f"No observed CCS entered. N₂ reference CCS for {adduct}: {_b(ref + ' Å²')} ({ref_note})."
+        return f"No observed CCS entered. No reference value in the data; predicted CCS for {adduct}: {_b(ref + ' Å²')} ({ref_note})."
+    return f"No reference CCS for {adduct} of this compound in the data." + (f" {_note(o, 'summary', 'Verdict')}" if _note(o, "summary", "Verdict") else "")
+
+
 BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
-                                    ms2_structure, ms2_denovo, nca, stability, mrm)}
+                                    ms2_structure, ms2_denovo, nca, stability, mrm, ccs)}
 NO_VERDICT = {"structure_formats", "gnps_fastmasst", "gnps_redu", "gnps_massql"}    # tables / figures are the answer
 
 
