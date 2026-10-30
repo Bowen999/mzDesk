@@ -70,13 +70,12 @@ def run_properties(inputs):
               ("Size & topology", [("Heavy atoms", count(p.heavy_atoms)), ("Rotatable bonds", count(p.rotatable_bonds)),
                                    ("Rings", count(p.rings)), ("Aromatic rings", count(p.aromatic_rings))])]
     rows = [[group if i == 0 else "", name, value] for group, items in groups for i, (name, value) in enumerate(items)]
-    found = fg.find_functional_groups(smiles)
-    group_rows = [[g.name, str(g.count), fg.atom_text(g.matches), g.smarts] for g in found]
+    views = fg.group_views(smiles)
     outputs = {
         "summary": {"values": {"Formula": p.formula or common.MISSING, "Monoisotopic mass": fmt(p.exact_mass, 4),
                                "Average MW": fmt(p.mw, 4), "Net charge": f"{p.formal_charge:+d}" if p.formal_charge else "0"}},
         "descriptors": {"rows": rows},
-        "functional_groups": bl.table_data(group_rows, count=sum(g.count for g in found)),
+        "functional_groups": bl.groupmap_data(views["svg"], views["groups"]),
     }
     return {"outputs": outputs, "warnings": warnings}
 

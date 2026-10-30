@@ -172,6 +172,13 @@ def reaction(title=None, id=None, help=None, key=None):
     A small line shows "formula · mass · heavy mass" + the option's "?". mass / heavy: bare value (a number is shown with 4 decimals),
     the renderer adds the "mass" / "heavy mass" labels. Strings may use unicode subscripts or <sub> / <sup>."""
     return _extras({"type": "reaction", "title": title, "key": key, "id": id}, help=help)
+def groupmap(title=None, id=None, help=None, key=None):
+    """Functional groups drawn on the input structure.
+    data: {"svg": input structure, "found": [{"family", "name", "count", "smarts", "atoms": "3, 2; 5, 4", "svg": the group alone,
+           "all_svg"?: every site tinted on the input (only with several sites),
+           "sites": [{"atoms": "3, 2", "svg": input with this site tinted and its atoms numbered}], "more"?: sites without a picture}]}
+    A list of groups (grouped by family) next to one large structure; choosing a group tints its sites, choosing a site shows that one with atom numbers."""
+    return _extras({"type": "groupmap", "title": title, "key": key, "id": id}, help=help)
 def grouptable(columns, title=None, id=None, help=None, caption=None, key=None, row_help=False):
     """Collapsible groups of rows that share the same columns (collapsed by default; chevron or header click toggles; keyboard accessible).
     data: {"groups": [{"title", "meta"?: short text on the right e.g. "0.66 · 3 methods", "help"?: str|list, "rows": [row, ...]}], "count"?: int}
@@ -368,10 +375,12 @@ MODULES = [
         [structure()],
         [cards([("Formula", ""), ("Monoisotopic mass", "Da"), ("Average MW", "Da"), ("Net charge", "formal")], "Composition", id="summary", style="metric"),
          table(["Group", "Descriptor", "Value"], "Descriptors", id="descriptors"),
-         table(["Group", "Count", "Atoms", "SMARTS"], "Functional groups", id="functional_groups",
-               help=["Transparent local SMARTS search; all matching rules are shown, including overlapping generic and specific groups.",
-                     "Atoms are one-based indices in the parsed input; semicolons separate matches. At most eight atom sets are shown per row.",
-                     "The curated rule library is broad but not a universally exhaustive functional-group ontology."])],
+         groupmap("Functional groups", id="functional_groups",
+                help=["Transparent local SMARTS search over more than 170 curated groups, ring systems and biomolecule motifs; every matching rule is listed, "
+                      "including overlapping generic and specific groups (for example alcohol and secondary alcohol).",
+                      "Click a group to see where it sits on your structure; a group with several sites shows all of them in different colours, and each site can be shown alone with its atom numbers (one-based, in the parsed input).",
+                      "The group drawing is the usual sketch of the group, R is the rest of the molecule. Open a group for the exact SMARTS that was counted.",
+                      "The rule library is broad but not a universally exhaustive functional-group ontology."])],
         subgroup="molecular", live=True, example={"structure": _name("kaempferol")}),
 
     # ---- Detectability：7 页。只有 Platform 的脂质组 / 代谢组部分接了引擎，其余都是占位 ----

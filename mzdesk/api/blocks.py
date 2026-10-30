@@ -64,6 +64,12 @@ def grouptable_data(groups, count=None, help=None):
     return {"groups": list(groups), **_keep({"count": count, "help": help})}
 
 
+# ---- groupmap ----
+def groupmap_data(svg, found, help=None):
+    """svg: the input structure; found: functional_groups.group_views()["groups"]."""
+    return {"svg": svg, "found": list(found), **_keep({"help": help})}
+
+
 # ---- portal ----
 def tile(label, status, value=None, chips=None, help=None):
     if status not in STATUSES:

@@ -263,6 +263,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.37', date:'2026-10-30', git:'',
+  title:'Properties & groups：官能团增至 176 条，并画在输入结构上',
+  note:'官能团库分 9 个家族（羰基、含氧、含氮、含硫、P / B / Si / Se / As、卤素、烃、环系、生物分子），含具体与通用两层，会互相重叠（如 Alcohol 与 Secondary alcohol）。点击一个官能团：左边是该官能团本身的结构（R = 分子其余部分），右边是输入结构，命中的位点上色；有多个位点时可看全部（各一种颜色）或单个位点（标原子序号，从 1 开始）。库不是“全部官能团”：化学上没有公认的穷尽清单。Fingerprint 没加：它是给相似度检索和建模用的，不是给人读的，页面上的官能团列表已经起到同样作用。',
+  state:[['官能团规则','65 → 176 条 · 9 个家族'], ['每个官能团','结构图 · 位点图 · SMARTS'], ['单个位点图','最多 6 张，其余只算数量'], ['Fingerprint','不加'], ['版本','0.2.37']],
+  c:{
+   prop:['feat','官能团库从 65 条扩到 176 条：新增更细的醇（伯 / 仲 / 叔）、邻二醇、儿茶酚、甲氧基、内酰胺、烯酮、醌、杂芳环 C=O、磺酸酯 / 硫酸酯、磷酸单 / 双 / 三酯、焦磷酸、含卤原子（C–F / Cl / Br / I）、芳环与杂环（吡啶、吲哚、嘌呤、香豆素、黄酮核等）、哌啶 / 吗啉型环，以及 α-氨基酸、糖苷、黄嘌呤、甾体母核、磷脂头基。每条规则附一张画法 SMILES，测试检查每条 SMARTS 都能匹配自己的画法，图与规则不会脱节。修正一条原有规则：Isonitrile 的 N 写成只连 1 个原子，实际连 2 个，从未命中过。',true,{w:'mzdesk/platform_fit/functional_groups.py · mzdesk/api/runners/structure.py · mzdesk/spec.py · tests/test_molecular_completion.py · tests/test_api.py'}],
+   app:['feat','新输出块 groupmap：左侧按家族列出命中的官能团，右侧是输入结构；选官能团即在结构上上色，多位点可切换“全部 / 单个位点”，单个位点标原子序号，下方给出 SMARTS。替换原来的 Count / Atoms / SMARTS 表。',true,{w:'web/src/components/GroupMap.tsx · web/src/components/groupmap.css · web/src/components/Outputs.tsx · web/src/types.ts · mzdesk/api/blocks.py · tests/test_spec_blocks.py'}],
+   docs:['doc','版本号 0.2.37，本页加 v0.2.37。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.36', date:'2026-10-30', git:'',
   title:'Alternative explanations 与 ESI MS/MS Annotation：候选加 Fragments 列，点 View 弹窗查看碎片解释',
   note:'每个候选一个 View 按钮。点击后现场用 MetFrag 计算（带进度条，一般 2–5 秒，不提前算）：母体结构上用颜色标出每个碎片，谱图里同色标出 m/z 和 Δ ppm，下面每个碎片一张卡。碎片放回母体是 MetFrag 之后的推断：同一碎片有多处合理位置时，画氢数最吻合的一处，并注明还有几处。ESI 页的异构体比较用 MS-FINDER、弹窗用 MetFrag，两者的解释结果可能不同，弹窗里已说明。',

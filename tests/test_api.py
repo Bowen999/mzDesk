@@ -426,9 +426,12 @@ def test_properties_page_has_no_duplicates():
     rows = out["descriptors"]["rows"]
     assert all(len(r) == 3 for r in rows) and not any("mass" in r[1].lower() or "MW" in r[1] for r in rows)
     assert [r[0] for r in rows] == ["Polarity", "", "", "", "Size & topology", "", "", ""]
-    group_rows = out["functional_groups"]["rows"]
-    assert group_rows and all(len(r) == 4 for r in group_rows)
-    assert out["functional_groups"]["count"] == sum(int(r[1]) for r in group_rows)
+    fg = out["functional_groups"]
+    assert fg["svg"].startswith("<?xml") and fg["found"]
+    for g in fg["found"]:
+        assert g["svg"] and g["smarts"] and g["family"] and g["sites"]
+        assert len(g["sites"]) == min(g["count"], 6) and all(s["svg"] and s["atoms"] for s in g["sites"])
+        assert ("all_svg" in g) == (g["count"] > 1)
 
 
 def test_platform_page_is_a_portal_and_a_reaction_block():

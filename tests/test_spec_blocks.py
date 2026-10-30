@@ -9,7 +9,7 @@ from mzdesk import spec as S
 from mzdesk.api import blocks as B
 from mzdesk.api.common import clean
 
-KNOWN_TYPES = {"table", "cards", "figure", "compare", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable", "downloads"}
+KNOWN_TYPES = {"table", "cards", "figure", "compare", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable", "downloads", "groupmap"}
 
 
 # ---------------------------------------------------------------- backward compatibility
@@ -142,6 +142,11 @@ def test_reaction_data():
         B.reaction_option("x", [])
     with pytest.raises(ValueError):
         B.reaction_data([])
+
+
+def test_groupmap_block_and_data():
+    assert S.groupmap("Functional groups", "fg", "h") == {"type": "groupmap", "title": "Functional groups", "key": None, "id": "fg", "help": "h"}
+    assert B.groupmap_data("<svg/>", [{"name": "x"}]) == {"svg": "<svg/>", "found": [{"name": "x"}]}
 
 
 def test_builder_output_survives_the_api_cleaner_and_json():

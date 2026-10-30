@@ -6,6 +6,7 @@ import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
 import { CompoundCompare } from "./CompoundCompare";
 import { FigureView } from "./Figure";
 import { FragmentProvider } from "./FragmentDialog";
+import { GroupMap } from "./GroupMap";
 import { HelpButton, RichText, emphasize, helpLines } from "./Help";
 import { MiddleEllipsis } from "./MiddleEllipsis";
 
@@ -166,6 +167,11 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         <Title block={block} data={data} status={shown} />
         {data?.options?.length ? <Reaction svg={data.svg} options={data.options} /> : <div className="placeholder-box">{empty}</div>}
       </div>);
+    case "groupmap": return (
+      <div className="out">
+        <Title block={block} data={data} status={shown} />
+        {data?.found?.length && data.svg ? <GroupMap svg={data.svg} found={data.found} /> : <div className="placeholder-box">{empty}</div>}
+      </div>);
     case "figure":
       if (data) return (
         <div className="out">
@@ -244,6 +250,7 @@ function isEmpty(b: Block, d: BlockData): boolean {
     case "notes": return !(d.items?.length) && !helpLines(d.help).length;
     case "formats": return !Object.keys(d.formats ?? {}).length && !d.sets?.some(s => Object.keys(s.formats ?? {}).length);
     case "compare": return !(d.compounds?.length);
+    case "groupmap": return !(d.found?.length);
     case "downloads": return !d.files?.length;
     case "code": return !d.text;
     default: return false;

@@ -233,7 +233,44 @@ def test_functional_group_atoms_are_one_based_and_capped():
 def test_all_functional_group_smarts_compile_and_invalid_input_fails():
     from rdkit import Chem
 
-    assert len(FG.RULES) >= 50
-    assert all(Chem.MolFromSmarts(smarts) is not None for _, smarts in FG.RULES)
+    assert len(FG.RULES) >= 170
+    assert all(Chem.MolFromSmarts(smarts) is not None for _, _, smarts, _ in FG.RULES)
     with pytest.raises(ValueError):
         FG.find_functional_groups("not a SMILES")
+
+
+def test_every_rule_matches_its_own_drawing():
+    """The picture shown for a group and the SMARTS that is counted must agree ("*" is the rest of the molecule, read as methyl here)."""
+    from rdkit import Chem
+
+    for family, name, smarts, drawing in FG.RULES:
+        assert family in FG.FAMILIES
+        assert Chem.MolFromSmiles(drawing) is not None, name
+        stand_in = Chem.MolFromSmiles(drawing.replace("*", "C"))
+        assert stand_in.HasSubstructMatch(Chem.MolFromSmarts(smarts)), f"{name}: {smarts} does not match {drawing}"
+        assert "<svg" in FG.pattern_svg(name)
+
+
+@pytest.mark.parametrize("smiles,expected", [
+    ("Cn1cnc2c1c(=O)n(C)c(=O)n2C", {"Xanthine core": 1, "Purine": 1, "Methyl": 3, "Heteroaromatic C=O (pyridone-type)": 2}),
+    ("O=c1c(O)c(-c2ccc(O)cc2)oc2cc(O)cc(O)c12", {"Phenol": 4, "Flavone core": 1, "Chromone": 1, "Benzene ring": 2}),
+    ("CC12CCC3C(CCC4=CC(=O)CCC34C)C1CCC2O", {"Steroid core": 1, "Secondary alcohol": 1, "α,β-Unsaturated carbonyl": 1}),
+    ("OCC1OC(Oc2ccccc2)C(O)C(O)C1O", {"O-Glycoside (cyclic acetal)": 1, "Primary alcohol": 1, "Tetrahydropyran-type ring": 1}),
+    ("NC(Cc1c[nH]c2ccccc12)C(=O)O", {"α-Amino acid": 1, "Indole": 1, "Carboxylic acid": 1, "Primary amine": 1}),
+    ("C[N+]#[C-]", {"Isonitrile": 1}),
+])
+def test_functional_groups_rings_and_motifs(smiles, expected):
+    found = {group.name: group.count for group in FG.find_functional_groups(smiles)}
+    for name, count in expected.items():
+        assert found.get(name) == count, (name, found)
+
+
+def test_group_views_pictures_and_site_cap():
+    views = FG.group_views("CCCCCCCCCCO")                      # 1 primary alcohol, 1 methyl, ...
+    by_name = {g["name"]: g for g in views["groups"]}
+    assert by_name["Primary alcohol"]["sites"][0]["atoms"] == "11, 10"
+    assert "all_svg" not in by_name["Primary alcohol"]
+    many = {g["name"]: g for g in FG.group_views("CC(C)(C)CC(C)(C)CC(C)(C)C")["groups"]}["Methyl"]
+    assert many["count"] > FG.MAX_SITE_PICTURES and len(many["sites"]) == FG.MAX_SITE_PICTURES
+    assert many["more"] == many["count"] - FG.MAX_SITE_PICTURES and "all_svg" in many
+    assert FG.group_views("CCO")["svg"].startswith("<?xml")

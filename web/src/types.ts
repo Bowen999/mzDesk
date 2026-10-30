@@ -71,6 +71,9 @@ export type FragmentView = {
 };
 export type FragmentJob = { status: "queued" | "running" | "done" | "error"; percent: number; stage: string; seconds: number; error: string | null; log: string;
   result: FragmentView | null };
+/** Properties & groups (groupmap block): a functional group found, its sites and their pictures (mzdesk/platform_fit/functional_groups.py). */
+export type GroupSite = { atoms: string; svg: string };
+export type FoundGroup = { family: string; name: string; count: number; smarts: string; atoms: string; svg: string; all_svg?: string; sites: GroupSite[]; more?: number };
 /** Structure & formats: one card per compound (2D SVG + 3D molblock) and the formats of each compound. */
 export type CompareCompound = { label: string; formula?: string; svg?: string; mol3d?: string };
 export type FormatSet = { label: string; formats: Record<string, string> };
@@ -83,6 +86,7 @@ export type BlockData = {
   columns?: string[];                                          // table: replaces the spec columns for this run (rows then have one cell per data column)
   tiles?: Tile[]; chips?: StatusChip[]; options?: RxOption[]; groups?: RowGroup[];   // portal / chips / reaction (svg above) / grouptable
   compounds?: CompareCompound[];                               // compare: one card per compound
+  found?: FoundGroup[];                                        // groupmap: functional groups found (svg above = the input structure)
   sets?: FormatSet[];                                          // formats: one tab per compound (single compound = the old shape)
 };
 /** verdict: the one-line answer shown above the results (may use <b>); none for pages whose output is the answer. */
