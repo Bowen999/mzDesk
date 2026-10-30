@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 import { ApiError, getJob, startPipeline } from "../api";
 import { RowsTable } from "../components/Blocks";
 import { FieldInput, initialValues, missingRequired, visibleFields } from "../components/Fields";
+import { Icon, pipelineIcon } from "../components/Icon";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
 import { IsomerEvidence, SpectrumEvidence, WorkflowOverview } from "../components/PipelineVisuals";
@@ -109,8 +109,7 @@ function AnswerCard({ result, requestedAdduct }: { result: AnnotationResult; req
   );
 }
 
-export function PipelinePage({ spec }: { spec: Spec }) {
-  const { id } = useParams();
+export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
   const pipe = spec.pipelines.find(p => p.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(pipe ? pipe.inputs : []));
   const [job, setJob] = useState<Job | null>(null);
@@ -119,13 +118,16 @@ export function PipelinePage({ spec }: { spec: Spec }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [requestedAdduct, setRequestedAdduct] = useState<string | null>(null);
   const [netNote, setNetNote] = useState("");     // "cancelled" note under the Run button
+  const [formVersion, setFormVersion] = useState(0);
   const guard = useNetworkGuard();               // asks before an online run while Internet search is off
-  const ticket = useRef(0);                      // a newer run, a page switch or unmount ends the polling of an older one
+  const ticket = useRef(0);                      // Clear, a newer run or unmount ends polling of an older job
+  const confirming = useRef(false);
   useEffect(() => {
     ticket.current++;
     setValues(initialValues(pipe ? pipe.inputs : [])); setJob(null); setBusy(false); setError(""); setErrors({}); setRequestedAdduct(null);
     return () => { ticket.current++; };
   }, [id]);
+  useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
   if (!pipe) return <p className="page">Unknown pipeline.</p>;
 
   const shown = visibleFields(pipe.inputs, values);
@@ -135,31 +137,45 @@ export function PipelinePage({ spec }: { spec: Spec }) {
     if (netNote) setNetNote("");
   };
   const loadExample = (example: Record<string, any>) => {
-    ticket.current++;
+    ticket.current++; confirming.current = false; guard.cancel();
     setValues({ ...initialValues(pipe.inputs), ...example }); setJob(null); setBusy(false); setError(""); setErrors({}); setRequestedAdduct(null); setNetNote("");
+  };
+  const clear = () => {
+    ticket.current++;
+    confirming.current = false;
+    guard.cancel();
+    setValues(initialValues(pipe.inputs)); setJob(null); setBusy(false); setError("");
+    setErrors({}); setRequestedAdduct(null);
+    setNetNote(busy ? "Cleared. The previous workflow may still finish on the server." : "");
+    setFormVersion(n => n + 1);
   };
 
   const run = async () => {
-    if (busy) return;
+    if (busy || confirming.current) return;
     const missing = missingRequired(pipe.inputs, values);
     if (missing.length) {
       setErrors(Object.fromEntries(missing.map(f => [f.id!, "Required."])));
       setError(`Complete ${missing.length === 1 ? "this required input" : "these required inputs"}: ${missing.map(f => f.label).join(", ")}.`);
       return;
     }
+    const mine = ++ticket.current;
     // Internet search off: a workflow that would fetch a USI asks first.
-    if (!(await guard.confirm(networkUses(shown, values)))) {
-      setNetNote("Cancelled: internet search is off.");
+    confirming.current = true;
+    const allowed = await guard.confirm(networkUses(shown, values));
+    if (ticket.current === mine) confirming.current = false;
+    if (!allowed) {
+      if (ticket.current === mine) setNetNote("Cancelled: internet search is off.");
       return;
     }
+    if (ticket.current !== mine) return;
     setNetNote("");
-    const mine = ++ticket.current;
     setBusy(true); setError(""); setErrors({}); setJob(null);
     try {
       const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
       const adduct = payload.precursor?.adduct;
       setRequestedAdduct(adduct && adduct !== "Auto" ? adduct : null);
       const { job_id } = await startPipeline(pipe.id, payload);
+      if (ticket.current !== mine) return;
       let failures = 0;
       for (;;) {
         let j: Job;
@@ -189,10 +205,13 @@ export function PipelinePage({ spec }: { spec: Spec }) {
     </div>);
   const result = job?.result ?? null;
   return (
-    <div className="page">
-      <h1>{pipe.title}</h1>
+    <div className="page module-page" data-pipeline={pipe.id}>
+      <div className="module-heading">
+        <span className="module-emblem"><Icon name={pipelineIcon(pipe.id)} /></span>
+        <div className="module-heading-copy"><div className="module-kicker">Workflows</div><h1>{pipe.title}</h1></div>
+      </div>
       <p className="one-liner" dangerouslySetInnerHTML={{ __html: pipe.one_liner }} />
-      <div className={"panel" + (busy ? " is-running" : "")}>
+      <div key={formVersion} className={"panel" + (busy ? " is-running" : "")}>
         <div className="panel-head"><h2 className="panel-title">Inputs</h2><span className="panel-note"><span className="req" aria-hidden="true">*</span> required</span></div>
         {groupFields(shown).map(g => {
           const body = g.fields.every(f => f.type === "checkbox")
@@ -204,6 +223,7 @@ export function PipelinePage({ spec }: { spec: Spec }) {
         })}
         <div className="actions">
           <button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />Running…</> : "Run workflow"}</button>
+          <button className="btn ghost" type="button" onClick={clear}>Clear</button>
           {(pipe.examples ?? []).map(ex => (
             <button className="btn secondary" type="button" key={ex.label} disabled={busy} onClick={() => loadExample(ex.values)}>Load example: {ex.label}</button>))}
           <span className="msg" aria-live="polite">{netNote}</span>

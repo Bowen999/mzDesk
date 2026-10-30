@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getSpec, trackView } from "./api";
 import { LockGate } from "./components/LockGate";
 import { Brand, Sidebar } from "./components/Sidebar";
@@ -17,13 +17,6 @@ function Home({ spec }: { spec: Spec }) {
   const unlocked = useUnlocked();
   const first = unlocked ? spec.modules[0] : spec.modules.find(m => !isLockedModule(m)) ?? spec.modules[0];
   return <Navigate to={`/modules/${first.id}`} replace />;
-}
-
-function ModuleRoute({ spec }: { spec: Spec }) {
-  const { id } = useParams();
-  const mod = spec.modules.find(m => m.id === id);
-  // key: a module switch remounts the page, so values/results cannot flash from the previous module.
-  return <LockGate required={!!mod && isLockedModule(mod)}><ModulePage key={id} spec={spec} /></LockGate>;
 }
 
 export default function App() {
@@ -49,6 +42,20 @@ function useMedia(query: string) {
 /** Sidebar (resizable on wide screens; a slide-in drawer under 960 px, opened from the top bar) + the page. */
 function Shell({ spec }: { spec: Spec }) {
   const { pathname } = useLocation();
+  const moduleId = matchPath("/modules/:id", pathname)?.params.id;
+  const pipelineId = matchPath("/pipelines/:id", pathname)?.params.id;
+  const activeModule = spec.modules.find(m => m.id === moduleId);
+  const activePipeline = spec.pipelines.find(p => p.id === pipelineId);
+  const [visitedModules, setVisitedModules] = useState<string[]>([]);
+  const [visitedPipelines, setVisitedPipelines] = useState<string[]>([]);
+  // Keep visited pages mounted in this tab. Their inputs, results and in-flight runs remain
+  // independent; inactive pages are hidden, not reused for another module's route.
+  useEffect(() => {
+    if (activeModule) setVisitedModules(ids => ids.includes(activeModule.id) ? ids : [...ids, activeModule.id]);
+  }, [activeModule]);
+  useEffect(() => {
+    if (activePipeline) setVisitedPipelines(ids => ids.includes(activePipeline.id) ? ids : [...ids, activePipeline.id]);
+  }, [activePipeline]);
   const { width, setWidth, reset } = useSidebarWidth();
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(() => { try { return localStorage.getItem("mzdesk.sidebarCollapsed") === "1"; } catch { return false; } });
@@ -80,14 +87,22 @@ function Shell({ spec }: { spec: Spec }) {
       <main className="main">
         <Routes>
           <Route path="/" element={<Home spec={spec} />} />
-          <Route path="/pipelines/:id" element={<PipelinePage spec={spec} />} />
-          <Route path="/modules/:id" element={<ModuleRoute spec={spec} />} />
+          <Route path="/pipelines/:id" element={activePipeline ? null : <p className="page">Unknown pipeline.</p>} />
+          <Route path="/modules/:id" element={activeModule ? null : <p className="page">Unknown module.</p>} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />
           {/* usage statistics: not in the sidebar; its own password check runs on the server */}
           <Route path="/stats" element={<StatsPage spec={spec} />} />
           <Route path="*" element={<p className="page">Not found.</p>} />
         </Routes>
+        {spec.modules.filter(m => visitedModules.includes(m.id) || m.id === activeModule?.id).map(m => (
+          <div key={m.id} hidden={m.id !== activeModule?.id}>
+            <LockGate required={isLockedModule(m)}><ModulePage id={m.id} spec={spec} active={m.id === activeModule?.id} /></LockGate>
+          </div>))}
+        {spec.pipelines.filter(p => visitedPipelines.includes(p.id) || p.id === activePipeline?.id).map(p => (
+          <div key={p.id} hidden={p.id !== activePipeline?.id}>
+            <PipelinePage id={p.id} spec={spec} active={p.id === activePipeline?.id} />
+          </div>))}
       </main>
     </div>
   );

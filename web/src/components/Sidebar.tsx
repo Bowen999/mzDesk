@@ -5,7 +5,7 @@ import { setInternet, useInternet } from "../network";
 import { useTheme, type ThemePref } from "../themeMode";
 import type { Module, Spec } from "../types";
 import { FeedbackButton } from "./Feedback";
-import { Icon, moduleIcon } from "./Icon";
+import { Icon, moduleIcon, pipelineIcon } from "./Icon";
 import { Logo } from "./Logo";
 import { LockIcon } from "./LockGate";
 
@@ -139,7 +139,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
         <span className="rail-sep" aria-hidden="true" />
         {spec.pipelines.map(p => (
           <NavLink key={p.id} to={`/pipelines/${p.id}`} title={p.title} className={({ isActive }) => "rail-item" + (isActive ? " active" : "")}>
-            <Icon name="pipeline" className="nav-icon" />
+            <Icon name={pipelineIcon(p.id)} className="nav-icon" />
           </NavLink>))}
       </nav>
       <div className="sidebar-foot"><InternetSwitch compact /><ThemeSwitch compact /><FeedbackButton rail /></div>
@@ -179,7 +179,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
         <div className="nav-title">Workflows</div>
         {spec.pipelines.map(p => (
           <NavLink key={p.id} to={`/pipelines/${p.id}`} className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-            <Icon name="pipeline" className="nav-icon" />
+            <Icon name={pipelineIcon(p.id)} className="nav-icon" />
             <span className="nav-link-label">{p.title}</span>
           </NavLink>
         ))}

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
 import { ApiError, runModule } from "../api";
 import { FieldInput, initialValues, isRequired, missingRequired, summarizeInputs, visibleFields } from "../components/Fields";
 import { RichText } from "../components/Help";
@@ -42,8 +41,7 @@ function groupFields(fields: Field[]): Group[] {
   return groups;
 }
 
-export function ModulePage({ spec }: { spec: Spec }) {
-  const { id } = useParams();
+export function ModulePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
   const mod = spec.modules.find(m => m.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(mod ? mod.inputs : []));
   const [run, setRun] = useState<Run>(IDLE);
@@ -51,18 +49,23 @@ export function ModulePage({ spec }: { spec: Spec }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [netNote, setNetNote] = useState("");       // "cancelled" note under the Run button
+  const [formVersion, setFormVersion] = useState(0); // reset uncontrolled file inputs as well
   const guard = useNetworkGuard();                 // asks before an online run while Internet search is off
-  const ticket = useRef(0);       // a slow run (ESI MS/MS takes up to minutes) must not land on the page the user has moved to
+  const ticket = useRef(0);       // Clear or a newer run invalidates an older response
+  const confirming = useRef(false);
   const valuesRef = useRef(values);
   valuesRef.current = values;
   const errorRef = useRef<HTMLDivElement | null>(null);
+  const pageRef = useRef<HTMLDivElement | null>(null);
   const elapsed = useElapsed(run.busy);
   useEffect(() => { ticket.current++; if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); setEditing(true); setErrors({}); setFormError(""); } }, [id]);
+  useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
   useEffect(() => { if (run.error) errorRef.current?.focus(); }, [run.error]);
   if (!mod) return <p className="page">Unknown module.</p>;
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
   const detectability = mod.subgroup === "detectability";
+  const styledHeading = detectability || ["molecular", "ms1", "ms2", "gnps", "tools"].includes(mod.subgroup ?? "");
   const gnps = mod.subgroup === "gnps";
   const signature = JSON.stringify(values);
   const ok = run.result?.status === "ok" && !run.busy;
@@ -81,11 +84,12 @@ export function ModulePage({ spec }: { spec: Spec }) {
     if (netNote) setNetNote("");
   };
   const focusField = (fid: string) => {
-    const el = document.querySelector<HTMLElement>(`[data-field="${fid}"]`);
+    const el = pageRef.current?.querySelector<HTMLElement>(`[data-field="${fid}"]`);
     el?.querySelector<HTMLElement>("input, textarea, select, button")?.focus();
   };
   const loadExample = () => {
     if (!mod.example) return;
+    ticket.current++; confirming.current = false; guard.cancel();
     setValues({ ...initialValues(mod.inputs), ...mod.example });
     setRun(IDLE);
     setEditing(true);
@@ -93,7 +97,17 @@ export function ModulePage({ spec }: { spec: Spec }) {
     setFormError("");
     setNetNote("");
   };
+  const clear = () => {
+    ticket.current++;
+    confirming.current = false;
+    guard.cancel();
+    setValues(initialValues(mod.inputs));
+    setRun(IDLE); setEditing(true); setErrors({}); setFormError("");
+    setNetNote(run.busy ? "Cleared. The previous run may still finish on the server." : "");
+    setFormVersion(n => n + 1);
+  };
   const go = async () => {
+    if (run.busy || confirming.current) return;
     const missing = missingRequired(mod.inputs, values);
     if (missing.length) {
       const next: Record<string, string> = {};
@@ -105,13 +119,18 @@ export function ModulePage({ spec }: { spec: Spec }) {
     }
     setErrors({});
     setFormError("");
+    const mine = ++ticket.current;
     // Internet search off: online runs ask first. Hidden fields are not sent, so they do not trigger the question.
-    if (!(await guard.confirm(networkUses(shown, values, mod.network)))) {
-      setNetNote("Cancelled: internet search is off.");
+    confirming.current = true;
+    const allowed = await guard.confirm(networkUses(shown, values, mod.network));
+    if (ticket.current === mine) confirming.current = false;
+    if (!allowed) {
+      if (ticket.current === mine) setNetNote("Cancelled: internet search is off.");
       return;
     }
+    if (ticket.current !== mine) return;
     setNetNote("");
-    const t0 = performance.now(), mine = ++ticket.current, started = signature;
+    const t0 = performance.now(), started = signature;
     // Hidden controls (for example MS/MS-only fields in EI mode) are neither sent nor validated.
     const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
     setRun(r => ({ ...IDLE, busy: true, result: r.result, signature: r.signature }));
@@ -134,12 +153,12 @@ export function ModulePage({ spec }: { spec: Spec }) {
   );
 
   return (
-    <div className={"page module-page" + (detectability ? " detectability-page" : "")} data-module={mod.id}>
+    <div ref={pageRef} className={"page module-page" + (detectability ? " detectability-page" : "")} data-module={mod.id}>
       <div className="module-heading">
-        {detectability && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
+        {styledHeading && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
         <div className="module-heading-copy">
-          {detectability && <div className="module-kicker">{subgroup}</div>}
-          <h1>{!detectability && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
+          {styledHeading && <div className="module-kicker">{subgroup}</div>}
+          <h1>{!styledHeading && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
           {!mod.live && <div className="meta">Placeholder: shows the page format, nothing computes yet</div>}
         </div>
       </div>
@@ -156,10 +175,11 @@ export function ModulePage({ spec }: { spec: Spec }) {
             {run.seconds !== null && <span className="msg">{run.seconds.toFixed(1)} s</span>}
             <button type="button" className="btn secondary" onClick={() => setEditing(true)}>Edit inputs</button>
             <button type="button" className="btn ghost" onClick={go} disabled={run.busy}>Run again</button>
+            <button type="button" className="btn ghost" onClick={clear}>Clear</button>
           </div>
         </div>
       ) : (
-        <div className={"panel" + (run.busy ? " is-running" : "")}>
+        <div key={formVersion} className={"panel" + (run.busy ? " is-running" : "")}>
           <div className="panel-head">
             <h2 className="panel-title">Inputs</h2>
             <span className="panel-note">{hasRequired ? <><span className="req" aria-hidden="true">*</span> required</> : "all inputs optional"}</span>
@@ -185,6 +205,7 @@ export function ModulePage({ spec }: { spec: Spec }) {
           })}
           <div className="actions">
             <button className="btn" onClick={go} disabled={run.busy} aria-busy={run.busy}>{runLabel}</button>
+            <button className="btn ghost" type="button" onClick={clear}>Clear</button>
             {mod.example && <button className="btn secondary" type="button" disabled={run.busy} onClick={loadExample}>Load example</button>}
             {ok && !stale && <button className="btn ghost" type="button" onClick={() => setEditing(false)}>Hide inputs</button>}
             <span className="msg" aria-live="polite">

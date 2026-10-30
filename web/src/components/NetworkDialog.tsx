@@ -97,5 +97,5 @@ export function useNetworkGuard() {
   const dialog = pending
     ? <NetworkDialog uses={pending.uses} onCancel={cancel} onContinue={proceed} />
     : null;
-  return { confirm, dialog };
+  return { confirm, cancel, dialog };
 }

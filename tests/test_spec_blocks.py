@@ -1,5 +1,7 @@
 """Output-block helpers in mzdesk/spec.py and the data builders in mzdesk/api/blocks.py: shapes and backward compatibility."""
 import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
 
 import pytest
 
@@ -7,7 +9,7 @@ from mzdesk import spec as S
 from mzdesk.api import blocks as B
 from mzdesk.api.common import clean
 
-KNOWN_TYPES = {"table", "cards", "figure", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable", "downloads"}
+KNOWN_TYPES = {"table", "cards", "figure", "compare", "code", "formats", "notes", "button", "heading", "portal", "chips", "reaction", "grouptable", "downloads"}
 
 
 # ---------------------------------------------------------------- backward compatibility
@@ -73,6 +75,17 @@ def test_every_module_block_is_well_formed():
                 assert b["columns"], where
             if b["type"] == "cards":
                 assert all("label" in it for it in b["items"]), where
+
+
+def test_restyled_pages_have_unique_icons_and_metric_cards():
+    groups = {"molecular", "ms1", "ms2", "gnps", "tools"}
+    modules = [m for m in S.MODULES if m["subgroup"] in groups]
+    path = Path(__file__).resolve().parents[1] / "web/src/assets/icons.svg"
+    ids = [node.get("id") for node in ET.parse(path).getroot()]
+    assert len(ids) == len(set(ids))
+    assert {m["id"] for m in modules} | {"esi_ms2_annotation"} <= set(ids)
+    for m in modules:
+        assert all(b.get("style") == "metric" for b in m["outputs"] if b["type"] == "cards"), m["id"]
 
 
 # ---------------------------------------------------------------- data builders

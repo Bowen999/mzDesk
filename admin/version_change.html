@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.33', date:'2026-10-29', git:'',
+  title:'页面风格统一，切页保留结果并可清空',
+  note:'Compound、MS1、Spectrum、GNPS2、Utilities 和 ESI MS/MS Annotation 按 Detectability 风格统一。切换页面时保留各自输入与结果；刷新或关闭页面后不保留。Clear 恢复当前页面初始状态，不影响其他页面；运行中清空不会取消服务器任务。',
+  state:[['范围','21 个模块页 · 1 个工作流'], ['切页','保留输入、结果和运行中的任务'], ['Clear','只清空当前页面；运行中旧任务可能继续'], ['版本','0.2.33']],
+  c:{
+   app:['chg','各页面统一页头、图标和指标卡，保留输入与计算行为；每页单独保留状态，工作流可在切页时继续运行。新增 Clear，可重置输入、结果、上传文件和提示；清空后忽略迟到的旧结果。',false,{w:'web/src/App.tsx · web/src/assets/icons.svg · web/src/components/Icon.tsx · web/src/components/Sidebar.tsx · web/src/components/Fields.tsx · web/src/components/NetworkDialog.tsx · web/src/pages/ModulePage.tsx · web/src/pages/PipelinePage.tsx · mzdesk/spec.py'}],
+   docs:['doc','版本号 0.2.33，本页加 v0.2.33；新增切页、清空及运行中清空的浏览器测试，补齐 compare 输出类型的测试名单。',false,{w:'mzdesk/__init__.py · admin/version_change.html · tests/test_ui_navigation.py · tests/test_spec_blocks.py'}]
+  }},
  {id:'v0.2.32', date:'2026-10-29', git:'',
   title:'Structure & formats：最多三个分子并排对比',
   note:'页面支持 1–3 个结构：每个分子一张卡片，2D 和 3D 都是等宽正方形；单个分子时两者并排。格式区按分子切换，所选格式保持不变。',

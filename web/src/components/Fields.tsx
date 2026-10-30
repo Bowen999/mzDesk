@@ -1,4 +1,4 @@
-import { lazy, Suspense, useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import type { Field, FieldCondition } from "../types";
 import { countPeaks } from "../peakCount";
 
@@ -221,6 +221,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
 function FileInput({ field, value, onChange, error, inputId, required }: P & { inputId: string; required: boolean }) {
   const [fileError, setFileError] = useState("");
   const sequence = useRef(0);
+  useEffect(() => () => { sequence.current++; }, []); // Ignore file reads that finish after Clear unmounts this field.
   const help = typeof field.help === "string" ? field.help : undefined;
   const select = async (files: FileList | null) => {
     const id = ++sequence.current;
@@ -263,7 +264,7 @@ function FileInput({ field, value, onChange, error, inputId, required }: P & { i
 function StructureInput({ field, value, onChange, error }: P) {
   const uid = useId();
   const labelId = `structure-${field.id ?? uid}-label`;
-  const name = `structure-mode-${field.id ?? uid}`;
+  const name = `structure-mode-${field.id ?? "field"}-${uid}`;
   const allowFormula = field.allow_formula === true;
   const nameLabel = allowFormula ? "Name / ID / Formula" : "Name / ID";
   const modes: [string, string][] = [[NAME_MODE, nameLabel], ["Draw", "Draw"], ["SMILES / InChI", "SMILES / InChI"]];
@@ -303,7 +304,7 @@ function StructureInput({ field, value, onChange, error }: P) {
 function PrecursorInput({ field, value, onChange, error }: P) {
   const uid = useId();
   const labelId = `precursor-${field.id ?? uid}-label`;
-  const name = `ion-mode-${field.id ?? uid}`;
+  const name = `ion-mode-${field.id ?? "field"}-${uid}`;
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
   const lists = field.adducts ?? { Positive: ["Auto"], Negative: ["Auto"] };
   const modes = field.ion_modes ?? [POSITIVE, NEGATIVE];
@@ -335,10 +336,13 @@ function PrecursorInput({ field, value, onChange, error }: P) {
 function SpectrumInput({ field, value, onChange, error }: P) {
   const uid = useId();
   const labelId = `spectrum-${field.id ?? uid}-label`;
-  const name = `spectrum-source-${field.id ?? uid}`;
+  const name = `spectrum-source-${field.id ?? "field"}-${uid}`;
+  const fileSequence = useRef(0);
+  useEffect(() => () => { fileSequence.current++; }, []);
   const sources = ["Paste", "MGF / MSP file", "USI"];
   const buffers = value.buffers ?? {};
   const switchSource = (s: string) => {
+    fileSequence.current++;
     const next = { ...buffers, [value.source]: { value: value.value ?? "", filename: value.filename ?? "" } };
     const b = next[s] ?? { value: "", filename: "" };
     onChange({ ...value, source: s, value: b.value ?? "", filename: b.filename ?? "", buffers: next });
@@ -361,7 +365,10 @@ function SpectrumInput({ field, value, onChange, error }: P) {
       {value.source === "MGF / MSP file" && (
         <div className="file-row">
           <input type="file" accept=".mgf,.msp,.txt,.csv,.json,.xml,.ms" multiple={!!field.multi}
-            onChange={async e => { const r = await readFiles(e.target.files); set({ value: r.text, filename: r.name }); }} />
+            onChange={async e => {
+              const mine = ++fileSequence.current, r = await readFiles(e.target.files);
+              if (mine === fileSequence.current) set({ value: r.text, filename: r.name });
+            }} />
           {value.filename && <small>{value.filename}{peaks > 0 ? ` · ${peaks} peaks` : ""}</small>}
         </div>)}
       {value.source === "USI" && (
