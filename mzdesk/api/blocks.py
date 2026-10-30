@@ -7,6 +7,7 @@ instead of silently showing as a grey tile in the browser. `help` is a string or
     portal_data([tile("Solid", "yes", "GC-ready", chips=["TMS"], help="...")])
     chips_data([chip("ESI+", "good", "pKa 9.1")])
     table_data([row([link("JP18", url), badge("JP", "jp")], help="why")], count=1)
+    fragment_cell("CCO", "[M+H]+", "ethanol")                  # a "View" button; table_data(rows, fragments=fragment_view.query(...)) gives it its spectrum
     grouptable_data([group("Caffeine", [[...]], meta="0.66 · 3 methods")])
     reaction_data([reaction_option("CIL · dansyl", [step("R–NH₂", "Dns-Cl", "R–NH–Dns", 2)], formula="C₁₂H₁₂N₂O₂S", mass=248.0619)], svg=svg)
 """
@@ -39,13 +40,20 @@ def depicted(text, svg, help=None):
     return _keep({"text": text, "hover_svg": svg, "help": help})
 
 
+def fragment_cell(smiles, adduct, name=None, help=None):
+    """A "View" button that opens the fragment view of one structure (the pop-up with the explained peaks drawn on it). The spectrum, precursor
+    and tolerances come from the table's `fragments` data (table_data), so they are not repeated in every row."""
+    return _keep({"fragment": _keep({"smiles": smiles, "adduct": adduct, "name": name}), "help": help})
+
+
 def row(cells, help=None):
     """A row with its own "?" (shown with spec row_help=True). Without help it is just the list of cells."""
     return {"cells": list(cells), "help": help} if help else list(cells)
 
 
-def table_data(rows, count=None, help=None):
-    return {"rows": list(rows), **_keep({"count": count, "help": help})}
+def table_data(rows, count=None, help=None, fragments=None):
+    """fragments: fragment_view.query() of the table, shared by its fragment_cell cells."""
+    return {"rows": list(rows), **_keep({"count": count, "help": help, "fragments": fragments})}
 
 
 def group(title, rows, meta=None, help=None):

@@ -471,6 +471,25 @@ def test_result_is_json_safe(rig):
     json.dumps(pipeline.run(form()))
 
 
+def test_result_carries_what_the_view_button_needs(rig):
+    """"View" on the ranked table: the peaks the isomer step considers, and per candidate the adduct MetFrag can use (None = no button)."""
+    caffeine = library_candidate("lib1", CAFFEINE, "Caffeine", 0.93, True)
+    rig.library([caffeine], passed=True)
+    rig.isomers(isomer_result("single", "c1"))
+    result = pipeline.run(form(libraries=["MassBank"]))
+    query = result["fragment_query"]
+    assert query["precursor_mz"] == 195.0877 and query["tol_da"] == 0.02 and query["peaks"]
+    assert all(0 < rel <= 100 and mz < 195.0877 for mz, rel in query["peaks"])           # the precursor is not a fragment peak
+    assert [c["fragment_adduct"] for c in result["candidates"]] == ["[M+H]+"]
+
+
+def test_candidates_without_a_structure_or_a_metfrag_adduct_get_no_view_button(rig):
+    rig.steps12(("[M+H]+",), (("C8H10N4O2", "[M+H]+"),))
+    result = pipeline.run(form())
+    assert result["answer"]["type"] == "formula_only"
+    assert [c["fragment_adduct"] for c in result["candidates"]] == [None]               # a formula row has no structure to fragment
+
+
 # ---------------------------------------------------------------- the form
 def test_parse_inputs_reads_the_form():
     q = pipeline.parse_inputs(form(ms1=CAFFEINE_MS1, libraries=["MassBank", "MassBank"], omics="Lipidomics", additive="Ammonium formate", alkali="Absent",

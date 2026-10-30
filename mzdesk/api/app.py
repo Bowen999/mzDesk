@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from mzdesk import __version__
 from mzdesk.annotation import pipeline as annotation_pipeline
 from mzdesk.api import feedback as feedback_api
+from mzdesk.api import fragments as fragments_api
 from mzdesk.api.request_limits import MassQLRequestLimit
 from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
@@ -32,6 +33,7 @@ log = logging.getLogger("mzdesk.api")
 app = FastAPI(title="mzDesk API", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
 app.add_middleware(MassQLRequestLimit)
+app.include_router(fragments_api.router)
 _modules = {m["id"]: m for m in MODULES}
 _pipelines = {p["id"]: p for p in PIPELINES}
 

@@ -14,7 +14,7 @@ from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 
 from mzdesk.api import common
-from mzdesk.api.blocks import badge, depicted, hinted, table_data
+from mzdesk.api.blocks import badge, depicted, fragment_cell, hinted, table_data
 from mzdesk.api.common import InputError, fmt, signed
 from mzdesk.spec import ADDUCTS_NEG, ADDUCTS_POS, DATABASES
 
@@ -39,7 +39,13 @@ def _peaks_cell(peaks):
     return hinted(text, [f"m/z {p['mz']:.4f} · {p['rel']:.1f} % · {p['formula'] or '?'} · {p['smiles'] or '?'}" for p in peaks])
 
 
-def _rows(res):
+def _view_cell(c, adduct):
+    """The row's "View" button (fragment view); a dash when there is no adduct MetFrag can use or no spectrum to show."""
+    return fragment_cell(c["smiles"], adduct, c["name"]) if adduct else common.MISSING
+
+
+def _rows(res, adduct):
+    """adduct: MetFrag's spelling, the one the comparison used (None: no "View" buttons)."""
     by_id = {i["id"]: i for i in res["isomers"]}
     rows = []
     for c in res["candidates"]:
@@ -47,12 +53,14 @@ def _rows(res):
                      if c["evaluated"] else "not scored")
         name = c["name"] or common.MISSING
         if c["id"] == res["top_id"]:
-            rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, badge("your compound"), common.MISSING, common.MISSING])
+            rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, badge("your compound"), common.MISSING, common.MISSING,
+                         _view_cell(c, adduct)])
             continue
         iso = by_id.get(c["id"], {"distinguished": None, "distinguishing_peaks": [], "isomer_only_peaks": []})
         verdict = (badge("not scored", help="MetFrag did not score this structure, so it cannot be ruled out.") if iso["distinguished"] is None
                    else badge("yes", "good") if iso["distinguished"] else badge("no", "warn"))
-        rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, verdict, _peaks_cell(iso["distinguishing_peaks"]), _peaks_cell(iso["isomer_only_peaks"])])
+        rows.append([name, c["source"], _smiles_cell(c["smiles"]), explained, verdict, _peaks_cell(iso["distinguishing_peaks"]),
+                     _peaks_cell(iso["isomer_only_peaks"]), _view_cell(c, adduct)])
     return rows
 
 
@@ -122,6 +130,7 @@ def _databases(inputs):
 def run_exclusivity(inputs):
     from mzdesk.exclusivity import isomers, pubchem_isomers
     from mzdesk.ms1 import exact_mass as em
+    from mzdesk.ms2 import fragment_view
 
     warnings = []
     struct = common.structure(inputs, label="Compound or formula", allow_formula=True, required=False, warnings=warnings)
@@ -208,7 +217,7 @@ def run_exclusivity(inputs):
         iso_notes.append("Enter a precursor m/z to search isobaric interferences.")
 
     # ---- isomers (PubChem online candidates, local MetFrag)
-    iso_res, iso_note = None, None
+    iso_res, iso_note, used_adduct = None, None, None
     lipid = False
     if struct and struct["kind"] == "smiles":
         from mzdesk.platform_fit import lipid_metabolite_classifier as clf
@@ -231,9 +240,9 @@ def run_exclusivity(inputs):
         except ValueError as exc:
             iso_note = f"PubChem isomer candidate search could not run: {exc} Other isomers are not ruled out."
         else:
+            used_adduct = adduct or ("[M+H]+" if positive else "[M-H]-")
             iso_res = pubchem_isomers.discriminate({"id": "compound", "smiles": struct["smiles"], "name": name}, candidates, peaks,
-                                                   precursor_mz, adduct or ("[M+H]+" if positive else "[M-H]-"),
-                                                   tol_da=tol_da, tol_ppm=tol_ppm)
+                                                   precursor_mz, used_adduct, tol_da=tol_da, tol_ppm=tol_ppm)
             warnings.extend(n for n in iso_res["notes"] if n.startswith(("Unavailable or unusable", "Not scored")))
 
     if iso_res:
@@ -246,11 +255,14 @@ def run_exclusivity(inputs):
             counts.append(f"{len(iso_rows)} isobaric formula{'s' if len(iso_rows) != 1 else ''} within {tol_ppm:g} ppm")
         verdict = ("; ".join(counts) + ". " if counts else "") + f"<b>No isomer verdict</b>: {html.escape(iso_note or 'the isomer check did not run.')}"
 
+    # the "View" buttons of the Isomers table: MetFrag's spelling of the adduct, and the peaks the comparison considered
+    view_adduct = fragment_view.metfrag_adduct(used_adduct) if iso_res else None
+    view_query = (fragment_view.query(peaks, precursor_mz, used_adduct, tol_da=tol_da, tol_ppm=tol_ppm) if view_adduct else None)
     return {"outputs": {
         "same_formula": table_data(same_rows, count=len(same_rows), help=same_notes),
         "isobaric": table_data(iso_rows, count=len(iso_rows), help=iso_notes),
-        "isomers": table_data(_rows(iso_res) if iso_res else [], count=max(0, len(iso_res["candidates"]) - 1) if iso_res else 0,
-                              help=(iso_res["notes"] if iso_res else [iso_note])),
+        "isomers": table_data(_rows(iso_res, view_adduct if view_query else None) if iso_res else [], count=max(0, len(iso_res["candidates"]) - 1) if iso_res else 0,
+                              help=(iso_res["notes"] if iso_res else [iso_note]), fragments=view_query),
     }, "warnings": warnings, "verdict": verdict}
 
 

@@ -653,7 +653,7 @@ MODULES = [
                      "selected databases (online); one row per formula, closest first, at most 50.",
                      "Exact m/z and Δ ppm use the compound's closest adduct. Same-formula hits are in the table above, not here.",
                      "At most 100 compounds per database are examined, so a crowded m/z window is not exhaustive."]),
-         table(["Isomer", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Explained only by the isomer"], "Isomers",
+         table(["Isomer", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Explained only by the isomer", "Fragments"], "Isomers",
                id="isomers",
                help=["PubChem same-formula candidates (online), independent of the Databases field: at most its first 100 CIDs are retrieved, "
                      "and at most 9 other usable connectivities are compared with your compound. The run reports truncation; the set is not exhaustive. "
@@ -665,7 +665,10 @@ MODULES = [
                      "Explained peaks: how many of those peaks the structure explains · their share of the intensity.",
                      "Explained only by the isomer: information only, it does not change the answer.",
                      "For structures recognised as lipids this check is skipped: conventional MS/MS usually cannot reliably determine C=C or sn-positions; "
-                     "specific methods or additional evidence may distinguish them."])],
+                     "specific methods or additional evidence may distinguish them.",
+                     "Fragments: View opens that structure with the peaks MetFrag explains for it, each fragment in its own colour on the structure and in the "
+                     "spectrum. It is computed when you click (a few seconds, with a progress bar), with the same peaks and tolerance as this table. "
+                     "Where a fragment fits several places on the structure, one is drawn and the card says how many others fit equally well."])],
         subgroup="tools", live=True,
         example={"structure": _name("caffeine"), "precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
         network="Name / ID inputs are resolved online. The same-formula and isobaric tables and isomer candidate search query PubChem with the formula or mass; MetFrag runs locally."),

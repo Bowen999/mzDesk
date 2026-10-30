@@ -3,6 +3,7 @@ import { ApiError, getJob, startPipeline } from "../api";
 import { RowsTable } from "../components/Blocks";
 import { FieldInput, initialValues, missingRequired, visibleFields } from "../components/Fields";
 import { Icon, pipelineIcon } from "../components/Icon";
+import { FragmentProvider } from "../components/FragmentDialog";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
 import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
@@ -64,11 +65,18 @@ function isomerCell(c: AnnotationCandidate): Cell {
   return iso.challenger ? { badge: `${text} · challenger`, tone: "warn" } : text;
 }
 
+/** "View": the fragment view of this candidate (computed when clicked); a dash when it has no structure or MetFrag cannot use its adduct. */
+function fragmentCell(c: AnnotationCandidate): Cell {
+  return c.smiles && c.fragment_adduct ? { fragment: { smiles: c.smiles, adduct: c.fragment_adduct, name: c.name || undefined } } : "—";
+}
+
+const FRAGMENT_NOTE = "The isomer comparison on this page uses MS-FINDER; this view uses MetFrag, so the explained peaks can differ between the two.";
+
 function rankedRows(candidates: AnnotationCandidate[]): Row[] {
   return candidates.map(c => [
     c.rank ?? "—", c.name || "—", c.smiles || "—", c.formula || "—", c.adduct || "—", c.layer_label,
     c.level ? { badge: levelName(c.level_label), tone: LEVEL_TONE[c.level] ?? "neutral", help: c.level_reason } : "—",
-    c.final_score === null ? "—" : c.final_score.toFixed(3), detectText(c), isomerCell(c),
+    c.final_score === null ? "—" : c.final_score.toFixed(3), detectText(c), isomerCell(c), fragmentCell(c),
   ]);
 }
 
@@ -242,8 +250,10 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           <SpectrumEvidence result={result} />
           <IsomerEvidence result={result} />
           <div className="results-head"><h2 className="panel-title">Ranked candidates</h2><span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
-          <RowsTable columns={["Rank", "Name", "SMILES", "Formula", "Adduct", "Layer", "Level", "Final score", "Detectability (omics / ionizable / adduct)", "Isomer role"]}
-            rows={rankedRows(result.candidates)} empty="no candidates" />
+          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
+            <RowsTable columns={["Rank", "Name", "SMILES", "Formula", "Adduct", "Layer", "Level", "Final score", "Detectability (omics / ionizable / adduct)", "Isomer role", "Fragments"]}
+              rows={rankedRows(result.candidates)} empty="no candidates" />
+          </FragmentProvider>
           <div className="meta">Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.</div>
         </>)}
       {job && (

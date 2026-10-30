@@ -5,6 +5,7 @@ import "../outputs-v2.css";
 import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
 import { CompoundCompare } from "./CompoundCompare";
 import { FigureView } from "./Figure";
+import { FragmentProvider } from "./FragmentDialog";
 import { HelpButton, RichText, emphasize, helpLines } from "./Help";
 import { MiddleEllipsis } from "./MiddleEllipsis";
 
@@ -83,7 +84,7 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   const cellText = (cell: Cell) => {
     if (cell === null || cell === undefined) return "";
     if (typeof cell !== "object") return String(cell);
-    return "img" in cell ? "" : String(cell.text ?? cell.badge ?? "");
+    return "img" in cell || "fragment" in cell ? "" : String(cell.text ?? cell.badge ?? "");
   };
   const searchable = (row: Row) => (Array.isArray(row) ? row : row.cells).map(cellText).join(" ").toLocaleLowerCase();
   const needle = filter.trim().toLocaleLowerCase();
@@ -124,7 +125,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
     case "table": return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
-        <ResultTable block={block} data={data} empty={empty} />
+        <FragmentProvider query={data?.fragments}><ResultTable block={block} data={data} empty={empty} /></FragmentProvider>
         {block.caption && <small>{block.caption}</small>}
       </div>);
     case "grouptable": return (

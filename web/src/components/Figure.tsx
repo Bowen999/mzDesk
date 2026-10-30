@@ -55,23 +55,40 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursor?: nu
   const sticks = vis.map(i => ({ i, x: xa.l2p(peaks[i].mz), top: ya.l2p(Math.min(peaks[i].rel, yTop)) }));
   if (precursor !== undefined && precursor >= x0 && precursor <= x1) sticks.push({ i: -1, x: xa.l2p(precursor), top: 0 });
   const dec = mzDecimals(peaks);
-  const order = [...vis].sort((a, b) => (Number(peaks[b].on) - Number(peaks[a].on)) || (peaks[b].rel - peaks[a].rel));
+  const order = [...vis].sort((a, b) => (Number(!!peaks[b].color) - Number(!!peaks[a].color)) || (Number(peaks[b].on) - Number(peaks[a].on)) || (peaks[b].rel - peaks[a].rel));
   const boxes: { l: number; r: number; t: number; b: number }[] = [];
   const anns: any[] = [];
+  const coloured = peaks.some(p => p.color);          // fragment view: only the fragments' peaks are labelled, each in its colour
   for (const i of order) {
     if (anns.length >= MAX_LABELS) break;
     const p = peaks[i];
-    if (p.rel > yTop) continue;
-    const txt = p.mz.toFixed(dec), w = txt.length * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
-    const b = { l: px - w / 2, r: px + w / 2, t: py - 16, b: py - 2 };
-    if (b.l < 0 || b.r > xa._length || b.t < 0) continue;
+    if (p.rel > yTop || (coloured && !p.color)) continue;
+    // a peak with a `label` (fragment view) is written in its own colour on two lines: "m/z<br>Δ ppm"
+    const txt = p.label ?? p.mz.toFixed(dec), lines = txt.split("<br>"), w = Math.max(...lines.map(l => l.length)) * 6.1 + 4, px = xa.l2p(p.mz), py = ya.l2p(p.rel);
     const isPrecursor = /precursor/i.test(p.kind);
-    const hit = boxes.some(o => b.l < o.r + 4 && b.r > o.l - 4 && b.t < o.b + 1 && b.b > o.t - 1)
-      || sticks.some(s => s.i !== i && !(s.i === -1 && isPrecursor) && s.x > b.l - 1 && s.x < b.r + 1 && s.top < b.b);
-    if (hit) continue;
+    // side: 0 centred over the peak, 1 / -1 beside it (right / left); lift: px above the peak, joined to it by a thin line
+    const place = (side: number, lift: number) => {
+      const l = side === 0 ? px - w / 2 : side > 0 ? px + 3 : px - 3 - w;
+      const b = { l, r: l + w, t: py - 4 - 12 * lines.length - lift, b: py - 2 - lift };
+      if (b.l < 0 || b.r > xa._length || b.t < 0) return null;
+      const hit = boxes.some(o => b.l < o.r + 4 && b.r > o.l - 4 && b.t < o.b + 1 && b.b > o.t - 1)
+        || sticks.some(s => s.i !== i && !(s.i === -1 && isPrecursor) && s.x > b.l - 1 && s.x < b.r + 1 && s.top < b.b);
+      return hit ? null : b;
+    };
+    // a fragment's label that would sit on a taller neighbour goes beside its peak, or above the neighbour
+    let side = 0, lift = 0, b = place(0, 0);
+    if (!b && p.color) {
+      search: for (lift = 0; lift <= 168; lift += 14) {
+        for (side of lift === 0 ? [1, -1] : [0, 1, -1]) { b = place(side, lift); if (b) break search; }
+      }
+    }
+    if (!b) continue;
     boxes.push(b);
-    anns.push({ x: p.mz, y: p.rel, xref: "x", yref: "y", text: txt, showarrow: false, xanchor: "center", yanchor: "bottom",
-                yshift: 2, font: { family: MONO, size: 10, color: p.on ? INK : MUTED } });
+    const font = { family: MONO, size: 10, color: p.color ?? (p.on ? INK : MUTED) };
+    const base = { x: p.mz, y: p.rel, xref: "x", yref: "y", text: txt, yanchor: "bottom", font };
+    anns.push(lift
+      ? { ...base, showarrow: true, arrowhead: 0, arrowwidth: 0.8, arrowcolor: p.color, ax: side * (w / 2 + 3), ay: -(lift + 2), xanchor: "center" }
+      : { ...base, showarrow: false, yshift: 2, ...(side === 0 ? { xanchor: "center" } : { xanchor: side > 0 ? "left" : "right", xshift: 3 * side }) });
   }
   return staticAnn.concat(anns);
 }

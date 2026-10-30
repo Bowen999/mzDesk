@@ -1,12 +1,14 @@
 import { useId, useState, type ReactNode } from "react";
 import type { Cell, Row, RowGroup, RxOption, StatusChip, Tile } from "../types";
+import { FragmentButton } from "./FragmentDialog";
 import { ThemedSvg } from "./Figure";
 import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
 
 /**
  * Renderers for the generic output blocks. Data contracts (the spec helpers in mzdesk/spec.py and the builders in
  * mzdesk/api/blocks.py are the reference; help = string | string[] everywhere):
- *   table / grouptable cell : "text" | {"text", "url"} | {"badge", "tone"} | {"text", "help"} | {"text", "hover_svg"} | {"img"}   (badge / text may also carry url + help)
+ *   table / grouptable cell : "text" | {"text", "url"} | {"badge", "tone"} | {"text", "help"} | {"text", "hover_svg"} | {"img"} | {"fragment": {smiles, adduct, name?}}
+ *                             (badge / text may also carry url + help; a fragment cell is a "View" button, its spectrum is the table's data.fragments)
  *   table row               : [cells] | {"cells": [...], "help"}   (the "?" column only with spec row_help=True)
  *   table data              : {"rows": [...], "count"?}           count -> pill next to the title
  *   grouptable data         : {"groups": [{"title", "meta"?, "help"?, "rows": [...]}], "count"?}   collapsed by default
@@ -46,6 +48,7 @@ export function CellView({ cell }: { cell: Cell }) {
   if (cell === null || cell === undefined) return null;
   if (typeof cell !== "object") return typeof cell === "string" ? <TextLines text={cell} /> : <>{String(cell)}</>;
   if ("img" in cell) return <img className="cell-img" src={cell.img} alt="" />;
+  if ("fragment" in cell) return <><FragmentButton target={cell.fragment} />{helpLines(cell.help).length > 0 && <HelpButton lines={helpLines(cell.help)} className="inline" label="Help" />}</>;
   const tone = String(cell.tone ?? "neutral").replace(/[^a-z0-9-]/gi, "").toLowerCase() || "neutral";
   const url = safeUrl(cell.url ?? cell.href ?? "");
   let node: ReactNode = cell.badge !== undefined ? <span className={"badge tone-" + tone}>{cell.badge}</span> : <TextLines text={cell.text ?? ""} />;

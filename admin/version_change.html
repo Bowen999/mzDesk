@@ -263,6 +263,17 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.36', date:'2026-10-30', git:'',
+  title:'Alternative explanations 与 ESI MS/MS Annotation：候选加 Fragments 列，点 View 弹窗查看碎片解释',
+  note:'每个候选一个 View 按钮。点击后现场用 MetFrag 计算（带进度条，一般 2–5 秒，不提前算）：母体结构上用颜色标出每个碎片，谱图里同色标出 m/z 和 Δ ppm，下面每个碎片一张卡。碎片放回母体是 MetFrag 之后的推断：同一碎片有多处合理位置时，画氢数最吻合的一处，并注明还有几处。ESI 页的异构体比较用 MS-FINDER、弹窗用 MetFrag，两者的解释结果可能不同，弹窗里已说明。',
+  state:[['入口','Isomers 表 · Ranked candidates 表的 Fragments 列'], ['引擎','MetFrag 2.5.2 · 树深 2 · 容差与所在页一致'], ['耗时','2–5 秒 / 次 · 同时最多 2 个 · 相同请求走缓存'], ['自检','10 个咖啡因同分异构体：弹窗峰数、强度占比与表格一致；全部碎片都放回了结构'], ['版本','0.2.36']],
+  c:{
+   ms2:['feat','新增碎片视图 fragment_view.py：MetFrag 解释峰 → 碎片放回母体原子（碎片 SMILES 的骨架在母体里做子结构匹配，氢数最吻合者优先，并报告同样合理的其他位置；原子数与碎片式不符则不放置）→ 彩色结构图、彩色谱图、每碎片一张卡。最多给 8 个最强的已解释峰上色。run_metfrag 增加进度回调；修正带电结构（如 [M]+ 的胆碱）被 MetFrag 拒绝的问题：传给 MetFrag 的分子式不带电荷符号。',true,{w:'mzdesk/ms2/fragment_view.py · mzdesk/ms2/metfrag_engine.py · tests/test_fragment_view.py'}],
+   other:['feat','Alternative explanations 的 Isomers 表加 Fragments 列（每行一个 View，含“你的化合物”）；表数据带它用的谱图（与异构体检查同一批峰：≥ 基峰 1 %，去掉前体及其同位素峰）和容差，所以弹窗里的解释峰数与表格一致。',true,{w:'mzdesk/api/runners/exclusivity.py · mzdesk/api/blocks.py · mzdesk/spec.py'}],
+   pipe:['feat','ESI MS/MS Annotation 的 Ranked candidates 表加 Fragments 列；结果带 fragment_query（异构体步骤用的峰）和每个候选的 fragment_adduct（MetFrag 能用的加合物，没有结构或加合物不支持则不出按钮）。',true,{w:'mzdesk/annotation/pipeline.py · web/src/pages/PipelinePage.tsx · tests/test_pipeline.py'}],
+   app:['feat','新接口 POST /api/fragments/run + GET /api/fragments/jobs/{id}：后台线程跑 MetFrag，返回阶段与百分比（MetFrag 本身是一步，条会停在该阶段直到它返回）；同时最多 2 个，其余排队；相同请求走内存缓存。前端：表格单元格新类型 fragment（View 按钮）、弹窗组件（进度条、Esc / 点遮罩关闭、焦点限制、深浅主题、手机宽度）；谱图标签支持按碎片着色的两行标签，被高峰挡住时移到侧边或抬高并加引线。',true,{w:'mzdesk/api/fragments.py · mzdesk/api/app.py · web/src/components/FragmentDialog.tsx · web/src/components/fragment-view.css · web/src/components/Blocks.tsx · web/src/components/Outputs.tsx · web/src/components/Figure.tsx · web/src/api.ts · web/src/types.ts'}],
+   docs:['doc','版本号 0.2.36，本页加 v0.2.36。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.2.34', date:'2026-10-30', git:'',
   title:'异构体检查与 CCS 页接通；删除 RT / RI 页；工作流与谱图显示优化',
   note:'异构体检查最多读取 PubChem 前 100 个 CID、比较 9 个其他结构，限时 120 秒；立体异构体折叠，未检查的结构不能排除。CCS 只比同一化合物、同一加合物、N₂ 标度的值；没有实测参考值时才用本地模型预测（只作粗查），只报告，不进 ESI MS/MS 注释流程；RT 不再做。',

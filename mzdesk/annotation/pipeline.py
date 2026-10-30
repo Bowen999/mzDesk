@@ -17,7 +17,9 @@ run(inputs, progress=None) -> Result:
   {"answer": answer.build_answer(), "candidates": [Candidate.to_dict()] (ranked, with isomer annotations; formula rows when no structure),
    "steps": [{"id", "title", "status": done | skipped | failed, "seconds", "note"}], "warnings": [str],
    "context": {"precursor_mz", "polarity", "adduct", "retained_adducts", "omics", "libraries", "gate_passed"},
-   "isomer": the dict of isomers.discriminate() without its engine log, or None when step 7 did not run}
+   "isomer": the dict of isomers.discriminate() without its engine log, or None when step 7 did not run,
+   "fragment_query": fragment_view.query() for the "View" button of the ranked table, or None; each candidate has "fragment_adduct" (MetFrag's
+                     spelling of its adduct, None = no button)}
 progress(step_id, status, note, blocks) is called when a step starts (status "running"), when its note changes ("scored 7/25") and when it
 ends. status is running | done | skipped | failed; note and blocks are None when unchanged. A block is
 {"type": "table" | "notes", "id", "title", "columns"?, "data": {...}}: the spec block and its data (mzdesk/api/blocks.py shapes) together.
@@ -426,13 +428,27 @@ def run_query(q, progress=None):
         log.exception("workflow figures failed")
         figures = None
 
+    # The "View" button of the ranked table (fragment view, computed on click): the peaks the isomer step considered, and the adduct each
+    # candidate can use in MetFrag. Display only, like the figures above.
+    candidates = [c.to_dict() for c in (ranked or formula_rows)]
+    try:
+        from mzdesk.ms2 import fragment_view
+
+        fragment_query = fragment_view.query(ms2_engine, q.precursor_mz, top_adduct, tol_da=q.tol_da, tol_ppm=q.tol_ppm)
+        for c in candidates:
+            c["fragment_adduct"] = fragment_view.metfrag_adduct(c.get("adduct")) if fragment_query and c.get("smiles") else None
+    except Exception:  # noqa: BLE001 - a display failure must not affect the annotation
+        log.exception("fragment view query failed")
+        fragment_query = None
+
     return {
         "answer": answer,
-        "candidates": [c.to_dict() for c in (ranked or formula_rows)],
+        "candidates": candidates,
         "steps": [steps.records[n] for n in sorted(steps.records)],
         "warnings": warnings,
         "context": {"precursor_mz": q.precursor_mz, "polarity": q.polarity, "adduct": top_adduct, "retained_adducts": retained,
                     "omics": q.omics, "libraries": q.libraries, "gate_passed": gate_passed},
         "isomer": {k: v for k, v in iso.items() if k != "log"} if iso else None,
         "visualization": figures,
+        "fragment_query": fragment_query,
     }

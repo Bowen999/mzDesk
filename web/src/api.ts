@@ -1,4 +1,4 @@
-import type { Job, RunResult, Spec } from "./types";
+import type { FragmentJob, Job, RunResult, Spec } from "./types";
 
 /** 后端返回的错误：message 给用户看，log 是外部工具（如 MetFrag）的输出末尾。 */
 export class ApiError extends Error {
@@ -26,6 +26,10 @@ export const runModule = (id: string, inputs: unknown) => post<RunResult>(`${BAS
 /** A workflow runs as a background job: start it, then poll getJob until its status is not "running". */
 export const startPipeline = (id: string, inputs: unknown) => post<{ job_id: string; status: string }>(`${BASE}api/pipelines/${id}/run`, inputs);
 export const getJob = (jobId: string) => json<Job>(`${BASE}api/pipelines/jobs/${jobId}`);
+
+/** The fragment view ("View" button): computed when asked. Start the job, then poll it until its status is done or error. */
+export const startFragments = (body: unknown) => post<{ job_id: string; status: string }>(`${BASE}api/fragments/run`, body);
+export const getFragmentJob = (jobId: string) => json<FragmentJob>(`${BASE}api/fragments/jobs/${jobId}`);
 
 /** Page view beacon for the stats page (fire and forget; never shows an error). */
 export function trackView(path: string) {

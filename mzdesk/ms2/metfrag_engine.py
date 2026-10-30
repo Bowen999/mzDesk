@@ -309,8 +309,11 @@ DEFAULT_SPECTRUM = """139.00977 3
 773.53589 416"""
 
 
-def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_ppm, *, timeout_s=METFRAG_TIMEOUT_S):
+def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_ppm, *, timeout_s=METFRAG_TIMEOUT_S, progress=None):
     """Run MetFrag on one candidate and return per-peak annotations.
+
+    ``progress(fraction, text)``, if given, is called before MetFrag starts (0.06), when it has finished (0.60) and while the fragment
+    structures are drawn (0.60-0.80); the fragment view (fragment_view.py) takes the rest of the range.
 
     ``precursor_mz`` is the measured precursor (None = use the theoretical m/z of the
     structure + adduct); it is used for neutral losses and a mismatch warning. MetFrag
@@ -330,6 +333,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
     inchi = Chem.MolToInchi(mol)
     inchikey = Chem.InchiToInchiKey(inchi) if inchi else ""
     mol_formula = rdMolDescriptors.CalcMolFormula(mol)
+    metfrag_formula = re.sub(r"[+-]\d*$", "", mol_formula)    # MetFrag rejects a formula with a charge sign ("C5H14NO+" of a permanent cation)
     mono_mass = Descriptors.ExactMolWt(mol)
     add = ADDUCTS[adduct]
     positive = add["positive"]
@@ -349,6 +353,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
             f"{theo_mz:.4f} (Δ {precursor_mz - theo_mz:+.3f} Da). "
             "Check the SMILES, adduct, or precursor value — annotation may be poor.")
 
+    tick = progress or (lambda fraction, text: None)
     if not JAR.exists():
         raise MetFragError(f"MetFrag JAR not found at {JAR}.")
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -357,7 +362,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         candidate_path = tmp / "candidate.csv"
         with open(candidate_path, "w") as f:
             f.write('"Identifier","InChI","MonoisotopicMass","MolecularFormula","SMILES","InChIKey","CompoundName"\n')
-            f.write(f'"candidate","{inchi}","{mono_mass:.6f}","{mol_formula}","{neutral_smiles}","{inchikey}","candidate"\n')
+            f.write(f'"candidate","{inchi}","{mono_mass:.6f}","{metfrag_formula}","{neutral_smiles}","{inchikey}","candidate"\n')
         peaks_path = tmp / "peaks.txt"
         with open(peaks_path, "w") as f:
             for mz, inten in peaks:
@@ -367,7 +372,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
             f"PeakListPath = {peaks_path}",
             "MetFragDatabaseType = LocalCSV",
             f"LocalDatabasePath = {candidate_path}",
-            f"NeutralPrecursorMolecularFormula = {mol_formula}",
+            f"NeutralPrecursorMolecularFormula = {metfrag_formula}",
             f"PrecursorIonMode = {add['mode']}",
             f"IsPositiveIonMode = {positive}",
             "MetFragCandidateWriter = FragmentSmilesPSV",
@@ -381,6 +386,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         ]
         with open(param_path, "w") as f:
             f.write("\n".join(params))
+        tick(0.06, "MetFrag is fragmenting the structure")
         try:
             proc = subprocess.run(
                 ["java", "-jar", str(JAR), str(param_path)],
@@ -402,12 +408,15 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         warnings.append("MetFrag returned no result for this structure, so no fragment could be "
                         "annotated.")
 
+    tick(0.60, "Matching peaks to fragments")
     max_inten = max(i for _, i in peaks)
     tol_prec = tol_abs + theo_mz * tol_ppm / 1e6        # MetFrag's peak window (absolute + relative)
     keys = sorted(formulas)
     precursor_png = None
     annotation = []
-    for mz, inten in peaks:
+    for done, (mz, inten) in enumerate(peaks, 1):
+        if done % 25 == 0:
+            tick(0.60 + 0.20 * done / len(peaks), "Drawing fragment structures")
         row = {"mz": mz, "intensity": inten, "rel": inten / max_inten * 100.0,
                "annotated": False, "kind": "", "ion_formula": "", "metfrag_ion": "",
                "calc_mz": None, "ppm": None, "nl": None, "smiles": "", "b64": ""}
