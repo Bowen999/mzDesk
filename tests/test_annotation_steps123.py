@@ -266,7 +266,7 @@ def test_buddy_runs_for_every_retained_adduct_but_only_the_best_gets_formulas_wh
 
 
 def test_a_close_second_adduct_gets_formulas_too(buddy):
-    table = {**TABLE, "[M+Na]+": [("C11H16N3O3", 0.9, 4.0, None)]}                             # BUDDY likes [M+Na]+ as much as [M+H]+
+    table = {**TABLE, "[M+Na]+": [("C11H16N3O3", 0.9, 0.5, None)]}                             # BUDDY likes [M+Na]+ as much as [M+H]+ (same mass error: no mass penalty)
     fake = buddy(table)
     adduct, formula = F.run_adduct_and_formula(300.0, True, peaks_with(300.0, base=SPARSE))     # sparse: [M+Na]+ is 0.78 x [M+H]+
     assert {c["adduct"] for c in fake.calls} == set(adduct.retained_adducts) and formula.adducts == ["[M+H]+", "[M+Na]+"]
@@ -278,7 +278,7 @@ def test_a_close_second_adduct_gets_formulas_too(buddy):
 
 def test_formula_order_preserves_adduct_priority_and_unrounded_buddy_ranks_after_filtering(buddy):
     buddy({"[M+H]+": [("C10H20N2O5", 0.900004, 0.5, None), ("C8H20O5", 0.900003, 12.0, None),
-                       ("C9H16N4O4", 0.900002, -0.3, None)],
+                       ("C9H16N4O4", 0.900002, -0.5, None)],
            "[M+Na]+": [("C11H16N3O3", 0.99, 0.2, None)]})
     adduct, result = F.run_adduct_and_formula(300.0, True, peaks_with(300.0, base=SPARSE), tol_ppm=10.0)
     assert result.adducts == ["[M+H]+", "[M+Na]+"] == adduct.retained_adducts[:2]

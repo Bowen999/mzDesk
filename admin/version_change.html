@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.40', date:'2026-10-30', git:'',
+  title:'ESI MS/MS Annotation：加合物和分子式打分加入母离子质量误差',
+  note:'起因是 CASMI 2022 第 16 题：真值 C14H16O3 [M+H]+ 误差 -1.1 ppm，但 [M+Na]+ 的 C12H18O3 在 +9.2 ppm（接近 10 ppm 上限）仍拿到 BUDDY 概率 0.74 并最终胜出。现在误差越接近容差上限扣分越多（高斯，σ = 容差/2，最低 ×0.1；10 ppm 时 1.3 ppm ×0.97、5 ppm ×0.65、9.2 ppm ×0.27）。CASMI 500 题奇偶两半分别校准，两半都不变差。另修正 Mass-shift 的甘氨酸结合位移。',
+  state:[['质量误差','σ = 容差/2 · 下限 ×0.1 · 只扣分不否决'], ['第 16 题','[M+Na]+ 0.28 → 0.095，[M+H]+ 胜出'], ['版本','0.2.40']],
+  c:{
+   pipe:['fix','第 1 步：加合物分数多乘一个质量因子（mass_error_factor），按该加合物“概率×质量因子”最高的分子式计算；证据里新增 mass 一项。第 2 步：每个加合物内分子式按“概率×质量因子”排序后再交错；显示的概率和名次仍是 BUDDY 原值。CASMI 500 题（只跑第 1–2 步）：奇数半 真值加合物第一 146→148、前 6 含真值 226→227；偶数半 148→147、219→222；第 16 题改对；7 题变差、11 题变好。',true,{w:'mzdesk/annotation/adduct_step.py · mzdesk/annotation/formula_step.py · tests/test_mass_error_factor.py · tests/test_annotation_steps123.py'}],
+   dmpk:['fix','Mass-shift 甘氨酸结合由 +C2H3NO2 改为 +C2H3NO（+57.0215；甘氨酸成酰胺脱一分子水）。',true,{w:'mzdesk/calculator/mass_shift.py'}],
+  }},
  {id:'v0.2.39', date:'2026-10-30', git:'',
   title:'ESI MS/MS Annotation：按 CASMI 2022 十题试跑修正加合物、分子式、MS-FINDER、FRIGID 和谱库门控',
   note:'起因是 CASMI 2022 随机十题试跑暴露的问题。修正如下：正确加合物进了保留列表，却没拿到分子式（146、328）；分子式按加合物分组排队，被 6 个上限截掉（093）；FRIGID 只用总表第一名，加合物排错时必错（093、370）；正确的谱库命中因“不在 BUDDY 前 5”被门控拒绝（227）；无结构的谱库命中拿到 2a 并跳过结构搜索（274）；大分子在 MS-FINDER 中 TreeDepth=2 跑不完、超时后什么都不剩（497）；GNPS 约 3.6 万条带 InChI 的谱被当成无结构。谱库索引需重建（python -m mzdesk.ms2.library_setup GNPS MassBank --rebuild，约 4 分钟）。',

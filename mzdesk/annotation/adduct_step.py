@@ -1,9 +1,9 @@
 """Step 1 of the ESI MS/MS Annotation workflow: which adduct is the precursor ion?
 
 Adduct "Auto": every adduct of the precursor's polarity in the app's master list (spec.ADDUCTS_POS / ADDUCTS_NEG) is a hypothesis.
-Its score is a relative likelihood, the product of four pieces of evidence, scaled so that all hypotheses sum to 1:
+Its score is a relative likelihood, the product of five pieces of evidence, scaled so that all hypotheses sum to 1:
 
-    score  ~  prior  x  MS2 factor  x  formula factor  x  isotope factor
+    score  ~  prior  x  MS2 factor  x  formula factor  x  isotope factor  x  mass factor
 
   prior           how often MassBank + GNPS annotate the adduct (LIBRARY_ADDUCT_COUNTS), flattened (PRIOR_EXPONENT) so that it only
                   breaks ties. Never taken from CASMI.
@@ -13,6 +13,9 @@ Its score is a relative likelihood, the product of four pieces of evidence, scal
                   passes the result in (buddy_fits).
   isotope factor  fit of the MS1 isotope pattern to that best formula (BUDDY's isotope similarity). It partly overlaps the formula
                   factor, because BUDDY's own score already uses the isotope fit when MS1 is given.
+  mass factor     how far the precursor is from that best formula's theoretical m/z, relative to the precursor tolerance
+                  (mass_error_factor): a formula that only just fits the tolerance is a weaker explanation than one that fits well.
+                  The "best formula" is the one that maximises BUDDY's probability x mass factor (formula_step._buddy_fit).
 No MS1, no BUDDY or an adduct BUDDY does not support: that factor is 1 (no evidence).
 
 An adduct chosen by the user is the only hypothesis: score 1, evidence "user". The ranking keeps the top RETAIN_MAX hypotheses whose
@@ -81,6 +84,20 @@ ISOTOPE_FLOOR = 0.25             # a hypothesis whose best formula fits the patt
 # from 0.1 (probability 0) to 1 (probability 1): at most a 10-fold penalty, usually 1-2-fold.
 FORMULA_FLOOR = 0.1
 
+# Precursor mass error of the best formula -> factor in [MASS_FLOOR, 1], owner's design 2026-10-30: a Gaussian in ppm with sigma = tol_ppm / 2,
+# lifted to MASS_FLOOR so that a bad mass is penalised, never vetoed. Relative to the user's tolerance, so a narrower window penalises
+# the same fraction of it (10 ppm: x0.97 at 1.3 ppm, x0.85 at 3 ppm, x0.65 at 5 ppm, x0.27 at 9.2 ppm, x0.22 at the limit). Why: BUDDY weighs
+# the mass error only mildly inside its window, so a formula at +9 ppm can keep a high probability (CASMI 2022 challenge 16, truth C14H16O3
+# [M+H]+ at -1.1 ppm: [M+Na]+ with C12H18O3 at +9.2 ppm, probability 0.74, scored 0.28 against 0.47 and went on to win the workflow).
+# Calibration (CASMI 2022, steps 1-2 only, BUDDY outputs cached, 500 challenges; SIRIUS parent mass against the truth formula and adduct):
+# the true ions' |error| has median 1.3 ppm, p90 2.2, p99 6.9, max 7.9, so the penalty must be mild up to ~3 ppm. Swept on odd and on even
+# challenge ids (sigma = tol / 1.5 ... 3.5, floor 0.05 ... 0.5; steps 1-2, 250 challenges per half): tol / 2 with floor 0.1-0.2 is the round
+# setting that does not lose on either half (vs no penalty: truth adduct first +2 / -1, true formula in the first six +1 / +3, Top-1 +0 / +1,
+# true formula present +0 / +0). A narrower sigma (tol / 3 and below) gains more adducts on the odd half but loses more on the even one,
+# tol / 3.5 with a low floor hurts both. No instrument offset (CASMI's median is -1.3 ppm) is modelled: that would be instrument-specific.
+MASS_SIGMA_DIVISOR = 2.0        # sigma = tol_ppm / 2
+MASS_FLOOR = 0.1                # at most a 10-fold penalty, like FORMULA_FLOOR
+
 
 # ---------------------------------------------------------------- result types
 @dataclass
@@ -91,9 +108,10 @@ class AdductHypothesis:
     rank       1 = best
     retained   in the top RETAIN_MAX and score >= RETAIN_RATIO x the best: these go on to the formula and library steps
     ambiguous  retained and less than AMBIGUOUS_RATIO times weaker than the best (the best one itself is flagged when it has such a rival)
-    prior / ms2_factor / formula_factor / isotope_factor   the multipliers (None for a user-chosen adduct)
+    prior / ms2_factor / formula_factor / isotope_factor / mass_factor   the multipliers (None for a user-chosen adduct)
     evidence   per source: "prior" {share, library_spectra, note}, "ms2" {factor, signals [{label, mz, found, rel_int}], note},
-               "formula" {factor, probability, formula, ppm, note}, "isotope" {factor, similarity, formula, note}; or "user" {note}
+               "formula" {factor, probability, formula, ppm, note}, "isotope" {factor, similarity, formula, note},
+               "mass" {factor, ppm, formula, note}; or "user" {note}
     """
     adduct: str
     score: float
@@ -104,6 +122,7 @@ class AdductHypothesis:
     ms2_factor: float | None = None
     formula_factor: float | None = None
     isotope_factor: float | None = None
+    mass_factor: float | None = None
     evidence: dict = field(default_factory=dict)
 
     def to_dict(self):
@@ -209,6 +228,17 @@ def formula_factor(probability):
     return FORMULA_FLOOR + (1.0 - FORMULA_FLOOR) * min(1.0, max(0.0, probability))
 
 
+def mass_error_factor(ppm, tol_ppm):
+    """Factor in [MASS_FLOOR, 1] from the precursor mass error `ppm` of a formula, relative to the tolerance `tol_ppm`; None (no formula) -> 1.
+
+    1 at 0 ppm, falling with |ppm| (Gaussian, sigma = tol_ppm / MASS_SIGMA_DIVISOR) towards MASS_FLOOR, which it reaches well beyond the limit.
+    """
+    if ppm is None or not tol_ppm or tol_ppm <= 0:
+        return 1.0
+    z = abs(ppm) / (tol_ppm / MASS_SIGMA_DIVISOR)
+    return MASS_FLOOR + (1.0 - MASS_FLOOR) * math.exp(-0.5 * z * z)
+
+
 # ---------------------------------------------------------------- scoring
 def _user_adduct(adduct, positive):
     """Canonical name of the adduct the user chose; None for Auto. ValueError for a name that is unknown or of the wrong polarity."""
@@ -230,7 +260,8 @@ def score_adducts(precursor_mz, positive, ms2_peaks, *, adduct=None, tol_da=0.02
     ms2_peaks     [(mz, intensity)]
     adduct        None / "Auto" = score the hypotheses; a name (any spelling) = use that adduct as is
     tol_da        fragment tolerance for the MS2 signals (Da)
-    buddy_fits    {adduct: {"formula": str | None, "prob": float | None, "ppm": float | None, "isotope_sim": float | None, "note": str}}:
+    buddy_fits    {adduct: {"formula": str | None, "prob": float | None, "ppm": float | None, "isotope_sim": float | None,
+                  "mass_factor": float | None, "note": str}}:
                   what BUDDY found for the best formula under each adduct, filled by formula_step for the adducts it ran for;
                   an adduct that is missing, or whose prob / isotope_sim is None, counts as "no evidence" for that factor
     candidates    the hypotheses to score (default: master_adducts(positive))
@@ -249,15 +280,19 @@ def score_adducts(precursor_mz, positive, ms2_peaks, *, adduct=None, tol_da=0.02
         fit = (buddy_fits or {}).get(name) or {}
         prob, sim, found = fit.get("prob"), fit.get("isotope_sim"), fit.get("formula")
         iso, form = isotope_factor(sim), formula_factor(prob)
+        mass = fit.get("mass_factor")
+        mass = 1.0 if mass is None else mass
         counts = LIBRARY_ADDUCT_COUNTS.get(name)
         if not fit:
-            form_note = iso_note = "not used: BUDDY was not run for this adduct"
+            form_note = iso_note = mass_note = "not used: BUDDY was not run for this adduct"
         elif found is None:
-            form_note = iso_note = fit.get("note") or "not used: no BUDDY formula"
+            form_note = iso_note = mass_note = fit.get("note") or "not used: no BUDDY formula"
         else:
             form_note = (f"BUDDY's best formula {found}: probability {prob:.3f}" + (f", {fit['ppm']:+.1f} ppm" if fit.get("ppm") is not None else "")
                          if prob is not None else "not used: BUDDY gave no probability")
             iso_note = f"best BUDDY formula {found}: isotope similarity {sim:.3f}" if sim is not None else "not used: no usable MS1 isotope pattern"
+            mass_note = (f"{found}: mass error {fit['ppm']:+.1f} ppm \u2192 \u00d7{mass:.2f}" if fit.get("ppm") is not None
+                         else "not used: no mass error")
         evidence = {
             "prior": {"share": round(shares[name], 4), "library_spectra": counts,
                       "note": f"{counts:,} library spectra" if counts else "not in the library table"},
@@ -265,21 +300,22 @@ def score_adducts(precursor_mz, positive, ms2_peaks, *, adduct=None, tol_da=0.02
             "formula": {"factor": round(form, 4), "probability": fit.get("prob"), "formula": fit.get("formula"), "ppm": fit.get("ppm"),
                         "note": form_note},
             "isotope": {"factor": round(iso, 4), "similarity": fit.get("isotope_sim"), "formula": fit.get("formula"), "note": iso_note},
+            "mass": {"factor": round(mass, 4), "ppm": fit.get("ppm"), "formula": fit.get("formula"), "note": mass_note},
         }
-        rows.append((shares[name] * ms2["factor"] * form * iso, name, shares[name], ms2["factor"], form, iso, evidence))
+        rows.append((shares[name] * ms2["factor"] * form * iso * mass, name, shares[name], ms2["factor"], form, iso, mass, evidence))
 
     total = sum(r[0] for r in rows)
     ranked = sorted(rows, key=lambda r: -r[0])               # a stable sort: ties keep the master-list order
     best = ranked[0][0] / total
     hypotheses = []
-    for rank, (raw, name, share, ms2_f, form_f, iso_f, evidence) in enumerate(ranked, start=1):
+    for rank, (raw, name, share, ms2_f, form_f, iso_f, mass_f, evidence) in enumerate(ranked, start=1):
         score = raw / total
         retained = rank <= RETAIN_MAX and score >= RETAIN_RATIO * best
         # Keep the full score for downstream formula selection; formatting is display-only.
         hypotheses.append(AdductHypothesis(adduct=name, score=score, rank=rank, retained=retained,
                                            ambiguous=retained and (rank == 1 or best < AMBIGUOUS_RATIO * score),
                                            prior=round(share, 4), ms2_factor=round(ms2_f, 4), formula_factor=round(form_f, 4),
-                                           isotope_factor=round(iso_f, 4), evidence=evidence))
+                                           isotope_factor=round(iso_f, 4), mass_factor=round(mass_f, 4), evidence=evidence))
     ambiguous = len(hypotheses) > 1 and ranked[0][0] < AMBIGUOUS_RATIO * ranked[1][0]
     if not ambiguous:
         hypotheses[0].ambiguous = False                      # the best one is flagged only when it has a rival within the ratio

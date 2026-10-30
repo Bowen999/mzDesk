@@ -12,4 +12,4 @@ os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(tempfile.gettempdir(), "mz
 # some sandboxes and then every process rebuilds it in a fresh temp folder. Keep one cache.
 os.environ.setdefault("MPLCONFIGDIR", os.path.join(tempfile.gettempdir(), "mzdesk-matplotlib"))
 
-__version__ = "0.2.39"
+__version__ = "0.2.40"

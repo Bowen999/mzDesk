@@ -9,8 +9,10 @@ adduct ranking to know which adducts get a formula list. run_adduct_and_formula(
      win over an evaluated one just because nothing lowered it);
   3. the shared formula list for steps 3-5: BUDDY's top-5 formulas for the best adduct, for the second one if its score is at least
      SECOND_ADDUCT_RATIO x the best, and for any other retained adduct whose own best formula has a BUDDY probability >= EXTRA_ADDUCT_PROB
-     (auto mode; formulas that miss the user's precursor tolerance are dropped). The list is interleaved by BUDDY rank across these adducts
-     (A#1, B#1, C#1, A#2, ...), so the consumers that take only the first formulas (MS-FINDER: 6, FRIGID: 1) see every target adduct.
+     (auto mode; formulas that miss the user's precursor tolerance are dropped). Within an adduct the formulas are ordered by BUDDY's
+     probability x the mass factor (adduct_step.mass_error_factor: a formula near the tolerance limit is demoted), then the list is
+     interleaved across these adducts (A#1, B#1, C#1, A#2, ...), so the consumers that take only the first formulas (MS-FINDER: 6,
+     FRIGID: 1) see every target adduct. The "rank" of a formula stays BUDDY's own rank.
 
 Mind that [M+NH4]+ and [M+H-H2O]+ give the same ion composition as [M+H]+ of another neutral (M+NH3, M-H2O): BUDDY's score and the
 isotope fit are then identical, and only the MS2 loss (NH3 17.0265) and the prior can tell these hypotheses apart.
@@ -54,6 +56,8 @@ class FormulaCandidate:
     mz_theo      theoretical m/z of formula + adduct
     isotope_sim  BUDDY's MS1 isotope similarity of the formula (1 - L1 distance of the sum-normalised first isotope peaks); None when
                  no MS1 pattern was used
+    mass_factor  adduct_step.mass_error_factor(ppm, tolerance): 1 for a perfect mass, falling to MASS_FLOOR at the tolerance limit. Within
+                 an adduct the list is ordered by prob x mass_factor; prob stays BUDDY's own.
     """
     formula: str
     adduct: str
@@ -62,6 +66,7 @@ class FormulaCandidate:
     ppm: float | None = None
     mz_theo: float | None = None
     isotope_sim: float | None = None
+    mass_factor: float | None = None
 
     def to_dict(self):
         return asdict(self)
@@ -69,7 +74,7 @@ class FormulaCandidate:
 
 @dataclass
 class FormulaResult:
-    """Step 2 result: the shared formula list, interleaved by BUDDY rank across the adducts (best adduct first within a rank).
+    """Step 2 result: the shared formula list, interleaved across the adducts by position (best adduct first); within an adduct ordered by prob x mass_factor.
 
     adducts   the adducts a list was asked for, in adduct-score order (the best one, the second if it scored high enough, and any other
               retained adduct with a confident BUDDY formula)
@@ -158,7 +163,9 @@ def buddy_covers(formula, halogen=False):
 
 
 def _buddy_fit(run, tol_ppm):
-    """What adduct_step needs from one adduct run: {"formula", "prob", "ppm", "isotope_sim", "note"} of the best formula within tol_ppm.
+    """What adduct_step needs from one adduct run: {"formula", "prob", "ppm", "isotope_sim", "mass_factor", "note"} of the best formula within tol_ppm.
+
+    "Best" = the highest BUDDY probability x mass factor (adduct_step.mass_error_factor of its ppm); "prob" stays BUDDY's own.
 
     A run that gave no formula at all within the tolerance is evidence in itself (probability 0: nothing explains the precursor under
     this adduct); a run that could not be made (unsupported adduct, BUDDY failing) is not (all None).
@@ -166,17 +173,22 @@ def _buddy_fit(run, tol_ppm):
     status, payload = run
     if status != "ok":
         return {"formula": None, "prob": None, "ppm": None, "isotope_sim": None, "note": f"not used: no BUDDY formula ({payload})"}
-    best = next((c for c in payload["candidates"] if c["ppm"] is not None and abs(c["ppm"]) <= tol_ppm), None)
-    if best is None:
-        return {"formula": None, "prob": 0.0, "ppm": None, "isotope_sim": None, "note": f"BUDDY found no formula within {tol_ppm:g} ppm"}
-    return {"formula": best["formula"], "prob": best["prob"], "ppm": best["ppm"], "isotope_sim": best["isotope_sim"], "note": ""}
+    within = [c for c in payload["candidates"] if c["ppm"] is not None and abs(c["ppm"]) <= tol_ppm]
+    if not within:
+        return {"formula": None, "prob": 0.0, "ppm": None, "isotope_sim": None, "mass_factor": None,
+                "note": f"BUDDY found no formula within {tol_ppm:g} ppm"}
+    # the best formula maximises probability x mass factor (the first of equals: BUDDY's order)
+    best = max(within, key=lambda c: (c["prob"] or 0.0) * adduct_step.mass_error_factor(c["ppm"], tol_ppm))
+    return {"formula": best["formula"], "prob": best["prob"], "ppm": best["ppm"], "isotope_sim": best["isotope_sim"],
+            "mass_factor": adduct_step.mass_error_factor(best["ppm"], tol_ppm), "note": ""}
 
 
 def _candidates(adduct, payload, tol_ppm):
-    """FormulaCandidates of one BUDDY run that fit the user's precursor tolerance."""
-    return [FormulaCandidate(formula=c["formula"], adduct=adduct, rank=c["rank"], prob=c["prob"], ppm=c["ppm"], mz_theo=c["mz_theo"],
-                             isotope_sim=c["isotope_sim"])
-            for c in payload["candidates"] if c["ppm"] is not None and abs(c["ppm"]) <= tol_ppm]
+    """FormulaCandidates of one BUDDY run that fit the user's precursor tolerance, best first by prob x mass factor (BUDDY's order on ties)."""
+    found = [FormulaCandidate(formula=c["formula"], adduct=adduct, rank=c["rank"], prob=c["prob"], ppm=c["ppm"], mz_theo=c["mz_theo"],
+                              isotope_sim=c["isotope_sim"], mass_factor=adduct_step.mass_error_factor(c["ppm"], tol_ppm))
+             for c in payload["candidates"] if c["ppm"] is not None and abs(c["ppm"]) <= tol_ppm]
+    return sorted(found, key=lambda f: -(f.prob or 0.0) * f.mass_factor)          # a stable sort
 
 
 # ---------------------------------------------------------------- steps 1 + 2
@@ -230,7 +242,8 @@ def run_adduct_and_formula(precursor_mz, positive, ms2_peaks, ms1_peaks=None, *,
             lists.append(_candidates(name, payload, tol_ppm))
         else:
             problems.append((name, status, payload))
-    # owner's design 2026-10-30: round-robin by BUDDY rank over the adducts (A#1, B#1, C#1, A#2, ...), not adduct after adduct
+    # owner's design 2026-10-30: round-robin over the adducts (A#1, B#1, C#1, A#2, ...), not adduct after adduct; each adduct's list is
+    # already ordered by probability x mass factor (_candidates)
     formulas = [lst[i] for i in range(max(map(len, lists), default=0)) for lst in lists if i < len(lst)]
     result = FormulaResult(formulas=formulas, adducts=targets, ms1_used=use_ms1)
     result.status, result.note = _summary(result, targets, problems, use_ms1, tol_ppm)
@@ -255,7 +268,7 @@ def _summary(result, targets, problems, use_ms1, tol_ppm):
     how = "BUDDY" + (" with the MS1 isotope pattern" if use_ms1 else "")
     if result.formulas:
         parts = [f"{n} formula{'' if n == 1 else 's'} for {a}" for a in asked for n in [sum(f.adduct == a for f in result.formulas)]]
-        note = f"{how}: {_join(parts, 'and')}, interleaved by BUDDY rank." if len(parts) > 1 else f"{how}: {parts[0]}."
+        note = f"{how}: {_join(parts, 'and')}, interleaved by rank." if len(parts) > 1 else f"{how}: {parts[0]}."
     else:
         note = f"{how} found no formula within {tol_ppm:g} ppm for {_join(asked, 'or')}; {fallback}."
     return "done", note + "".join(f" {name}: {text}" for name, _, text in problems)

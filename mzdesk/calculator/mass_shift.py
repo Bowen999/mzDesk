@@ -24,7 +24,7 @@ SHIFT_SPECS = (
     ("+SO3 sulfate", _S + 3 * _O, "Sulfation"),
     ("+C2H2O acetyl", 2 * _C + 2 * _H + _O, "Acetylation"),
     ("+C10H15N3O6S GSH", 10 * _C + 15 * _H + 3 * _N + 6 * _O + _S, "Glutathione conjugation"),
-    ("+C2H3NO2 glycine", 2 * _C + 3 * _H + _N + 2 * _O, "Glycine conjugation"),
+    ("+C2H3NO glycine", 2 * _C + 3 * _H + _N + _O, "Glycine conjugation"),          # amide with glycine: + C2H5NO2 − H2O
 )
 SHIFTS = {label: delta for label, delta, _ in SHIFT_SPECS}
 REACTIONS = {label: reaction for label, _, reaction in SHIFT_SPECS}
