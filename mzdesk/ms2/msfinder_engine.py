@@ -14,6 +14,10 @@ Things worth knowing (all checked against the sources of tag MSFINDER-v3.73 and 
   * PRECURSORTYPE must be written; without it the reader silently uses "[M]+." and the formulas are wrong.
   * The number reader of the query file knows no exponent except "e+": peaks are written as plain decimals.
   * MS-FINDER writes .fgt / .sfd side files into the input folder, and resolves Resources/ from the exe folder.
+  * MS-FINDER can rewrite its own databases: when reading Resources/*_bin.* fails (or comes back empty), Common.dll re-reads the text database,
+    renames the binary file to *.backup and writes a new one (MessagePackMsFinderHandler.SaveToFile, no lock). Several runs at once can leave a
+    0-byte database (seen 2026-10-30). A normal run writes nothing into the install, but no run ever works in the shared install: each one gets
+    its own copy-on-write clone of it inside the run's temp folder (private_install), deleted with that folder.
   * A run loads about 2.3 GB of databases and takes 4-5 s, so runs are serialised and watched (time and memory).
 Top-level imports are the standard library only (spec.py reads ADDUCTS).
 """
@@ -22,6 +26,7 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -103,6 +108,50 @@ def check_msfinder():
     if not s["ini"]:
         raise MsFinderError(f"The mzDesk parameter file {INI_PATH} is missing; reinstall mzDesk.")
     return s["mono"], s["exe"], s["ini"]
+
+
+# ---------------------------------------------------------------- private copy of the install
+def _clone_tree(src, dst):
+    """Copy-on-write clone of the folder ``src`` as ``dst``: instant and no extra disk until a file is changed. OSError when it cannot be done."""
+    if sys.platform == "darwin":                    # APFS clonefile(2) takes the whole tree in one call (EXDEV across volumes, ENOTSUP off APFS)
+        import ctypes
+        try:
+            clonefile = ctypes.CDLL(None, use_errno=True).clonefile
+        except AttributeError as exc:
+            raise OSError("clonefile(2) is not available") from exc
+        if clonefile(os.fsencode(src), os.fsencode(dst), 0) != 0:
+            err = ctypes.get_errno()
+            raise OSError(err, os.strerror(err), str(src))
+    elif sys.platform.startswith("linux"):          # btrfs, XFS (reflink=1), ...; "always" so that a failure is seen instead of a silent full copy
+        done = subprocess.run(["cp", "-R", "--reflink=always", str(src), str(dst)], capture_output=True, text=True)
+        if done.returncode:
+            raise OSError(done.stderr.strip() or "cp --reflink=always failed")
+    else:
+        raise OSError(f"no copy-on-write clone on {sys.platform}")
+
+
+def private_install(exe, dst):
+    """Give ONE run its own copy of the MS-FINDER install folder (the folder of ``exe``) as ``dst`` -> (exe in the copy, note).
+
+    MS-FINDER may rewrite its databases while it runs (see the top of this file), so a run never works in the shared install: the install is
+    only read here. First choice is a copy-on-write clone (a few ms for the 850 MB folder on macOS APFS); where that is not possible (other
+    volume, a file system without clones, Windows) the folder is copied for real (about 1-2 s on an SSD) and the note says so. The note is ""
+    for a clone. Raises MsFinderError when not even a copy can be made: the shared install is never used instead.
+    """
+    src, dst = Path(exe).parent, Path(dst)
+    try:
+        _clone_tree(src, dst)
+        return dst / Path(exe).name, ""
+    except OSError as clone_error:
+        shutil.rmtree(dst, ignore_errors=True)      # a failed clone may have left a part of the tree
+        try:
+            shutil.copytree(src, dst, symlinks=True)
+        except (OSError, shutil.Error) as copy_error:
+            shutil.rmtree(dst, ignore_errors=True)
+            raise MsFinderError(f"Could not make the private copy of the MS-FINDER install for this run ({copy_error}); the shared install is not "
+                                f"used. Free some disk space in the temp folder.") from copy_error
+        return dst / Path(exe).name, (f"[mzDesk] Copy-on-write clone of the MS-FINDER install failed ({clone_error}); this run used a plain copy "
+                                      f"of it in its temp folder.\n")
 
 
 # ---------------------------------------------------------------- parameter file
@@ -329,7 +378,8 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
     the parameter file is used whenever a switch is on; with all switches off the shipped file is used as it is. Raises ValueError for
     input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
     {"adduct", "precursor_mz", "positive", "halogen", "silicon", "extended", "formulas": [...], "structures": [...],
-     "ms1_count", "ms2_count", "seconds", "peak_rss_mb", "log"}.
+     "ms1_count", "ms2_count", "seconds", "peak_rss_mb", "log", "install_copy"}. install_copy is "clone" or "copy" (how the
+    run's private copy of the install was made, see private_install); a plain copy is also noted at the start of "log".
     """
     adduct = resolve_adduct(positive, adduct)
     if not precursor_mz or precursor_mz <= 0:
@@ -350,6 +400,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
             in_dir.mkdir()
             out_dir.mkdir()
             (in_dir / "query.mat").write_text(query, encoding="ascii")
+            exe, copy_note = private_install(exe, Path(tmp) / "install")
             if halogen or silicon or extended:                      # this run only: a copy in the run's temp folder, the shipped file stays as it is
                 run_ini = Path(tmp) / INI_PATH.name
                 run_ini.write_bytes(ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen, silicon, extended).encode("utf-8"))
@@ -357,6 +408,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
             cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(ini)]
             _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
+            log = copy_note + log
             formula_files = sorted(out_dir.glob("Formula result-*.txt"))
             structure_files = sorted(out_dir.glob("Structure result-*.txt"))
             if not formula_files:
@@ -372,7 +424,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
     return {"adduct": adduct, "precursor_mz": precursor_mz, "positive": positive, "halogen": bool(halogen), "silicon": bool(silicon),
             "extended": bool(extended), "formulas": formulas["rows"], "structures": structures["rows"],
             "ms1_count": ms1_count if ms1_count is not None else len(ms1 or []), "ms2_count": ms2_count if ms2_count is not None else len(ms2),
-            "seconds": seconds, "peak_rss_mb": peak, "log": log}
+            "seconds": seconds, "peak_rss_mb": peak, "log": log, "install_copy": "copy" if copy_note else "clone"}
 
 
 # ---------------------------------------------------------------- given candidate structures (isomer check, mzdesk/exclusivity/isomers.py)
@@ -477,7 +529,7 @@ def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_d
     candidates' formulas. Raises ValueError for input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
     {"adduct", "structures": [{"id": the candidate's id, or None for a structure of MS-FINDER's databases, "name", "inchikey", "smiles",
       "formula", "score", "fragments": [...]}] (fragments as parse_sfd gives them), "formulas": [...] (as in predict), "seconds",
-     "peak_rss_mb", "log"}. A candidate MS-FINDER did not score is missing from "structures".
+     "peak_rss_mb", "log", "install_copy"}. A candidate MS-FINDER did not score is missing from "structures".
     """
     adduct = resolve_adduct(positive, adduct)
     if not precursor_mz or precursor_mz <= 0:
@@ -511,12 +563,14 @@ def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_d
             out_dir.mkdir()
             (in_dir / "query.mat").write_text(query, encoding="ascii")
             db.write_text("\n".join(rows) + "\n", encoding="ascii")
+            exe, copy_note = private_install(exe, Path(tmp) / "install")
             run_ini = Path(tmp) / INI_PATH.name                    # this run only; the shipped file stays as it is
             text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=bool(elements & {"F", "Cl", "Br", "I"}), silicon="Si" in elements)
             run_ini.write_bytes(ini_with_values(text, {**switches, "UserDefinedDbFilePath": db}).encode("utf-8"))
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
             cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
             _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
+            log = copy_note + log
             formula_files = sorted(out_dir.glob("Formula result-*.txt"))
             if not formula_files:
                 raise MsFinderError("MS-FINDER finished without writing a result file.", log)
@@ -526,7 +580,8 @@ def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_d
         seconds = time.monotonic() - t0
     finally:
         _RUN_LOCK.release()
-    return {"adduct": adduct, "structures": structures, "formulas": formulas, "seconds": seconds, "peak_rss_mb": peak, "log": log}
+    return {"adduct": adduct, "structures": structures, "formulas": formulas, "seconds": seconds, "peak_rss_mb": peak, "log": log,
+            "install_copy": "copy" if copy_note else "clone"}
 
 
 # ---------------------------------------------------------------- several spectra in one run (ESI MS/MS Annotation workflow, mzdesk/annotation/msfinder_step.py)
@@ -601,7 +656,7 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
     ValueError for input MS-FINDER cannot use and MsFinderError when it is missing, busy or fails. Returns
     {"results": {key: {"formulas": [as in predict], "structures": [as parse_sfd_headers, plus "formula"; score > 0, best first],
                        "searches": {formula as MS-FINDER writes it: wall seconds of that formula's structure search, None off macOS}}},
-     "seconds", "peak_rss_mb", "log", "stopped"}.
+     "seconds", "peak_rss_mb", "log", "stopped", "install_copy"}.
     A structure search runs at most StructurePredictionTimeOut minutes (parameter file, -1 = no limit; checked after each scored structure)
     and then keeps what it has scored. A run that is stopped (time or memory limit) is not lost: "stopped" holds the reason, "formulas" are
     empty and "peak_rss_mb" is None, and the structures are those of the searches that had finished; when none had, the error is raised.
@@ -634,6 +689,7 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
             out_dir.mkdir()
             for key, text in texts.items():
                 (in_dir / f"{key}.mat").write_text(text, encoding="ascii")
+            exe, copy_note = private_install(exe, Path(tmp) / "install")
             run_ini = Path(tmp) / INI_PATH.name                    # this run only; the shipped file stays as it is
             text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=halogen)
             run_ini.write_bytes(ini_with_values(text, values or {}).encode("utf-8"))
@@ -644,6 +700,7 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
                 _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)     # exit code 1 = success: judge by the files
             except MsFinderError as exc:                # stopped (time, memory): the .sfd files of the searches that had finished are kept
                 stopped, log, peak = exc, exc.log, None
+            log = copy_note + log
             formula_files = sorted(out_dir.glob("Formula result-*.txt"))
             if stopped is None and not formula_files:
                 raise MsFinderError("MS-FINDER finished without writing a result file.", log)
@@ -661,4 +718,5 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
         seconds = time.monotonic() - t0
     finally:
         _RUN_LOCK.release()
-    return {"results": results, "seconds": seconds, "peak_rss_mb": peak, "log": log, "stopped": str(stopped) if stopped else None}
+    return {"results": results, "seconds": seconds, "peak_rss_mb": peak, "log": log, "stopped": str(stopped) if stopped else None,
+            "install_copy": "copy" if copy_note else "clone"}

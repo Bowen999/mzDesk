@@ -338,6 +338,7 @@ def fake_install(monkeypatch, tmp_path):
     def install(formula=CAFFEINE_FORMULA, structure=CAFFEINE_STRUCTURE, number=77, log="Writing done"):
         def fake_run(cmd, cwd, env, timeout, rss_cap_mb, **kw):
             seen.update(cmd=cmd, cwd=cwd, env=env, timeout=timeout, rss_cap_mb=rss_cap_mb)
+            seen["copy_files"] = sorted(q.name for q in Path(cwd).iterdir())                 # what the run's own copy of the install holds
             seen["ini_path"] = Path(cmd[cmd.index("-m") + 1])
             seen["ini_text"] = seen["ini_path"].read_text()
             in_dir, out_dir = Path(cmd[cmd.index("-i") + 1]), Path(cmd[cmd.index("-o") + 1])
@@ -357,12 +358,13 @@ def test_predict_runs_the_console_app_and_parses_both_files(fake_install, tmp_pa
     seen = fake_install()
     res = mf.predict(195.0877, True, None, PEAKS)
     cmd = seen["cmd"]
-    assert cmd[:3] == ["/usr/bin/mono", str(tmp_path / "MsfinderConsoleApp.exe"), "predict"] and cmd[-2:] == ["-m", str(tmp_path / "x.ini")]
-    assert seen["cwd"] == str(tmp_path) and seen["env"]["LC_ALL"] == "en_US.UTF-8" and seen["env"]["LANG"] == "en_US.UTF-8"
+    assert cmd[:3] == ["/usr/bin/mono", str(Path(seen["cwd"]) / "MsfinderConsoleApp.exe"), "predict"] and cmd[-2:] == ["-m", str(tmp_path / "x.ini")]
+    assert Path(seen["cwd"]) != tmp_path and tmp_path not in Path(seen["cwd"]).parents          # the run's own copy of the install, not the shared one
+    assert seen["env"]["LC_ALL"] == "en_US.UTF-8" and seen["env"]["LANG"] == "en_US.UTF-8"
     assert "PRECURSORTYPE: [M+H]+" in seen["query"]                                   # Auto -> [M+H]+, written explicitly
     assert res["adduct"] == "[M+H]+" and res["formulas"][0]["formula"] == "C8H10N4O2" and res["structures"][0]["name"] == "Caffeine"
     assert (res["ms1_count"], res["ms2_count"]) == (0, 27) and res["peak_rss_mb"] == 2300.0
-    assert not seen["in_dir"].exists()                                                # the temp folder is gone
+    assert not seen["in_dir"].exists() and not Path(seen["cwd"]).exists()             # the temp folder is gone, the copy of the install with it
 
 
 def test_predict_without_the_switches_uses_the_shipped_parameter_file(fake_install, tmp_path):
@@ -439,6 +441,123 @@ def test_lock_is_released_after_a_failed_run(fake_install):
         mf.predict(195.0877, True, None, PEAKS)
     assert mf._RUN_LOCK.acquire(blocking=False)
     mf._RUN_LOCK.release()
+
+
+# ---------------------------------------------------------------- every run works on its own copy of the install
+# MS-FINDER can rewrite Resources/*_bin.* while it runs (concurrent runs once left a 0-byte formula database), so no run uses the shared install.
+def _fake_install_tree(root):
+    """A small stand-in for the install folder: exe, a DLL and Resources/ with a database file."""
+    (root / "Resources").mkdir(parents=True)
+    (root / "MsfinderConsoleApp.exe").write_bytes(b"exe")
+    (root / "Common.dll").write_bytes(b"dll")
+    (root / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").write_bytes(b"database")
+    return root / "MsfinderConsoleApp.exe"
+
+
+@pytest.fixture
+def tree_install(monkeypatch, tmp_path):
+    """A fake install tree; run_watched records where it ran and, like MS-FINDER's SaveToFile, destroys the database it finds there."""
+    live = tmp_path / "live"
+    exe = _fake_install_tree(live)
+    ini = tmp_path / "x.ini"
+    ini.write_text("")
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": live, "exe": exe, "resources": live / "Resources", "ini": ini})
+    seen = {"cwds": []}
+
+    def fake_run(cmd, cwd, env, timeout, rss_cap_mb, **kw):
+        seen["cwds"].append(Path(cwd))
+        seen["exe"] = Path(cmd[1])
+        seen["files"] = sorted(str(q.relative_to(cwd)) for q in Path(cwd).rglob("*") if q.is_file())
+        (Path(cwd) / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").write_bytes(b"")           # the damage seen on 2026-10-30
+        out_dir = Path(cmd[cmd.index("-o") + 1])
+        (out_dir / "Formula result-77.txt").write_text(CAFFEINE_FORMULA)
+        (out_dir / "Structure result-77.txt").write_text(CAFFEINE_STRUCTURE)
+        return 1, "Writing done", 2300.0
+    monkeypatch.setattr(mf, "run_watched", fake_run)
+    return live, seen
+
+
+def test_a_run_works_in_its_own_copy_of_the_install_and_the_shared_install_stays_intact(tree_install):
+    live, seen = tree_install
+    res = mf.predict(195.0877, True, None, PEAKS)
+    cwd = seen["cwds"][0]
+    assert cwd != live and live not in cwd.parents and seen["exe"] == cwd / "MsfinderConsoleApp.exe"
+    assert seen["files"] == ["Common.dll", "MsfinderConsoleApp.exe", "Resources/MsfinderFormulaDB-VS13_bin.efd"]       # the whole install is there
+    assert (live / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").read_bytes() == b"database"                       # the run's damage stayed in its copy
+    assert not cwd.exists()                                                                                          # deleted with the temp folder
+    assert res["formulas"] and res["install_copy"] in ("clone", "copy")
+
+
+def test_every_engine_entry_point_uses_a_private_copy_and_removes_it(tree_install, monkeypatch):
+    live, seen = tree_install
+    monkeypatch.setattr(mf, "parse_sfd", lambda text: [])
+    mf.predict(195.0877, True, None, PEAKS)
+    mf.explain_candidates(195.0877, True, None, PEAKS, [{"id": "a", "smiles": "C", "inchikey": "AAAAAAAAAAAAAA-BBBBBBBBBB-C", "formula": "CH4", "mass": 16.0313}])
+    mf.predict_queries([{"key": "q", "precursor_mz": 195.0877, "positive": True, "adduct": "[M+H]+", "ms2": PEAKS}])
+    assert len(seen["cwds"]) == 3 and len(set(seen["cwds"])) == 3                                                    # a new copy each run
+    assert all(c != live and live not in c.parents and not c.exists() for c in seen["cwds"])
+    assert (live / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").read_bytes() == b"database"
+
+
+def test_the_copy_is_removed_when_the_run_fails(tree_install, monkeypatch):
+    live, seen = tree_install
+    monkeypatch.setattr(mf, "run_watched", lambda cmd, cwd, *a, **k: (seen["cwds"].append(Path(cwd)), (_ for _ in ()).throw(mf.MsFinderError("stopped")))[1])
+    with pytest.raises(mf.MsFinderError, match="stopped"):
+        mf.predict(195.0877, True, None, PEAKS)
+    assert len(seen["cwds"]) == 1 and not seen["cwds"][0].exists() and (live / "MsfinderConsoleApp.exe").is_file()
+
+
+def test_failed_clone_falls_back_to_a_plain_copy_and_says_so(tree_install, monkeypatch):
+    live, seen = tree_install
+
+    def no_clone(src, dst):
+        (Path(dst) / "Resources").mkdir(parents=True)                       # a clone that failed half way
+        raise OSError(18, "Invalid cross-device link")
+    monkeypatch.setattr(mf, "_clone_tree", no_clone)
+    res = mf.predict(195.0877, True, None, PEAKS)
+    assert res["install_copy"] == "copy" and "plain copy" in res["log"] and "cross-device" in res["log"] and res["log"].endswith("Writing done")
+    assert seen["cwds"][0] != live and not seen["cwds"][0].exists()
+    assert (live / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").read_bytes() == b"database"
+
+
+def test_without_any_copy_the_run_does_not_start_and_the_shared_install_is_not_used(tree_install, monkeypatch):
+    live, seen = tree_install
+    monkeypatch.setattr(mf, "_clone_tree", lambda src, dst: (_ for _ in ()).throw(OSError("no clones here")))
+    monkeypatch.setattr(mf.shutil, "copytree", lambda *a, **k: (_ for _ in ()).throw(OSError(28, "No space left on device")))
+    with pytest.raises(mf.MsFinderError, match="private copy"):
+        mf.predict(195.0877, True, None, PEAKS)
+    assert seen["cwds"] == []                                                # MS-FINDER was never started
+    assert mf._RUN_LOCK.acquire(blocking=False)                              # and the lock is free again
+    mf._RUN_LOCK.release()
+
+
+def test_private_install_is_independent_of_the_original(tmp_path):
+    exe = _fake_install_tree(tmp_path / "live")
+    (tmp_path / "run").mkdir()
+    copy_exe, note = mf.private_install(exe, tmp_path / "run" / "install")
+    copy = copy_exe.parent
+    assert copy_exe == copy / "MsfinderConsoleApp.exe" and copy_exe.read_bytes() == b"exe" and (copy / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").is_file()
+    (copy / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").write_bytes(b"")             # write into the copy (as MS-FINDER does) ...
+    (copy / "Common.dll").unlink()
+    assert (tmp_path / "live" / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").read_bytes() == b"database"   # ... the original is not touched
+    assert (tmp_path / "live" / "Common.dll").is_file()
+    assert note == "" or "plain copy" in note                                                                # a clone has no note, a plain copy says why
+
+
+@pytest.mark.skipif(NO_MSFINDER is not None, reason=f"MS-FINDER not available: {NO_MSFINDER}")
+def test_real_run_leaves_the_shared_install_untouched_and_uses_a_private_copy(monkeypatch):
+    """One real MS-FINDER run (~5 s, ~2.3 GB peak): every file of the install keeps its size and modification time, the copy is gone afterwards."""
+    live = mf.status()["exe"].parent
+
+    def snapshot():
+        return {str(q.relative_to(live)): (q.stat().st_size, q.stat().st_mtime_ns) for q in live.rglob("*") if q.is_file()}
+    before, cwds, real_run = snapshot(), [], mf.run_watched
+    monkeypatch.setattr(mf, "run_watched", lambda cmd, cwd, *a, **k: (cwds.append(Path(cwd)), real_run(cmd, cwd, *a, **k))[1])
+    ms2 = [tuple(map(float, ln.split())) for ln in CAFFEINE_MSFINDER_MS2.splitlines()]
+    res = mf.predict(195.0877, True, None, ms2)
+    assert res["formulas"][0]["formula"] == "C8H10N4O2" and res["install_copy"] in ("clone", "copy")
+    assert snapshot() == before
+    assert len(cwds) == 1 and cwds[0] != live and live not in cwds[0].parents and not cwds[0].exists()      # it ran in a copy, which is gone now
 
 
 # ---------------------------------------------------------------- runner output (engine replaced)

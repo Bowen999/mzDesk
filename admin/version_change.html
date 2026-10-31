@@ -263,6 +263,13 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.2.41', date:'2026-10-30', git:'',
+  title:'MS-FINDER：每次运行使用独立的安装副本',
+  note:'起因：CASMI 回放时多个 MS-FINDER 同时运行，安装里的分子式数据库 MsfinderFormulaDB-VS13_bin.efd 变成 0 字节，此后所有 MS-FINDER 运行都失败。MS-FINDER 读二进制数据库失败时会重建并改写这个文件（Common.dll，无锁），并发时可能互相截断。现在每次运行先在临时文件夹里做一份安装的写时复制克隆，运行完删除，共享安装只读不写。',
+  state:[['副本','macOS APFS 克隆（3–6 ms）· Linux reflink · 否则完整复制（约 1 s）'], ['共享安装','只读；连副本都做不出时报错，不退回共享安装'], ['版本','0.2.41']],
+  c:{
+   ms2:['fix','msfinder_engine：predict、explain_candidates、predict_queries 三个入口都通过 private_install 在本次运行的临时文件夹里克隆整个 MS-FINDER 安装，并在其中运行；结果新增 install_copy（clone / copy），用完整复制时日志开头会注明。',true,{w:'mzdesk/ms2/msfinder_engine.py · tests/test_msfinder.py'}],
+  }},
  {id:'v0.2.40', date:'2026-10-30', git:'',
   title:'ESI MS/MS Annotation：加合物和分子式打分加入母离子质量误差',
   note:'起因是 CASMI 2022 第 16 题：真值 C14H16O3 [M+H]+ 误差 -1.1 ppm，但 [M+Na]+ 的 C12H18O3 在 +9.2 ppm（接近 10 ppm 上限）仍拿到 BUDDY 概率 0.74 并最终胜出。现在误差越接近容差上限扣分越多（高斯，σ = 容差/2，最低 ×0.1；10 ppm 时 1.3 ppm ×0.97、5 ppm ×0.65、9.2 ppm ×0.27）。CASMI 500 题奇偶两半分别校准，两半都不变差。另修正 Mass-shift 的甘氨酸结合位移。',
