@@ -5,7 +5,7 @@ import { React, startSsr } from "./ssr-helper.mjs";
 const ssr = await startSsr("candidates");
 const { CandidateTable } = await ssr.load("/src/components/CandidateTable.tsx");
 const { FragmentProvider } = await ssr.load("/src/components/FragmentDialog.tsx");
-const { candidateDetails } = await ssr.load("/src/components/annotationModel.ts");
+const { candidateDetails, ccsNumbers, ccsText } = await ssr.load("/src/components/annotationModel.ts");
 after(() => ssr.close());
 
 const SMILES = "CN1C=NC2=C1C(=O)N(C)C(=O)N2C";
@@ -84,4 +84,48 @@ test("missing values read as a dash in the detail line", () => {
 test("no candidates: one empty line", () => {
   const html = view({ candidates: [] });
   assert.match(html, /<td colSpan="6" class="empty">no candidates<\/td>|<td colSpan="6" class="empty">no candidates/);
+});
+
+// ---------------------------------------------------------------- CCS check (supporting evidence)
+const ccs = (over = {}) => ({ verdict: "Consistent", source: "measured", adduct: "[M+H]+", observed: 139.6, reference: 139.6, delta_pct: 0.64, tolerance_pct: 1, ref_label: "DTCCS N2",
+  dataset: "Baker2017", n_refs: 6, in_domain: null, note: "", flag: null, moved_from: null, ...over });
+const withCcs = [
+  candidate("c1", "Isocaffeine", { ccs: ccs({ source: "predicted", reference: 139.3, delta_pct: 0.2, tolerance_pct: 6.5, ref_label: "SVR", dataset: null }) }),
+  candidate("c2", "Caffeine", { rank: 2, ccs: ccs({ verdict: "Inconsistent", delta_pct: 9.8, flag: "CCS ≠ measured", moved_from: 1 }) }),
+  candidate("c3", "Aspirin", { rank: 3, ccs: ccs({ verdict: "Inconsistent", source: "predicted", reference: 150, delta_pct: -6.33, tolerance_pct: 5.6, ref_label: "SVR", dataset: null, flag: "CCS ≠ predicted" }) }),
+  candidate("c4", "Unknown", { rank: 4, smiles: null, ccs: { verdict: "No structure", note: "a CCS can only be looked up for a structure" } }),
+];
+
+test("the key columns do not change with a CCS check; a candidate the rule applied to gets a short flag after its name", () => {
+  const html = view({ candidates: withCcs });
+  assert.deepEqual(heads(html), ["Details", "Rank", "Name", "Level", "Final score", "Fragments"]);
+  assert.match(html, /<td class="cand-name">Caffeine<span class="cand-flag" title="Inconsistent · \+9\.80 % \(±1\.0 %\) · measured 139\.6 Å² · DTCCS N2 · Baker2017 · moved from rank 1">CCS ≠ measured<\/span><\/td>/);
+  assert.match(html, /<td class="cand-name">Aspirin<span class="cand-flag"[^>]*>CCS ≠ predicted<\/span><\/td>/);
+  assert.equal((html.match(/cand-flag/g) ?? []).length, 2, "Consistent and No structure rows carry no flag");
+  assert.match(html, /<td class="cand-name">Isocaffeine<\/td>/);
+  assert.ok(!html.replace(/ title="[^"]*"/g, "").includes("Baker2017"), "the numbers stay in the detail line (the flag's hover title aside)");
+});
+
+test("the detail line shows the CCS: a verdict badge, then delta, tolerance, source and where it moved from", () => {
+  const html = view({ candidates: withCcs, defaultOpen: ["c1", "c2", "c3", "c4"] });
+  const ccsFacts = [...html.matchAll(/<div><dt>CCS<\/dt><dd>(.*?)<\/dd><\/div>/g)].map(m => m[1]);
+  assert.equal(ccsFacts.length, 4);
+  assert.equal(ccsFacts[0], '<span class="badge tone-good">Consistent</span><span class="cand-ccs"> +0.20 % (±6.5 %) · predicted 139.3 Å² · SVR</span>');
+  assert.equal(ccsFacts[1], '<span class="badge tone-warn">Inconsistent</span><span class="cand-ccs"> +9.80 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · Baker2017</span><span class="cand-ccs"> · moved from rank 1</span>');
+  assert.match(ccsFacts[2], /^<span class="badge tone-warn">Inconsistent<\/span><span class="cand-ccs"> −6\.33 % \(±5\.6 %\) · predicted 150\.0 Å² · SVR<\/span>$/);
+  assert.equal(ccsFacts[3], '<span class="badge tone-neutral">No structure</span><span class="cand-ccs"> a CCS can only be looked up for a structure</span>');
+});
+
+test("without a CCS check the detail line and the closed table are exactly as before", () => {
+  const html = view({ defaultOpen: ["c1"] });
+  assert.doesNotMatch(html, /CCS|cand-flag|cand-ccs/);
+  assert.equal(candidateDetails(candidates[0]).length, 6);
+});
+
+test("ccsNumbers and ccsText: the numbers when there are some, the note when there are not", () => {
+  assert.equal(ccsNumbers(ccs({ delta_pct: -3.37, tolerance_pct: 2, source: "measured", reference: 145.4, ref_label: "TWCCS N2", dataset: "moll0218" })), "−3.37 % (±2.0 %) · measured 145.4 Å² · TWCCS N2 · moll0218");
+  assert.equal(ccsNumbers({ verdict: "Not checked", note: "Unknown adduct: '[M+Xx]+'." }), "Unknown adduct: '[M+Xx]+'.");
+  assert.equal(ccsNumbers({ verdict: "No structure" }), "");
+  assert.equal(ccsText({ verdict: "No structure" }), "No structure");
+  assert.equal(ccsText(ccs({ moved_from: 3 })), "Consistent · +0.64 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · Baker2017 · moved from rank 3");
 });

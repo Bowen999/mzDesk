@@ -1,6 +1,6 @@
 import { Fragment, useId, useState, type MouseEvent } from "react";
 import type { AnnotationCandidate, Cell } from "../types";
-import { candidateDetails, LEVEL_TONE, levelName } from "./annotationModel";
+import { candidateDetails, CCS_TONE, ccsNumbers, ccsText, LEVEL_TONE, levelName } from "./annotationModel";
 import { CellView } from "./Blocks";
 import "./pipeline.css";
 
@@ -14,8 +14,9 @@ const levelCell = (c: AnnotationCandidate): Cell =>
 
 /**
  * The ranked candidates, key columns only: Rank, Name, Level, Final score and the Fragments "View" button. Everything else (SMILES, Formula,
- * Adduct, Layer, Detectability, Isomer role) sits in a detail line that a toggle button (or a click on the row) opens, so the table never
- * scrolls sideways. The order is the one the result came in. `defaultOpen` lists candidate ids whose detail starts open.
+ * Adduct, Layer, Detectability, Isomer role, and the CCS check when the run had an observed CCS) sits in a detail line that a toggle button (or a
+ * click on the row) opens, so the table never scrolls sideways. A candidate the CCS rule applied to carries a short flag after its name. The order is the
+ * one the result came in. `defaultOpen` lists candidate ids whose detail starts open.
  * The "View" buttons need a FragmentProvider above this table.
  */
 export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: AnnotationCandidate[]; defaultOpen?: string[] }) {
@@ -42,7 +43,7 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                       aria-label={`${isOpen ? "Hide" : "Show"} details of ${name}`} onClick={() => toggle(c.id)}><span className="cand-caret" aria-hidden="true" /></button>
                   </td>
                   <td>{c.rank ?? "—"}</td>
-                  <td className="cand-name">{c.name || "—"}</td>
+                  <td className="cand-name">{c.name || "—"}{c.ccs?.flag && <span className="cand-flag" title={ccsText(c.ccs)}>{c.ccs.flag}</span>}</td>
                   <td><CellView cell={levelCell(c)} /></td>
                   <td className="num">{typeof c.final_score === "number" ? c.final_score.toFixed(3) : "—"}</td>
                   <td><CellView cell={fragmentCell(c)} /></td>
@@ -50,7 +51,13 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                 {isOpen && (
                   <tr className="cand-detail" id={detail}>
                     <td colSpan={6}>
-                      <dl className="cand-facts">{candidateDetails(c).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+                      <dl className="cand-facts">
+                        {candidateDetails(c).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                        {c.ccs && <div key="CCS"><dt>CCS</dt>
+                          <dd><span className={"badge tone-" + (CCS_TONE[c.ccs.verdict] ?? "neutral")}>{c.ccs.verdict}</span>
+                            {ccsNumbers(c.ccs) && <span className="cand-ccs"> {ccsNumbers(c.ccs)}</span>}
+                            {c.ccs.moved_from ? <span className="cand-ccs"> · moved from rank {c.ccs.moved_from}</span> : null}</dd></div>}
+                      </dl>
                     </td>
                   </tr>)}
               </Fragment>);

@@ -44,6 +44,11 @@ FRIGID_ADDUCTS = {"Positive": ["Auto"] + FRIGID_ADDUCT_NAMES, "Negative": ["Auto
 LIBRARIES = ["MassBank", "GNPS"]            # 本地索引见 mzdesk/ms2/library_setup.py
 LIBRARY_METRICS = METRIC_NAMES.LIBRARY_ORDER    # Library search 页的指标多选 = Similarity 页得分表里的全部 16 项（同一份名字，谱熵排第一）
 LIBRARY_DEFAULT_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.COSINE_GREEDY]
+# CCS: platform / gas / TWIMS calibration choices, shared by the CCS page and the ESI MS/MS Annotation workflow's Ion Mobility section
+# (mzdesk/orthogonal/ccs.py PLATFORMS, GASES and TW_CALIBRATIONS; tests/test_annotation_ccs.py checks they agree)
+CCS_PLATFORMS = ["DTIMS (stepped field)", "DTIMS (single field)", "TIMS", "TWIMS", "FAIMS / DMS"]
+CCS_GASES = ["N₂", "He"]
+CCS_TW_CALIBRATIONS = ["N₂ reference values", "He reference values (N₂→He)"]
 DATABASES = ["HMDB", "PubChem", "LIPID MAPS", "KEGG", "ChEBI", "DrugBank", "NORMAN SusDat"]
 
 
@@ -692,9 +697,9 @@ MODULES = [
     module("ccs", "CCS", "A", "Does the <b>ion mobility</b> agree: the <b>reference CCS</b> of the same compound and adduct, or a model prediction if there is none.",
         [structure(), select("adduct", "Adduct", ADDUCTS_POS[1:] + ADDUCTS_NEG[1:]),
          text("observed", "Observed CCS (Å², optional; several values comma-separated, e.g. two conformers)", placeholder="152.3 or 152.3, 160.1"),
-         select("platform", "Platform", ["DTIMS (stepped field)", "DTIMS (single field)", "TIMS", "TWIMS", "FAIMS / DMS"]),
-         select("gas", "Drift gas", ["N₂", "He"]),
-         select("tw_calibration", "TWIMS calibration (TWIMS only)", ["N₂ reference values", "He reference values (N₂→He)"])],
+         select("platform", "Platform", CCS_PLATFORMS),
+         select("gas", "Drift gas", CCS_GASES),
+         select("tw_calibration", "TWIMS calibration (TWIMS only)", CCS_TW_CALIBRATIONS)],
         [cards([("Reference CCS", "Å²", "The reference value used: the one closest to your observed value, or the median of the measured values when there is nothing to compare. "
                                          "If the index has no value for this compound and adduct, the model prediction."),
                 ("Source", "", "Measured: a published N₂ value from the CCSbase source data (CCS type and dataset in the note). Predicted: a model, weaker than a measurement."),
@@ -1041,9 +1046,10 @@ def stage(n, title, expected_s=1.0):
     return {"id": n, "title": title, "modules": [], "expected_s": float(expected_s)}
 
 
-def _section(title, *fields):
-    """Put the fields under one form heading (the pipeline page draws one group per heading)."""
-    return [{**f, "section": title} for f in fields]
+def _section(title, *fields, collapsed=False):
+    """Put the fields under one form heading (the pipeline page draws one group per heading).
+    collapsed: the section starts closed, behind its heading (a <details>, like "Advanced"); its fields carry section_collapsed."""
+    return [{**f, "section": title, **({"section_collapsed": True} if collapsed else {})} for f in fields]
 
 
 # adduct_rules.ADDITIVES (tests/test_pipeline.py checks they agree; spec does not import the rule engine)
@@ -1058,6 +1064,16 @@ _PIPELINE_ADVANCED = [
      "help": "Scores the library hits and decides the Level-2 gate. Falls back to CosineGreedy if it cannot be computed."},
     {**number("lib_threshold", "Level-2 gate similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
      "help": "A library hit needs this similarity to pass the gate. Hits join the candidate pool from this value minus 0.10."}]
+# ESI MS/MS Annotation, optional Ion Mobility section: one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
+_PIPELINE_CCS = [
+    {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0,
+     "help": "Optional. One value measured in N₂. Each candidate is compared with its CCS in the local reference data (same compound and adduct), or with a "
+             "predicted value if there is none. A candidate that disagrees with a measured value goes behind the others; a predicted value only reorders near-ties. "
+             "For TIMS enter the CCS your vendor software reports, not 1/K0."},
+    {**select("ccs_platform", "Platform", [""] + CCS_PLATFORMS, value=""), "placeholder": "Select the platform",
+     "help": "Required when a CCS is given: the allowed difference depends on the platform."},
+    select("ccs_gas", "Drift gas", CCS_GASES),
+    {**select("ccs_tw_calibration", "TWIMS calibration", CCS_TW_CALIBRATIONS), "visible_when": {"field": "ccs_platform", "equals": "TWIMS"}}]
 _PIPELINE_SPECTRUM = _section("Spectrum", {**precursor(), "required": True, "header_fallback": True, "auto_label": "Auto (rank the adducts)"},
                               {**spectrum(label="MS2 spectrum"), "required": True}, ms1())
 
@@ -1080,16 +1096,19 @@ def _caffeine_example(libraries, ms2):
 PIPELINES = [
     {"id": "esi_ms2_annotation", "title": "ESI MS/MS Annotation",
      "one_liner": "I have an <b>ESI MS/MS spectrum</b> and a precursor m/z. Find the adduct and formula, search the libraries and, if no library spectrum "
-                  "matches, propose structures; then let detectability order the near-ties (candidates within 10% of the best score) and check which isomers the spectrum can tell apart.",
+                  "matches, propose structures; then let detectability order the near-ties (candidates within 10% of the best score) and check which isomers the spectrum can tell apart. "
+                  "If you also have an <b>observed CCS</b>, each candidate is checked against its reference or predicted CCS.",
      "inputs": (_PIPELINE_SPECTRUM
                 + _section("Search", multiselect("libraries", "Libraries", LIBRARIES),
                            number("tol_ppm", "Precursor tolerance (ppm)", 10.0, 0.1), number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001),
                            select("omics", "Omics", ["Either / unknown", "Metabolomics", "Lipidomics"]))
                 + _section("Options", checkbox("halogen", "Allow Cl/Br in formulas"),
                            checkbox("local_isomers", "Also compare with database isomers (slower, stricter)"))
+                + _section("Ion Mobility", *_PIPELINE_CCS, collapsed=True)
                 + _section("Advanced", *_PIPELINE_ADVANCED)),
      # expected_s: Adduct includes the formula search (step 2 only reads it back): CASMI 2022 500 challenges median 5.0 s, caffeine cold 9.6-10.3 s;
-     # Library search: first query of a server loads the index (7.5 s cold, 0.03 s warm); MS-FINDER / FRIGID run only when the library does not decide
+     # Merge and re-rank: 0.03-0.2 s on the examples; an observed CCS adds about 0.01 s per structure, plus 1.0 s once per server process for loading the CCS prediction model
+     # (not worth a larger share of the bar). Library search: first query of a server loads the index (7.5 s cold, 0.03 s warm); MS-FINDER / FRIGID run only when the library does not decide
      # (CASMI medians 44 s / 95 s when run, caffeine 6-11 s): conservative middles; Isomer check re-runs MS-FINDER (CASMI median 7.8 s, caffeine 4.5-9 s)
      "stages": [stage(1, "Adduct", 6.0), stage(2, "Formula", 0.5), stage(3, "Library search", 4.0), stage(4, "MS-FINDER structures", 20.0),
                 stage(5, "FRIGID structures", 40.0), stage(6, "Merge and re-rank", 0.5), stage(7, "Isomer check", 8.0), stage(8, "Answer", 0.1)],

@@ -166,7 +166,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
       </label>);
     case "select": return (
       <label className="field" htmlFor={inputId}><span className="field-label-text">{f.label}{required && <Req />}</span>
-        <select {...common} value={value} onChange={e => onChange(e.target.value)}>{f.options!.map(o => <option key={o}>{o}</option>)}</select>
+        <select {...common} value={value} onChange={e => onChange(e.target.value)}>{f.options!.map(o => <option key={o} value={o}>{o === "" ? (f.placeholder ?? "") : o}</option>)}</select>
         <Note text={help} error={error} id={`${inputId}-help`} />
       </label>);
     case "radio": return (

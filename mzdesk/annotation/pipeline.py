@@ -5,7 +5,8 @@
   4 MS-FINDER           only if the gate failed
   5 FRIGID              only if the gate failed and MS-FINDER was not good enough (positive mode)
   6 merge + re-rank     every layer's candidates, the sub-threshold library hits included; the layers' scores decide the order,
-                        detectability only breaks near-ties (rerank.py)
+                        detectability only breaks near-ties (rerank.py). With an observed CCS (the "Ion Mobility" section of the form) each
+                        candidate is also checked against its reference or predicted CCS and may move (ccs_step.py, rerank.apply_ccs); levels never change
   7 isomers             one MS-FINDER run for the top-1 and its same-formula candidates; information only, never changes a level
   8 answer              answer.build_answer
 
@@ -14,7 +15,8 @@ without stopping the run (status "failed" + a note); the result always has an an
 The engines run one after another, each under the heavy-job lock of its own engine module.
 
 run(inputs, progress=None) -> Result:
-  {"answer": answer.build_answer(), "candidates": [Candidate.to_dict()] (ranked, with isomer annotations; formula rows when no structure),
+  {"answer": answer.build_answer(), "candidates": [Candidate.to_dict()] (ranked, with isomer annotations; formula rows when no structure;
+                   each row has "ccs" only when the form had an observed CCS, see schema.Candidate),
    "steps": [{"id", "title", "status": done | skipped | failed, "seconds", "note"}], "warnings": [str],
    "context": {"precursor_mz", "polarity", "adduct", "retained_adducts", "omics", "libraries", "gate_passed"},
    "isomer": the dict of isomers.discriminate() without its engine log, or None when step 7 did not run,
@@ -33,13 +35,13 @@ from dataclasses import dataclass, field
 
 from mzdesk import adducts
 from mzdesk.annotation import answer as ans
-from mzdesk.annotation import formula_step, frigid_step, library_step, msfinder_step
+from mzdesk.annotation import ccs_step, formula_step, frigid_step, library_step, msfinder_step
 from mzdesk.annotation.levels import level_name
 from mzdesk.annotation.merge import formula_only_candidates, merge_candidates
-from mzdesk.annotation.rerank import DEFAULT_PH, rerank
+from mzdesk.annotation.rerank import DEFAULT_PH, apply_ccs, rerank
 from mzdesk.annotation.schema import LAYER_LABELS, STATUS_DONE, STATUS_FAILED, STATUS_SKIPPED
 from mzdesk.api import blocks as blk
-from mzdesk.api.common import InputError, depiction_svg, flag, fmt, number, precursor, spectrum, text
+from mzdesk.api.common import InputError, depiction_svg, flag, fmt, number, precursor, signed, spectrum, text
 from mzdesk.exclusivity import isomers
 from mzdesk.shared.spectrum import parse_spectrum
 from mzdesk.spec import LIBRARIES, PIPELINES
@@ -61,7 +63,7 @@ SMILES_DRAWING = (260, 182)     # 2D structure drawn on hover over a SMILES cell
 # ---------------------------------------------------------------- inputs
 @dataclass
 class Query:
-    """The form, parsed. adduct None = Auto; ms1 may be empty; alkali None = unknown."""
+    """The form, parsed. adduct None = Auto; ms1 may be empty; alkali None = unknown; ccs None = no observed CCS (step 6 then does what it always did)."""
     precursor_mz: float
     positive: bool
     adduct: str | None
@@ -78,6 +80,7 @@ class Query:
     local_isomers: bool
     lib_metric: str = library_step.PRIMARY_METRIC
     lib_threshold: float = library_step.GATE_SIMILARITY
+    ccs: ccs_step.CcsQuery | None = None
     warnings: list = field(default_factory=list)
 
     @property
@@ -117,6 +120,7 @@ def parse_inputs(inputs):
     lib_metric = text(inputs, "lib_metric") or library_step.PRIMARY_METRIC
     if lib_metric not in library_step.METRIC_CHOICES:
         raise InputError(f"Similarity algorithm must be one of: {', '.join(library_step.METRIC_CHOICES)}.")
+    ccs = ccs_step.parse_form(inputs, warnings)
     return Query(
         precursor_mz=mz, positive=positive, adduct=adduct, ms2=ms2, ms1=parse_spectrum(text(inputs, "ms1")), libraries=list(dict.fromkeys(libraries)),
         tol_ppm=number(inputs, "tol_ppm", "Precursor tolerance (ppm)", default=10.0, positive=True),
@@ -126,7 +130,7 @@ def parse_inputs(inputs):
         halogen=flag(inputs, "halogen", "Allow Cl/Br in formulas"),
         local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metric=lib_metric,
         lib_threshold=number(inputs, "lib_threshold", "Level-2 gate similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
-        warnings=warnings)
+        ccs=ccs, warnings=warnings)
 
 
 # ---------------------------------------------------------------- blocks (shown while the job runs)
@@ -217,6 +221,67 @@ def _ranked_blocks(ranked):
     note = ("Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, "
             "so the Final score column does not always go down the list.")
     return [_table("ranked_table", "Ranked candidates", columns, rows), _notes("ranked_note", "How the rank is set", [note])]
+
+
+CCS_TONES = {"Consistent": "good", "Inconsistent": "warn"}
+
+
+def _label(c):
+    return c.name or c.smiles or c.id
+
+
+def _ccs_source(x):
+    """The "Source" cell of the CCS check: what the candidate was compared with."""
+    if x.get("reference") is None:
+        return "—"
+    if x.get("source") == "measured":
+        return f"Measured {x['reference']:.1f} Å² · {x.get('ref_label') or '—'} · {x.get('dataset') or '—'}"
+    return f"Predicted {x['reference']:.1f} Å² · {x.get('ref_label') or '—'}" + ("" if x.get("in_domain") is not False else " · outside its training domain")
+
+
+def _ccs_blocks(ranked, q):
+    """The "CCS check" block of step 6: one row per candidate in the final order, then how the rule moved candidates."""
+    rows, moves = [], []
+    for c in ranked:
+        x = c.ccs or {}
+        help_ = x.get("note") or None
+        if x.get("moved_from"):
+            moves.append(f"{_label(c)}: rank {x['moved_from']} to {c.rank} ({ccs_step.describe(c)})")
+            help_ = f"Moved from rank {x['moved_from']} to {c.rank} by the CCS."
+        verdict = x.get("verdict", "—")
+        rows.append([c.rank, _label(c), x.get("adduct") or c.adduct or "—", blk.badge(verdict, CCS_TONES.get(verdict, "neutral"), help=help_),
+                     signed(x.get("delta_pct"), 2), f"±{x['tolerance_pct']:.1f}" if x.get("tolerance_pct") is not None else "—", _ccs_source(x)])
+    table = _table("ccs_table", "CCS check", ["Rank", "Candidate", "Adduct", "Verdict", "Δ %", "Tolerance %", "Source"], rows)
+    table["caption"] = (f"Observed CCS {q.label}. Δ = (observed − reference) / reference. A candidate that disagrees with a measured reference goes behind all the "
+                        "others; one that disagrees with a predicted value only goes behind the other near-ties (within 10% of the best base score). "
+                        "Levels do not change.")
+    items = [f"Moved by CCS: {'; '.join(moves)}." if moves else "No candidate was moved by the CCS."]
+    return [table, _notes("ccs_note", "How the CCS check ranks", items)]
+
+
+def _check_ccs(ranked, q, adduct, steps, warnings):
+    """Step 6c on the re-ranked list -> (ranked in its final order, one sentence for the step note, blocks). Never raises: a failed CCS check leaves the order as it was."""
+    try:
+        outcome = ccs_step.check(ranked, q.ccs, adduct, progress=lambda done, total: steps.emit(6, "running", f"CCS checked {done}/{total}"))
+        if outcome.checks is None:                  # not comparable / index missing: one note, no effect
+            warnings.append(outcome.message)
+            return ranked, f"Observed CCS not used ({outcome.short}).", []
+        for c in ranked:
+            c.ccs = outcome.checks[c.id]
+        after = apply_ccs(ranked)
+    except Exception as exc:        # noqa: BLE001 - supporting evidence must not take the ranking down
+        log.exception("CCS check failed")
+        for c in ranked:
+            c.ccs = None
+        message = f"The CCS check failed ({type(exc).__name__}: {exc}); the order is the one without CCS."
+        warnings.append(message)
+        return ranked, message, []
+    moved = sum(1 for c in after if c.ccs.get("moved_from"))
+    if after[0].id != ranked[0].id:
+        first = ranked[0]                           # ranked[0].ccs is the measurement; `after` carries the flag
+        near = "near-tied candidates" if first.ccs.get("source") == "predicted" else "candidates"
+        warnings.append(f"CCS: {_label(first)} is {ccs_step.describe(first)}; it was moved behind the other {near}, so {_label(after[0])} is now ranked first.")
+    return after, ccs_step.summary(q.ccs, outcome, moved), _ccs_blocks(after, q.ccs)
 
 
 def _isomer_blocks(res, view_query=None, view_adduct=None):
@@ -388,7 +453,12 @@ def run_query(q, progress=None):
         merged = merge_candidates(layers)
         if not merged:
             rows = formula_only_candidates(formula_dicts)
-            return STATUS_DONE, ("No structure was proposed; the formulas are listed instead." if rows else "No structure and no formula."), [], ([], rows)
+            note = "No structure was proposed; the formulas are listed instead." if rows else "No structure and no formula."
+            if q.ccs is not None:
+                for row in rows:
+                    row.ccs = {"verdict": ccs_step.NO_STRUCTURE, "note": "a CCS can only be looked up for a structure"}
+                note += " The observed CCS was not used: there is no structure to look up."
+            return STATUS_DONE, note, [], ([], rows)
 
         def scored(done, total):
             steps.emit(6, "running", f"scored {done}/{total}")
@@ -404,7 +474,14 @@ def run_query(q, progress=None):
                 c.rank = i
             status, note = STATUS_FAILED, f"Re-rank failed ({type(exc).__name__}: {exc}); candidates are ordered by the layer scores."
             warnings.append(note)
-        return status, note, _ranked_blocks(ranked), (ranked, [])
+        extra = []
+        if q.ccs is not None:
+            if status == STATUS_DONE:
+                ranked, sentence, extra = _check_ccs(ranked, q, top_adduct, steps, warnings)
+                note += " " + sentence
+            else:
+                note += " The observed CCS was not used."
+        return status, note, _ranked_blocks(ranked) + extra, (ranked, [])
     got = steps.guarded(6, merge_rerank)
     ranked, formula_rows = got if got else ([], formula_only_candidates(formula_dicts))
     if gate_passed and not unverifiable and ranked and ranked[0].level != "2a":

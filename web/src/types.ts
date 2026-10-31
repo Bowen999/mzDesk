@@ -5,7 +5,7 @@ export type Field = {
   rows?: number; accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
   binary?: boolean; max_bytes?: number;
   // form metadata (Spectrum pages; optional everywhere)
-  section?: string; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
+  section?: string; section_collapsed?: boolean; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
   header_fallback?: boolean; auto_label?: string; ion_modes?: string[]; allow_formula?: boolean; help?: Help;
   label_field?: boolean;           // structure: an optional label input inside the field names the compound on the result cards
   // internet use (spec.py): the frontend asks before running online while the sidebar switch is off
@@ -105,12 +105,23 @@ export type AnnotationAnswer = {
   type: "single" | "group" | "formula_only" | "mass_only" | "none"; ids: string[]; layer: string; layer_label: string; level: string; level_label: string;
   statement: string; top_id: string | null; isomer_verdict: string | null;
 };
+/** The CCS check of one candidate (mzdesk/annotation/ccs_step.py), present only when the form had an observed CCS. */
+export type CandidateCcs = {
+  verdict: string;                        // Consistent | Inconsistent | No reference | No structure | Not checked
+  source?: "measured" | "predicted" | null;
+  adduct?: string | null; observed?: number | null; reference?: number | null; delta_pct?: number | null; tolerance_pct?: number | null;
+  ref_label?: string | null;              // CCS type of the measured row ("DTCCS N2") or the model name
+  dataset?: string | null; n_refs?: number; in_domain?: boolean | null; note?: string;
+  flag?: string | null;                   // "CCS ≠ measured" | "CCS ≠ predicted": the ranking rule applied to this candidate
+  moved_from?: number | null;             // its rank before the rule moved it
+};
 export type AnnotationCandidate = {
   id: string; rank: number | null; name: string; smiles: string | null; formula: string | null; adduct: string | null; layer: string; layer_label: string;
   level: string | null; level_label: string; level_reason: string; final_score: number | null; base_score: number | null; hypothesis: boolean;
   evidence?: { library?: { gate_passed?: boolean } };
   detect: { omics?: string; ionizable?: string; adduct?: string } | null;
   fragment_adduct?: string | null;     // MetFrag's spelling of the adduct; null / absent = no "View" button
+  ccs?: CandidateCcs | null;           // only with an observed CCS in the form
   isomer: { verdict: string; role: string | null; challenger: boolean; explained_fraction: number | null } | null;
 };
 export type AnnotationResult = {

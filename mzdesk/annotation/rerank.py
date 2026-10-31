@@ -23,6 +23,9 @@ unknown never lowers a score: the adduct is then scored under every additive tha
 adduct needs an ammonium additive, a formate or acetate adduct that anion, any other adduct can appear under all of them; the
 search stops at the first "high", which cannot be beaten), and sodium / potassium count as present. Adduct names are made canonical
 first ([M+FA-H]- is [M+HCOO]-, mzdesk.adducts); a name the adduct rules do not list reads as "not expected".
+
+An observed CCS (optional, ccs_step.py) can move candidates after this re-rank: apply_ccs() below. It is supporting evidence only, so it never
+changes a score or a level; see its docstring for the rule.
 """
 from __future__ import annotations
 
@@ -170,6 +173,11 @@ def _best_adduct(smiles, adduct, additive, alkali):
     return likelihood, f"with {context}; rule score {score:g}; {reason}"
 
 
+def _in_window(base, best, cfg):
+    """True when a base score is within the tie-break window of the best one (the test rerank() and apply_ccs() share)."""
+    return base >= (1 - cfg.tiebreak_window) * best - 1e-9
+
+
 # ---------------------------------------------------------------- the factors
 def _omics_factor(cls, chosen, cfg):
     if cls == NEITHER:
@@ -272,7 +280,9 @@ def rerank(candidates, *, polarity, adduct, omics, ph=DEFAULT_PH, additive=UNKNO
         if progress:
             progress(index + 1, len(candidates))
     best = max((row[0] for row in scored), default=0.0)
-    in_window = [row[0] >= (1 - cfg.tiebreak_window) * best - 1e-9 for row in scored]
+    in_window = [_in_window(row[0], best, cfg) for row in scored]
+    for row, inside in zip(scored, in_window):              # not a field, never serialized: apply_ccs() must see this decision, not one redone on the rounded base_score
+        row[3]._in_tiebreak_window = inside
     window = sorted((row for row, inside in zip(scored, in_window) if inside), key=lambda r: (-round(r[1], 6), -round(r[0], 6), r[2]))
     rest = sorted((row for row, inside in zip(scored, in_window) if not inside), key=lambda r: (-round(r[0], 6), r[2]))
     for row in rest:                                        # the factors took no part in this position
@@ -283,3 +293,55 @@ def rerank(candidates, *, polarity, adduct, omics, ph=DEFAULT_PH, additive=UNKNO
     for rank, (base, final, _, new) in enumerate(ordered, start=1):
         new.base_score, new.final_score, new.rank = round(base, 4), round(final, 4), rank
     return [row[3] for row in ordered]
+
+
+# ---------------------------------------------------------------- the CCS rule (step 6c)
+CCS_INCONSISTENT = "Inconsistent"        # = mzdesk.orthogonal.ccs.INCONSISTENT (tests/test_annotation_ccs.py checks they agree)
+CCS_MEASURED, CCS_PREDICTED = "measured", "predicted"
+FLAG_CCS_MEASURED, FLAG_CCS_PREDICTED = "CCS ≠ measured", "CCS ≠ predicted"
+
+
+def apply_ccs(ranked, config=None):
+    """Move candidates whose CCS disagrees with their reference -> new Candidates (the input is not changed), rank renumbered 1..n.
+
+    `ranked` is the order rerank() returned (the tie-break window first) and every candidate carries `ccs` (ccs_step.check). The rule:
+
+      measured, strong   A candidate whose CCS is Inconsistent with a measured reference goes behind every candidate that is not
+                         measured-inconsistent, wherever it stood (also outside the window). Those candidates keep their relative order.
+      predicted, weak    A candidate whose CCS is Inconsistent with a predicted value only moves inside the tie-break window: behind the
+                         window's other members. A predicted-inconsistent candidate outside the window stays where it is, and one that
+                         is also behind a measured-inconsistent one is simply behind it.
+      everything else    Consistent, No reference, No structure, Not checked (and a candidate without a `ccs`): not moved by the rule.
+                         Candidates only change place by the others leaving theirs; relative order is otherwise stable.
+
+    The window is the re-rank's own (base_score >= (1 - tiebreak_window) x the best base_score), measured on the list as given, so a demoted
+    candidate still counts for it. rerank() leaves its decision on each candidate (it was made on the exact base score, which base_score only holds rounded
+    to 4 decimals); a candidate that did not come from rerank() is judged by its base_score. Scores, levels and `detect` are not touched: CCS is supporting evidence, not a score. A candidate the rule
+    applies to gets ccs["flag"] ("CCS ≠ measured" / "CCS ≠ predicted"); one that a candidate behind it overtook also gets ccs["moved_from"], its rank before
+    (a flagged candidate can still gain places when a measured-inconsistent one ahead of it leaves; it then has a flag and no moved_from).
+    """
+    cfg = config or RerankConfig()
+    cands = [copy.deepcopy(c) for c in ranked]
+    best = max((c.base_score or 0.0 for c in cands), default=0.0)
+    window = {i for i, c in enumerate(cands)
+              if (c._in_tiebreak_window if hasattr(c, "_in_tiebreak_window") else _in_window(c.base_score or 0.0, best, cfg))}     # rerank()'s own decision; recomputed only for hand-made candidates
+
+    def inconsistent_with(i, source):
+        x = cands[i].ccs or {}
+        return x.get("verdict") == CCS_INCONSISTENT and x.get("source") == source
+
+    strong = [i for i in range(len(cands)) if inconsistent_with(i, CCS_MEASURED)]
+    weak = [i for i in sorted(window) if inconsistent_with(i, CCS_PREDICTED) and i not in strong]
+    order = [i for i in range(len(cands)) if i not in strong and i not in weak]
+    if weak:
+        at = max((k for k, i in enumerate(order) if i in window), default=-1) + 1          # right behind the window's other members
+        order[at:at] = weak
+    order += strong
+
+    place = {i: new_pos for new_pos, i in enumerate(order)}
+    for i, c in enumerate(cands):
+        c.rank = place[i] + 1
+        if i in strong or i in weak:
+            passed = any(place[j] < place[i] for j in range(i + 1, len(cands)))          # a candidate that stood behind it is now ahead of it
+            c.ccs = {**c.ccs, "flag": FLAG_CCS_MEASURED if i in strong else FLAG_CCS_PREDICTED, "moved_from": i + 1 if passed else None}
+    return [cands[i] for i in order]

@@ -21,20 +21,22 @@ const sleep = (ms: number) => new Promise<void>(resolve => window.setTimeout(res
 const ESI_PIPELINE = "esi_ms2_annotation";       // the one workflow with its own result view; the others return the generic WorkflowResult
 const isWorkflowResult = (r: AnnotationResult | WorkflowResult): r is WorkflowResult => "pipeline" in r;
 
-/** Fields grouped by `section`, in the order the sections first appear. */
-function groupFields(fields: Field[]): { title: string; fields: Field[] }[] {
-  const groups: { title: string; fields: Field[] }[] = [];
+/** Fields grouped by `section`, in the order the sections first appear. A section starts closed (behind its heading) when it is "Advanced" or its fields say section_collapsed. */
+function groupFields(fields: Field[]): { title: string; fields: Field[]; collapsed: boolean }[] {
+  const groups: { title: string; fields: Field[]; collapsed: boolean }[] = [];
   for (const f of fields) {
     const title = f.section ?? "";
     let g = groups.find(x => x.title === title);
-    if (!g) { g = { title, fields: [] }; groups.push(g); }
+    if (!g) { g = { title, fields: [], collapsed: title === "Advanced" }; groups.push(g); }
     g.fields.push(f);
+    if (f.section_collapsed) g.collapsed = true;
   }
   return groups;
 }
 
 const FRAGMENT_NOTE = "The isomer comparison on this page uses MS-FINDER; this view uses MetFrag, so the explained peaks can differ between the two.";
 const RANK_NOTE = "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.";
+const CCS_RANK_NOTE = "With an observed CCS, a candidate that disagrees with a measured reference goes behind all the others; one that disagrees with a predicted value only goes behind the other near-ties. Such a candidate carries a CCS flag, and the levels do not change.";
 
 /** The generic result (mzdesk/workflows/common.py): the answer (statement, level badge, facts), the warnings, then the headline blocks. */
 export function WorkflowResultView({ result }: { result: WorkflowResult }) {
@@ -168,8 +170,8 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           const body = g.fields.every(f => f.type === "checkbox")
             ? <div className="check-row">{g.fields.map(field)}</div>
             : <div className="fields">{g.fields.map(field)}</div>;
-          return g.title === "Advanced"
-            ? <details className="form-section" key={g.title}><summary>Advanced</summary>{body}</details>
+          return g.collapsed
+            ? <details className="form-section" key={g.title}><summary>{g.title}</summary>{body}</details>
             : g.title ? <fieldset className="form-section" key={g.title}><legend>{g.title}</legend>{body}</fieldset> : <div key="plain">{body}</div>;
         })}
         <div className="actions">
@@ -188,7 +190,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           <AnswerCard result={result} requestedAdduct={requestedAdduct} />
           <SpectrumEvidence result={result} />
           <IsomerEvidence result={result} />
-          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={[RANK_NOTE]} label="Help: Ranked candidates" /></h2>
+          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
             <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
           <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
             <CandidateTable candidates={result.candidates} />

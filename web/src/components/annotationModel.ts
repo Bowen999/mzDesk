@@ -1,4 +1,4 @@
-import type { AnnotationCandidate, AnnotationResult } from "../types";
+import type { AnnotationCandidate, AnnotationResult, CandidateCcs } from "../types";
 
 /** Pure helpers of the ESI MS/MS Annotation result view (answer card, candidate table): everything is derived from the result's own fields,
  *  nothing is scored or ranked here. */
@@ -80,7 +80,26 @@ export function answerSummary(result: AnnotationResult): AnswerSummary {
   if (score !== null) facts.push(["Final score", score.toFixed(3)]);
   if (verdict && verdict !== "not run") facts.push(["Isomer check", conflicting ? "conflicting evidence" : verdict]);
   if (result.context?.gate_passed) facts.push(["Library gate", "passed"]);
+  if (top?.ccs) facts.push(["CCS", ccsText(top.ccs)]);
   return { headline, level, score, secondary: parts.join(" · "), warn, facts, challengers: sentence };
+}
+
+// ---------------------------------------------------------------- CCS check (supporting evidence; mzdesk/annotation/ccs_step.py)
+export const CCS_TONE: Record<string, string> = { Consistent: "good", Inconsistent: "warn" };
+const signedPct = (v: number) => `${v < 0 ? "−" : "+"}${Math.abs(v).toFixed(2)} %`;
+
+/** The numbers behind a CCS verdict: "+0.64 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · MetCCS"; the engine's note when there is no verdict; "" when there is neither. */
+export function ccsNumbers(x: CandidateCcs): string {
+  if (typeof x.delta_pct === "number" && typeof x.reference === "number" && typeof x.tolerance_pct === "number") {
+    return [`${signedPct(x.delta_pct)} (±${x.tolerance_pct.toFixed(1)} %)`, `${x.source ?? "reference"} ${x.reference.toFixed(1)} Å²`, x.ref_label, x.dataset,
+      x.in_domain === false ? "outside its training domain" : ""].filter(Boolean).join(" · ");
+  }
+  return x.note ?? "";
+}
+
+/** One line for the answer's Details: "Inconsistent · +9.80 % (±1.0 %) · measured 140.5 Å² · DTCCS N2 · tag · moved from rank 1". */
+export function ccsText(x: CandidateCcs): string {
+  return [x.verdict, ccsNumbers(x), x.moved_from ? `moved from rank ${x.moved_from}` : ""].filter(Boolean).join(" · ");
 }
 
 // ---------------------------------------------------------------- candidate table

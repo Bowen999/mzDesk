@@ -5,6 +5,7 @@ Who fills what
              fields, mz_error_ppm, layer_score, layer_score_norm, evidence and hypothesis, and nothing else.
   step 6a    merge.merge_candidates() makes one Candidate per structure (ik14) and fills id, sources, flags, level and level_reason.
   step 6b    rerank.rerank() fills detect, base_score, final_score and rank.
+  step 6c    ccs_step.check() fills ccs when the form has an observed CCS; rerank.apply_ccs() may then move the candidate and renumber rank.
   step 7     answer.attach_isomer() fills isomer.
   step 8     Candidate.to_dict() is one row of the ranked list; answer.build_answer() writes the answer block.
 
@@ -85,6 +86,18 @@ class Candidate:
       final_score      base_score x detect["factor"]; detectability only orders candidates whose base_score is within 10% of the best, the rest keep layer-score order
       rank             1-based position in the ranked list
 
+    Filled by the CCS check (step 6c), only when the form has an observed CCS (otherwise None, and to_dict() leaves the key out)
+      ccs              {"verdict": Consistent | Inconsistent | No reference | No structure | Not checked,
+                        "source": "measured" | "predicted" | None   (what the verdict is against),
+                        "adduct": the adduct that was looked up, "observed": the observed CCS (Å²),
+                        "reference": the reference or predicted CCS (Å²), "delta_pct": (observed - reference) / reference x 100,
+                        "tolerance_pct": ±%, "ref_label": CCS type of the measured row ("DTCCS N2") or the model name,
+                        "dataset": source dataset of the measured row, "n_refs": measured values in the index,
+                        "in_domain": prediction only, False = outside the model's training domain, "note": why there is no verdict,
+                        "flag": "CCS ≠ measured" | "CCS ≠ predicted" | None   (the rule of rerank.apply_ccs applied to this candidate),
+                        "moved_from": the rank before the rule moved it, or None}
+                       CCS is supporting evidence only: it never changes `level`.
+
     Filled by the isomer check (step 7), answer.attach_isomer()
       isomer           {"verdict": single | indistinguishable | insufficient | not run (the same on every row),
                         "role": "top" (the top-1), "separated" (told apart from the top-1), "not separated" (cannot be told
@@ -114,6 +127,7 @@ class Candidate:
     level: str | None = None
     level_reason: str = ""
     isomer: dict | None = None
+    ccs: dict | None = None
 
     def __post_init__(self):
         if self.layer not in LAYERS + (LAYER_FORMULA,):
@@ -123,10 +137,12 @@ class Candidate:
             self.layer_score_norm = 0.0
 
     def to_dict(self):
-        """JSON-able dict: every field, plus the display names layer_label and level_label. NaN / inf become None."""
+        """JSON-able dict: every field (ccs only when the CCS check ran), plus the display names layer_label and level_label. NaN / inf become None."""
         from mzdesk.annotation.levels import level_label      # levels imports this module, so import it here
 
         d = _jsonable(asdict(self))
+        if d.get("ccs") is None:                    # no observed CCS in the form: the row is exactly what it was before the CCS check existed
+            d.pop("ccs", None)
         d["layer_label"] = LAYER_LABELS[self.layer]
         d["level_label"] = level_label(self.level)
         return d

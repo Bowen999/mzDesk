@@ -263,6 +263,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.3.1', date:'2026-10-31', git:'',
+  title:'ESI MS/MS Annotation：可选“观测 CCS”，第 6 步用 CCS 核对每个候选',
+  note:'主要未决问题：与实测 CCS 不符的库匹配会排到没有结构的条目之后（没有结构的条目不算被实测否定），答案的等级跟着新的第 1 名走。实测强、预测弱的权重是 owner 定的起始规则，未用任何数据拟合。',
+  state:[['CCS','可选 · 实测强、预测弱 · 不改等级'], ['版本','0.3.1']],
+  c:{
+   pipe:['feat','ESI MS/MS Annotation 新增可选“观测 CCS”（Ion Mobility 折叠区：CCS、平台、漂移气、TWIMS 校准）；第 6 步按每个候选自己的加合物与 CCSbase 实测参考值或模型预测值核对：与实测不符→排到所有未被实测否定的候选之后；与预测不符→只在 10% 并列窗口内靠后并标记；相符或无参考不动；证据等级不变；不填 CCS 时结果与 v0.3.0 完全相同。He、FAIMS / DMS、用 He 校准的 TWIMS 不可比，只在警告里说明，不动排序。',true,{w:'mzdesk/annotation/ccs_step.py · mzdesk/annotation/rerank.py · mzdesk/annotation/pipeline.py · mzdesk/annotation/schema.py · mzdesk/spec.py · web/src/types.ts · web/src/pages/PipelinePage.tsx · web/src/components/ · tests/test_annotation_ccs.py · tests/test_annotation_ccs_unchanged.py · tests/fixtures/esi_without_ccs.json · tests/test_pipeline.py · web/tests/'}],
+   docs:['doc','版本号 0.3.1，本页加 v0.3.1。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.3.0', date:'2026-10-31', git:'',
   title:'新增两条流程：EI MS 注释、靶向方法开发；进度条合并为一条平滑进度',
   note:'两条新流程只串联现有引擎，新增的只是小规则。EI MS 注释的证据等级沿用 ESI，Level 2a 的 0.80 门槛未针对 EI 校准（待定）。benchmark 结果对应 v0.2.40 代码，属探索性。',

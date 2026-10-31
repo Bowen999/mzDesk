@@ -113,3 +113,30 @@ test("a result with the fields missing does not break the card", () => {
   assert.doesNotThrow(() => view(sparse));
   assert.doesNotThrow(() => view({ ...group(), candidates: [], isomer: null }));
 });
+
+// ---------------------------------------------------------------- CCS check (supporting evidence)
+const ccs = (over = {}) => ({ verdict: "Consistent", source: "measured", adduct: "[M+H]+", observed: 139.6, reference: 139.6, delta_pct: 0, tolerance_pct: 1, ref_label: "DTCCS N2",
+  dataset: "Baker2017", n_refs: 6, in_domain: null, note: "", flag: null, moved_from: null, ...over });
+const withCcs = x => group({ candidates: [candidate("c1", "Caffeine", { ccs: x }), candidate("c2", "Isocaffeine", { rank: 2, final_score: 0.835 })] });
+const detailsOf = html => text(html.slice(html.indexOf("<details")));
+
+test("Details lists the top candidate's CCS line, and the headline does not change", () => {
+  const html = view(withCcs(ccs()));
+  assert.ok(detailsOf(html).includes("CCS Consistent · +0.00 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · Baker2017"));
+  assert.equal(html.slice(0, html.indexOf("<details")), view(group()).slice(0, view(group()).indexOf("<details")), "the compact card above Details is the one without CCS");
+  assert.deepEqual(answerSummary(withCcs(ccs())).facts.at(-1), ["CCS", "Consistent · +0.00 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · Baker2017"]);
+});
+
+test("a demoted top, a predicted value and a candidate without a reference read plainly", () => {
+  const moved = ccs({ verdict: "Inconsistent", delta_pct: 9.8, reference: 140.5, flag: "CCS ≠ measured", moved_from: 1 });
+  assert.ok(detailsOf(view(withCcs(moved))).includes("CCS Inconsistent · +9.80 % (±1.0 %) · measured 140.5 Å² · DTCCS N2 · Baker2017 · moved from rank 1"));
+  const predicted = ccs({ verdict: "Inconsistent", source: "predicted", reference: 150, delta_pct: -6.33, tolerance_pct: 5.6, ref_label: "SVR", dataset: null, in_domain: false });
+  assert.ok(detailsOf(view(withCcs(predicted))).includes("CCS Inconsistent · −6.33 % (±5.6 %) · predicted 150.0 Å² · SVR · outside its training domain"));
+  const none = ccs({ verdict: "No reference", source: null, reference: null, delta_pct: null, tolerance_pct: null, ref_label: null, dataset: null, note: "No prediction model is installed." });
+  assert.ok(detailsOf(view(withCcs(none))).includes("CCS No reference · No prediction model is installed."));
+});
+
+test("no CCS check, no CCS fact", () => {
+  assert.ok(!answerSummary(group()).facts.some(([k]) => k === "CCS"));
+  assert.doesNotMatch(view(group()), /CCS/);
+});

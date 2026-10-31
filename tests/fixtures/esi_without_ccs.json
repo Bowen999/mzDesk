@@ -1,0 +1,1202 @@
+{
+ "MS-FINDER and FRIGID": {
+  "result": {
+   "answer": {
+    "ids": [
+     "c1"
+    ],
+    "isomer_verdict": "insufficient",
+    "layer": "msfinder",
+    "layer_label": "MS-FINDER",
+    "level": "3",
+    "level_label": "Level 3: tentative candidate",
+    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with), so other isomers of C8H10N4O2 are not ruled out.",
+    "top_id": "c1",
+    "type": "single"
+   },
+   "candidates": [
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.8,
+     "detect": {
+      "adduct": "high",
+      "factor": 1.0,
+      "ionizable": "strong",
+      "omics": "both"
+     },
+     "evidence": {
+      "msfinder": {
+       "score": 0.8
+      }
+     },
+     "final_score": 0.8,
+     "flags": [],
+     "formula": "C8H10N4O2",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c1",
+     "ik14": "RYYVLZVUVIJVGH",
+     "inchikey": "RYYVLZVUVIJVGH-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": "top",
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 8.0,
+     "layer_score_norm": 0.8,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 1,
+     "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 8.0,
+       "layer_score_norm": 0.8,
+       "rank_in_layer": 1
+      }
+     ]
+    },
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.76,
+     "detect": {
+      "adduct": "high",
+      "factor": 1.0,
+      "ionizable": "strong",
+      "omics": "both"
+     },
+     "evidence": {
+      "msfinder": {
+       "score": 0.76
+      }
+     },
+     "final_score": 0.76,
+     "flags": [],
+     "formula": "C2H6O",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c2",
+     "ik14": "LFQSCWFLJHTTHZ",
+     "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": null,
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 7.6,
+     "layer_score_norm": 0.76,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 2,
+     "smiles": "CCO",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 7.6,
+       "layer_score_norm": 0.76,
+       "rank_in_layer": 2
+      }
+     ]
+    },
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.3,
+     "detect": {
+      "adduct": "high",
+      "factor": 1.0,
+      "ionizable": "strong",
+      "omics": "both"
+     },
+     "evidence": {
+      "frigid": {
+       "score": 0.2
+      },
+      "msfinder": {
+       "score": 0.3
+      }
+     },
+     "final_score": 0.3,
+     "flags": [],
+     "formula": "C2H6O",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c3",
+     "ik14": "LCGLNKUTAGEVQW",
+     "inchikey": "LCGLNKUTAGEVQW-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": null,
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 3.0,
+     "layer_score_norm": 0.3,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum; also proposed by FRIGID.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 3,
+     "smiles": "COC",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 3.0,
+       "layer_score_norm": 0.3,
+       "rank_in_layer": 3
+      },
+      {
+       "layer": "frigid",
+       "layer_score": 2.0,
+       "layer_score_norm": 0.2,
+       "rank_in_layer": 1
+      }
+     ]
+    }
+   ],
+   "context": {
+    "adduct": "[M+H]+",
+    "gate_passed": false,
+    "libraries": [],
+    "omics": "Either / unknown",
+    "polarity": "Positive",
+    "precursor_mz": 195.0877,
+    "retained_adducts": [
+     "[M+H]+"
+    ]
+   },
+   "fragment_query": {
+    "peaks": [
+     [
+      56.0495,
+      8.8088
+     ],
+     [
+      69.0446,
+      32.032
+     ],
+     [
+      81.0447,
+      3.8038
+     ],
+     [
+      82.0525,
+      1.6016
+     ],
+     [
+      83.0603,
+      31.6316
+     ],
+     [
+      97.0075,
+      2.7027
+     ],
+     [
+      97.0397,
+      2.1021
+     ],
+     [
+      108.0557,
+      1.4014
+     ],
+     [
+      109.0396,
+      9.009
+     ],
+     [
+      110.0712,
+      59.0591
+     ],
+     [
+      111.0552,
+      3.9039
+     ],
+     [
+      123.0427,
+      14.4144
+     ],
+     [
+      138.0662,
+      100.0
+     ]
+    ],
+    "precursor_mz": 195.0877,
+    "tol_da": 0.02
+   },
+   "isomer": {
+    "candidates": [],
+    "challengers": [],
+    "engine": "MS-FINDER",
+    "error": null,
+    "group": [],
+    "isomers": [],
+    "notes": [
+     "No isomer to compare with."
+    ],
+    "top_id": "c1",
+    "verdict": "insufficient"
+   },
+   "steps": [
+    {
+     "id": 1,
+     "note": "adducts scored",
+     "seconds": 0,
+     "status": "done",
+     "title": "Adduct"
+    },
+    {
+     "id": 2,
+     "note": "1 formulas",
+     "seconds": 0,
+     "status": "done",
+     "title": "Formula"
+    },
+    {
+     "id": 3,
+     "note": "No library was selected, so no library spectrum was searched.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "Library search"
+    },
+    {
+     "id": 4,
+     "note": "msfinder note",
+     "seconds": 0,
+     "status": "done",
+     "title": "MS-FINDER structures"
+    },
+    {
+     "id": 5,
+     "note": "frigid note",
+     "seconds": 0,
+     "status": "done",
+     "title": "FRIGID structures"
+    },
+    {
+     "id": 6,
+     "note": "3 structures from 2 layers, in the layers' order; detectability only orders near-ties.",
+     "seconds": 0,
+     "status": "done",
+     "title": "Merge and re-rank"
+    },
+    {
+     "id": 7,
+     "note": "No isomer to compare with.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "Isomer check"
+    },
+    {
+     "id": 8,
+     "note": "Level 3: tentative candidate (single).",
+     "seconds": 0,
+     "status": "done",
+     "title": "Answer"
+    }
+   ],
+   "warnings": [
+    "an MS-FINDER warning"
+   ]
+  },
+  "step6": [
+   "done",
+   "3 structures from 2 layers, in the layers' order; detectability only orders near-ties.",
+   [
+    {
+     "columns": [
+      "Rank",
+      "Name",
+      "Formula",
+      "Adduct",
+      "Layer",
+      "Level",
+      "Base score",
+      "Final score",
+      "Omics",
+      "Ionizable",
+      "Adduct fit"
+     ],
+     "data": {
+      "count": 3,
+      "rows": [
+       [
+        1,
+        "—",
+        "C8H10N4O2",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.800",
+        "0.800",
+        "both",
+        "strong",
+        "high"
+       ],
+       [
+        2,
+        "—",
+        "C2H6O",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.760",
+        "0.760",
+        "both",
+        "strong",
+        "high"
+       ],
+       [
+        3,
+        "—",
+        "C2H6O",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.300",
+        "0.300",
+        "both",
+        "strong",
+        "high"
+       ]
+      ]
+     },
+     "id": "ranked_table",
+     "title": "Ranked candidates",
+     "type": "table"
+    },
+    {
+     "data": {
+      "items": [
+       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+      ]
+     },
+     "id": "ranked_note",
+     "title": "How the rank is set",
+     "type": "notes"
+    }
+   ]
+  ]
+ },
+ "library gate passed": {
+  "result": {
+   "answer": {
+    "ids": [
+     "c1"
+    ],
+    "isomer_verdict": "single",
+    "layer": "library",
+    "layer_label": "library",
+    "level": "2a",
+    "level_label": "Level 2a: probable structure (library spectrum match)",
+    "statement": "Caffeine is the top-ranked structure (library, Level 2a). Fragment peaks tell it apart from every other isomer that was considered. The isomer verdict only holds for the candidates that were considered; an isomer that is not in the candidate list has not been ruled out.",
+    "top_id": "c1",
+    "type": "single"
+   },
+   "candidates": [
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.93,
+     "detect": {
+      "adduct": "high",
+      "factor": 1.0,
+      "ionizable": "strong",
+      "omics": "both"
+     },
+     "evidence": {
+      "library": {
+       "failed_checks": [],
+       "gate_passed": true,
+       "matched_peaks": 9,
+       "precursor_error_ppm": 0.3,
+       "similarity": 0.93
+      }
+     },
+     "final_score": 0.93,
+     "flags": [],
+     "formula": "C8H10N4O2",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c1",
+     "ik14": "RYYVLZVUVIJVGH",
+     "inchikey": "RYYVLZVUVIJVGH-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": 0.8,
+      "role": "top",
+      "verdict": "single"
+     },
+     "layer": "library",
+     "layer_label": "library",
+     "layer_score": 0.93,
+     "layer_score_norm": 0.93,
+     "level": "2a",
+     "level_label": "Level 2a: probable structure (library spectrum match)",
+     "level_reason": "Library spectrum passed the Level-2 gate (similarity 0.93, 9 matched peaks).",
+     "mz_error_ppm": null,
+     "name": "Caffeine",
+     "rank": 1,
+     "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+     "sources": [
+      {
+       "layer": "library",
+       "layer_score": 0.93,
+       "layer_score_norm": 0.93,
+       "rank_in_layer": 1
+      }
+     ]
+    },
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.72,
+     "detect": {
+      "adduct": "high",
+      "factor": 1.0,
+      "ionizable": "strong",
+      "omics": "both"
+     },
+     "evidence": {
+      "library": {
+       "failed_checks": [
+        "Similarity: 0.76 is below 0.80"
+       ],
+       "gate_passed": false,
+       "matched_peaks": 9,
+       "precursor_error_ppm": 0.3,
+       "similarity": 0.72
+      }
+     },
+     "final_score": 0.72,
+     "flags": [],
+     "formula": "C2H6O",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c2",
+     "ik14": "LCGLNKUTAGEVQW",
+     "inchikey": "LCGLNKUTAGEVQW-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": 0.4,
+      "role": "separated",
+      "verdict": "single"
+     },
+     "layer": "library",
+     "layer_label": "library",
+     "layer_score": 0.72,
+     "layer_score_norm": 0.72,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "Library hit that did not pass the Level-2 gate (failed: Similarity: 0.76 is below 0.80).",
+     "mz_error_ppm": null,
+     "name": "Dimethyl ether",
+     "rank": 2,
+     "smiles": "COC",
+     "sources": [
+      {
+       "layer": "library",
+       "layer_score": 0.72,
+       "layer_score_norm": 0.72,
+       "rank_in_layer": 2
+      }
+     ]
+    }
+   ],
+   "context": {
+    "adduct": "[M+H]+",
+    "gate_passed": true,
+    "libraries": [
+     "MassBank"
+    ],
+    "omics": "Either / unknown",
+    "polarity": "Positive",
+    "precursor_mz": 195.0877,
+    "retained_adducts": [
+     "[M+H]+"
+    ]
+   },
+   "fragment_query": {
+    "peaks": [
+     [
+      56.0495,
+      8.8088
+     ],
+     [
+      69.0446,
+      32.032
+     ],
+     [
+      81.0447,
+      3.8038
+     ],
+     [
+      82.0525,
+      1.6016
+     ],
+     [
+      83.0603,
+      31.6316
+     ],
+     [
+      97.0075,
+      2.7027
+     ],
+     [
+      97.0397,
+      2.1021
+     ],
+     [
+      108.0557,
+      1.4014
+     ],
+     [
+      109.0396,
+      9.009
+     ],
+     [
+      110.0712,
+      59.0591
+     ],
+     [
+      111.0552,
+      3.9039
+     ],
+     [
+      123.0427,
+      14.4144
+     ],
+     [
+      138.0662,
+      100.0
+     ]
+    ],
+    "precursor_mz": 195.0877,
+    "tol_da": 0.02
+   },
+   "isomer": {
+    "candidates": [
+     {
+      "explained_fraction": 0.8,
+      "id": "c1",
+      "name": "top",
+      "smiles": "CCO",
+      "source": "input"
+     },
+     {
+      "explained_fraction": 0.4,
+      "id": "c2",
+      "name": "other",
+      "smiles": "COC",
+      "source": "input"
+     }
+    ],
+    "challengers": [],
+    "engine": "MS-FINDER",
+    "error": null,
+    "group": [
+     "c1"
+    ],
+    "isomers": [
+     {
+      "distinguished": true,
+      "distinguishing_peaks": [
+       {
+        "formula": "C2H5O+",
+        "mz": 45.0334,
+        "rel": 30.0,
+        "smiles": "CCO"
+       }
+      ],
+      "evaluated": true,
+      "id": "c2",
+      "name": "c2",
+      "smiles": "COC"
+     }
+    ],
+    "notes": [
+     "Relative to the 2 candidates considered."
+    ],
+    "top_id": "c1",
+    "verdict": "single"
+   },
+   "steps": [
+    {
+     "id": 1,
+     "note": "adducts scored",
+     "seconds": 0,
+     "status": "done",
+     "title": "Adduct"
+    },
+    {
+     "id": 2,
+     "note": "1 formulas",
+     "seconds": 0,
+     "status": "done",
+     "title": "Formula"
+    },
+    {
+     "id": 3,
+     "note": "library note",
+     "seconds": 0,
+     "status": "done",
+     "title": "Library search"
+    },
+    {
+     "id": 4,
+     "note": "Library gate passed.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "MS-FINDER structures"
+    },
+    {
+     "id": 5,
+     "note": "Library gate passed.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "FRIGID structures"
+    },
+    {
+     "id": 6,
+     "note": "2 structures from 1 layer, in the layers' order; detectability only orders near-ties.",
+     "seconds": 0,
+     "status": "done",
+     "title": "Merge and re-rank"
+    },
+    {
+     "id": 7,
+     "note": "Fragment peaks tell the top-1 apart from every isomer compared.",
+     "seconds": 0,
+     "status": "done",
+     "title": "Isomer check"
+    },
+    {
+     "id": 8,
+     "note": "Level 2a: probable structure (library spectrum match) (single).",
+     "seconds": 0,
+     "status": "done",
+     "title": "Answer"
+    }
+   ],
+   "warnings": [
+    "a library warning"
+   ]
+  },
+  "step6": [
+   "done",
+   "2 structures from 1 layer, in the layers' order; detectability only orders near-ties.",
+   [
+    {
+     "columns": [
+      "Rank",
+      "Name",
+      "Formula",
+      "Adduct",
+      "Layer",
+      "Level",
+      "Base score",
+      "Final score",
+      "Omics",
+      "Ionizable",
+      "Adduct fit"
+     ],
+     "data": {
+      "count": 2,
+      "rows": [
+       [
+        1,
+        "Caffeine",
+        "C8H10N4O2",
+        "[M+H]+",
+        "library",
+        {
+         "badge": "Level 2a",
+         "tone": "good"
+        },
+        "0.930",
+        "0.930",
+        "both",
+        "strong",
+        "high"
+       ],
+       [
+        2,
+        "Dimethyl ether",
+        "C2H6O",
+        "[M+H]+",
+        "library",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.720",
+        "0.720",
+        "both",
+        "strong",
+        "high"
+       ]
+      ]
+     },
+     "id": "ranked_table",
+     "title": "Ranked candidates",
+     "type": "table"
+    },
+    {
+     "data": {
+      "items": [
+       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+      ]
+     },
+     "id": "ranked_note",
+     "title": "How the rank is set",
+     "type": "notes"
+    }
+   ]
+  ]
+ },
+ "real re-rank": {
+  "result": {
+   "answer": {
+    "ids": [
+     "c1"
+    ],
+    "isomer_verdict": "insufficient",
+    "layer": "msfinder",
+    "layer_label": "MS-FINDER",
+    "level": "3",
+    "level_label": "Level 3: tentative candidate",
+    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with), so other isomers of C8H10N4O2 are not ruled out.",
+    "top_id": "c1",
+    "type": "single"
+   },
+   "candidates": [
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.8,
+     "detect": {
+      "adduct": "high",
+      "factor": 0.8,
+      "factors": {
+       "adduct": 1.0,
+       "ionizable": 0.8,
+       "omics": 1.0
+      },
+      "ionizable": "moderate",
+      "omics": "metabolome",
+      "reasons": [
+       "omics: No lipid backbone; logP < 3 → Metabolome. Chosen: Metabolomics.",
+       "ionization: ESI+ response moderate; basic site N4 (pKa 2.1) is within ± 1 of pH 2.7: partly protonated",
+       "adduct: [M+H]+ high; with Formic acid; rule score 65; no basic site with pKa ≥ 3, but a proton-accepting amide / lactam / urea C=O (protonated in the droplet / gas phase)"
+      ]
+     },
+     "evidence": {
+      "msfinder": {
+       "score": 0.8
+      }
+     },
+     "final_score": 0.64,
+     "flags": [],
+     "formula": "C8H10N4O2",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c1",
+     "ik14": "RYYVLZVUVIJVGH",
+     "inchikey": "RYYVLZVUVIJVGH-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": "top",
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 8.0,
+     "layer_score_norm": 0.8,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 1,
+     "smiles": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 8.0,
+       "layer_score_norm": 0.8,
+       "rank_in_layer": 1
+      }
+     ]
+    },
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.78,
+     "detect": {
+      "adduct": "low",
+      "factor": 0.04,
+      "factors": {
+       "adduct": 0.4,
+       "ionizable": 0.5,
+       "omics": 0.2
+      },
+      "ionizable": "weak",
+      "omics": "neither",
+      "reasons": [
+       "omics: MW outside the LC-MS window → Neither. Chosen: Metabolomics.",
+       "ionization: ESI+ response weak; no basic site; 1 O/N atom and no carbonyl, amide or ether group",
+       "adduct: [M+H]+ low; with Formic acid; rule score 12; no basic or proton-accepting group: protonation is weak"
+      ]
+     },
+     "evidence": {
+      "msfinder": {
+       "score": 0.78
+      }
+     },
+     "final_score": 0.0312,
+     "flags": [],
+     "formula": "C2H6O",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c2",
+     "ik14": "LFQSCWFLJHTTHZ",
+     "inchikey": "LFQSCWFLJHTTHZ-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": null,
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 7.800000000000001,
+     "layer_score_norm": 0.78,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 2,
+     "smiles": "CCO",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 7.800000000000001,
+       "layer_score_norm": 0.78,
+       "rank_in_layer": 2
+      }
+     ]
+    },
+    {
+     "adduct": "[M+H]+",
+     "base_score": 0.3,
+     "detect": {
+      "adduct": "low",
+      "factor": 0.064,
+      "factors": {
+       "adduct": 0.4,
+       "ionizable": 0.8,
+       "omics": 0.2
+      },
+      "ionizable": "moderate",
+      "omics": "neither",
+      "reasons": [
+       "omics: MW outside the LC-MS window → Neither. Chosen: Metabolomics.",
+       "ionization: ESI+ response moderate; no basic site; 1 O/N atoms and weakly basic ether: weak [M+H]+, mostly Na+ / NH4+ adducts",
+       "adduct: [M+H]+ low; with Formic acid; rule score 12; no basic or proton-accepting group: protonation is weak",
+       "re-rank: base score 0.30 is more than 10% below the best (0.80), so detectability did not change its position"
+      ]
+     },
+     "evidence": {
+      "msfinder": {
+       "score": 0.3
+      }
+     },
+     "final_score": 0.3,
+     "flags": [],
+     "formula": "C2H6O",
+     "fragment_adduct": "[M+H]+",
+     "hypothesis": false,
+     "id": "c3",
+     "ik14": "LCGLNKUTAGEVQW",
+     "inchikey": "LCGLNKUTAGEVQW-UHFFFAOYSA-N",
+     "isomer": {
+      "challenger": false,
+      "explained_fraction": null,
+      "role": null,
+      "verdict": "insufficient"
+     },
+     "layer": "msfinder",
+     "layer_label": "MS-FINDER",
+     "layer_score": 3.0,
+     "layer_score_norm": 0.3,
+     "level": "3",
+     "level_label": "Level 3: tentative candidate",
+     "level_reason": "MS-FINDER structure candidate: in-silico fragment fit, not confirmed by a library spectrum.",
+     "mz_error_ppm": null,
+     "name": "",
+     "rank": 3,
+     "smiles": "COC",
+     "sources": [
+      {
+       "layer": "msfinder",
+       "layer_score": 3.0,
+       "layer_score_norm": 0.3,
+       "rank_in_layer": 3
+      }
+     ]
+    }
+   ],
+   "context": {
+    "adduct": "[M+H]+",
+    "gate_passed": false,
+    "libraries": [],
+    "omics": "Metabolomics",
+    "polarity": "Positive",
+    "precursor_mz": 195.0877,
+    "retained_adducts": [
+     "[M+H]+"
+    ]
+   },
+   "fragment_query": {
+    "peaks": [
+     [
+      56.0495,
+      8.8088
+     ],
+     [
+      69.0446,
+      32.032
+     ],
+     [
+      81.0447,
+      3.8038
+     ],
+     [
+      82.0525,
+      1.6016
+     ],
+     [
+      83.0603,
+      31.6316
+     ],
+     [
+      97.0075,
+      2.7027
+     ],
+     [
+      97.0397,
+      2.1021
+     ],
+     [
+      108.0557,
+      1.4014
+     ],
+     [
+      109.0396,
+      9.009
+     ],
+     [
+      110.0712,
+      59.0591
+     ],
+     [
+      111.0552,
+      3.9039
+     ],
+     [
+      123.0427,
+      14.4144
+     ],
+     [
+      138.0662,
+      100.0
+     ]
+    ],
+    "precursor_mz": 195.0877,
+    "tol_da": 0.02
+   },
+   "isomer": {
+    "candidates": [],
+    "challengers": [],
+    "engine": "MS-FINDER",
+    "error": null,
+    "group": [],
+    "isomers": [],
+    "notes": [
+     "No isomer to compare with."
+    ],
+    "top_id": "c1",
+    "verdict": "insufficient"
+   },
+   "steps": [
+    {
+     "id": 1,
+     "note": "adducts scored",
+     "seconds": 0,
+     "status": "done",
+     "title": "Adduct"
+    },
+    {
+     "id": 2,
+     "note": "1 formulas",
+     "seconds": 0,
+     "status": "done",
+     "title": "Formula"
+    },
+    {
+     "id": 3,
+     "note": "No library was selected, so no library spectrum was searched.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "Library search"
+    },
+    {
+     "id": 4,
+     "note": "msfinder note",
+     "seconds": 0,
+     "status": "done",
+     "title": "MS-FINDER structures"
+    },
+    {
+     "id": 5,
+     "note": "MS-FINDER result good enough.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "FRIGID structures"
+    },
+    {
+     "id": 6,
+     "note": "3 structures from 1 layer, in the layers' order; detectability only orders near-ties.",
+     "seconds": 0,
+     "status": "done",
+     "title": "Merge and re-rank"
+    },
+    {
+     "id": 7,
+     "note": "No isomer to compare with.",
+     "seconds": 0,
+     "status": "skipped",
+     "title": "Isomer check"
+    },
+    {
+     "id": 8,
+     "note": "Level 3: tentative candidate (single).",
+     "seconds": 0,
+     "status": "done",
+     "title": "Answer"
+    }
+   ],
+   "warnings": [
+    "an MS-FINDER warning"
+   ]
+  },
+  "step6": [
+   "done",
+   "3 structures from 1 layer, in the layers' order; detectability only orders near-ties.",
+   [
+    {
+     "columns": [
+      "Rank",
+      "Name",
+      "Formula",
+      "Adduct",
+      "Layer",
+      "Level",
+      "Base score",
+      "Final score",
+      "Omics",
+      "Ionizable",
+      "Adduct fit"
+     ],
+     "data": {
+      "count": 3,
+      "rows": [
+       [
+        1,
+        "—",
+        "C8H10N4O2",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.800",
+        "0.640",
+        "metabolome",
+        "moderate",
+        "high"
+       ],
+       [
+        2,
+        "—",
+        "C2H6O",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.780",
+        "0.031",
+        "neither",
+        "weak",
+        "low"
+       ],
+       [
+        3,
+        "—",
+        "C2H6O",
+        "[M+H]+",
+        "MS-FINDER",
+        {
+         "badge": "Level 3",
+         "tone": "neutral"
+        },
+        "0.300",
+        "0.300",
+        "neither",
+        "moderate",
+        "low"
+       ]
+      ]
+     },
+     "id": "ranked_table",
+     "title": "Ranked candidates",
+     "type": "table"
+    },
+    {
+     "data": {
+      "items": [
+       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+      ]
+     },
+     "id": "ranked_note",
+     "title": "How the rank is set",
+     "type": "notes"
+    }
+   ]
+  ]
+ }
+}

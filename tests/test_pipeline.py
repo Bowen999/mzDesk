@@ -568,7 +568,8 @@ def test_spec_form_matches_the_pipeline():
     pipe = ESI
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
-                                                         "additive", "alkali", "ph", "lib_metric", "lib_threshold"}
+                                                         "additive", "alkali", "ph", "lib_metric", "lib_threshold",
+                                                         "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"}      # the last four: Ion Mobility (tests/test_annotation_ccs.py)
     assert fields["tol_da"]["value"] == 0.02 and fields["omics"]["options"][0] == "Either / unknown" and fields["omics"]["options"] == list(pipeline.OMICS_CHOICES)
     assert fields["additive"]["options"] == ["Unknown", *adduct_rules.ADDITIVES] and spec.PIPELINE_ADDITIVES == list(adduct_rules.ADDITIVES)
     assert fields["halogen"]["label"] == "Allow Cl/Br in formulas" and fields["halogen"]["value"] is False and fields["local_isomers"]["value"] is False
