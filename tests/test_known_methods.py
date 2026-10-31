@@ -197,6 +197,22 @@ def test_jp_rows_take_analytes_and_substances_once_per_record_and_compound():
     assert index.roles(ethanol).tolist() == [0] and index.roles(amine).tolist() == [1]          # measured wins; the substance-only one keeps its flag
 
 
+def test_exact_totals_count_every_exact_method_not_only_the_listed_ones(jp_dir, fake_report):
+    """Result.exact_totals is the true number of exact methods per source; Result.exact is cut at cfg.max_exact_per_source (the warning says the same)."""
+    import dataclasses
+    jp = jp18.load(cache_dir=jp_dir)
+    smiles = next(r for r in jp.records if r["block_id"] == "JP18-CD-0126")["analyte_structures"][0]["smiles"]              # paeoniflorin: 3 conditions
+    full = km.search(smiles, JP_ONLY, jp_dir=jp_dir)
+    assert full.exact_totals == {"JP18": len(full.exact), "RepoRT": 0} and len(full.exact) >= 2
+    cut = km.search(smiles, JP_ONLY, cfg=dataclasses.replace(ci.CONFIG, max_exact_per_source=1), jp_dir=jp_dir)
+    assert len(cut.exact) == 1 and cut.exact_totals == {"JP18": len(full.exact), "RepoRT": 0}
+    assert any(f"JP18: {len(full.exact)} distinct conditions" in w for w in cut.warnings)           # the total no longer has to be read from this text
+    both = km.search(CAFFEINE, [km.SOURCE_REPORT], cfg=dataclasses.replace(ci.CONFIG, max_exact_per_source=1), report_path=fake_report)
+    assert len(both.exact) == 1 and both.exact_totals == {"JP18": 0, "RepoRT": 2}                  # 0901 and 0902 are both caffeine datasets
+    assert km.search(NOT_IN_JP, JP_ONLY, jp_dir=jp_dir).exact_totals == {"JP18": 0, "RepoRT": 0}
+    assert km.search(CAFFEINE, JP_ONLY, jp_dir=jp_dir).exact_totals["RepoRT"] == 0                    # a source that was not searched counts 0
+
+
 def test_similar_hits_for_a_compound_not_in_jp(jp_dir):
     res = _jp(NOT_IN_JP, jp_dir)
     assert res.exact == [] and res.match in ("similar", "none")

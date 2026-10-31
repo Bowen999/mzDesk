@@ -14,59 +14,104 @@ def _trace(fig, name):
     return next(trace for trace in fig.data if trace.name == name)
 
 
+def _halves(fig):
+    """The two hover traces of a mirror plot (both named "peaks"): query first, then reference."""
+    return [trace for trace in fig.data if trace.name == "peaks"]
+
+
+def _row(card, label):
+    return next(value for name, value in card["rows"] if name == label)
+
+
 def test_mirror_keeps_true_small_stick_heights_and_hover_intensities():
     a = [(100, 100), (120, 0.01), (140, 0.02)]
     b = [(100.01, 100), (120.01, 0.01), (160, 0.02)]
     summary_before = match_summary(a, b, tolerance=0.02)
-    fig = build_mirror_figure(a, b, tolerance=0.02)
+    fig, cards = build_mirror_figure(a, b, tolerance=0.02)
     assert list(_trace(fig, "Query · matched").y) == pytest.approx([0, 100, None, 0, 0.01, None])
     assert list(_trace(fig, "Reference · matched").y) == pytest.approx([0, -100, None, 0, -0.01, None])
     assert list(_trace(fig, "Query · unmatched").y) == pytest.approx([0, 0.02, None])
-    q, r = _trace(fig, "Query peaks"), _trace(fig, "Reference peaks")
+    q, r = _halves(fig)
     assert list(q.y) == pytest.approx([100, 0.01, 0.02])
     assert list(r.y) == pytest.approx([-100, -0.01, -0.02])
-    assert q.customdata[1][2] == "0.01"
-    assert r.customdata[1][2] == "0.01"
+    assert list(q.customdata) == [0, 1, 2] and list(r.customdata) == [3, 4, 5]
+    assert [c["rel"] for c in cards] == pytest.approx([100, 0.01, 0.02, -100, -0.01, -0.02])
+    assert _row(cards[1], "Rel. intensity") == "0.01 %"
+    assert _row(cards[4], "Rel. intensity") == "0.01 %"
+    assert [c["on"] for c in cards] == [True, True, False, True, True, False]
+    assert cards[2]["kind"] == "Query · unmatched" and cards[3]["kind"] == "Reference · matched"
     assert summary_before == match_summary(a, b, tolerance=0.02)
     assert summary_before["matched_pairs"] == 2
-    json.dumps(plotly(fig), allow_nan=False)
+    json.dumps(plotly(fig, peaks=cards), allow_nan=False)
+
+
+def test_a_low_mirror_plot_gets_short_y_axis_titles():
+    """Each half of the 370 px plot on the workflow page is about 150 px: the long title would run into the other half's."""
+    a, b = [(100, 100)], [(100, 90)]
+    titles = lambda fig: [ann.text for ann in fig.layout.annotations if "rel." in (ann.text or "")]
+    assert titles(build_mirror_figure(a, b, labels=("Experimental", "Library"))[0]) == [
+        "Experimental · rel. intensity (%)", "Library · rel. intensity (%)"]
+    assert titles(build_mirror_figure(a, b, labels=("Experimental", "Library"), height=370)[0]) == [
+        "Experimental · rel. %", "Library · rel. %"]
 
 
 def test_mirror_hover_and_labels_distinguish_near_masses():
     a, b = [(100.12341, 100)], [(100.12344, 100)]
-    fig = build_mirror_figure(a, b, precursor_mz1=200.123456, precursor_mz2=200.1234565)
-    q, r = _trace(fig, "Query peaks"), _trace(fig, "Reference peaks")
-    assert q.customdata[0][1] == "100.12341"
-    assert r.customdata[0][1] == "100.12344"
-    assert "100.12344" in q.customdata[0][4] and "+3e-05" in q.customdata[0][4]
-    assert "100.12341" in r.customdata[0][4] and "-3e-05" in r.customdata[0][4]
-    assert "Precursor − peak m/z" in q.customdata[0][3]
-    assert "Neutral loss" not in q.customdata[0][3]
+    fig, cards = build_mirror_figure(a, b, precursor_mz1=200.123456, precursor_mz2=200.1234565)
+    q, r = cards
+    assert q["mz"] == 100.12341 and r["mz"] == 100.12344
+    assert _row(q, "m/z (more precision)") == "100.12341"
+    assert _row(r, "m/z (more precision)") == "100.12344"
+    assert _row(q, "Reference m/z") == "100.12344" and _row(q, "Δ m/z") == "+3e-05 Da"
+    assert _row(r, "Query m/z") == "100.12341" and _row(r, "Δ m/z") == "-3e-05 Da"
+    assert "Precursor − peak" in dict(q["rows"])
+    assert "Neutral loss" not in dict(q["rows"])
     labels = [ann.text for ann in fig.layout.annotations]
-    assert "100.12341" in labels and "100.12344" in labels
+    # distinct precursors that round to the same four decimals keep their full digits
+    assert "Query precursor 200.123456" in labels and "Reference precursor 200.1234565" in labels
     assert len(fig.layout.shapes) == 2  # distinct precursor values are not merged
 
 
 def test_mirror_distinguishes_sub_eight_decimal_peaks_and_nonzero_differences():
     a, b = 100.123456781, 100.123456782
-    fig = build_mirror_figure([(a, 100)], [(b, 100)], precursor_mz1=b, precursor_mz2=a)
-    q, r = _trace(fig, "Query peaks"), _trace(fig, "Reference peaks")
-    assert q.customdata[0][1] == "100.123456781"
-    assert r.customdata[0][1] == "100.123456782"
-    assert "100.123456782" in q.customdata[0][4]
-    assert "100.123456781" in r.customdata[0][4]
-    assert float(q.customdata[0][3].rsplit(" ", 1)[-1]) > 0
-    assert "+" in q.customdata[0][4] and "-" in r.customdata[0][4]
+    fig, cards = build_mirror_figure([(a, 100)], [(b, 100)], precursor_mz1=b, precursor_mz2=a)
+    q, r = cards
+    assert _row(q, "m/z (more precision)") == "100.123456781"
+    assert _row(r, "m/z (more precision)") == "100.123456782"
+    assert _row(q, "Reference m/z") == "100.123456782"
+    assert _row(r, "Query m/z") == "100.123456781"
+    assert float(_row(q, "Precursor − peak")) > 0
+    assert _row(q, "Δ m/z").startswith("+") and _row(r, "Δ m/z").startswith("-")
     assert len(fig.layout.shapes) == 2
+
+
+def test_mirror_precursor_label_has_four_decimals():
+    fig, _ = build_mirror_figure([(100, 100)], [(100, 100)], precursor_mz1=195.08765203118054, precursor_mz2=195.08765203118054)
+    assert "precursor 195.0877" in [ann.text for ann in fig.layout.annotations]
 
 
 @pytest.mark.parametrize("a,b", [([], []), ([(100, 0)], []), ([], [(100, 10)]), ([(100, 10)], [])])
 def test_mirror_empty_zero_and_one_sided_spectra(a, b):
-    fig = build_mirror_figure(a, b)
+    fig, cards = build_mirror_figure(a, b)
     has_peaks = any(intensity > 0 for _, intensity in a + b)
     assert bool(fig.data) == has_peaks
+    assert len(cards) == sum(intensity > 0 for _, intensity in a + b)
     assert match_summary(a, b)["matched_pairs"] == 0
-    json.dumps(plotly(fig), allow_nan=False)
+    json.dumps(plotly(fig, peaks=cards), allow_nan=False)
+
+
+def test_single_precursor_label_and_percent_ticks():
+    fig, _ = spectrum_figure([(110.0713, 1), (195.0876, 100)], precursor_mz=195.08765203118054)
+    assert [ann.text for ann in fig.layout.annotations] == ["precursor 195.0877"]
+    assert not fig.layout.shapes  # a tall precursor peak leaves no stub of dotted line under the top
+    assert list(fig.layout.yaxis.tickvals) == [0, 20, 40, 60, 80, 100]
+
+
+def test_dense_spectra_get_thinner_sticks():
+    sparse, _ = spectrum_figure([(100, 100), (150, 50)])
+    dense, _ = spectrum_figure([(float(m), 10 + m % 7) for m in range(30, 400)])
+    assert _trace(sparse, "kept").line.width == 2
+    assert _trace(dense, "kept").line.width == 1
 
 
 def test_single_zero_and_empty_peaks_keep_cards_and_finite_axis():

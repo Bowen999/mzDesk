@@ -1,23 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, getJob, startPipeline } from "../api";
-import { RowsTable } from "../components/Blocks";
+import { AnswerCard } from "../components/AnswerCard";
+import { CandidateTable } from "../components/CandidateTable";
 import { FieldInput, initialValues, missingRequired, visibleFields } from "../components/Fields";
 import { Icon, pipelineIcon } from "../components/Icon";
 import { FragmentProvider } from "../components/FragmentDialog";
 import { useNetworkGuard } from "../components/NetworkDialog";
+import { HelpButton } from "../components/Help";
 import { OutputList } from "../components/Outputs";
 import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
+import { StepList } from "../components/StepList";
 import { WorkflowProgress } from "../components/WorkflowProgress";
 import { networkUses } from "../network";
-import type { AnnotationCandidate, AnnotationResult, Cell, Field, Job, JobStep, Row, Spec } from "../types";
+import type { AnnotationResult, Field, Job, Spec, WorkflowResult } from "../types";
 
 const POLL_MS = 1500;
 const MAX_POLL_FAILURES = 3;                    // a dropped request is retried; an answer of the server (a job that is gone after a restart) ends the run at once
 const sleep = (ms: number) => new Promise<void>(resolve => window.setTimeout(resolve, ms));
 
-const STATUS_TONE: Record<string, string> = { done: "good", running: "jp", failed: "bad", skipped: "neutral", queued: "neutral" };
-const LEVEL_TONE: Record<string, string> = { "2a": "good", "3": "jp", H: "warn", "4": "neutral", "5": "neutral" };
-const levelName = (label: string) => label.split(":")[0];
+const ESI_PIPELINE = "esi_ms2_annotation";       // the one workflow with its own result view; the others return the generic WorkflowResult
+const isWorkflowResult = (r: AnnotationResult | WorkflowResult): r is WorkflowResult => "pipeline" in r;
 
 /** Fields grouped by `section`, in the order the sections first appear. */
 function groupFields(fields: Field[]): { title: string; fields: Field[] }[] {
@@ -31,90 +33,25 @@ function groupFields(fields: Field[]): { title: string; fields: Field[] }[] {
   return groups;
 }
 
-function StatusChip({ status }: { status: string }) {
-  return <span className={"badge tone-" + (STATUS_TONE[status] ?? "neutral")}>{status}</span>;
-}
-
-/** One step: status chip, seconds, note, and the blocks it has produced so far (tables with ids, filled as soon as the step ends). */
-function StepView({ step, index }: { step: JobStep; index: number }) {
-  const blocks = step.blocks ?? [];
-  const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
-  const shown = step.status !== "queued";
-  const hasSeconds = typeof step.seconds === "number" && Number.isFinite(step.seconds) && step.seconds >= 0;
-  return (
-    <details id={`workflow-step-${step.id}`} className="stage" open={shown && blocks.length > 0 && step.status !== "skipped"}>
-      <summary>
-        {index + 1}. {step.title || "Unnamed stage"} <StatusChip status={step.status || "unknown"} />
-        {step.status !== "queued" && step.status !== "skipped" && hasSeconds && <span className="meta"> {step.seconds.toFixed(1)} s</span>}
-        {step.note && <span className="meta"> {step.note}</span>}
-      </summary>
-      {blocks.length > 0 && <OutputList blocks={blocks} outputs={outputs} live />}
-    </details>
-  );
-}
-
-const detectText = (c: AnnotationCandidate) => {
-  const d = c.detect;
-  return d ? `${d.omics ?? "—"} / ${d.ionizable ?? "—"} / ${d.adduct ?? "—"}` : "—";
-};
-
-function isomerCell(c: AnnotationCandidate): Cell {
-  const iso = c.isomer;
-  if (!iso || (!iso.role && !iso.challenger)) return "—";
-  const text = iso.role ?? "not compared";
-  return iso.challenger ? { badge: `${text} · challenger`, tone: "warn" } : text;
-}
-
-/** "View": the fragment view of this candidate (computed when clicked); a dash when it has no structure or MetFrag cannot use its adduct. */
-function fragmentCell(c: AnnotationCandidate): Cell {
-  return c.smiles && c.fragment_adduct ? { fragment: { smiles: c.smiles, adduct: c.fragment_adduct, name: c.name || undefined } } : "—";
-}
-
 const FRAGMENT_NOTE = "The isomer comparison on this page uses MS-FINDER; this view uses MetFrag, so the explained peaks can differ between the two.";
+const RANK_NOTE = "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.";
 
-function rankedRows(candidates: AnnotationCandidate[]): Row[] {
-  return candidates.map(c => [
-    c.rank ?? "—", fragmentCell(c), c.name || "—", c.smiles || "—", c.formula || "—", c.adduct || "—", c.layer_label,
-    c.level ? { badge: levelName(c.level_label), tone: LEVEL_TONE[c.level] ?? "neutral", help: c.level_reason } : "—",
-    c.final_score === null ? "—" : c.final_score.toFixed(3), detectText(c), isomerCell(c),
-  ]);
-}
-
-/** The answer: statement, layer, level, the group that cannot be separated, and the isomers that explain peaks the top-1 cannot. */
-function AnswerCard({ result, requestedAdduct }: { result: AnnotationResult; requestedAdduct: string | null }) {
+/** The generic result (mzdesk/workflows/common.py): the answer (statement, level badge, facts), the warnings, then the headline blocks. */
+export function WorkflowResultView({ result }: { result: WorkflowResult }) {
   const a = result.answer;
-  const byId = new Map(result.candidates.map(c => [c.id, c]));
-  const label = (id: string) => byId.get(id)?.name || byId.get(id)?.smiles || id;
-  const challengers = result.isomer?.challengers ?? [];
-  const conflicting = a.isomer_verdict === "single" && challengers.length > 0;
-  const top = a.top_id ? byId.get(a.top_id) : undefined;
-  const otherAdducts = requestedAdduct ? [...new Set(result.candidates.filter(c => c.evidence?.library?.gate_passed && c.adduct && c.adduct !== requestedAdduct)
-    .map(c => c.adduct))] : [];
+  const blocks = result.blocks ?? [];
+  const facts = a.facts ?? [];
+  const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
   return (
     <>
       <div className="verdict" aria-live="polite">
         <div className="verdict-label">Answer</div>
         <p className="verdict-text">{a.statement}</p>
       </div>
-      <div className="pill-row">
-        {a.layer_label && <span className="badge">Layer: {a.layer_label}</span>}
-        {a.level && <span className={"badge tone-" + (LEVEL_TONE[a.level] ?? "neutral")} title={a.level_label}>{a.level_label ? levelName(a.level_label) : a.level}</span>}
-        {a.isomer_verdict && a.isomer_verdict !== "not run" && <span className={"badge" + (conflicting ? " tone-warn" : "")}>Isomer check: {conflicting ? "conflicting evidence" : a.isomer_verdict}</span>}
-        {result.context.gate_passed && <span className="badge tone-good">Library gate passed</span>}
-      </div>
-      {otherAdducts.length > 0 && <div className="alert warn" role="status">Input adduct: {requestedAdduct}. A library hit passed with {otherAdducts.join(", ")}; review the library checks.</div>}
-      {requestedAdduct && top?.adduct && top.adduct !== requestedAdduct && !otherAdducts.includes(top.adduct) &&
-        <div className="alert warn" role="status">Input adduct: {requestedAdduct}. The top candidate uses {top.adduct}; review the adduct evidence.</div>}
-      {conflicting && <div className="alert warn" role="status">Fragment explanations conflict. Treat the single-answer verdict as unresolved.</div>}
-      {a.type === "group" && (
-        <div className="alert warn" role="status">These cannot be separated by the spectrum: {a.ids.map(label).join(", ")}. The ranking only orders them.</div>
-      )}
-      {challengers.map(ch => (
-        <div className="alert warn" role="status" key={ch.id}>
-          Another isomer explains peaks the top-1 cannot: {ch.name || label(ch.id)} (m/z {ch.peaks.map(p => p.mz.toFixed(4)).join(", ")}).
-          The verdict above is unchanged; treat the top-1 with care.
-        </div>))}
-      {result.warnings.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
+      {a.level && <div className="pill-row"><span className="badge" title={a.level_label ?? undefined}>{a.level}</span></div>}
+      {facts.length > 0 && <dl className="answer-facts">{facts.map(([label, value], i) => <div key={i}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>}
+      {(result.warnings ?? []).map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
+      {blocks.length > 0 && <OutputList blocks={blocks} outputs={outputs} live />}
     </>
   );
 }
@@ -184,7 +121,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     try {
       const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
       const adduct = payload.precursor?.adduct;
-      setRequestedAdduct(adduct && adduct !== "Auto" ? adduct : null);
+      setRequestedAdduct(pipe.id === ESI_PIPELINE && adduct && adduct !== "Auto" ? adduct : null);
       const { job_id } = await startPipeline(pipe.id, payload);
       if (ticket.current !== mine) return;
       setHasStartedJob(true);
@@ -215,7 +152,9 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     <div className="field-slot" data-field={f.id} key={f.id ?? i}>
       <FieldInput field={f} value={f.id ? values[f.id] : undefined} error={f.id ? errors[f.id] : undefined} onChange={v => f.id && update(f.id, v)} />
     </div>);
-  const result = job?.result ?? null;
+  const jobResult = job?.result ?? null;
+  const result = pipe.id === ESI_PIPELINE && jobResult && !isWorkflowResult(jobResult) ? jobResult : null;          // ESI MS/MS Annotation's own result
+  const workflowResult = pipe.id !== ESI_PIPELINE && jobResult && isWorkflowResult(jobResult) ? jobResult : null;   // every other workflow
   return (
     <div className="page module-page" data-pipeline={pipe.id}>
       <div className="module-heading">
@@ -249,17 +188,17 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
           <AnswerCard result={result} requestedAdduct={requestedAdduct} />
           <SpectrumEvidence result={result} />
           <IsomerEvidence result={result} />
-          <div className="results-head"><h2 className="panel-title">Ranked candidates</h2><span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
+          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={[RANK_NOTE]} label="Help: Ranked candidates" /></h2>
+            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
           <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
-            <RowsTable columns={["Rank", "Fragments", "Name", "SMILES", "Formula", "Adduct", "Layer", "Level", "Final score", "Detectability (omics / ionizable / adduct)", "Isomer role"]}
-              rows={rankedRows(result.candidates)} empty="no candidates" />
+            <CandidateTable candidates={result.candidates} />
           </FragmentProvider>
-          <div className="meta">Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.</div>
         </>)}
+      {workflowResult && <WorkflowResultView result={workflowResult} />}
       {job && (
         <>
           <div className="results-head"><h2 className="panel-title">Steps</h2></div>
-          {(Array.isArray(job.steps) ? job.steps : []).map((s, i) => <StepView step={s} index={i} key={s.id} />)}
+          <StepList steps={job.steps} />
         </>)}
       {guard.dialog}
     </div>

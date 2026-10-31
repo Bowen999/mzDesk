@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Export the official CASMI 2022 final key as one CSV row per challenge.
+"""Export the official CASMI 2022 final key and extracted spectra as CSV.
 
-Only fields from the official key are exported; analysis settings and locally
-processed spectra are not part of the CSV. The earlier spectrum-packaging
-helper remains available as ``build_extracted_records``.
+Each challenge has its official fields, an MS1 isotope peak list and a merged
+MS2 peak list. Analysis settings are not included.
 """
 from __future__ import annotations
 
@@ -21,8 +20,8 @@ CANONICAL_ADDUCTS = {
     "[M+Na]+": "[M+Na]+", "[M+Cl]-": "[M+Cl]-", "[M+FA-H]-": "[M+HCOO]-",
 }
 
-# CSV names and types. Each maps directly to a field in the official final key.
-COLUMNS: tuple[tuple[str, str], ...] = (
+# Official fields map directly to columns in the final key.
+OFFICIAL_COLUMNS: tuple[tuple[str, str], ...] = (
     ("challenge_id", "int"),
     ("formula", "str"),
     ("adduct_official", "str"),
@@ -38,6 +37,8 @@ COLUMNS: tuple[tuple[str, str], ...] = (
     ("well_id", "str"),
     ("mix_or_set", "str"),
 )
+# Peak lists use one newline-separated ``m/z intensity`` pair per line.
+COLUMNS = OFFICIAL_COLUMNS + (("ms1_isotope", "str"), ("ms2", "str"))
 KIND = dict(COLUMNS)
 NAMES = [name for name, _ in COLUMNS]
 OFFICIAL_HEADERS = {
@@ -153,7 +154,7 @@ def decode_cell(text, kind, name):
 
 
 def flatten(record):
-    """Serialise one official record in ``NAMES`` order."""
+    """Serialise one record in ``NAMES`` order."""
     cid = record.get("challenge_id")
     if set(record) != set(NAMES):
         raise ValueError(f"challenge {cid}: fields differ from the columns: {sorted(set(record) ^ set(NAMES))}")
@@ -161,12 +162,12 @@ def flatten(record):
 
 
 def unflatten(row):
-    """Decode one CSV row without adding non-official fields."""
+    """Decode one CSV row."""
     return {name: decode_cell(row[name], kind, name) for name, kind in COLUMNS}
 
 
 def write_records(records, path=OUTPUT):
-    """Write the official records as CSV."""
+    """Write the records as CSV."""
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(NAMES)
@@ -212,7 +213,8 @@ def build_extracted_records():
         if (header.get("compound") != f"challenge_{cid:03d}"
                 or header.get("ionization") != ("[M+?]+" if m["polarity"] == "positive" else "[M+?]-")
                 or abs(float(header["parentmass"]) - float(r["parentmass_used"])) > 1e-7
-                or len(ms1) != 1 or len(ms1[0]["peaks"]) != int(r["n_ms1_isotope_peaks"])
+                or len(ms1) != 1 or not ms1[0]["peaks"]
+                or len(ms1[0]["peaks"]) != int(r["n_ms1_isotope_peaks"])
                 or len(ms2) != int(r["n_ms2_scans_used"])
                 or sum(len(b["peaks"]) for b in ms2) != int(r["n_ms2_peaks"])
                 or not ms2 or not all(b["peaks"] for b in ms2)):
@@ -266,7 +268,7 @@ def build_extracted_records():
 
 
 def build_records():
-    """Read the 14 official fields directly from the final answer workbook."""
+    """Combine the official final answer workbook and extracted peak lists."""
     from openpyxl import load_workbook
 
     source = BASE / "metadata/source/casmi2022_key_final.xlsx"
@@ -283,7 +285,7 @@ def build_records():
             if row[indices["challenge_id"]] is None:
                 continue
             record = {}
-            for name, kind in COLUMNS:
+            for name, kind in OFFICIAL_COLUMNS:
                 value = row[indices[name]]
                 if value is None:
                     raise ValueError(f"{source}: missing {name} for challenge {row[indices['challenge_id']]}")
@@ -307,9 +309,26 @@ def build_records():
         records.sort(key=lambda record: record["challenge_id"])
         if [record["challenge_id"] for record in records] != list(range(1, 501)):
             raise ValueError(f"{source}: expected each challenge ID from 1 through 500 exactly once")
-        return records
     finally:
         book.close()
+
+    extracted = {record["challenge_id"]: record for record in build_extracted_records()}
+    for record in records:
+        cid = record["challenge_id"]
+        spectrum = extracted[cid]
+        truth, provenance = spectrum["ground_truth"], spectrum["provenance"]
+        for name in ("formula", "adduct_official", "inchikey", "smiles_official"):
+            if record[name] != truth[name]:
+                raise ValueError(f"challenge {cid}: {name} differs between key and spectrum metadata")
+        for name in ("priority", "file"):
+            if record[name] != provenance[name]:
+                raise ValueError(f"challenge {cid}: {name} differs between key and spectrum metadata")
+        for name in ("rt_min_given", "precursor_mz_given"):
+            if abs(record[name] - provenance[name]) > 1e-7:
+                raise ValueError(f"challenge {cid}: {name} differs between key and spectrum metadata")
+        record["ms1_isotope"] = spectrum["inputs"]["ms1"]
+        record["ms2"] = spectrum["inputs"]["ms2"]["value"]
+    return records
 
 
 def main():

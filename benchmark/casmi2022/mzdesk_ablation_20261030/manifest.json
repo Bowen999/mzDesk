@@ -1,0 +1,4525 @@
+{
+  "seed": null,
+  "sampling": "all 500 challenges",
+  "ids": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148,
+    149,
+    150,
+    151,
+    152,
+    153,
+    154,
+    155,
+    156,
+    157,
+    158,
+    159,
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167,
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175,
+    176,
+    177,
+    178,
+    179,
+    180,
+    181,
+    182,
+    183,
+    184,
+    185,
+    186,
+    187,
+    188,
+    189,
+    190,
+    191,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199,
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207,
+    208,
+    209,
+    210,
+    211,
+    212,
+    213,
+    214,
+    215,
+    216,
+    217,
+    218,
+    219,
+    220,
+    221,
+    222,
+    223,
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231,
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239,
+    240,
+    241,
+    242,
+    243,
+    244,
+    245,
+    246,
+    247,
+    248,
+    249,
+    250,
+    251,
+    252,
+    253,
+    254,
+    255,
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    287,
+    288,
+    289,
+    290,
+    291,
+    292,
+    293,
+    294,
+    295,
+    296,
+    297,
+    298,
+    299,
+    300,
+    301,
+    302,
+    303,
+    304,
+    305,
+    306,
+    307,
+    308,
+    309,
+    310,
+    311,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318,
+    319,
+    320,
+    321,
+    322,
+    323,
+    324,
+    325,
+    326,
+    327,
+    328,
+    329,
+    330,
+    331,
+    332,
+    333,
+    334,
+    335,
+    336,
+    337,
+    338,
+    339,
+    340,
+    341,
+    342,
+    343,
+    344,
+    345,
+    346,
+    347,
+    348,
+    349,
+    350,
+    351,
+    352,
+    353,
+    354,
+    355,
+    356,
+    357,
+    358,
+    359,
+    360,
+    361,
+    362,
+    363,
+    364,
+    365,
+    366,
+    367,
+    368,
+    369,
+    370,
+    371,
+    372,
+    373,
+    374,
+    375,
+    376,
+    377,
+    378,
+    379,
+    380,
+    381,
+    382,
+    383,
+    384,
+    385,
+    386,
+    387,
+    388,
+    389,
+    390,
+    391,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397,
+    398,
+    399,
+    400,
+    401,
+    402,
+    403,
+    404,
+    405,
+    406,
+    407,
+    408,
+    409,
+    410,
+    411,
+    412,
+    413,
+    414,
+    415,
+    416,
+    417,
+    418,
+    419,
+    420,
+    421,
+    422,
+    423,
+    424,
+    425,
+    426,
+    427,
+    428,
+    429,
+    430,
+    431,
+    432,
+    433,
+    434,
+    435,
+    436,
+    437,
+    438,
+    439,
+    440,
+    441,
+    442,
+    443,
+    444,
+    445,
+    446,
+    447,
+    448,
+    449,
+    450,
+    451,
+    452,
+    453,
+    454,
+    455,
+    456,
+    457,
+    458,
+    459,
+    460,
+    461,
+    462,
+    463,
+    464,
+    465,
+    466,
+    467,
+    468,
+    469,
+    470,
+    471,
+    472,
+    473,
+    474,
+    475,
+    476,
+    477,
+    478,
+    479,
+    480,
+    481,
+    482,
+    483,
+    484,
+    485,
+    486,
+    487,
+    488,
+    489,
+    490,
+    491,
+    492,
+    493,
+    494,
+    495,
+    496,
+    497,
+    498,
+    499,
+    500
+  ],
+  "settings": {
+    "libraries": [
+      "MassBank",
+      "GNPS"
+    ],
+    "tol_ppm": 10.0,
+    "tol_da": 0.01,
+    "omics": "Metabolomics",
+    "halogen": true,
+    "local_isomers": false,
+    "additive": "Formic acid",
+    "alkali": "Unknown",
+    "ph": 2.7
+  },
+  "inputs": {
+    "1": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_001.ms",
+      "ms_sha256": "02585b585a901e971b4406708df306feb407df10f472b100042ad8086af1395a",
+      "jestr_spectrum_sha256": "7349cb66ed65129dbbcbf2ff0939fb8da4bccd8cd7dc7489e8fae0e11be41393",
+      "ms1_peaks": 2,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "2": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_002.ms",
+      "ms_sha256": "81cba10aa9e7c98dec49ea499ddea9d7b02f69d2a22d9a90524cdc8605fbbf45",
+      "jestr_spectrum_sha256": "a76f1a8d5867f338e9e9b4e35ef7801e847dee427bc76aee6eb13250a4a28b4f",
+      "ms1_peaks": 5,
+      "ms2_peaks": 56,
+      "collision_blocks": 3
+    },
+    "3": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_003.ms",
+      "ms_sha256": "b52a102c6faf76ef2dee8e1acad92e1ee269080a220c3225268bc58fb3f22e32",
+      "jestr_spectrum_sha256": "1407804274dc060447d3e0ae80a0e46abdbf5a1dac6c181f1e95ec87c8c3d0db",
+      "ms1_peaks": 5,
+      "ms2_peaks": 112,
+      "collision_blocks": 3
+    },
+    "4": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_004.ms",
+      "ms_sha256": "37917c8164b74f6ee32f0b758b92bb16964ce50046a98d0179bcaeae386f3394",
+      "jestr_spectrum_sha256": "8eea1edae8db791682daebbe5d440e3f3aff72ab04f8e71ae261afdafa8224cc",
+      "ms1_peaks": 4,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "5": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_005.ms",
+      "ms_sha256": "3196bf8cfc86b1625936df64eda0597ba3c2dbc06a931c22fb559663a2b15466",
+      "jestr_spectrum_sha256": "bdbc1e06b163491a4a21ff4bc734d21167db5b4de66aa2c87c6075809c7af244",
+      "ms1_peaks": 4,
+      "ms2_peaks": 156,
+      "collision_blocks": 3
+    },
+    "6": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_006.ms",
+      "ms_sha256": "d33cb91df2c31c905acd7f4a5dfa8531bb8cdaa33cc4c02470099c1a1f7056ed",
+      "jestr_spectrum_sha256": "b068c1a5196a31fea46cbb5d31e455407e307284f801f739949c32419d2dd5dc",
+      "ms1_peaks": 4,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "7": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_007.ms",
+      "ms_sha256": "702342240227d5f49f61af15797c927190796837f7464382a4af7aa6e7f083fe",
+      "jestr_spectrum_sha256": "cf8ee1ee439c642e41d33ea89dab19333d1506957e5593eb04849cd797885bc9",
+      "ms1_peaks": 5,
+      "ms2_peaks": 98,
+      "collision_blocks": 3
+    },
+    "8": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_008.ms",
+      "ms_sha256": "b8412910bdec7df560893c132f65918b8530a1c9f0082ab24a7738c3e1123330",
+      "jestr_spectrum_sha256": "9ed4edeb1964433ddca9158284fbe1efc8535ab8462f9d8c1e42c7e0015a1e99",
+      "ms1_peaks": 4,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "9": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_009.ms",
+      "ms_sha256": "ce72101244898c408f674d47bc982efe3009009e8c196799618520c75a3c3ddd",
+      "jestr_spectrum_sha256": "f3f7ae0a915cbe1f4539e74bc45135763c00f531425f43b4db7f493236e14cd0",
+      "ms1_peaks": 4,
+      "ms2_peaks": 65,
+      "collision_blocks": 3
+    },
+    "10": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_010.ms",
+      "ms_sha256": "bafb7c5822fb181f90e636d814dcff65ed62d52c85c645fffdc39cefe22ad21b",
+      "jestr_spectrum_sha256": "1db5c3960e3a89aa0497346e646c0d97dc6a4347ffcbd30c7d16a132bbc613df",
+      "ms1_peaks": 4,
+      "ms2_peaks": 191,
+      "collision_blocks": 3
+    },
+    "11": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_011.ms",
+      "ms_sha256": "725a151cb8e39f65fb68bc223c72c16a4fe3edb4adeeb8026ed2a15173fd48ff",
+      "jestr_spectrum_sha256": "dbad9deafd27cea5135d6432297f69c4d624f80836f2ed06d6f148edb31f941f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 81,
+      "collision_blocks": 3
+    },
+    "12": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_012.ms",
+      "ms_sha256": "ff06b569705e6fa6896355d0899486338fff8df3c60fc6d25baa1bf43f194068",
+      "jestr_spectrum_sha256": "8918e7d040b180b93a1a259e3aee3914ed3695122fd23a81437a0411a16f9a0a",
+      "ms1_peaks": 3,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "13": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_013.ms",
+      "ms_sha256": "c3240f0d0707f9a9b06abd0474294e2f28974e35c761cef497887e803e975908",
+      "jestr_spectrum_sha256": "0e0fb16948754dcafc9bb60613c097f8d3213048082dfcfd3310bd46eed87e5c",
+      "ms1_peaks": 5,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "14": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_014.ms",
+      "ms_sha256": "842bdb44237a86e2c455b58e2c64be8d2d2ce9a21cd18b4ae8a3fb5e2f1a4e3a",
+      "jestr_spectrum_sha256": "d1ba2c55e9b60474979975b7dc9502644fde8fc985c7f0d1c5d595ce339b1c90",
+      "ms1_peaks": 5,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "15": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_015.ms",
+      "ms_sha256": "0f83d7e7939b8ce709836578b6f1c2b6fcffb6516ecac0a8759bf98f8a8f68cf",
+      "jestr_spectrum_sha256": "5d2298216aed1f3a69831c8aaac00f98d501bb1e662a9140307bd99a59b5d53c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "16": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_016.ms",
+      "ms_sha256": "a948e04053afc093431be4cb13a4923008be0622e8e0e71bbba4203e5c98e589",
+      "jestr_spectrum_sha256": "65b9838f35e6d00245d4ed367decbf19c3da87d84af7d017ea57a7a3bc62f96b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 100,
+      "collision_blocks": 3
+    },
+    "17": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_017.ms",
+      "ms_sha256": "64baea8c23a2cfb51292f07865a34efb2539f40cc5f7524572b92f07429a1bc1",
+      "jestr_spectrum_sha256": "c50f0fba53bed1d0f9979e92b8567978a1a95be6db561b36381b758486f5d0cb",
+      "ms1_peaks": 3,
+      "ms2_peaks": 25,
+      "collision_blocks": 2
+    },
+    "18": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_018.ms",
+      "ms_sha256": "d2b332aaa4083706daa0bf02b181b64b28d505bc215da17a70ad16b3340e0042",
+      "jestr_spectrum_sha256": "cb4072f88d8d748f6339e6314087f6af96dd0eebef2625bded5afcfffd24df6e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 126,
+      "collision_blocks": 3
+    },
+    "19": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_019.ms",
+      "ms_sha256": "3258c1fbebcb1ec8bbd897e27faeb274583be78e7c488e89e24c7e4cbd4d2088",
+      "jestr_spectrum_sha256": "4d87cfa6ca7d215810c4258634bbc84fa2e0987e60d980d5717574bb7400f0f8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "20": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_020.ms",
+      "ms_sha256": "04f8aa57ff65ce60ac4da0dbe01d6faa11f3e439c67842bf61ca42ded85bb586",
+      "jestr_spectrum_sha256": "1dd614c9c6bd5ff6de9d5b4d67d76995b0acb0d4f2f84d6fd187f0714e71df3f",
+      "ms1_peaks": 5,
+      "ms2_peaks": 148,
+      "collision_blocks": 3
+    },
+    "21": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_021.ms",
+      "ms_sha256": "7bd8f5a99cbe507c964f1e152a3be51df7afe846afc1d1129d87d6be539b25e3",
+      "jestr_spectrum_sha256": "b3fe39e810b01adfd6a19628bc40d72e0485d0df95e55c23c5deb9105037d315",
+      "ms1_peaks": 4,
+      "ms2_peaks": 127,
+      "collision_blocks": 3
+    },
+    "22": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_022.ms",
+      "ms_sha256": "6cfdd13b72ced784a04ffc0306dcc3af83ebfce961507ea15115fdd009b01bb7",
+      "jestr_spectrum_sha256": "0e06eb8387b712a18da90d487d1119d1b39429a95021c917dfb233949e21b9e9",
+      "ms1_peaks": 2,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "23": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_023.ms",
+      "ms_sha256": "ce30226c289285e08fbd4bf4c3d7bdd388eacf36d0947a0cfe384d7a88c9be8c",
+      "jestr_spectrum_sha256": "d5f651d8060dfec0e7abdf40f6870e00a25f3ddb050cf60298852b01ddda6e30",
+      "ms1_peaks": 2,
+      "ms2_peaks": 152,
+      "collision_blocks": 3
+    },
+    "24": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_024.ms",
+      "ms_sha256": "813f167b3f58b838f86e8d60b81fc845f04fd97ab06cdc18fb19f8bbdb2fa944",
+      "jestr_spectrum_sha256": "9e598630b25de2a23897e0f80ff6d40b5b37a3521b8ab0a1bbef006843aee6c1",
+      "ms1_peaks": 2,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "25": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_025.ms",
+      "ms_sha256": "6a48babf9f03c7c654fccbdeabba4d1f6db11cf8b8c678f3f334b00919a603f6",
+      "jestr_spectrum_sha256": "d1189827c14eeae4f9c1893aaf5e52a12f150c81b06612edbdf15fdf85d24d47",
+      "ms1_peaks": 4,
+      "ms2_peaks": 26,
+      "collision_blocks": 2
+    },
+    "26": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_026.ms",
+      "ms_sha256": "e9d0e759cba6606094871a5974d881fe1956cc042948c627964e06906b2e1e10",
+      "jestr_spectrum_sha256": "d4ba35c10611c96f8d8b0db027a4c58b2fbd87a77481b55243124e95223eec9b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 53,
+      "collision_blocks": 3
+    },
+    "27": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_027.ms",
+      "ms_sha256": "485b02f702884a2361f2408fe095003e630fcfaa4a3f180a796e217846048904",
+      "jestr_spectrum_sha256": "b39364c31b2f9cd32c9a78ad1b26101215d6d7e0ceb35787c4338ec9fed53d5b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "28": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_028.ms",
+      "ms_sha256": "b72f6fe2c7782180f82e5efefe46823caef2e5decfdf120740dcb958455a0564",
+      "jestr_spectrum_sha256": "240f04342e41797f2502d4af975765c51f8920132608345e9c4df74f2e5d89fd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "29": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_029.ms",
+      "ms_sha256": "ff436c7a6a6fc697095142a011a0fc3aa0652781a642632cbf3ef7f9be917859",
+      "jestr_spectrum_sha256": "533144d8379771d5489e13da58887e7d60ebec337864811197fd95437803d9b5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "30": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_030.ms",
+      "ms_sha256": "3968a28fa782efb512aabdd4c22059e8314cb6f1c7b3194cd47ea5f5244d44a1",
+      "jestr_spectrum_sha256": "19e8e6e314efd0daefd009cc234c3be5d5688d28c065d0b94e790343a4050647",
+      "ms1_peaks": 5,
+      "ms2_peaks": 52,
+      "collision_blocks": 3
+    },
+    "31": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_031.ms",
+      "ms_sha256": "28da9f6f1042a7557bf194bb00fedfe04385c546617eee833efee25f0c9b280e",
+      "jestr_spectrum_sha256": "a3a257782ec5097fb6f310c7c680d2e6c548dc1a22b317e6d0057e9afb67f7fc",
+      "ms1_peaks": 5,
+      "ms2_peaks": 148,
+      "collision_blocks": 3
+    },
+    "32": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_032.ms",
+      "ms_sha256": "f4b56398a2cfd48e6aca5485e4dc146e1f1bf08f1e00d712c26e37d8b82a807e",
+      "jestr_spectrum_sha256": "8c468f4aee47932b0e49baf07269e270d8045b1b5869529b147401fa94baf53d",
+      "ms1_peaks": 2,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "33": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_033.ms",
+      "ms_sha256": "00036b899b246527ea95b3d74c07fddc8f8a904f5f566b6383fcd1ad7bad8bed",
+      "jestr_spectrum_sha256": "e479c56db035b2dd36bf6b99be368ac9f6b4bc46538d04af1feec93e33a3bb85",
+      "ms1_peaks": 2,
+      "ms2_peaks": 42,
+      "collision_blocks": 3
+    },
+    "34": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_034.ms",
+      "ms_sha256": "fb85bebd2246022407f4271aeb7ca81754d39f2f0c71cd970f8dd8de51d7509c",
+      "jestr_spectrum_sha256": "00a02a20326ec6859588e598dec6662553b914cdae34ab726c852fc18e3275ea",
+      "ms1_peaks": 2,
+      "ms2_peaks": 176,
+      "collision_blocks": 3
+    },
+    "35": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_035.ms",
+      "ms_sha256": "13bba41c7c9e20ed513f08c550c16f9e6c10ba77024fdc075d800a6175ecd835",
+      "jestr_spectrum_sha256": "22436da382046a036b576765f1087e49670424289357b437ca3dd2dba369a1de",
+      "ms1_peaks": 3,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "36": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_036.ms",
+      "ms_sha256": "b6f3062a86d954075c1923faa3dcd5d587472e55f95b044c0945663b21b9be5a",
+      "jestr_spectrum_sha256": "eb71e8f91a9191049777e488e0a0f072e972b80af6cb8f891baf0f49f2c493b4",
+      "ms1_peaks": 2,
+      "ms2_peaks": 58,
+      "collision_blocks": 3
+    },
+    "37": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_037.ms",
+      "ms_sha256": "4034504913e6041238681565e91452f7140fd32672de073c7b0325c5ba888796",
+      "jestr_spectrum_sha256": "9d8bd1caa5e3fe7e6f71732accd52ce5c674db003523b5e3e71476f8f06aad16",
+      "ms1_peaks": 2,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "38": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_038.ms",
+      "ms_sha256": "45a01902f5111d057cbedc9d9d3e342425807e895c65491ea1c1b44974f339b0",
+      "jestr_spectrum_sha256": "5361e42b24d37ac836555777f7b8255192a4d23413061afb24d27fdd6d8720e7",
+      "ms1_peaks": 2,
+      "ms2_peaks": 41,
+      "collision_blocks": 3
+    },
+    "39": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_039.ms",
+      "ms_sha256": "952652b4cf461d9e75b3d701bd6c07a8f7d68749ddfaa3eadeda7d4720b037f7",
+      "jestr_spectrum_sha256": "d076ca537b2c4add003269015709906d13d9b9fc1ff5361aef2dc23090ea0594",
+      "ms1_peaks": 2,
+      "ms2_peaks": 11,
+      "collision_blocks": 1
+    },
+    "40": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_040.ms",
+      "ms_sha256": "fc9015161fc243adc773de9ed414d2e08888632826c8b0d5f23f239ece8ac6b4",
+      "jestr_spectrum_sha256": "2c1f4ef54156b81e9a2c376729e37e3645626a543c1d5f65ad32149e173e5a0a",
+      "ms1_peaks": 5,
+      "ms2_peaks": 51,
+      "collision_blocks": 3
+    },
+    "41": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_041.ms",
+      "ms_sha256": "6a09d87bc4f336a21ca7460b3dcf8ec3bca2a1ce6c2716c47123dd9c5ed58351",
+      "jestr_spectrum_sha256": "150203f402ad9e3e0ee5d07bd1899b6aef1329015cacc982ccc821c7d78f7393",
+      "ms1_peaks": 4,
+      "ms2_peaks": 145,
+      "collision_blocks": 3
+    },
+    "42": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_042.ms",
+      "ms_sha256": "3fa72332c237f67c72fcc03626282baf500d472002d3bfa8524daadcff3a5670",
+      "jestr_spectrum_sha256": "611086f66b50ad5293323121acedce413052b3616d17a5acae0398b366427978",
+      "ms1_peaks": 2,
+      "ms2_peaks": 109,
+      "collision_blocks": 3
+    },
+    "43": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_043.ms",
+      "ms_sha256": "ef05dcdb627eec68ff00fbed384f2dcb160e28733c50155f42e5b36cff23c09f",
+      "jestr_spectrum_sha256": "e10aad33dad73df7fddddaee7b58758caf20ead13cf0a0624cc152e794e7a0ec",
+      "ms1_peaks": 2,
+      "ms2_peaks": 31,
+      "collision_blocks": 3
+    },
+    "44": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_044.ms",
+      "ms_sha256": "6f044fccec217768855a0451f719ec2ad6095ef5fba5a7266261d9a3dfabed5a",
+      "jestr_spectrum_sha256": "f40045df69655582100aa058ee140604aa9d0af71bd0a1e074ed14f6f7a7b2c8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "45": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_045.ms",
+      "ms_sha256": "6eb29959fc04aee08ec022171822836af5868a26374a081854b0d7813fcbe3eb",
+      "jestr_spectrum_sha256": "1d6bb0f61db4bc4109184d73f80260bbc995ec7eaff525954369614bc50d24fe",
+      "ms1_peaks": 5,
+      "ms2_peaks": 122,
+      "collision_blocks": 3
+    },
+    "46": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_046.ms",
+      "ms_sha256": "40bb10b3903528c38edc91988164b104f44e9b89d612f1281e6d12affb870158",
+      "jestr_spectrum_sha256": "fbf820210d93ae9dfe07f33ae81a36c6a0373d3a05b53d7350087a481aa585ef",
+      "ms1_peaks": 2,
+      "ms2_peaks": 28,
+      "collision_blocks": 3
+    },
+    "47": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_047.ms",
+      "ms_sha256": "c3c9441f767f1a641b7484008f5d28e39ac71fd13e8b30f495cb998d78485269",
+      "jestr_spectrum_sha256": "9b960946fd64fe2fa451c2a4c1be1925cc2bdc42b29902bfc7a57a04ccee47e5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 129,
+      "collision_blocks": 3
+    },
+    "48": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_048.ms",
+      "ms_sha256": "34e9fa7f3e509def5103ac46a2f3925bd9eef25067543e001c543f950aa083cf",
+      "jestr_spectrum_sha256": "4eaf2258bcd0e01e5197367878f1e9a8bb7f817f5fbfadefbdc8b6ac9889ace7",
+      "ms1_peaks": 3,
+      "ms2_peaks": 89,
+      "collision_blocks": 3
+    },
+    "49": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_049.ms",
+      "ms_sha256": "31fbf40defa709acc60add38de7832c8ba51b9bb387216b37c2857681cddd025",
+      "jestr_spectrum_sha256": "c92fa8b1aa54a07eca9d7308fef9ba6de25777289e46b6e961544ca065d4544b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "50": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_050.ms",
+      "ms_sha256": "4170bcff596aab4865ca73a7c7f716eae0e0a311360ae58042c8be7659c11e97",
+      "jestr_spectrum_sha256": "f07c4fa3a15fb17f0d2a326e02d0209c52bd4b62e9413ba6e261c9d253ea4311",
+      "ms1_peaks": 4,
+      "ms2_peaks": 68,
+      "collision_blocks": 3
+    },
+    "51": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_051.ms",
+      "ms_sha256": "4b8105181cb96c93473aad85c1fbaa23911dd52d3230526368c9610eb389069f",
+      "jestr_spectrum_sha256": "72c742094b10d84cff89f99f00a88ccd5232b95da634570eb8d5b4e13df77da1",
+      "ms1_peaks": 4,
+      "ms2_peaks": 86,
+      "collision_blocks": 3
+    },
+    "52": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_052.ms",
+      "ms_sha256": "0ee00267ea9b9d46c2c4071752afedbf208b56ff15883a65abae7b09f2f03f70",
+      "jestr_spectrum_sha256": "1c9a48f49c4fda629d698dc79ffa1b2a0e28ca68c9443bb25152a3604e43cb20",
+      "ms1_peaks": 5,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "53": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_053.ms",
+      "ms_sha256": "a8744bd28ba5bb0af695e8745e8c2fa3482a509d34a04c5d383b3309214954a7",
+      "jestr_spectrum_sha256": "393843c9a63a62b77e3650f50aae8a9b1685831b27ba72d06975ad6177d4a40e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "54": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_054.ms",
+      "ms_sha256": "32201848ea7ad3822158d5a04ab640043252003aeba044317c40aa832dd742d3",
+      "jestr_spectrum_sha256": "356260d3bb35f662de806fe47a96d89b63ada30d428f5bfbada9d334fded1d97",
+      "ms1_peaks": 3,
+      "ms2_peaks": 161,
+      "collision_blocks": 3
+    },
+    "55": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_055.ms",
+      "ms_sha256": "b4c5504424c903d178e8571a6c1d51ae8c1de1fe5a505edab94d224690953f64",
+      "jestr_spectrum_sha256": "119166cd4da4b2818be48a31b7adae40f445f920361e25afc3044058bd9396dd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 180,
+      "collision_blocks": 3
+    },
+    "56": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_056.ms",
+      "ms_sha256": "f30d635c279ba0e41f47b6327f09c06865c974c54db3a6bbd1ca3c6ed26646d3",
+      "jestr_spectrum_sha256": "5391a793f400097a701b9accc95a523c15c817d5f474ccca3f5dc68d97ad8a25",
+      "ms1_peaks": 4,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "57": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_057.ms",
+      "ms_sha256": "085c286167d9fef9a6273921f9a32faffc05f05056f295c689cf15aebfda301b",
+      "jestr_spectrum_sha256": "ac08f754a0b51f343787c3ff4b35b7372c990f50195da2218c56a4855e841ef2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 167,
+      "collision_blocks": 3
+    },
+    "58": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_058.ms",
+      "ms_sha256": "8a544da57ce0bf71f1ea719580f440940fdd35a072157638076c0ee97ce50099",
+      "jestr_spectrum_sha256": "40de01d6eb5bb655a6f9bcb188bcaa3c7e9040bcb82202648781ff8aee16d960",
+      "ms1_peaks": 3,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "59": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_059.ms",
+      "ms_sha256": "f0a7a9a672fc1b9a09383281da09abc9aa15ba4ac2d96666037d6778b9d14c72",
+      "jestr_spectrum_sha256": "2d57010f48cd1887c8a898a14468b12b5b691641fa6a7b72d84622e8c9adbe9d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 106,
+      "collision_blocks": 3
+    },
+    "60": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_060.ms",
+      "ms_sha256": "6e9a4f155ae3d1ad37b1cbac71b549b399083e69e89268fd40ff9bf7b0157178",
+      "jestr_spectrum_sha256": "8fa5ce833c8a5b3d4cd52e46a2d1a86b31f40e3fb936daeb59fabf76dbe27afb",
+      "ms1_peaks": 3,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "61": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_061.ms",
+      "ms_sha256": "48168435974b29230054fb894daaf9024c4630a72182890b618d24fe2dcb9e74",
+      "jestr_spectrum_sha256": "d7bb291d9c56489a80251f1e790a491ff2cebf032d6c2ac5cf1288a9a4736615",
+      "ms1_peaks": 3,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "62": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_062.ms",
+      "ms_sha256": "782b99a73730bd7ae28416ac5dd8df26c2613d2e4bcfe148bc6ccc552c56910c",
+      "jestr_spectrum_sha256": "7406b84d4db148b753f47068d2ee8311ee8ab91cb24b685fe3579bcb32d051bd",
+      "ms1_peaks": 3,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "63": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_063.ms",
+      "ms_sha256": "1846f1f34edb4066c51eeb9a2fc88b32069e08be5f04cc508960a95f4a8fcab3",
+      "jestr_spectrum_sha256": "6b9de489bc19fafe57b79220975391053ee13ad72f3b67d23c4918c318415f7c",
+      "ms1_peaks": 3,
+      "ms2_peaks": 89,
+      "collision_blocks": 3
+    },
+    "64": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_064.ms",
+      "ms_sha256": "5647320761ef39516464fbb761c6b04fe93eede7e7524e3230cf413b349f3647",
+      "jestr_spectrum_sha256": "d4ef053faae1f5240f01b31a5c2d8999dc86ad917860dfbbe3c8057295740425",
+      "ms1_peaks": 5,
+      "ms2_peaks": 208,
+      "collision_blocks": 3
+    },
+    "65": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_065.ms",
+      "ms_sha256": "e40fe6c0193aea79304dc4b2d41483b0085e0ebab4da1964d87b69aa4b67e4eb",
+      "jestr_spectrum_sha256": "11f452d8bf1b3f430b770bff7608c329fc7444aab067331b182fdaa4c6e1b5c2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "66": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_066.ms",
+      "ms_sha256": "51d73aee45f93f9c5e080842102a3ceff8b97f4c58b486a87e4c137276592af7",
+      "jestr_spectrum_sha256": "c3ce76d04856309ee036491630ea689f7021465860444f1b693668ce8611eaa9",
+      "ms1_peaks": 2,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "67": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_067.ms",
+      "ms_sha256": "2a3d174778f93d069a299a5102fb48962e53b5b42a74c1528dfbf43ce6867c7c",
+      "jestr_spectrum_sha256": "75cb80cb41346b56d675243cecb94db292cadd41ec4644660e7560f6fc681430",
+      "ms1_peaks": 4,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "68": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_068.ms",
+      "ms_sha256": "013ab6a994c94f24cd2188a9a7ac7a6f922a2c4544e843d4c4f05b7019d80a95",
+      "jestr_spectrum_sha256": "b1774ce916e1f6760e767fe4972e21c222ccb78e12fac129d26c6d85f908363a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 63,
+      "collision_blocks": 3
+    },
+    "69": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_069.ms",
+      "ms_sha256": "ff44d08dbd4eb5176586fdcd0a77ed57410352a22afdaf27a688acae7f0cbe3b",
+      "jestr_spectrum_sha256": "dff60a671c4e1c896deed245fc3d8cbdb94f009e995c578e04fbfa22964bbc67",
+      "ms1_peaks": 3,
+      "ms2_peaks": 127,
+      "collision_blocks": 3
+    },
+    "70": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_070.ms",
+      "ms_sha256": "6e0f9b429a92412b203e44e14c40407f87675e622a6fcf2d89a2f0f739bf5bd1",
+      "jestr_spectrum_sha256": "4676c976b302b8ef331470d17c2aecf9cf95c29212d90222bf1e799cc0d1fda2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "71": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_071.ms",
+      "ms_sha256": "472476596f072377f138fdf884a6dc158e879b3dfe677741bd6bacdd85c75cf0",
+      "jestr_spectrum_sha256": "fe8af757ad9b05982bd876e3a609d942ea7b236b2202a852608db91efc6266b7",
+      "ms1_peaks": 4,
+      "ms2_peaks": 86,
+      "collision_blocks": 3
+    },
+    "72": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_072.ms",
+      "ms_sha256": "353bddab8622789a3c3486aafea0e2b38a9d7967cacabb454e384b822b65c118",
+      "jestr_spectrum_sha256": "d0792be48b5c8a32cc0da4b2bc3e1c7b42f17401244a399498663c860759a26c",
+      "ms1_peaks": 5,
+      "ms2_peaks": 266,
+      "collision_blocks": 3
+    },
+    "73": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_073.ms",
+      "ms_sha256": "c79316db699a6930987e5953292ec45296263813ba08bd11ebe45078153e3bd9",
+      "jestr_spectrum_sha256": "c447691ca06b2c1497ccf016f3948f225ade07b77660bb978dbc1f5035de1056",
+      "ms1_peaks": 4,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "74": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_074.ms",
+      "ms_sha256": "8c2fe2b8e0059c96b0e19dc3c2efc23e54c76487c557970906f8ed3bf33dd8bd",
+      "jestr_spectrum_sha256": "d2d019cd1505ab5db1255226f9b86bba798cc7a6a6e12c7fec5f024324a5becc",
+      "ms1_peaks": 2,
+      "ms2_peaks": 71,
+      "collision_blocks": 3
+    },
+    "75": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_075.ms",
+      "ms_sha256": "20240ccb61d11c3f4ec524db1403e539ed321d94961f4efb06fa25ddd8c6c920",
+      "jestr_spectrum_sha256": "ac6114697efc6c30644187c073de2d72e243870e63f447e7f7fb9a72fb864b05",
+      "ms1_peaks": 4,
+      "ms2_peaks": 114,
+      "collision_blocks": 3
+    },
+    "76": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_076.ms",
+      "ms_sha256": "c9a19cdcc1f1e52ec45d32f91ae14e4e2f013dd0fad5f397a3ea18a50ca707d7",
+      "jestr_spectrum_sha256": "7bca1f4045ca3cf0b13008ad7ea819533e12163111a8ec542eb350b3bed42ace",
+      "ms1_peaks": 2,
+      "ms2_peaks": 23,
+      "collision_blocks": 3
+    },
+    "77": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_077.ms",
+      "ms_sha256": "c2f3b4f74edc2d827969c8f489af14df7fb7aec2472743686dd38e6e7af7fac3",
+      "jestr_spectrum_sha256": "e0a34f48b0fc0fa7f9a7b1a417c74f34f851fbb06c9372cb8adb633e882e7dda",
+      "ms1_peaks": 4,
+      "ms2_peaks": 76,
+      "collision_blocks": 3
+    },
+    "78": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_078.ms",
+      "ms_sha256": "1b9e0b272d9aa74389bc41696d554ffb68eb14db0e4e09c1c68a1b5d9e474a5c",
+      "jestr_spectrum_sha256": "79ab8899e1d0f612c87acd872facf926c3974484fcb9e57e8dc669d0a3851f2a",
+      "ms1_peaks": 2,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "79": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_079.ms",
+      "ms_sha256": "29e6bba667bbecd007fac01893cca5a3fee088a452a2c834bdb19b5ecd14c18c",
+      "jestr_spectrum_sha256": "2f3405b651a193b87a27a1de3781929f290abac13c38e606acf02c1b3771b2f1",
+      "ms1_peaks": 3,
+      "ms2_peaks": 164,
+      "collision_blocks": 3
+    },
+    "80": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_080.ms",
+      "ms_sha256": "8108c896d56391c51749c2d1fab117f630eb4eb652413b6bd6fd5fc775fc8ff5",
+      "jestr_spectrum_sha256": "886e0798e03fd268354e209f029d2cd3a7de7fa28e3aa4c5fd956cc8f57c2691",
+      "ms1_peaks": 2,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "81": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_081.ms",
+      "ms_sha256": "ef34b6996f54c2a1ec5c4f070fd96ba099686bfb1968b0aec50cd7ad4e80bb5f",
+      "jestr_spectrum_sha256": "31f69d6bf5d060d95e6fa8a4f957952b93940c49ab183e4c94da5e53502f437d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "82": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_082.ms",
+      "ms_sha256": "64c622d092701a8862b03257f5c6b96e29e378e1efb138b31a16768fabf4bef4",
+      "jestr_spectrum_sha256": "1768be586a4fd2f76ff680fcd0e7c15e10c53042a8f0f12ffe725f00d191dee4",
+      "ms1_peaks": 5,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "83": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_083.ms",
+      "ms_sha256": "baff70ba1aaf94a30854733acd4f3dd7c1ef8e4f87f457ccec4ee67fd9f67ed8",
+      "jestr_spectrum_sha256": "64536b065c467aacf2b0d34df500a478a74092089f921c9bfa55a87cc6acd2ea",
+      "ms1_peaks": 2,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "84": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_084.ms",
+      "ms_sha256": "e9f71bab5a2587a943d9ebe26d77387751853181620ea335c865830564902c04",
+      "jestr_spectrum_sha256": "f22aae300b54f355781b6ab7c2480b43763a6719b045edb3b6e2aae13df9d2cc",
+      "ms1_peaks": 4,
+      "ms2_peaks": 176,
+      "collision_blocks": 3
+    },
+    "85": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_085.ms",
+      "ms_sha256": "5fd4c059ed5806285ca0223264070b0f4f70ced192a3cf3a6f82b9eb674eec5b",
+      "jestr_spectrum_sha256": "4f126774e2bfca6c157212a4ffad8da0d4fca986f11acb0a306c3be2d1609187",
+      "ms1_peaks": 4,
+      "ms2_peaks": 177,
+      "collision_blocks": 3
+    },
+    "86": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_086.ms",
+      "ms_sha256": "5e8973107da9c1bcc23812e2d937372266ab13f7494e3c6b3a815730d75c3dce",
+      "jestr_spectrum_sha256": "d953e9b1a843301be920eb845835455b5daed327eccfd8a021fda6cc56c536a7",
+      "ms1_peaks": 4,
+      "ms2_peaks": 201,
+      "collision_blocks": 3
+    },
+    "87": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_087.ms",
+      "ms_sha256": "7088be946f3cebeb28f0198c977271a1616e6480ade7d9887ed7ee64bd599a70",
+      "jestr_spectrum_sha256": "5d9a51f56f340f7d3f73a3f796e59bc462aefa21d56bf8b30246b58a740fe04a",
+      "ms1_peaks": 2,
+      "ms2_peaks": 76,
+      "collision_blocks": 3
+    },
+    "88": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_088.ms",
+      "ms_sha256": "dc03e3e2aa1ecd7708b4e607df27fe186b5496e49a8cdf713d3cbeeb69ca09dc",
+      "jestr_spectrum_sha256": "f130a6e1822a612c3678b8ee7aab0e18cc02073cd877d4bb1d3b40133cd15008",
+      "ms1_peaks": 2,
+      "ms2_peaks": 28,
+      "collision_blocks": 3
+    },
+    "89": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_089.ms",
+      "ms_sha256": "1932691e20b3eeb4eb83241142947f2b81258dce53d32595c5de85c50002d1a2",
+      "jestr_spectrum_sha256": "ab779d4e8b167116906340f9f9b5ae42d2fd57c470f64e025583b311679ae5a7",
+      "ms1_peaks": 3,
+      "ms2_peaks": 24,
+      "collision_blocks": 3
+    },
+    "90": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_090.ms",
+      "ms_sha256": "6d710846a7fcad9bed8ec29f6c5455cc6cbd140374efc2a25ae85a3371ea6226",
+      "jestr_spectrum_sha256": "47305496ae9033b46dc574a983ffc6542de37ced86455a09acd895adbdd7a5f5",
+      "ms1_peaks": 2,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "91": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_091.ms",
+      "ms_sha256": "99be7abb88f4b2232a3d000fb8f0d95684051e7376f93cee43f468bfb5a35d82",
+      "jestr_spectrum_sha256": "d67d91adf0add530e429066123150a6e4132027bab4804853023a087ca2bdb82",
+      "ms1_peaks": 2,
+      "ms2_peaks": 25,
+      "collision_blocks": 3
+    },
+    "92": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_092.ms",
+      "ms_sha256": "c118030f111a9c96dbaa1bd861aa7d806cdf756925cbf5f59790b89da92230c2",
+      "jestr_spectrum_sha256": "0fb80afdbfa5d58726fb9574d8c60625ead82ed7f1fcd21d09ea0833108b0cfb",
+      "ms1_peaks": 5,
+      "ms2_peaks": 296,
+      "collision_blocks": 3
+    },
+    "93": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_093.ms",
+      "ms_sha256": "497f0e1cb9709bf1daf1e498340ba963d32d9bf8ccb148fc3365b3088e14e7e2",
+      "jestr_spectrum_sha256": "663afa1c74d3332aa154cc677b3026f61c48f0233eb3636a2eb50ac8c5f14f0f",
+      "ms1_peaks": 2,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "94": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_094.ms",
+      "ms_sha256": "b970d0f9ad94b1d0af52621309cb6a74393fce6f106c6666403091140f1ade6f",
+      "jestr_spectrum_sha256": "f030f1afeef5dfe2bc83210a8e448d3b43dc7ba6b054469a7918f03848a895c8",
+      "ms1_peaks": 2,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "95": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_095.ms",
+      "ms_sha256": "9dc3f7ca8b7011d3df6fbec06ca9d2d835424dd4f1849ebfa52db4c403a02c2b",
+      "jestr_spectrum_sha256": "8a2f3f7cea432102fbc7b0114fee588f26dedeecd7e7ab37a16e89a77caba9f2",
+      "ms1_peaks": 2,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "96": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_096.ms",
+      "ms_sha256": "c60f0bfcf3eef7a717c857c3b93dba6f01e897b76e84c8324b4dace961e902aa",
+      "jestr_spectrum_sha256": "5f2c8af78a77a37478c8c7ce74b7826cda33ca7800fadb4f1271dc5ebe31ab34",
+      "ms1_peaks": 4,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "97": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_097.ms",
+      "ms_sha256": "08b12da02b318009f7fb50172f92afaf81efe60e9dfa904deb7a48dc2e1496ca",
+      "jestr_spectrum_sha256": "ee4cef957abcff9931c243efd5c2f39f3b1b941723fe37ec9ae7c5f8eddc28d8",
+      "ms1_peaks": 2,
+      "ms2_peaks": 19,
+      "collision_blocks": 3
+    },
+    "98": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_098.ms",
+      "ms_sha256": "37ee284ccdce731fd2d32b0d2b1ec06e2e840e01cecd8643a5dd92b151741be1",
+      "jestr_spectrum_sha256": "73c2ca4d3cd1ff387a56e1721ea05df58c175fa6cb0295f5b07fc9bfaba9d990",
+      "ms1_peaks": 4,
+      "ms2_peaks": 253,
+      "collision_blocks": 3
+    },
+    "99": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_099.ms",
+      "ms_sha256": "569de49fa4756011136da0dbf1e8288bd6d1f605e2be13d81d02a0a750af6635",
+      "jestr_spectrum_sha256": "7d386e670edb8ae3954c974621d8243616afe89ded5039832dd6dce8d64f0a6e",
+      "ms1_peaks": 2,
+      "ms2_peaks": 58,
+      "collision_blocks": 1
+    },
+    "100": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_100.ms",
+      "ms_sha256": "f3d56fb245a388f508113ede7fe256dfdde9c888285eb309718e66413af6a03f",
+      "jestr_spectrum_sha256": "26ea5cc34346164edcbcf9c538494c3610603642659f760b95561be02df3654e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "101": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_101.ms",
+      "ms_sha256": "6e51a7f0215f72841427b922d5066735c268c352366d7817746645cfbe2c67b6",
+      "jestr_spectrum_sha256": "2b20955d644cdd886c64b01680684f2de8e1547ad66edb1c1460784ac3bb84e5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 72,
+      "collision_blocks": 3
+    },
+    "102": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_102.ms",
+      "ms_sha256": "657cfc3f2233f29b0804527f22f7127bdef1cdb8ab5316d372688c555864d932",
+      "jestr_spectrum_sha256": "dc371dd4036605d0607e0d5d0613230d0f632e872a58f62913003f1895be443b",
+      "ms1_peaks": 2,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "103": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_103.ms",
+      "ms_sha256": "98ebe84c829bc65f681262379c2c1247d2f29f9a0ee3206135b877b0cddbc2e3",
+      "jestr_spectrum_sha256": "3832c51dcb652717e1eff32c3cba09640c5c219b44c5bd38cb7c523de9fde186",
+      "ms1_peaks": 4,
+      "ms2_peaks": 141,
+      "collision_blocks": 3
+    },
+    "104": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_104.ms",
+      "ms_sha256": "845e51234835787c4ab53f06569addf5d18b3bb8747d245feedc6b92931175a2",
+      "jestr_spectrum_sha256": "ac80556ed2c4e864065e697fe75828f62a466624cc73088f7e717d14b388a6e0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "105": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_105.ms",
+      "ms_sha256": "3ccaf128a493b100f45de3cdcd5d20f1130e8a1cb5b5154597d5a147f349c27a",
+      "jestr_spectrum_sha256": "b2c9e9a168ca5e22b80eddba9a9af8e9fe34056194f39b5f15d30adb02a65e71",
+      "ms1_peaks": 3,
+      "ms2_peaks": 180,
+      "collision_blocks": 3
+    },
+    "106": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_106.ms",
+      "ms_sha256": "e9aa3f34d253524488a673cb610c92371334c51c533a3131ca30623e1264c3e5",
+      "jestr_spectrum_sha256": "3afeed94e9c956ce2ae819bd50734e7b4b345b1e22802ae26be543bd58e97834",
+      "ms1_peaks": 3,
+      "ms2_peaks": 108,
+      "collision_blocks": 3
+    },
+    "107": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_107.ms",
+      "ms_sha256": "a68acc01ebd99d0fa177063549d00a02a1f5bf936c304ec9f6008e643e3d6bad",
+      "jestr_spectrum_sha256": "7d39f56bfe82ffecafb8f06b5120c9553c88c734debef2c814791e7dda0f39b3",
+      "ms1_peaks": 5,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "108": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_108.ms",
+      "ms_sha256": "953ebc1f5541d1dfcb711c2ecc0a500e3fc6c08e9fe95c79b56edad6d5a4afe8",
+      "jestr_spectrum_sha256": "aca2b75c4650af0dc0a8a6dbf9551f170c18ca10e9c382d5479b1f4742482396",
+      "ms1_peaks": 4,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "109": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_109.ms",
+      "ms_sha256": "da6db4fbc9beb94db1cddf51c4377e47a73a2b4b4b979d780c10d93cc41d7e4c",
+      "jestr_spectrum_sha256": "231c72538054487ec70ceafc876e11f0513249dad674c48b53b01ab94dde37d8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "110": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_110.ms",
+      "ms_sha256": "ec920a2914a3821aa7862486800990fb05c0f4a83324ed887c7661578143583b",
+      "jestr_spectrum_sha256": "62ba8fe61c1761c3c2cdfe681b8d7802fa8bd09201e0abc3119652e42b379d0b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "111": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_111.ms",
+      "ms_sha256": "db62a8fa6a10fc4d9c64d0ec36fed5335ed16e1af319dbd646fe55d2f5e758b8",
+      "jestr_spectrum_sha256": "a18e33a131cce84bf1c96d3efa2eafca8ed89debb8daded060005d3749d2ebf8",
+      "ms1_peaks": 5,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "112": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_112.ms",
+      "ms_sha256": "c2e2a810968234da9594004b137bc9657c4d16e23515c4352caf7dca9db1f765",
+      "jestr_spectrum_sha256": "e12ba3f67e15ac79f20002a8ca7808ff737cecf683812097645325867d19a27e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 178,
+      "collision_blocks": 3
+    },
+    "113": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_113.ms",
+      "ms_sha256": "dbe223e71edfe1428dde661503e62a8c6bd1989b7180617894c7ba9286ae2962",
+      "jestr_spectrum_sha256": "f4eb87df1abe3f3f930283f1c83a008e1dc08e5d6e0ceb22f021fb6db0b6f9f4",
+      "ms1_peaks": 4,
+      "ms2_peaks": 215,
+      "collision_blocks": 3
+    },
+    "114": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_114.ms",
+      "ms_sha256": "284f0ce071800f61eca901f49afccff543c5879fead20651ec91cf1e977710a4",
+      "jestr_spectrum_sha256": "bd42094f514909caf07f5d76e86c04def9c4366378c8e73acc03266a33283a99",
+      "ms1_peaks": 4,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "115": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_115.ms",
+      "ms_sha256": "fd03b32bf64e9659678a1479d9bbc471033c2fb88952ada7d35dae659ef94ac1",
+      "jestr_spectrum_sha256": "ae2916f6866c7a9b83b52cf2374f4fb5566b42a03dfb1dc51d26066ae05a1c42",
+      "ms1_peaks": 5,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "116": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_116.ms",
+      "ms_sha256": "7f933be569711843a33ce628040933125a95316138f32bb47340b5a4e19c38c6",
+      "jestr_spectrum_sha256": "e1a8ca70b92571d23060dce7d2ebd42a3d3b1f93c1d66b3848966a0be228b401",
+      "ms1_peaks": 3,
+      "ms2_peaks": 96,
+      "collision_blocks": 3
+    },
+    "117": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_117.ms",
+      "ms_sha256": "6ce36a8cd21f287e544b4164502ee40f11a16f05ae075a7e5997d3ae259f3545",
+      "jestr_spectrum_sha256": "0edb15553af48d01489497e5f14536a82fa90a2cf47c6ad0672ef5f171f868e0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "118": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_118.ms",
+      "ms_sha256": "2cea5050d6673b0c0a2fc58153b203325956d471cfdebef91c8a60dcf0c82eb1",
+      "jestr_spectrum_sha256": "1bc74aa8ef3821febbf94bf8b712d17cd33bb95a7cda4bccd519d6e4fce0bfa8",
+      "ms1_peaks": 2,
+      "ms2_peaks": 135,
+      "collision_blocks": 3
+    },
+    "119": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_119.ms",
+      "ms_sha256": "1350d92c9533102d2ce0ae5cd5c21f467cad0ee0cc524f9ae369bb223fd08bcc",
+      "jestr_spectrum_sha256": "738ef82be603bc24d98403a8d47d49dfcc7554c0e2a5f5d7facdb8ad76bbffee",
+      "ms1_peaks": 3,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "120": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_120.ms",
+      "ms_sha256": "4a2fb9e48a274b2d01ec93f0da02877e4baabbc91838ba8ade2d4d2b7e2944d2",
+      "jestr_spectrum_sha256": "65dbb046b04fc0e35cbebc9bfe5d20c7382568c05b50b8bf50f722b3c1151abb",
+      "ms1_peaks": 2,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "121": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_121.ms",
+      "ms_sha256": "3aaa0a44f36b2d7d9eb94d589f0795cff4a9de122eb00c8f12d550cb4d5e25c6",
+      "jestr_spectrum_sha256": "b9cd3161155314cdd2ab3e337e68e497f3c2b8cddf6bd5c914d68bdf37c88e4e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "122": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_122.ms",
+      "ms_sha256": "f129661db6585b44c354b4fb64dc76308077a51fda7a9ef0d9e0673e57ad35b1",
+      "jestr_spectrum_sha256": "a5eb149be788610ffe086dceec8c599584f7a738eaf3b43d00d19b7009a440ee",
+      "ms1_peaks": 4,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "123": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_123.ms",
+      "ms_sha256": "e0c7a613a6622df17c615703e74568c467d24f7445ceca6728632bb45c83fb12",
+      "jestr_spectrum_sha256": "f3598f0709159eab489716c66f66798a0e3dad7b1ee0b0b6e765fcf9d98d0717",
+      "ms1_peaks": 3,
+      "ms2_peaks": 25,
+      "collision_blocks": 3
+    },
+    "124": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_124.ms",
+      "ms_sha256": "98074c87b1ad37234e3c23e1ae114db8d07250b1e4829d1cd3fa7baa36681b5c",
+      "jestr_spectrum_sha256": "78d8bc4586daab2e3c2862663fd05be34d262225b4ad8774c020f6292f703262",
+      "ms1_peaks": 4,
+      "ms2_peaks": 77,
+      "collision_blocks": 3
+    },
+    "125": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_125.ms",
+      "ms_sha256": "721af0cc87f0af2170150e1d14862969de0f0e316c114b4aaadf7b7f435eab0d",
+      "jestr_spectrum_sha256": "98c27e857dc5819c5f2ad6d14040f41966f79b5ed9b981501aaa35a89e00e80e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 167,
+      "collision_blocks": 3
+    },
+    "126": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_126.ms",
+      "ms_sha256": "e2badc9ba3617d0640cf4a64e753f80c7e447b8824f4ac5d0ec081027afd8d4f",
+      "jestr_spectrum_sha256": "1177fdb05787a2ceec99fbae57d8355e62055bcbb96c55e6d9a3411d35c3b7ba",
+      "ms1_peaks": 5,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "127": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_127.ms",
+      "ms_sha256": "72b81b2487ab79b3176184a5989ec805aa6a8cbec650e154dd75cd1b0a778cfa",
+      "jestr_spectrum_sha256": "342aced03adf98de710122c202b5a002a2a00d62b48b81af6a2acfdb3822e43a",
+      "ms1_peaks": 3,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "128": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_128.ms",
+      "ms_sha256": "50dba9aba2dbe025465aa817bebc02be64bfe4b791a0bae8b4f28e7b9a7a7c21",
+      "jestr_spectrum_sha256": "b8a82f852dd3408d9ba89833d8a42e24297f4030ff783c75fb4a2461958146c6",
+      "ms1_peaks": 5,
+      "ms2_peaks": 142,
+      "collision_blocks": 3
+    },
+    "129": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_129.ms",
+      "ms_sha256": "dde64d5fe61a91b28cf0cdcab83add4de3b174bad70b9c914b2d481471da011e",
+      "jestr_spectrum_sha256": "764da6101b920b5cbb4082a41991a39ca28c75cafb2fba248b1b443f04904ce0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 14,
+      "collision_blocks": 2
+    },
+    "130": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_130.ms",
+      "ms_sha256": "491fa2b67cfcac077feeb9e6ad1b29163363434869b416f7f899402b0bf4adb6",
+      "jestr_spectrum_sha256": "81f151aa27f249979f5b1a7890a6211a64d6b7125c0b3f3a9a10f39aad706fc2",
+      "ms1_peaks": 2,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "131": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_131.ms",
+      "ms_sha256": "af41fe4e79c8ce5c0105ee0b551dee083dedc31bc81d65ad409c138f7ee335ac",
+      "jestr_spectrum_sha256": "a502b8303abea2687cc65b0ee40f5e84f0c984e44a8a2bc3e19a20c2e3a751f2",
+      "ms1_peaks": 4,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "132": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_132.ms",
+      "ms_sha256": "57b32d08b8107f6f4820060b65e32c1b361f470274764cd4be9c51c00607aa63",
+      "jestr_spectrum_sha256": "bed859f19638a8573000f1f1de843eb6b90172dcc558f95d8e371df27b138284",
+      "ms1_peaks": 4,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "133": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_133.ms",
+      "ms_sha256": "ed1a6fa960d9277ec4fd5d2d420151c1a575563a22341173fa7e63b77b5d85b3",
+      "jestr_spectrum_sha256": "7d16fe7ac439fe0984567960a06a4b54385f10d1773a81c443ced02f3360f20e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "134": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_134.ms",
+      "ms_sha256": "835fd1822f50ee8d7f9adfd48d1069c71c57f6060c04a1f6acbdaa315a1811e7",
+      "jestr_spectrum_sha256": "d4de5ff07eddb8cf2c3b7a9777288dcf762e47cca0ae768296021d89aea12f9e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 293,
+      "collision_blocks": 3
+    },
+    "135": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_135.ms",
+      "ms_sha256": "07d7edd1022da457f6f7eb12c263cad47008e04b511d9fb4bc576ecef94108c0",
+      "jestr_spectrum_sha256": "2cc22d40a7c25155b97599ea62712d78720fe4d690fa57c3d86389b5ba71131d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "136": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_136.ms",
+      "ms_sha256": "5e22cb45de1c7f20c15494da6a81db71d67ab446aae349db728d537b904590d1",
+      "jestr_spectrum_sha256": "4dd15440d3de33bd7a75997ecbee9eb07c365c3f59a45918441d1434b0866eaa",
+      "ms1_peaks": 2,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "137": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_137.ms",
+      "ms_sha256": "cb0cc4965d42b2f2832eb9ae9f69f3b4bd4f8e32c89250b8156d035225af22e4",
+      "jestr_spectrum_sha256": "da6a8dbf9910437395277894eafcaca48c643fd1cdb8636829186c5b4953be28",
+      "ms1_peaks": 3,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "138": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_138.ms",
+      "ms_sha256": "799358a33aeb66e74fee8975f760f72342d2cc1d32440669c8a87fff0ec3792d",
+      "jestr_spectrum_sha256": "7e01e5f01bd34438bd770d6e3219840c1a263c954d6dab0ce1db66588da8ed41",
+      "ms1_peaks": 5,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "139": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_139.ms",
+      "ms_sha256": "8bc80089075eb65bdb989ab0fd6c05a14ef592ac24eeb87b03bcba7367518ab5",
+      "jestr_spectrum_sha256": "a2a3b5e1283e782a6d5faa3010784c888be5a500f44ab20853aa7e91f1ee3ad7",
+      "ms1_peaks": 4,
+      "ms2_peaks": 143,
+      "collision_blocks": 3
+    },
+    "140": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_140.ms",
+      "ms_sha256": "ebfb23ea42fb42a17ed8aa5acd82eed728062a44615931a752512d413b67d026",
+      "jestr_spectrum_sha256": "4fb2039cd20e4b39c0b269357c637d6bcc754752a0bf8626a857496ecb90e0bb",
+      "ms1_peaks": 3,
+      "ms2_peaks": 94,
+      "collision_blocks": 3
+    },
+    "141": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_141.ms",
+      "ms_sha256": "07e5efc841ac22247cad1ce54f9ba20fea87ec4451efba73691c72d2ca653cd7",
+      "jestr_spectrum_sha256": "0a5892a1b86e540f1e18b2d413fdbe74d895bec770ab0b67c711874f22ff7729",
+      "ms1_peaks": 3,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "142": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_142.ms",
+      "ms_sha256": "3454203eff84cb0556206e8f555ae8b0579c212d3ae287c9f06c8aed4747ac45",
+      "jestr_spectrum_sha256": "c7472a384bdb041ba452c59497693857f77d7188b69fd4f5cf28d09d6a43a48e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "143": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_143.ms",
+      "ms_sha256": "e8be021a263758ac7eab69314bca48652f2d5c13c84992ede4be4ce0e4a6d932",
+      "jestr_spectrum_sha256": "4ead4641aa9b0a093c10000cc98fca32e0b8d801c0c4fd8e0eecacc9693dd517",
+      "ms1_peaks": 4,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "144": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_144.ms",
+      "ms_sha256": "0e729e5cbb05f1ca9519d36e0058e6ef0555de19d4340eed7961556eeb63d23e",
+      "jestr_spectrum_sha256": "ee1393f68a83d382fabebfe1b1b66219d75134525cb9b7a7ddb1eeeb88d8417a",
+      "ms1_peaks": 5,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "145": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_145.ms",
+      "ms_sha256": "a01fd179ebeafaca10a16c6e57aa611c8936479ae0513a5f08af52fe55114744",
+      "jestr_spectrum_sha256": "430577275181f9495f1405e850332a24382e1df5146433a6952518171b9afdd1",
+      "ms1_peaks": 4,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "146": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_146.ms",
+      "ms_sha256": "c1c55288020bebbf9c0f53039251d1f0ce5bf1051af220817c23caa2e847eea5",
+      "jestr_spectrum_sha256": "0f9f3c22b69b7e6e5c83a62cac3c5f95c276b308a5b0b1d5d20dbe5524a4ad93",
+      "ms1_peaks": 4,
+      "ms2_peaks": 69,
+      "collision_blocks": 3
+    },
+    "147": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_147.ms",
+      "ms_sha256": "b17c569a427f4afa53bc08dc76932f504f0f113abc0f8b8fde18fd74506f43f8",
+      "jestr_spectrum_sha256": "258ddbec2743e6fd2b9b6c3d50a268c6bb75c3b8fef63690809e6f0b4c7cb7a8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 150,
+      "collision_blocks": 3
+    },
+    "148": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_148.ms",
+      "ms_sha256": "075263b3755a4b3e45aea6edd7c65af07c4a427313729f0d15e1a9761d80c8b9",
+      "jestr_spectrum_sha256": "02995643ef0e2848cb29c37bcfa8a5569b35e1fa25a6bfce296bcb7992f356ac",
+      "ms1_peaks": 3,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "149": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_149.ms",
+      "ms_sha256": "8c133d9645ee12620acd4d4d6fd4e83a48497b42a9cb5651af6a1be9974a5a00",
+      "jestr_spectrum_sha256": "18f23199d0ee62e5517e1d0acc956482afaa7c8d790fc2f93ebb3f9d7828dc4b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 31,
+      "collision_blocks": 3
+    },
+    "150": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_150.ms",
+      "ms_sha256": "85e3732aacf9a1497569ea8b94143e75e9ecae67743158985f94cddf25c27980",
+      "jestr_spectrum_sha256": "62947983061b491003c003aabb31c46189f2c40698afeef188c91b77a579b8b3",
+      "ms1_peaks": 4,
+      "ms2_peaks": 52,
+      "collision_blocks": 3
+    },
+    "151": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_151.ms",
+      "ms_sha256": "2216c8cf8b2166fff6191452b245cea1c6b5d6fd8ce0cccab3270563dd337270",
+      "jestr_spectrum_sha256": "41ffbb1c1558ce6d9792afd6b7f913025626a9701d296f078fd4b0da40385cbf",
+      "ms1_peaks": 4,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "152": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_152.ms",
+      "ms_sha256": "e5ded4215db5fa5c56bb543bf4aa2c78f9dc3c952df12a8cd0d7d403a89991a3",
+      "jestr_spectrum_sha256": "15db9e08deb0d931f06bb89f93f4d8164b9a010edf728174fffb7c46dc37f1d6",
+      "ms1_peaks": 3,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "153": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_153.ms",
+      "ms_sha256": "3c311754ff9bdd785adac39c453bd54106b178a4f80702170de05d2cf6e4c412",
+      "jestr_spectrum_sha256": "346c1366bd24623577a39e56e19a44c9f866e80d1e2a3485513ab083add2a012",
+      "ms1_peaks": 3,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "154": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_154.ms",
+      "ms_sha256": "371d1d17d46dcd7679e233a35036bc1be318990aa8a01eda136a706c36ec975b",
+      "jestr_spectrum_sha256": "0761dfba167eccd5a4506fac6ec32679733091ee06da6e0cc004c813cc98ea3c",
+      "ms1_peaks": 2,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "155": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_155.ms",
+      "ms_sha256": "be88cfdbadb4370cf88fa87b41b31bab7f8f4814cdb44231d6005a9f890e1110",
+      "jestr_spectrum_sha256": "84c6e354a98743b365806107f5d700b38e12a8deb80e285e26ab9056d7482abf",
+      "ms1_peaks": 5,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "156": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_156.ms",
+      "ms_sha256": "254877d02a0dd0494f11d9df57f4eaab37722c7973a976a87952571732146940",
+      "jestr_spectrum_sha256": "14aa570fb4aff6ee285f34d8d6835c667e896f68c7c483b84dd7c0c60400a54c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "157": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_157.ms",
+      "ms_sha256": "5a5e486ae1f80ed8a68fe2ef1deee793fc4cfbadd955ff0d0dfae8ff41f07b07",
+      "jestr_spectrum_sha256": "b66ec5dd1de8bef05176b79f5518d45ca1d42d77bdb789e2aa9cf80b6da914db",
+      "ms1_peaks": 4,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "158": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_158.ms",
+      "ms_sha256": "fff353f9d51099e7da3f1decfc095530e8682f9eb7358a7a4e34253dab2c2c62",
+      "jestr_spectrum_sha256": "76b9ba7933ebb35011bb02df3a2b09ffe5d065d743a66bb1e05d5ccd0f2a33e0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 231,
+      "collision_blocks": 3
+    },
+    "159": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_159.ms",
+      "ms_sha256": "4479108ccb3510c717b5859077e756b1d96c4e0cf008e210f7a8e5059735e61c",
+      "jestr_spectrum_sha256": "83b5b03b56b1f8caf739f289b9f3b2ea963d244d7709eb2940e79ee1eed6266d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 236,
+      "collision_blocks": 3
+    },
+    "160": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_160.ms",
+      "ms_sha256": "793f1dd138b5ef0b8f863be2aaaa3dd50353ed0d18c79322368be7ba7784cbdf",
+      "jestr_spectrum_sha256": "e9032685ab40a39926e458edf63123b68fcda3e3c77cde255b75647c4b7883eb",
+      "ms1_peaks": 4,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "161": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_161.ms",
+      "ms_sha256": "e83139860d5b882a7178b6d33cc64a053fca0dd74d5caa23cc2f81f4cad21687",
+      "jestr_spectrum_sha256": "b1fafaa74603469a1abb0f6e8ebdde627fcf243d5ff1a2e0e5b53b7990d8cbd8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 137,
+      "collision_blocks": 3
+    },
+    "162": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_162.ms",
+      "ms_sha256": "88888172355557717f6a1cddf25eaad85377ca87d20f4320ae0654f2a5209f93",
+      "jestr_spectrum_sha256": "c83b0991d3f8f7ffe7d63c4c1c3c17f0c3244a502a5e25fae5a98a70689c21e8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 63,
+      "collision_blocks": 3
+    },
+    "163": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_163.ms",
+      "ms_sha256": "6225573cb1a37c307d9bd743b2e038f451ce57b13dc9bc37e690451ea85f74ac",
+      "jestr_spectrum_sha256": "99066a632ce1357fa5450414ba4823b3232ef2af7879afc66b74805c92882dfc",
+      "ms1_peaks": 3,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "164": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_164.ms",
+      "ms_sha256": "d6094677bc64bb34934f1a159ec2f9c54221d31b404d47e9ec951be38899bbd6",
+      "jestr_spectrum_sha256": "1d8677b60d27c8eb8a175343d460fbe58059de8179558714dde702d6083e8d36",
+      "ms1_peaks": 2,
+      "ms2_peaks": 28,
+      "collision_blocks": 3
+    },
+    "165": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_165.ms",
+      "ms_sha256": "dac06360769d01b82e6e3f3502451e2af17d95da2fe447ac7c80aa91df69ee4c",
+      "jestr_spectrum_sha256": "41959777ebf4877747fa5ff8b01ba739a95e30dd184e93d16c30adabfe2274c7",
+      "ms1_peaks": 2,
+      "ms2_peaks": 72,
+      "collision_blocks": 3
+    },
+    "166": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_166.ms",
+      "ms_sha256": "ef06c8b1ab45b8c1add76eab4723068bc296b12c1bed42d391d52e0985640dc0",
+      "jestr_spectrum_sha256": "b1400e75bbe17aae386cd290814c58158155e282d5da5e2724922de6affa1f93",
+      "ms1_peaks": 5,
+      "ms2_peaks": 68,
+      "collision_blocks": 3
+    },
+    "167": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_167.ms",
+      "ms_sha256": "22354956f5ef0d34bbf25add037804e25b9b52966e7afe235900da72a52768aa",
+      "jestr_spectrum_sha256": "843d990fbb1fe344a9f83e08f9daa75aacdd45adcca6f53ed71d5b2cefe5a596",
+      "ms1_peaks": 3,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "168": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_168.ms",
+      "ms_sha256": "e1db0207a0e506776d3c90debb0a8e34d78b4283fe80083997727754864fa3ca",
+      "jestr_spectrum_sha256": "9b1e82cb9ab7bbc1eb2c5415b304efc4e4511d4243560053c52e33aefbccc836",
+      "ms1_peaks": 5,
+      "ms2_peaks": 107,
+      "collision_blocks": 3
+    },
+    "169": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_169.ms",
+      "ms_sha256": "464c13316d8489ee88b0b58f4f8eaae8d7210562b40e218969085460092a8d3d",
+      "jestr_spectrum_sha256": "234d8c66c40efeae259072aa32b56868b1c24cc1a6f6178f60d821b5ac9da959",
+      "ms1_peaks": 4,
+      "ms2_peaks": 65,
+      "collision_blocks": 3
+    },
+    "170": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_170.ms",
+      "ms_sha256": "91542744e5992c14f573494de70812e7be85e9bf6e1f0c123f1d178ac4daa45d",
+      "jestr_spectrum_sha256": "ba352e0911aa357aefceff2b97f5837d74a7506fc8a6de93c5200f1eb0bfab17",
+      "ms1_peaks": 3,
+      "ms2_peaks": 87,
+      "collision_blocks": 3
+    },
+    "171": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_171.ms",
+      "ms_sha256": "7ef0aa76e5e82cd026595cc4c34a0362af98897e8656698be91ca433b82e42e0",
+      "jestr_spectrum_sha256": "0916cee4b8103f432963d154645bad8a1b082f0d9280f05eafa4b2facf2f8fc9",
+      "ms1_peaks": 4,
+      "ms2_peaks": 51,
+      "collision_blocks": 3
+    },
+    "172": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_172.ms",
+      "ms_sha256": "bf1bb236aa0ea4026fc75cd080a56541918f21dfa902c402a60e361f216ba35a",
+      "jestr_spectrum_sha256": "6b35d449332ca712eec1440fdad5d891132afaa3f33b2b7fdeb519b6ff66959b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 46,
+      "collision_blocks": 3
+    },
+    "173": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_173.ms",
+      "ms_sha256": "fac1604695bf729fa92accc50fb3a8d9fb5beb63bb6f0eddcb4709fc5bd46d8a",
+      "jestr_spectrum_sha256": "8581abc26c9c3e35f9e8b2e1739017fe2a3f1ef3d201ead6cf3c60f36e2ad8cd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "174": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_174.ms",
+      "ms_sha256": "925d013d9f4a8d8bd56277873f280ff90d8068874b39bd702b50ba5eda7ae640",
+      "jestr_spectrum_sha256": "005a6374d74df374120739db38f0e55144199694b3caeaa191f130b85c2da7de",
+      "ms1_peaks": 4,
+      "ms2_peaks": 60,
+      "collision_blocks": 3
+    },
+    "175": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_175.ms",
+      "ms_sha256": "cd95c999f9e2bd6d284a070beb2f404a38bf66e0d79d673369796d1e1e88ba06",
+      "jestr_spectrum_sha256": "9703672eed943b9b486a6b6e0122bc0b12e0f2b00e6b4129e027183096bd9a27",
+      "ms1_peaks": 4,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "176": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_176.ms",
+      "ms_sha256": "40eb6e400186b3ac821103ecc6451f95e72d9b1d0574f5da74d4084a053b61f4",
+      "jestr_spectrum_sha256": "7875a998de6ea38830e6886be4ba003ca3a7c0d1bb11075e95f383607bfb8ac9",
+      "ms1_peaks": 2,
+      "ms2_peaks": 113,
+      "collision_blocks": 3
+    },
+    "177": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_177.ms",
+      "ms_sha256": "5af945f9d56d2e317c77a38988cf489e71f425255b0434c7f7519fd5b8f29cc9",
+      "jestr_spectrum_sha256": "2b197bb83b1e6227d6400537d274b7221f5090c7dfd89f5afb3dcd018da1f10f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 44,
+      "collision_blocks": 3
+    },
+    "178": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_178.ms",
+      "ms_sha256": "31052f55974eaf5b7786d16281dbd54462462d90f2fbe9317c4d3491774ad0f0",
+      "jestr_spectrum_sha256": "b352ce14ed91c9f63205fd83b2106611d3d536827a0c66b80d2ab7b9ce06f5f9",
+      "ms1_peaks": 2,
+      "ms2_peaks": 38,
+      "collision_blocks": 1
+    },
+    "179": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_179.ms",
+      "ms_sha256": "d9788011ff672256f5d6dc0054827ae639bbcbc15a4e5639f3b6f8361d553f51",
+      "jestr_spectrum_sha256": "26e465dea3156d1a56d832e276ae8ba9b53aa91bdaf91c84c54df16bfe70d516",
+      "ms1_peaks": 3,
+      "ms2_peaks": 28,
+      "collision_blocks": 3
+    },
+    "180": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_180.ms",
+      "ms_sha256": "3e70043ee5694ba96dd00f65d90d71ef041582b606af82af868abbd6e9f31b94",
+      "jestr_spectrum_sha256": "636aee2af5077776800ca4a89c3eeac1c9529c0370e262ab21b4ce1166748d2f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 62,
+      "collision_blocks": 3
+    },
+    "181": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_181.ms",
+      "ms_sha256": "99d7bb30ac2986386f4dadcc4b91c558b28757fbe58c1486f532d55a1260e282",
+      "jestr_spectrum_sha256": "3d1e4ccae54389811a1ddb07ad9f8be6a7852cc080cb605b28d5a776ce5c1e9c",
+      "ms1_peaks": 5,
+      "ms2_peaks": 90,
+      "collision_blocks": 3
+    },
+    "182": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_182.ms",
+      "ms_sha256": "a09499d5170cbb4d96ba80019b22a3872e34b11972c0dc070fa34eecf521a78f",
+      "jestr_spectrum_sha256": "0cedcdf9c556da14bc20c676c83c46b1ad1f20b31bafb20f580fa23050c97e47",
+      "ms1_peaks": 4,
+      "ms2_peaks": 86,
+      "collision_blocks": 3
+    },
+    "183": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_183.ms",
+      "ms_sha256": "b3387d845e8116aa36b8fc3c8130a69f8cc2b1415b8b84b7a5d29d354c268ada",
+      "jestr_spectrum_sha256": "e07f0fc2ec40633758e5aa48873f3138275d350b81023805541dd04f48e14862",
+      "ms1_peaks": 4,
+      "ms2_peaks": 175,
+      "collision_blocks": 3
+    },
+    "184": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_184.ms",
+      "ms_sha256": "1395437f2f73ba3080fece5472d9cf7f9d2933add0c086ee7ff32fcb7226229a",
+      "jestr_spectrum_sha256": "ed71003af519c693ec5239f79f36c80a7122f56b310f0f4272d4e8115769ebd4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "185": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_185.ms",
+      "ms_sha256": "e3c383749857c75005e53e3c6b95bb1d2801c35e896e6a61f183f6606e2e0496",
+      "jestr_spectrum_sha256": "b1dd8ce4dde30d6153bbb370cb44105f83a61b324d24a33ed4338a76aa78ee63",
+      "ms1_peaks": 3,
+      "ms2_peaks": 41,
+      "collision_blocks": 3
+    },
+    "186": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_186.ms",
+      "ms_sha256": "514a4f41171c06b5e208d4df03b11147a2ba04af6fc6e52d86450eefd7fa4861",
+      "jestr_spectrum_sha256": "b202f38fff76219542187244de61df19a9a47fc23c7d087b64c7b791dac3c898",
+      "ms1_peaks": 2,
+      "ms2_peaks": 21,
+      "collision_blocks": 3
+    },
+    "187": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_187.ms",
+      "ms_sha256": "d1dae98e513fc68c1a8967e64d2a9c52fcdbffa92cae1a4fba7ceaca7237d6af",
+      "jestr_spectrum_sha256": "dc07e7282cc5889b5e61935aa725455f1481b473017bee0e2e613a9fb8eb1048",
+      "ms1_peaks": 4,
+      "ms2_peaks": 97,
+      "collision_blocks": 3
+    },
+    "188": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_188.ms",
+      "ms_sha256": "89ef34ca4c65912ed5dff14e2e03d849f8e6985e7fd1b56187ed17575fcedd75",
+      "jestr_spectrum_sha256": "8dd124522eaf9e9dacef28014bb28029b328bec83fca1a3823606f7af1cbad6d",
+      "ms1_peaks": 2,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "189": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_189.ms",
+      "ms_sha256": "59710a652acb088b6679eea83ea31be69b75be5245afbdb41d0cd5d02479c102",
+      "jestr_spectrum_sha256": "454e4c4c2ee12ca1d75ce1060cc2daa4fdfd7e9c557d63de9ec6ede44d4f60b0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 68,
+      "collision_blocks": 3
+    },
+    "190": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_190.ms",
+      "ms_sha256": "0c6e055f74b58c69db300f34b98d042637193ab7b9e925c4945467ab169e6835",
+      "jestr_spectrum_sha256": "7c727f3f3372f7092a75ba98d36ee2d884b5e898b4437603495701d91cb03d24",
+      "ms1_peaks": 3,
+      "ms2_peaks": 72,
+      "collision_blocks": 3
+    },
+    "191": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_191.ms",
+      "ms_sha256": "02e7ced7745cc437554e1daa6d6e71aeac021bea636e87a2d599af7ef9c8c7ae",
+      "jestr_spectrum_sha256": "2bf3bfea56c9f561e2bf2c06087558193eae75f2ce4c51ba7ca162b54cb990b2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 134,
+      "collision_blocks": 3
+    },
+    "192": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_192.ms",
+      "ms_sha256": "c9d4b1c71d70b3238f2ba71d3abeeadc9f517092cabcf1ae0874e196ff08a5ca",
+      "jestr_spectrum_sha256": "b0608d6916042a7b784d7d9c771ccb0db213c2402d523a0e6aa5692f0bbfacfd",
+      "ms1_peaks": 5,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "193": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_193.ms",
+      "ms_sha256": "86225beb026e424af080f7737f57f58cca0abdd64eb58599bee36f4e4eeae6b9",
+      "jestr_spectrum_sha256": "8d87e39a609e9632a781d1afd70ee4d42b67a682a0e8f839c28e97de5e709f5d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 181,
+      "collision_blocks": 3
+    },
+    "194": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_194.ms",
+      "ms_sha256": "bf2e605ebbac9f3f2c2c1203d2efaeca4b220464cd3f7294b34dfde160dcb325",
+      "jestr_spectrum_sha256": "fb428e8ada0909c54842f08b46d33c06254f3b72200f725c9d6ef8f92be0fa66",
+      "ms1_peaks": 4,
+      "ms2_peaks": 106,
+      "collision_blocks": 3
+    },
+    "195": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_195.ms",
+      "ms_sha256": "abf5166763ee246f6f59d536968f440f96f7ccd89d45be16d8b4f7f4e151d80c",
+      "jestr_spectrum_sha256": "dab81b01f9180e8cff259398c47f9e3f472663eabb2329e1c6b017cfb05e0d4b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 132,
+      "collision_blocks": 3
+    },
+    "196": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_196.ms",
+      "ms_sha256": "a9c0fd601e360d80f4587e35d8a95549fe0ad0a12ced807650ed3980b1ac06bb",
+      "jestr_spectrum_sha256": "cb823b9ca718fa5a79fb700ab4bec9bf98cf717b27e52c0683dd3ad63fcbe746",
+      "ms1_peaks": 4,
+      "ms2_peaks": 304,
+      "collision_blocks": 3
+    },
+    "197": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_197.ms",
+      "ms_sha256": "2d61b8a777333a249ba54a02e1b45fa5d32fec6cf1a253dc3b69d2b459653c75",
+      "jestr_spectrum_sha256": "4adcbaaf52b60662c70af8b88d9b0646b2f5709e0ec840aecd31315ff0a7afb4",
+      "ms1_peaks": 4,
+      "ms2_peaks": 144,
+      "collision_blocks": 3
+    },
+    "198": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_198.ms",
+      "ms_sha256": "8694821c2e469116c373f5b71d4e7e27e5cae11674a01f3ede8399145974cf72",
+      "jestr_spectrum_sha256": "b09dc948961400ce8435e29c31ec907c31f6a521825f1b10b530a354a7c904a5",
+      "ms1_peaks": 3,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "199": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_199.ms",
+      "ms_sha256": "c1b98182c99c8670fd456b47c0b044582dbee14f92bb96335c5a6a474ebe0c7a",
+      "jestr_spectrum_sha256": "e8b00e8df48c0a3ca20a8940bc68ad4ef23bb5b5d62f65965b1289432e1e890e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 105,
+      "collision_blocks": 3
+    },
+    "200": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_200.ms",
+      "ms_sha256": "5ecda05baa183ed3cb172858442e5a57a8e969be0cfab99420f0443d9506c16f",
+      "jestr_spectrum_sha256": "7fa5c63cd793a717158bd42a80efd7918672ddad77e208bb7b635bc849c69b7a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 89,
+      "collision_blocks": 3
+    },
+    "201": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_201.ms",
+      "ms_sha256": "df34d3f2491082415412c01617af94994c07a84b3dcee24504ccbcb3e525ea83",
+      "jestr_spectrum_sha256": "36149c155a46b857efbdf9d574800a687300fbedb90db50a308b5f4eb2a38aca",
+      "ms1_peaks": 2,
+      "ms2_peaks": 28,
+      "collision_blocks": 3
+    },
+    "202": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_202.ms",
+      "ms_sha256": "f55a6432a844e9652fbce3377fdeafe14f618dbb3b59f348caf5a56d990908d6",
+      "jestr_spectrum_sha256": "1042836e91f6a3b516dcc604848a30bde7b196dd5dfe337361b4b4a4ebd53ffc",
+      "ms1_peaks": 5,
+      "ms2_peaks": 416,
+      "collision_blocks": 3
+    },
+    "203": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_203.ms",
+      "ms_sha256": "5d9763b9eea9e9266a8ad1281a4ae4478125db12d232e2f6221b22a398173083",
+      "jestr_spectrum_sha256": "1d46a577880cb49f8250b63a5d2efeb1c737373ea220bc9d55e821e552ced456",
+      "ms1_peaks": 2,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "204": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_204.ms",
+      "ms_sha256": "86fddbeb82a8109d6cd4b95cc9c18c532a2d524cae265065593d2ca8c12b43b8",
+      "jestr_spectrum_sha256": "d3621df417feba0521dfef281a3c40bb27526e62880601d0724651f6509ac557",
+      "ms1_peaks": 2,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "205": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_205.ms",
+      "ms_sha256": "7cc3c83eb6e5b38f6daf209e4abd667b2a888f781d29911e80304d3cc429f160",
+      "jestr_spectrum_sha256": "8e3ef2fb0133c1880c56f2c4b60eddb54770a4d2e3e7ce207c365eed8d7bcf13",
+      "ms1_peaks": 2,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "206": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_206.ms",
+      "ms_sha256": "4ed545c7341e79c8a5568212dee89853502705669f4a542d64d6305fae69eb7f",
+      "jestr_spectrum_sha256": "c663f9f6ae2c6e93da19733fcc84dfd7009d00ab79994bbcb8f56f8e29aff5f0",
+      "ms1_peaks": 4,
+      "ms2_peaks": 19,
+      "collision_blocks": 3
+    },
+    "207": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_207.ms",
+      "ms_sha256": "1e180f12d83a07f2abb84ac8509537566015c3823a7e1d6cd5aa9fd0ea692ec2",
+      "jestr_spectrum_sha256": "325bc303967b16ba4e04b8a1c51200a1f7a21e98dc30be0e4d634a34793235dd",
+      "ms1_peaks": 5,
+      "ms2_peaks": 79,
+      "collision_blocks": 3
+    },
+    "208": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_208.ms",
+      "ms_sha256": "0d773df24b6e0ec6c84e2baa3612154396a82d0ef18bc09745c67f4a490ada45",
+      "jestr_spectrum_sha256": "cb0ed162d5bf69dab8075775de3c6a4720fb0ba0b3101c7740e37efe3a4f8270",
+      "ms1_peaks": 3,
+      "ms2_peaks": 308,
+      "collision_blocks": 3
+    },
+    "209": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_209.ms",
+      "ms_sha256": "27305dc56e3e5b74393c6f7e341fac7dc43a6b7ba3da5418e36fd97a0e1157fb",
+      "jestr_spectrum_sha256": "5fbb46f36125c059f089ab5a9a05a7b347a0c86364fbea28ac110986a57cb763",
+      "ms1_peaks": 3,
+      "ms2_peaks": 71,
+      "collision_blocks": 3
+    },
+    "210": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_210.ms",
+      "ms_sha256": "0a3b9ecc75e55180d87a7a8de4aea349092d2516006d53b4bf4880dc6994ce3f",
+      "jestr_spectrum_sha256": "386157035b688eeb422823c6551706b0d6d95f1618e2a7847ec6748351576ebf",
+      "ms1_peaks": 4,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "211": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_211.ms",
+      "ms_sha256": "5644d815c6ed7429d0253590e51a17d36011725b8f438c437b51f06ca3336eee",
+      "jestr_spectrum_sha256": "7ba612e8c1f3972295e141beaee4be325820f91b63b948ab5f762bd0db8bdd72",
+      "ms1_peaks": 4,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "212": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_212.ms",
+      "ms_sha256": "0aa9b7ef48387034cd78e83a52c67b16904eafb51618722fda47724f3b3dac92",
+      "jestr_spectrum_sha256": "f067ee1d67243998e11916075946a9eeb596a9359faa211ebc2007617c157b17",
+      "ms1_peaks": 5,
+      "ms2_peaks": 57,
+      "collision_blocks": 3
+    },
+    "213": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_213.ms",
+      "ms_sha256": "2b411188a3ec628f1ee2b750f32ff6640d1cda0c3379c3ff3f35067ed085d947",
+      "jestr_spectrum_sha256": "f80940ecd56791e9db1fb3699e8a6f50678d225ccc6fd8ac470c2505bfc567f7",
+      "ms1_peaks": 3,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "214": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_214.ms",
+      "ms_sha256": "eb6cd127cafe9833497e9cb1741ef9b547717a9e9d6a443b9be8bfd91f2894ef",
+      "jestr_spectrum_sha256": "30b765ca9952a0c0ca5c9d4b849441f9732544a454aa40aaaba2fd70a4e8e1f1",
+      "ms1_peaks": 4,
+      "ms2_peaks": 121,
+      "collision_blocks": 3
+    },
+    "215": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_215.ms",
+      "ms_sha256": "661fa78a842ca56bed9ea85c1c95e3ceb7f89b12afe149a1249e41a0d2102564",
+      "jestr_spectrum_sha256": "55b685cce85ef4bed9043ecab7146fda2d711a819a42a412840bbda88a8ac289",
+      "ms1_peaks": 3,
+      "ms2_peaks": 44,
+      "collision_blocks": 3
+    },
+    "216": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_216.ms",
+      "ms_sha256": "1354e8e53fd4e7c7e6bc1c6efb501674ca1d2f47c173d8e7c58053006b22e1f5",
+      "jestr_spectrum_sha256": "5ba6592234974f5d6acdd4f8419288dd8d2eba3562d4a153f73dc0e9d297bb3e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 44,
+      "collision_blocks": 3
+    },
+    "217": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_217.ms",
+      "ms_sha256": "7c790d382839c50c875752516ac935b5c8ace4e35959aa5af8217bd3e124722f",
+      "jestr_spectrum_sha256": "535f9ac338798533b3bdf41f8e9bf2a4b7a36ec9bf4b751387b0fa8f31b0aeab",
+      "ms1_peaks": 5,
+      "ms2_peaks": 81,
+      "collision_blocks": 3
+    },
+    "218": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_218.ms",
+      "ms_sha256": "21bd4260be73f00203635ed49a375ed1a2cf1a47d504a99ba3bcd1fda40909cf",
+      "jestr_spectrum_sha256": "c7e25b870f3e96a2eeac64b4b6a38721641b45fc514a81dde4a91f73b84c1dfa",
+      "ms1_peaks": 4,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "219": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_219.ms",
+      "ms_sha256": "78dfb12fa99132cc98ffc656433f04bd7cac0c4c9c61a76568eec7566f4c2dbd",
+      "jestr_spectrum_sha256": "7c8bb6f697d1193eedda0e52817632c277cbbe4bf3d795606763692683d0abd8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 102,
+      "collision_blocks": 3
+    },
+    "220": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_220.ms",
+      "ms_sha256": "85892856f8d74a5414975b97479e67de4e78ccf964d144563cbd676621f6dcc4",
+      "jestr_spectrum_sha256": "80de92e598f3b78da4cd62b2b36ee4341b633eb15f6339b64b663c2eef450464",
+      "ms1_peaks": 4,
+      "ms2_peaks": 170,
+      "collision_blocks": 3
+    },
+    "221": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_221.ms",
+      "ms_sha256": "876f7e8398f396c447af2c5ea52ec05d80da269eb57d4f21a91454bf2c1ff832",
+      "jestr_spectrum_sha256": "5fbc3e65a00e90db48535785140746e4805c9b11545d3d61d6906a000d3f149b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 31,
+      "collision_blocks": 3
+    },
+    "222": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_222.ms",
+      "ms_sha256": "324278cc9fffcf8e38c6567d99346af871dcf13733b11edde57134b5a4015dca",
+      "jestr_spectrum_sha256": "2939b5690997da321b91368b2536cb4c8e20723fe05e5d5b4dc3fb9a4e15e225",
+      "ms1_peaks": 4,
+      "ms2_peaks": 23,
+      "collision_blocks": 3
+    },
+    "223": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_223.ms",
+      "ms_sha256": "2480a8f68b44f2e3c7c86f865c0e52eb13ab700108e047d3f9ac8325442764d0",
+      "jestr_spectrum_sha256": "ad2183bcf341e48bb50f58b6a1e41722b21f9be2d683c116d88732ecef641d2a",
+      "ms1_peaks": 2,
+      "ms2_peaks": 61,
+      "collision_blocks": 3
+    },
+    "224": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_224.ms",
+      "ms_sha256": "f532d1c8863d083c6f865cec3276596bc9ff7b6e06de09f482ab4e06aaeadfd1",
+      "jestr_spectrum_sha256": "da9dacda9994a86820bff0c4301969dac94a0b29b7a656dc129254802120c699",
+      "ms1_peaks": 5,
+      "ms2_peaks": 42,
+      "collision_blocks": 3
+    },
+    "225": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_225.ms",
+      "ms_sha256": "aa7502a1962dbab21383ae44f998bfc308e6d7325fc61cfad536dede87c7490f",
+      "jestr_spectrum_sha256": "1c6c9376abb29eddee481274e7d0af8f66402b90b9f9724722eeca8ed7c74aa1",
+      "ms1_peaks": 4,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "226": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_226.ms",
+      "ms_sha256": "2c033da49e3bf243acca8f4fff410e3de2b298fb83fb3cb6efbabbf5f9ef0acf",
+      "jestr_spectrum_sha256": "567b0e53684ab23c20c291d42220bfca21ea162cb523e6c059c797050920c73d",
+      "ms1_peaks": 5,
+      "ms2_peaks": 53,
+      "collision_blocks": 3
+    },
+    "227": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_227.ms",
+      "ms_sha256": "29cf216ecc5aff771ad49d567cffe2752f107f635eec83230046070fc0b78737",
+      "jestr_spectrum_sha256": "1d856e964a4f6f34a790f7e9bab3d91882e20d0079530426e2037341d9db86bd",
+      "ms1_peaks": 2,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "228": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_228.ms",
+      "ms_sha256": "6ff4e3bb4da6c75afaaeddf8e3902f62169178cafeeb799cfcb3679e2878ed59",
+      "jestr_spectrum_sha256": "18602363d624280f3a4da2c94d1bc7328a9bd2eb0f9bd7a8cf423fe5d59208bc",
+      "ms1_peaks": 3,
+      "ms2_peaks": 190,
+      "collision_blocks": 3
+    },
+    "229": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_229.ms",
+      "ms_sha256": "3b8580db8a50eb79de5233b02508331f2df0a2500c3debcb2948d77d0fd57140",
+      "jestr_spectrum_sha256": "2f504054c58be23f0d64ed260f0e128793ae87d6face21a4a5efe0444c18551b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 67,
+      "collision_blocks": 3
+    },
+    "230": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_230.ms",
+      "ms_sha256": "bf60f817cd3747c375d5552b1deb46dafeace5b659d20677623d8c4fa7128b43",
+      "jestr_spectrum_sha256": "62cf5b2b196feaa8030f3ea4f661bd2849843a5ea2407b501d72f15602649761",
+      "ms1_peaks": 4,
+      "ms2_peaks": 57,
+      "collision_blocks": 3
+    },
+    "231": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_231.ms",
+      "ms_sha256": "69490032950474750bf2f08d9c336d57262fa67896cc67cdd688c118ec3121d4",
+      "jestr_spectrum_sha256": "6d84b1d41294c3d5756b69f6732cbb7f8ad9aadb1baad24994bf49d09bebee84",
+      "ms1_peaks": 4,
+      "ms2_peaks": 58,
+      "collision_blocks": 3
+    },
+    "232": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_232.ms",
+      "ms_sha256": "86bf2ec1491e55e2ef11411f8e69d950e560cae6f82fcef317192718b0b758aa",
+      "jestr_spectrum_sha256": "f462889aeca18065cf98855ef2446a62866b9fa4476cb05550bd5baa6de2e1b9",
+      "ms1_peaks": 4,
+      "ms2_peaks": 87,
+      "collision_blocks": 3
+    },
+    "233": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_233.ms",
+      "ms_sha256": "b7227098e82c1214ab0ba9712e3258dad84763da1c6a0301dcf9efa41c659718",
+      "jestr_spectrum_sha256": "c619e94bdf4ca20691d30740dd26fed871af9fb37ab8ea23de68c38ed6b38ecb",
+      "ms1_peaks": 3,
+      "ms2_peaks": 68,
+      "collision_blocks": 3
+    },
+    "234": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_234.ms",
+      "ms_sha256": "8ebe1dbe0504dd10e3354229e9c3dfd612ca1ff39087e78bddfb14d8eb787b69",
+      "jestr_spectrum_sha256": "907901cc33d04a5d012f5f1d4c898354135e90e6234114a584bee0eba7e91ec3",
+      "ms1_peaks": 4,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "235": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_235.ms",
+      "ms_sha256": "7a6a19d9621eccf5fc6d71d8766268cd5cd124292c77fc191630a4edb0ddc6da",
+      "jestr_spectrum_sha256": "7f320391a7159756468268e454fb2c96c2eea61009a93f038f9acf02cf9611b8",
+      "ms1_peaks": 5,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "236": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_236.ms",
+      "ms_sha256": "e85234b35d6dba027b060a3634f0c46a6f7db19208c9cc3ff5da0025642987da",
+      "jestr_spectrum_sha256": "96b872a2e790de7ccaf8c6eac4957e9e3e127122cf75be72970a88a41d5fc63f",
+      "ms1_peaks": 5,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "237": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_237.ms",
+      "ms_sha256": "167d87247f3a7057d4f93b9c8cb117d47bad8d0329bace8ab4cb47ee44458855",
+      "jestr_spectrum_sha256": "39c810e770d6bb874ef9d91a4311da201bdbd823af6270f9d79fa3ee15fe7b35",
+      "ms1_peaks": 2,
+      "ms2_peaks": 44,
+      "collision_blocks": 3
+    },
+    "238": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_238.ms",
+      "ms_sha256": "5c198e72861e1ba327a50af3fd0b892caa42f3cb88a6a46fdb56724878c2ced5",
+      "jestr_spectrum_sha256": "441edbf8ca3c8e69819374981298749b23b7c03f951123828a929d3ff1e05755",
+      "ms1_peaks": 4,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "239": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_239.ms",
+      "ms_sha256": "17eafe0fd9fb93b6d37acc2c7ea646993e324b9fd7fd7650b826f3ce3d89977d",
+      "jestr_spectrum_sha256": "ba2a7d62cd0403eda0d60361f09bd17ffab998ebf2b27ad57413f2afb65dcd50",
+      "ms1_peaks": 2,
+      "ms2_peaks": 58,
+      "collision_blocks": 3
+    },
+    "240": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_240.ms",
+      "ms_sha256": "65cc980f156d4b2729819ba666cd395e60bb9c12db3b3cd0ffa5cd7a42876a88",
+      "jestr_spectrum_sha256": "f61d6241fb96a5e40ac8a091e8c74191ff2568af0ca0d552f4076943b81ff8dd",
+      "ms1_peaks": 2,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "241": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_241.ms",
+      "ms_sha256": "ffd2ea1aa55c5d530e83dc0fa0370994ee795f7100b4f12068915dfb194b491a",
+      "jestr_spectrum_sha256": "66f44db72fe1a557f8e791890d02764134a2cac3cff83c31eea3982582437d47",
+      "ms1_peaks": 2,
+      "ms2_peaks": 62,
+      "collision_blocks": 3
+    },
+    "242": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_242.ms",
+      "ms_sha256": "f63b022bb0c9f7791058ca4de09fd45ebccc5e65dc89b82969edd35f0d2f2f88",
+      "jestr_spectrum_sha256": "a4d16792ed59c1f625db118e102becf171b6790731375c660d756090d4387edf",
+      "ms1_peaks": 2,
+      "ms2_peaks": 27,
+      "collision_blocks": 3
+    },
+    "243": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_243.ms",
+      "ms_sha256": "dba6fd7c0f095ce9d90624058c02b5c7c44426ece0c2c9cf4e93634cfe0d5487",
+      "jestr_spectrum_sha256": "2e55513f3f61e911c68d1fc6e08698137e9a96993000b7e1f9ead83bfcc7e045",
+      "ms1_peaks": 5,
+      "ms2_peaks": 290,
+      "collision_blocks": 3
+    },
+    "244": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_244.ms",
+      "ms_sha256": "fcee99797bf9c6e48ef9ded0b3221a0906b56eaf6454bd43be61612cc47db4ed",
+      "jestr_spectrum_sha256": "8af899ccdc1779b6e5f0ddfd93e3f3447aa9a9634a9fa7137ffe8b73dc11b302",
+      "ms1_peaks": 3,
+      "ms2_peaks": 70,
+      "collision_blocks": 3
+    },
+    "245": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_245.ms",
+      "ms_sha256": "430d33301ed0d91e066e12e32a32dcb00fed15eac077224f64c8020c569aab70",
+      "jestr_spectrum_sha256": "19fecfe61d4a3ccbf96f79ac7e1ced65dc816e0e90aea36bb1367aa06dfe0c5b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "246": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_246.ms",
+      "ms_sha256": "870f3492e13d7efad7a13bc98fa697ff8194861a25aeb88e7824478ebf3f87f9",
+      "jestr_spectrum_sha256": "c3e3782f252c0de687ad8354e250bf2b1e6c5cc0427d65b3f684f11071c457d9",
+      "ms1_peaks": 4,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "247": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_247.ms",
+      "ms_sha256": "3b547a14a9da0cc279eb6b1480e50b87f113d8ddbe68c5498c7a4b049ce8142e",
+      "jestr_spectrum_sha256": "a9406fa8404b77ab196e66ad5a44d22e3599cb68f956d6fcfd2f9fa19d7784d4",
+      "ms1_peaks": 4,
+      "ms2_peaks": 92,
+      "collision_blocks": 3
+    },
+    "248": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_248.ms",
+      "ms_sha256": "9295b3e7b86a0ec6096503a362b1aec2ec3a5591e972e77507b9564c859c8faf",
+      "jestr_spectrum_sha256": "4c4cbecd87097cff7df01eee8227f7aba8fda527d457355c6dc5ca066a6837be",
+      "ms1_peaks": 2,
+      "ms2_peaks": 16,
+      "collision_blocks": 2
+    },
+    "249": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_249.ms",
+      "ms_sha256": "29846912e348a045d2ba5e09dfdaacb3316b13eb006f622acc418d0810af38ae",
+      "jestr_spectrum_sha256": "37d3cd1fde8d745b0586706a941d79be2e0427e79e4a224a51d085a363058321",
+      "ms1_peaks": 2,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "250": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_250.ms",
+      "ms_sha256": "2079420c0c316bb36616cfae458ba2b78b7855e565aefe0f916e5e1ec6ad6c9c",
+      "jestr_spectrum_sha256": "c3a49a359946d336f14e640b1ce0df7656cb38107b2d184a2fe2816d059a08d2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 52,
+      "collision_blocks": 3
+    },
+    "251": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_251.ms",
+      "ms_sha256": "07812cbadf9e118c0940d31052ac514a7047c0dbb55035e94c45a6aa606c3735",
+      "jestr_spectrum_sha256": "36ff5fe7c9b6b810c40d2794f74cd5a36bba2824ae612df26bdd6019177dce55",
+      "ms1_peaks": 1,
+      "ms2_peaks": 25,
+      "collision_blocks": 2
+    },
+    "252": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_252.ms",
+      "ms_sha256": "fc3f7cbeb624d6ce86400fbccf84ad1e53d58e79d194d72ebdb1fb972c50a594",
+      "jestr_spectrum_sha256": "c9bd67626c0208c65111a0d5450fbf9ce720cd886006e5848fa88880ce24bd10",
+      "ms1_peaks": 4,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "253": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_253.ms",
+      "ms_sha256": "59548abb160cdcd45a7d27c4890d538c67a5fc9da6fe83516ffc6dcd754e8f7d",
+      "jestr_spectrum_sha256": "88cd30921bd4f3610716e27f0ebadb952e250dc4703c4d5a0196d76a771513bd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "254": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_254.ms",
+      "ms_sha256": "cd0bfb14f5041e105c8cdab720c6c45a7e95bbc3257ecd15e61c38a8c446a19d",
+      "jestr_spectrum_sha256": "49b928c1e85be5e9f1399dcea324a84877bc18c565e4fafaeb861e12675f83c6",
+      "ms1_peaks": 3,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "255": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_255.ms",
+      "ms_sha256": "b3f10afbd677030b57d595e440ce5198716bb0c1139651e6271f115dc3812b56",
+      "jestr_spectrum_sha256": "91abf72ed810ab877ff144fc1b3953a2f62f47e5287f4e935c288d793862b697",
+      "ms1_peaks": 3,
+      "ms2_peaks": 159,
+      "collision_blocks": 3
+    },
+    "256": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_256.ms",
+      "ms_sha256": "df0c7bde695bbdd96007a8b9baa797a9447d7d8a72eda0847fc722a99a387193",
+      "jestr_spectrum_sha256": "8aea7358a7fecb26aa817f0aa16b5d254501e869f860a3019c526bca96ac5c9f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "257": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_257.ms",
+      "ms_sha256": "7c291c7e543876392bb843756de78dc9474af7a255d843a06830b44b51285444",
+      "jestr_spectrum_sha256": "8dd6a2396d5e931f9f9ad10fd13c8de6ea3cba7786549142a7d76ec41bb11094",
+      "ms1_peaks": 4,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "258": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_258.ms",
+      "ms_sha256": "46a55ef8615ec6411fdb515893b3d126f56d6d857c0240db273155e72b895d3c",
+      "jestr_spectrum_sha256": "89d739dec49bb07e5f43584693922ac7c16ddd03453c0836a3a3b43db6117da5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 123,
+      "collision_blocks": 3
+    },
+    "259": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_259.ms",
+      "ms_sha256": "957849511babab38bfa3fb72896d1efba5b79e4e8a87c6e86b9d5fb7288f63e5",
+      "jestr_spectrum_sha256": "4e3f58207c42130fbd6a10170642f4a3f25882e5af76eab27646345b13382340",
+      "ms1_peaks": 2,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "260": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_260.ms",
+      "ms_sha256": "8a9c3102aa4569b2264b64401116626cff83b256f36b0fb5e48782950cd0f091",
+      "jestr_spectrum_sha256": "c18c172f41a349a289770dfddad061b1331625a1e5c04f178157d29435b230fd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "261": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_261.ms",
+      "ms_sha256": "c86e9bdb67ee62af9bcf60839ccf6f327caf696b629d0f2864f193fa84567a40",
+      "jestr_spectrum_sha256": "5eec52a62de61028926f0b657c275d2f75421672ff4e3c49a6ec8f92f5cd2215",
+      "ms1_peaks": 5,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "262": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_262.ms",
+      "ms_sha256": "8f28ec636a2c11e29ca8eed1868d1810141b597e62750e493764dd2e9236153a",
+      "jestr_spectrum_sha256": "936e0e1c524005080a5e809d9a32c94b7c02446962dd8886893c677975b0d7ef",
+      "ms1_peaks": 3,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "263": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_263.ms",
+      "ms_sha256": "7c9ddddcd57c1f8bf0489352a65eceaf788f3c9e9557945e9047245313023d5a",
+      "jestr_spectrum_sha256": "884e08e960721d6809a63d26541e74c28f8fe2f8ed99ef52c76cd73c7608eb70",
+      "ms1_peaks": 4,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "264": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_264.ms",
+      "ms_sha256": "7678e4f40318e4b35a8168eb8eeb74afcd4f592623c78f031dc27c83525270ef",
+      "jestr_spectrum_sha256": "468c2d1b86b290a8287ffe0a6b65729514ff34050ed89f8e9f7f947aae58fe8d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "265": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_265.ms",
+      "ms_sha256": "47e85c005feb2a4e82f4677ebd692af195bccabe92789837b9d681587e68fc51",
+      "jestr_spectrum_sha256": "91f67731e99daca6c002b6becaf411263cdf5bb2724015795804ae878f5c21ce",
+      "ms1_peaks": 4,
+      "ms2_peaks": 51,
+      "collision_blocks": 3
+    },
+    "266": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_266.ms",
+      "ms_sha256": "7825763fcffe4b21c05ace78ffcf0e67823c2d3806d6de37b37a0b9d63bd9772",
+      "jestr_spectrum_sha256": "89c96e018296db17a3298e246abf09c50cf4a5823dc6f5fb3e92aaaddd152091",
+      "ms1_peaks": 3,
+      "ms2_peaks": 32,
+      "collision_blocks": 3
+    },
+    "267": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_267.ms",
+      "ms_sha256": "92796086c0f4706eb9037c9c5f492991fe7cf2ff5afaad6f79a9a81ba21a2631",
+      "jestr_spectrum_sha256": "b1dd98901c1f84a9b74e850f4a7a0f06d01e8ca0def4d34c295159fb20d95b08",
+      "ms1_peaks": 5,
+      "ms2_peaks": 25,
+      "collision_blocks": 3
+    },
+    "268": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_268.ms",
+      "ms_sha256": "3060ceb690c044bc79e2eb570d98b8c04099a713fb4f51d5597409fda6b6654b",
+      "jestr_spectrum_sha256": "323f4c8185e3c33a71bbc2a47e4eda64f860ae3b46b3feb08565a92546207fa9",
+      "ms1_peaks": 4,
+      "ms2_peaks": 136,
+      "collision_blocks": 3
+    },
+    "269": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_269.ms",
+      "ms_sha256": "31a9b149a29bc264c6fa5d294a3f79786a2ea7e728368aa79117897d0d4e8f66",
+      "jestr_spectrum_sha256": "15530a4f2de65d182fe72516a1bea8950f21895b417f5a75cc4db8ea9486eebb",
+      "ms1_peaks": 4,
+      "ms2_peaks": 82,
+      "collision_blocks": 3
+    },
+    "270": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_270.ms",
+      "ms_sha256": "c36832482b424370c00890bae95de4fc042850e868476fce22fb57f9e2f8eb0f",
+      "jestr_spectrum_sha256": "2c607c1fb5bf8e9faca63a6dc733e85bd81892de3c5962b59c29e660c58ceca1",
+      "ms1_peaks": 4,
+      "ms2_peaks": 219,
+      "collision_blocks": 3
+    },
+    "271": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_271.ms",
+      "ms_sha256": "06d66cfed7db36a06bc78f7daa3a25172be5225a5d4a5a22c1cb53a96c56542f",
+      "jestr_spectrum_sha256": "6472f5c3adf65533c3bbe85f671c597ab9f3014fa767c54b920689703a58f1b1",
+      "ms1_peaks": 3,
+      "ms2_peaks": 72,
+      "collision_blocks": 3
+    },
+    "272": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_272.ms",
+      "ms_sha256": "b7b3ebf5ac4388a7dedd5483e000b18dbb8176f85144bdbc3fc85a7aacaebcb4",
+      "jestr_spectrum_sha256": "e4478325f087fda88a40b3d281b78ea306c231faaf2b95427e70ce6b55d3c3b4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "273": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_273.ms",
+      "ms_sha256": "b9d6dcf23cbf1faa7a4a9be19d8c40a307e2b24694d690eac909e4a65e3885f8",
+      "jestr_spectrum_sha256": "f414a79d71e649e8e0ac9a5766c7416a47946115c1bfd4056e1f38614e72a080",
+      "ms1_peaks": 4,
+      "ms2_peaks": 96,
+      "collision_blocks": 3
+    },
+    "274": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_274.ms",
+      "ms_sha256": "1b7f39287c3bab0edb3c84fdfccdd1c92abf89f789ccac8c9fc47e19b7dd4a9b",
+      "jestr_spectrum_sha256": "5ce88af3a5ca68354305e66caa57327db10fb8453df3029fcf9dec1138f2e0c0",
+      "ms1_peaks": 4,
+      "ms2_peaks": 86,
+      "collision_blocks": 3
+    },
+    "275": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_275.ms",
+      "ms_sha256": "33504dda643520052c660c167f567137c3d6dec0a7c8150ce70dba705c36fb35",
+      "jestr_spectrum_sha256": "5d49ae0871c4e4ff653d275b8064e58dd86bddc1c58acb4d3cdb83181f82fc40",
+      "ms1_peaks": 4,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "276": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_276.ms",
+      "ms_sha256": "7d11a5ce5c24138db85f9b740f0f19440a7086c1b5bd62ab542c0c06483ca8e4",
+      "jestr_spectrum_sha256": "20ff14ace8f48665648ef09729ac51a5c36d11bd8be2664f896e1c046c408cbf",
+      "ms1_peaks": 3,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "277": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_277.ms",
+      "ms_sha256": "92708033e15126c0014209ca97fe56049e40b6e6457983f7f290e9b865aaf5da",
+      "jestr_spectrum_sha256": "2a3bfd6ef57d1c22b994640a0e4db575ba0215bbbe00444ff203be710cae205c",
+      "ms1_peaks": 2,
+      "ms2_peaks": 128,
+      "collision_blocks": 3
+    },
+    "278": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_278.ms",
+      "ms_sha256": "004eaf826274d320f8a43ddcae28e37b602a05f8739c0d3a878cddcb253354bc",
+      "jestr_spectrum_sha256": "8711017a476f537e588bc78d3f691ebe5e1a39e83c19ed5b9464dd46dd795856",
+      "ms1_peaks": 2,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "279": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_279.ms",
+      "ms_sha256": "c2b09cd5abb59db6821311f0a789bfc6def631c4139e0e839c3024145f43e325",
+      "jestr_spectrum_sha256": "a94b5bbb8c304594194cbaa1f12c545755f4a3e080cba753b125e424a1e83a07",
+      "ms1_peaks": 4,
+      "ms2_peaks": 55,
+      "collision_blocks": 3
+    },
+    "280": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_280.ms",
+      "ms_sha256": "be1e6303239ee761e1e29755147d47f2d1aa8c3782db913cca04c88c2a720ee5",
+      "jestr_spectrum_sha256": "b05d1c8d3216a941cd08ba69415b15791b1956c7ec546bbca10d4582bdc92ac7",
+      "ms1_peaks": 5,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "281": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_281.ms",
+      "ms_sha256": "7ed8802cf7441d80749225fb66512254d2b1b9b2fc37c41b023fb38d8e35c874",
+      "jestr_spectrum_sha256": "c9748abbfad9d164570051ded8577254d29632d9fd3623e8d850fc8c4d1eec5e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 127,
+      "collision_blocks": 3
+    },
+    "282": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_282.ms",
+      "ms_sha256": "7c21df632a875cfb967c8057ef936a2f144fb224c21623f3196cce638acdb98d",
+      "jestr_spectrum_sha256": "1c41ef0a5a9769fe73fcda44a0024f9822a945ac067fc978070d14e208b25979",
+      "ms1_peaks": 4,
+      "ms2_peaks": 138,
+      "collision_blocks": 3
+    },
+    "283": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_283.ms",
+      "ms_sha256": "9c7709fc93bc2dbc079be40f9cedf25df1688ba5bc0c4f75d68523bd69c1fe87",
+      "jestr_spectrum_sha256": "febb6240a9f9731aaf989a1e4452f3a90fc5e0da17b411de5f636d510a20b000",
+      "ms1_peaks": 3,
+      "ms2_peaks": 44,
+      "collision_blocks": 3
+    },
+    "284": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_284.ms",
+      "ms_sha256": "52d99a09ba9f264a44b28db43cfa7aad6ab52667e1156c36ade9041d7888bb97",
+      "jestr_spectrum_sha256": "3f0f88ef60a2cb292268400cea200cf1e99760907e1385e7425554907c4ec6a8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 140,
+      "collision_blocks": 3
+    },
+    "285": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_285.ms",
+      "ms_sha256": "21e76420d1ee78f05757cc43a0c14f6633285119317577508ff695fa1ceb9047",
+      "jestr_spectrum_sha256": "872cfc0360d4ede3c9189414edf6e6492e16d8554f619054e64cf9585ddddeb2",
+      "ms1_peaks": 4,
+      "ms2_peaks": 62,
+      "collision_blocks": 3
+    },
+    "286": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_286.ms",
+      "ms_sha256": "b1531fc0e97b1b7063ef7ef77521f094270fc7bad1fa936a06089b8bcbe07dde",
+      "jestr_spectrum_sha256": "378650f6b0dd3c907e2c4b98ffa5f719596a0f715418d28727ade84e07c5719d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "287": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_287.ms",
+      "ms_sha256": "fd8bceaad17c6078d05630266470db0ae4dd7bfeb4ee7b78a3a015563531bd7e",
+      "jestr_spectrum_sha256": "e6a5aea72ece71faa676ce08de89faf2ef4fdbfb142fd22fd05f940b49b242d4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 23,
+      "collision_blocks": 3
+    },
+    "288": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_288.ms",
+      "ms_sha256": "5ff4aecf7c345a0453096da7032bf03d29708ac41d19c6a7f0262ebfca3368d0",
+      "jestr_spectrum_sha256": "b6dc548735550f9783c3ff6825796f430abc286bcc86d1a5e6ab1bac93da4743",
+      "ms1_peaks": 5,
+      "ms2_peaks": 70,
+      "collision_blocks": 3
+    },
+    "289": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_289.ms",
+      "ms_sha256": "d43af569dd3a4b34ef5e1fac8d10babe843d3a880e213ad468559c12bc07a1ec",
+      "jestr_spectrum_sha256": "5da5b1a2896bca05329eec98c08c5f432b5d269af30ba7e9426e89f78503ab72",
+      "ms1_peaks": 4,
+      "ms2_peaks": 152,
+      "collision_blocks": 3
+    },
+    "290": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_290.ms",
+      "ms_sha256": "fc12ed2334e9144313fbef0326866b914f86533190ffd6f2737d4ea2b2844303",
+      "jestr_spectrum_sha256": "b477e0c9bcd35d69df6146061b80a5ec8d29c475d1740735c0bda77a9f759a50",
+      "ms1_peaks": 4,
+      "ms2_peaks": 75,
+      "collision_blocks": 3
+    },
+    "291": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_291.ms",
+      "ms_sha256": "33bd7549f38db7f58ad112e0fe760b7a4072334b9ebbc857a1478c654b6f2c65",
+      "jestr_spectrum_sha256": "d250c01c4cf94d2cfa2255ea86c8eeaa0b1082397abf2f0134b4cb157020e15a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "292": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_292.ms",
+      "ms_sha256": "8f5812ed3ad7d51c385967160da686bd659a50cd2aedfbab91ee3fbdb6aee596",
+      "jestr_spectrum_sha256": "152f28db27d1aa78014af1317eaf9e0911b9a0682788e83887149196079553ac",
+      "ms1_peaks": 5,
+      "ms2_peaks": 110,
+      "collision_blocks": 3
+    },
+    "293": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_293.ms",
+      "ms_sha256": "6784e860d7620f79476347058018176988af8e46b832bb140e46f128de123bb8",
+      "jestr_spectrum_sha256": "213dc284d93f8fa156c62317862b9b9d5fe06438bded184f9988dddaea81e22d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 146,
+      "collision_blocks": 3
+    },
+    "294": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_294.ms",
+      "ms_sha256": "2e422a825b2be65b61dc3a491cc8adea0c3317826efb4f49c6ff0b8154b00dc1",
+      "jestr_spectrum_sha256": "434449a1b1b7f041519ea324d6ed1e3ca7fefb026d7945bb6af02db02ed5bcec",
+      "ms1_peaks": 4,
+      "ms2_peaks": 238,
+      "collision_blocks": 3
+    },
+    "295": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_295.ms",
+      "ms_sha256": "9d4ac265ec1f2c5ff9c2ec994c545fbda6cc255617d6335a83b94269b12de608",
+      "jestr_spectrum_sha256": "849c8ce245e17df10f9b295b096fcc7ecfdf34f4e78fb9f2a0a2e49dc0274a11",
+      "ms1_peaks": 5,
+      "ms2_peaks": 121,
+      "collision_blocks": 3
+    },
+    "296": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_296.ms",
+      "ms_sha256": "e8ff47644d54ed4569d0be0d0d73f7d0633acd36a485de7804943b20cd3f8c27",
+      "jestr_spectrum_sha256": "46baa375159ed3b0f93f3098def88053a926ce3c85f6a29f80b67458031dc011",
+      "ms1_peaks": 4,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "297": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_297.ms",
+      "ms_sha256": "d38b1d8b9e1090b34a1133217bbef5f4a6d9bf2ebc941fb08a5d29859b278d65",
+      "jestr_spectrum_sha256": "7c096449e6a7b81453adc8a2c00db7f46a7943c41b1c337a48be45d0bfbc110d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 49,
+      "collision_blocks": 3
+    },
+    "298": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_298.ms",
+      "ms_sha256": "9660ac3c539584f84a23ed0253759a78d1b9e24b44b59b429f89f50f1ae4a4f6",
+      "jestr_spectrum_sha256": "37033dbd0b70b04e84facde34fb356be8f3b7bfb7ce1efae49256e1d07e75402",
+      "ms1_peaks": 3,
+      "ms2_peaks": 31,
+      "collision_blocks": 3
+    },
+    "299": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_299.ms",
+      "ms_sha256": "f6dbc31bb4a89a870ad0ec80c99c5dacefde3405f009deaf397ef50388435a67",
+      "jestr_spectrum_sha256": "d0367ed2f30fa1b356c84f7a3c5b88e4b1ee9a7886864a86944188c70a788a6e",
+      "ms1_peaks": 3,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "300": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_300.ms",
+      "ms_sha256": "368e1c2788a75afa1cb15be71b5c0f3c38d28779fe3f8c7660019ca2ed97109a",
+      "jestr_spectrum_sha256": "cd21ab6caa24376dff6e32f3b79ad20d6416550d374625f74f83bb976c6b2cc3",
+      "ms1_peaks": 5,
+      "ms2_peaks": 293,
+      "collision_blocks": 3
+    },
+    "301": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_301.ms",
+      "ms_sha256": "a35a6b35ef65b7f139d1163a4c42eb699afa41200f8cafc74aa4e0eeb9e1ba33",
+      "jestr_spectrum_sha256": "fd5b2fbcac5588b8d0ffdfae3a8ea3fa66830b55961c62362d4852ae842afc3c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "302": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_302.ms",
+      "ms_sha256": "fa6f9e4849a9e6566cbdb86931b0f87233e0c1020072e7461b27fb7ce55a040a",
+      "jestr_spectrum_sha256": "09c38192e8bfddd29400871984a9725c4c8457ba761daf57bac9a26e924f1aa2",
+      "ms1_peaks": 5,
+      "ms2_peaks": 135,
+      "collision_blocks": 3
+    },
+    "303": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_303.ms",
+      "ms_sha256": "80c69b881611a4f5fad68c4589b558793af83226668451a6b45b1d195756377d",
+      "jestr_spectrum_sha256": "f27b41cb0bfdccb8e458aa178922e139058feacaa56957d1b2cc4c939815280f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 92,
+      "collision_blocks": 3
+    },
+    "304": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_304.ms",
+      "ms_sha256": "636f9c35e790ad1a0c411c0783f0918fdd4e4c677340c5def61501c570d60c32",
+      "jestr_spectrum_sha256": "1f62a8cd9af2d1178a301b96a5029da0b0845eb5935f4f2e5f4da7d851755490",
+      "ms1_peaks": 5,
+      "ms2_peaks": 56,
+      "collision_blocks": 3
+    },
+    "305": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_305.ms",
+      "ms_sha256": "6c8607fc36048026eea3e81ad9abad0c0ba7352c8a863d791e936a3219396fc5",
+      "jestr_spectrum_sha256": "0e65108084e30133e3372a81de353265fc0d8d59a4c184283db309f48b975c56",
+      "ms1_peaks": 5,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "306": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_306.ms",
+      "ms_sha256": "1231faac20f8db08bd2c3c20b144b5f128420b15da999ea98289998d5c1186df",
+      "jestr_spectrum_sha256": "def93380b577721639e7ee1f58594c91848fa6f6905e4e6dcbd8fa6e415b43f7",
+      "ms1_peaks": 4,
+      "ms2_peaks": 271,
+      "collision_blocks": 3
+    },
+    "307": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_307.ms",
+      "ms_sha256": "69824be19b053e2448bf48c51951d096e0eff8784966704c94fab201fa323784",
+      "jestr_spectrum_sha256": "c18729865806f5a23cd4d2117e763feffb881990d26d2a7310f0bfd68490dadd",
+      "ms1_peaks": 3,
+      "ms2_peaks": 74,
+      "collision_blocks": 3
+    },
+    "308": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_308.ms",
+      "ms_sha256": "ff366cc0246279c912f887fe5fd26d637d0578881a937a0fe2a5181697659455",
+      "jestr_spectrum_sha256": "15f955ca64c5e5645fb9420e25606ee89ee0715f3c30de0dcc158f1236471837",
+      "ms1_peaks": 2,
+      "ms2_peaks": 76,
+      "collision_blocks": 3
+    },
+    "309": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_309.ms",
+      "ms_sha256": "8972516480b16a048f6532513c63dde20c43b34e9bac3615659fd106326444ce",
+      "jestr_spectrum_sha256": "cecac289a579cb780cb6a10ae5e69eddd49046876de88bdf7a41c3288074332e",
+      "ms1_peaks": 3,
+      "ms2_peaks": 142,
+      "collision_blocks": 3
+    },
+    "310": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_310.ms",
+      "ms_sha256": "3932b542b8c66aa4be98980c3aa1265b9de322224b9475ecbab5805ae42663f9",
+      "jestr_spectrum_sha256": "93b47517f9ef891713f1663d55919a743f16d6217471859cf3675c92ad924da4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 111,
+      "collision_blocks": 3
+    },
+    "311": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_311.ms",
+      "ms_sha256": "059d43edb8fdb31f6f0af28110f8c14e40fa8be2b58b646a4de08899212e8915",
+      "jestr_spectrum_sha256": "db335155cc57ce837fdaefa97676f1f0316f9aeba4b596dbdb8acf2d2c74d5be",
+      "ms1_peaks": 4,
+      "ms2_peaks": 118,
+      "collision_blocks": 3
+    },
+    "312": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_312.ms",
+      "ms_sha256": "cc6634cd75798c8a68b6e110c3c4e9e568b9ac7e79de2a66dd128ac39989d2a5",
+      "jestr_spectrum_sha256": "a8091938d13c71e300ec6cc16d6183ef6cef0e70d3bf7eb9ad60a8dfe30d18e9",
+      "ms1_peaks": 3,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "313": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_313.ms",
+      "ms_sha256": "234bd504063fb3ac99f6735b182f054204b1e78779f85a5dfa414c15479a48ae",
+      "jestr_spectrum_sha256": "b695003c78c3840b449b499df5bc61dfb1d5642bb0b43e86222d34e7f3f06597",
+      "ms1_peaks": 4,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "314": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_314.ms",
+      "ms_sha256": "27f7ec42e4b5a3e16645d5ee75723390694e949ffdf7756365a030a0083329ce",
+      "jestr_spectrum_sha256": "72c826cab43f165b9835c7240ce5b3a9a1bbbfbc20359e391a6ff71d157f0fae",
+      "ms1_peaks": 5,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "315": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_315.ms",
+      "ms_sha256": "d7c5ab1074bbd61128fd94a0dbd8259cf86b4491bd1879d1576f3b94ae766c3a",
+      "jestr_spectrum_sha256": "bbe34bb93cc67be5780765944c0ca2f862aa3cffad45b184c347db40711432e5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 63,
+      "collision_blocks": 3
+    },
+    "316": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_316.ms",
+      "ms_sha256": "c95de5f2de4323c7f41a7a441a607360197d50f673b0e3a6c2feda824edbb5e5",
+      "jestr_spectrum_sha256": "62edee0bbba3ca7cf1d1323c433e8754fef9a010c4030a24ca0df6c703195b63",
+      "ms1_peaks": 3,
+      "ms2_peaks": 121,
+      "collision_blocks": 3
+    },
+    "317": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_317.ms",
+      "ms_sha256": "142c63108a83c81b1408273ad70df4780ad939f702dbc4ef8802c1ae946ef81a",
+      "jestr_spectrum_sha256": "373ca45beab39cd79603e53c6db95a98704dfd31cd33cf65b1ee43b5ef5d219c",
+      "ms1_peaks": 3,
+      "ms2_peaks": 23,
+      "collision_blocks": 1
+    },
+    "318": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_318.ms",
+      "ms_sha256": "10ccdfa94ac318dc51ce2e81bba31ed696afb2937df46b75eda82995eefe8faa",
+      "jestr_spectrum_sha256": "b7eda61dffb064983a8f99e8d13c06b5c4bec8fb5903b54f6b0483ab1112835f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 387,
+      "collision_blocks": 3
+    },
+    "319": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_319.ms",
+      "ms_sha256": "a021a7d71d4dd151e8fa99bd48ea60c104bce1217e060dd2ed56fd5f69519f44",
+      "jestr_spectrum_sha256": "5684db3807f3647065c72a7e3951585d2356f895b354aca5a79cdac0bc0ef0ed",
+      "ms1_peaks": 5,
+      "ms2_peaks": 88,
+      "collision_blocks": 3
+    },
+    "320": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_320.ms",
+      "ms_sha256": "675e01ddb6c9bb98ee3e3c7ac7215bbdf86e7b2f8fe514034f02868464c8296a",
+      "jestr_spectrum_sha256": "890c0e5a1acf7ec7523feb4798102dbab68c6b956f68ccf7a828faa42c6b0f5e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 201,
+      "collision_blocks": 3
+    },
+    "321": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_321.ms",
+      "ms_sha256": "1b71dc1226ca558de39f95b0d84f518f072fa72400315ebd15a56159a14143d6",
+      "jestr_spectrum_sha256": "d4c0966f4bb7be1fa94f2c3f60e123bef8e0ce30c0b04ab0125da99f2d9ec20b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 41,
+      "collision_blocks": 3
+    },
+    "322": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_322.ms",
+      "ms_sha256": "0286f2483412b80046f49055207f9531029255bf74494d7cf66dc8d8f803cb75",
+      "jestr_spectrum_sha256": "744c26ebe57977baeb9cd6b2f4caf09ee66422531a8613bda1392170bf4331f8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 149,
+      "collision_blocks": 3
+    },
+    "323": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_323.ms",
+      "ms_sha256": "04c6b4c4aed668b6a6f78cfe4bf063cff95507589dd2b65a77fb1e9f44f90a4a",
+      "jestr_spectrum_sha256": "6196076f6c98d06acab287d20883b725261ee8e267fbdbc3b8983e03ad32e04b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 88,
+      "collision_blocks": 3
+    },
+    "324": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_324.ms",
+      "ms_sha256": "fa87c0055c5188b371b61a87b8d15b5e9c96a146a0ff8609cf062819d1c82913",
+      "jestr_spectrum_sha256": "db838d6226c04486a8621d22edac069df9b6c168d29ec375c529209aa896f84f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 109,
+      "collision_blocks": 3
+    },
+    "325": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_325.ms",
+      "ms_sha256": "cec73b273e55c5815d098c0a9cf5e91934171a34fc39154ffe0290e076b81199",
+      "jestr_spectrum_sha256": "d4a0121a6c741fa9ce5dfbf31c14bf91bf739ac710cb32d40bd9460f8febe49c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 42,
+      "collision_blocks": 3
+    },
+    "326": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_326.ms",
+      "ms_sha256": "4725d484438d06397b02187d73bd0fe55081264830cf9f0511b14a6b3b2d4351",
+      "jestr_spectrum_sha256": "6cca5375f9a94b6bceb85d3dd178ed27d7e52ff21c6a87233959ce1dafdd153b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 45,
+      "collision_blocks": 3
+    },
+    "327": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_327.ms",
+      "ms_sha256": "46cb01817008a6ff04c9b2eac411ab3974ad0c33d893d37ca019406c97fc13c0",
+      "jestr_spectrum_sha256": "5d538ac25fd2637209e5fd5c362ff267dcf241a0039514a8765a4d414e04db15",
+      "ms1_peaks": 3,
+      "ms2_peaks": 53,
+      "collision_blocks": 3
+    },
+    "328": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_328.ms",
+      "ms_sha256": "5297dee84c0ed44c45e940344e63ac48633a143d430cb9580ce8a9bbbb4bf4af",
+      "jestr_spectrum_sha256": "b5e32123e1df1bde219298785c5ac2d8d43853bee23fcd9d42fc2500df3be96b",
+      "ms1_peaks": 5,
+      "ms2_peaks": 52,
+      "collision_blocks": 3
+    },
+    "329": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_329.ms",
+      "ms_sha256": "a53e9a0110abf55df22d5b6d20139d42dccc3c3689f85084d3e45377db2a6799",
+      "jestr_spectrum_sha256": "b3bef1cea2c323e1c9553b29a825153c1dd9331fd1af9e23af5c6cd3ceeaa31d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 114,
+      "collision_blocks": 3
+    },
+    "330": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_330.ms",
+      "ms_sha256": "2dc5c733b008ff3d7fa635f3ab1d52c9c11b0bab100900382f8299e160538cdd",
+      "jestr_spectrum_sha256": "705de2ffb78883f14ae9bc01bf8ad10cb1101da7097d8940d4b22e50cba89e56",
+      "ms1_peaks": 5,
+      "ms2_peaks": 160,
+      "collision_blocks": 3
+    },
+    "331": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_331.ms",
+      "ms_sha256": "f5a3d297bd3d4d0dfc7adf7b4f4526b83a011c48717fdf3266a6367afd68f7b0",
+      "jestr_spectrum_sha256": "922dc24e552d383d6e53619d0c2b62fe7591f41c1da76f103c0697330a280078",
+      "ms1_peaks": 3,
+      "ms2_peaks": 67,
+      "collision_blocks": 3
+    },
+    "332": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_332.ms",
+      "ms_sha256": "fa460918d894d32c22697e693bedbbcf6f24d410751c0fa8d466e5eeec3ac7ff",
+      "jestr_spectrum_sha256": "6c7335711fd261b51d41c301d061078fe5b30e88ab4c3cafa7895ab65c24bf69",
+      "ms1_peaks": 4,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "333": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_333.ms",
+      "ms_sha256": "6418b964de9ac726c65744ac1853ccb2b3822bd7ffb2299d0fdd0cba6fb56c92",
+      "jestr_spectrum_sha256": "cc37e4710eb1521352db0de17d566e8b4845d00efc843f48d55cadc8cbf8f03d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 335,
+      "collision_blocks": 3
+    },
+    "334": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_334.ms",
+      "ms_sha256": "53ca4b009adace8a55a0da65dd37d6de4fa0685f01ab58d79e314c580b905a53",
+      "jestr_spectrum_sha256": "e6455c7e8b214229a42f7c858883093a64bd455dfa5fb4823901219ab0ca2ea2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 56,
+      "collision_blocks": 3
+    },
+    "335": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_335.ms",
+      "ms_sha256": "87775576a68892b2f38fe4af3da7986db985de142bdc134ec581f3a1bb0ff34a",
+      "jestr_spectrum_sha256": "9379925909a67a2d898d304ee60977dd4c38b6c92191d3722a6e1ce32b52abd8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "336": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_336.ms",
+      "ms_sha256": "9c6ee01f2db6ff7919d70e624a76879e1f4f8206f83267b52bb88b2fe42bc958",
+      "jestr_spectrum_sha256": "f14e5a0a48284b556310d2d6d74fc2ce2d149dd55cea1d9e0eb724c7cb138af8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 113,
+      "collision_blocks": 3
+    },
+    "337": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_337.ms",
+      "ms_sha256": "83b3a7dea52368bf2cbb98303088a019f97f54171b02121399a425707f06836e",
+      "jestr_spectrum_sha256": "692b10e130c62bc4517359f73108a39e22411a9d71023ca94b86cf724358609d",
+      "ms1_peaks": 5,
+      "ms2_peaks": 118,
+      "collision_blocks": 3
+    },
+    "338": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_338.ms",
+      "ms_sha256": "7db67c54dc9fd269bbaed16ca1f9ea71acb5e57e2215667f488821ad45537d61",
+      "jestr_spectrum_sha256": "fdb57e7b5acd24d20cda76c1eed49bfd290c1d4c6f411e72c4bf7453f96a965d",
+      "ms1_peaks": 2,
+      "ms2_peaks": 112,
+      "collision_blocks": 3
+    },
+    "339": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_339.ms",
+      "ms_sha256": "a55aef157191e7b4d2843247b6b331a99a92019e671dbcd5a4dcb94181d6526c",
+      "jestr_spectrum_sha256": "040d5d254a7097002b318f6f532b17ad6ba80835a56b9989d8148767eb133a78",
+      "ms1_peaks": 4,
+      "ms2_peaks": 137,
+      "collision_blocks": 3
+    },
+    "340": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_340.ms",
+      "ms_sha256": "252be60e38369d1f76ebee08625f7458f77217bdad63bd524f6733bf68cce957",
+      "jestr_spectrum_sha256": "5bed2de6850208f6ad6547f8f179b96fcfc606a4abb50003d73dd80c96926e0d",
+      "ms1_peaks": 5,
+      "ms2_peaks": 75,
+      "collision_blocks": 3
+    },
+    "341": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_341.ms",
+      "ms_sha256": "db5ff4ceb0176f68358455cf07f21cadef677c1c95f9e25aeb94bbfe8ad92c90",
+      "jestr_spectrum_sha256": "bca2f7303bc459392b2d270473acf7d028d2f1a73775774b5742c679de34933f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 11,
+      "collision_blocks": 1
+    },
+    "342": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_342.ms",
+      "ms_sha256": "610509520cb807059e121bc292d96240e987395a8c8815475c3197103acd28c2",
+      "jestr_spectrum_sha256": "29bd0d91634efacc913865037d3966a6fe9cc348b88f883fcc2465568b54eea8",
+      "ms1_peaks": 2,
+      "ms2_peaks": 79,
+      "collision_blocks": 3
+    },
+    "343": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_343.ms",
+      "ms_sha256": "2cea3e34e5338796d08de9e01b19ffcbf4227ec58d14b345221b9a8f652dce13",
+      "jestr_spectrum_sha256": "19afbb2e13d0db40999abc85f40b3175ef957613319fb646d255eca82efccc09",
+      "ms1_peaks": 2,
+      "ms2_peaks": 26,
+      "collision_blocks": 3
+    },
+    "344": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_344.ms",
+      "ms_sha256": "9e19aebeb94244b5745c0e4837381ad68459350c8ba6102046d4cd31ffdbdc30",
+      "jestr_spectrum_sha256": "363c5a0c1418701b8b5e419dcc66a26810c5d2e76b10c33d998dc50453af022d",
+      "ms1_peaks": 2,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "345": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_345.ms",
+      "ms_sha256": "0f95998283a08d521bae97f72bf4bc37b2c2b9466a9b32c8152bb68a9dba77fd",
+      "jestr_spectrum_sha256": "1b16cdbf19873101b14bbe89f9de71e264f3532f4b311b1d821c2a6e0faff0e6",
+      "ms1_peaks": 2,
+      "ms2_peaks": 24,
+      "collision_blocks": 3
+    },
+    "346": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_346.ms",
+      "ms_sha256": "1a675472b41d23f3b9a24f9a2e7ee20c364464c1828c9cb658f0fae93c478ad9",
+      "jestr_spectrum_sha256": "a31c8579febbc5e184693821285815a92f7a8e2bdd7ad0fb82bc1d5e426a1846",
+      "ms1_peaks": 4,
+      "ms2_peaks": 111,
+      "collision_blocks": 3
+    },
+    "347": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_347.ms",
+      "ms_sha256": "4d4b903e659b30777eba2652a16f42969dec77f45999e320a30fe61adeca1e5d",
+      "jestr_spectrum_sha256": "bf59db93e7c477d91dc16c031d1fa332746dc02663ba905abd064739767d7f7b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 176,
+      "collision_blocks": 3
+    },
+    "348": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_348.ms",
+      "ms_sha256": "cabac0c1515f07e2b694fa79701ee86ece1c6bcf2ee13df8534cbde62553a1a8",
+      "jestr_spectrum_sha256": "d2d14e71d0f80ea6dcce92c3bf4a43f9dbfacab57aafd66baf7d8f04f2743c8c",
+      "ms1_peaks": 2,
+      "ms2_peaks": 162,
+      "collision_blocks": 3
+    },
+    "349": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_349.ms",
+      "ms_sha256": "5708296c88bdfecc73d8c54039a83e46928308e43084236d25e12b34ed940ce5",
+      "jestr_spectrum_sha256": "4f2470db940bfb293ba0de1c8aa59989982935d0cb0d7a525eac90051e278453",
+      "ms1_peaks": 4,
+      "ms2_peaks": 76,
+      "collision_blocks": 3
+    },
+    "350": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_350.ms",
+      "ms_sha256": "3f4f8ff5ee6bb69c8b622e2e9b8131efd8856f7bbca90a1bfd5183877e94392f",
+      "jestr_spectrum_sha256": "1d95ce2830eb2dccb83aa7f5647d08cee062b14ec4161ebc240c408a3094338d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 61,
+      "collision_blocks": 3
+    },
+    "351": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_351.ms",
+      "ms_sha256": "bba49be667369badb1477efb959f29d37bf87ee72a173d5f816ba64ed7a815d8",
+      "jestr_spectrum_sha256": "739743c1ed3bb1f2af5b0fd5ecc41b05c39b9cc2aa4d2f3e70b309736df5d540",
+      "ms1_peaks": 2,
+      "ms2_peaks": 88,
+      "collision_blocks": 3
+    },
+    "352": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_352.ms",
+      "ms_sha256": "39fe3916e97979e65dc06c3ac0ae0c473be692160af367bc695100112f172172",
+      "jestr_spectrum_sha256": "0f66af814184354e237b273cd1611a66dc48b8d6fefdf754a4616625a806c009",
+      "ms1_peaks": 3,
+      "ms2_peaks": 46,
+      "collision_blocks": 3
+    },
+    "353": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_353.ms",
+      "ms_sha256": "cf0fb77b136dda0cf3108d1e54a97ec989078c3b68a81d9290bb4b5de06de39d",
+      "jestr_spectrum_sha256": "90f180a1b3ae6659105a6ccc28061b4c457e57603ee8ccc66c48b119de4706a5",
+      "ms1_peaks": 5,
+      "ms2_peaks": 77,
+      "collision_blocks": 3
+    },
+    "354": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_354.ms",
+      "ms_sha256": "119b3a9c865c543b7b0b15187933bc32dd50bc75995f5a52de79f5cc0b4a8cc3",
+      "jestr_spectrum_sha256": "3897c5ca1753195c06dbb5efd5baa50196b6f0ec65ff32a7298217d973fe942e",
+      "ms1_peaks": 5,
+      "ms2_peaks": 96,
+      "collision_blocks": 3
+    },
+    "355": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_355.ms",
+      "ms_sha256": "feee89efe554b976483c7016bfd87cfbfe1f82b026461dcaf291f78c7bc1b093",
+      "jestr_spectrum_sha256": "7ecfa7ec01c9f3b03ca4737bce6641c4a8e1df2b11f3082267fab67d1059f446",
+      "ms1_peaks": 4,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "356": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_356.ms",
+      "ms_sha256": "2710291405076606965e0b45bd4e447472f0a64aaa4a5123fd751bf4fd4ad40d",
+      "jestr_spectrum_sha256": "4ad6771015c1afe71951904bff4ca2a5cce23b74f9e53229050b4a72a30e4675",
+      "ms1_peaks": 2,
+      "ms2_peaks": 22,
+      "collision_blocks": 1
+    },
+    "357": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_357.ms",
+      "ms_sha256": "b8b37bb7a7e6aed34847deffe1d65ecc266ac7b6a76ba9fd2ddf167c9e269b51",
+      "jestr_spectrum_sha256": "ce4863320989dbc9550cce27047d891de54761437b92c59be4a6e63e53f7b9b7",
+      "ms1_peaks": 4,
+      "ms2_peaks": 71,
+      "collision_blocks": 3
+    },
+    "358": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_358.ms",
+      "ms_sha256": "736b6a3ec81dee71465125bf4120814b986786853b4239c4e18672f97f863a72",
+      "jestr_spectrum_sha256": "7ad4273c387648016d1f86bebd1052da99db57ab88102098e48de5ca66f4bce2",
+      "ms1_peaks": 4,
+      "ms2_peaks": 117,
+      "collision_blocks": 3
+    },
+    "359": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_359.ms",
+      "ms_sha256": "4fcac9d8adcaab2b2e25607b6fb0b41bc38087438c0dcaadf6024980e308f907",
+      "jestr_spectrum_sha256": "34b824c8e3bbaa8fef96a7cfcb3311fdc08b0b89b9f30726708a0d10eee7f685",
+      "ms1_peaks": 3,
+      "ms2_peaks": 79,
+      "collision_blocks": 3
+    },
+    "360": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_360.ms",
+      "ms_sha256": "4c0337ac1bd5f63c827f65bd66480973e4b690d3ce822af2fdc4b2369fd1037a",
+      "jestr_spectrum_sha256": "4f735986d24026414a6a9e24ba41f65c21c3c647c1f79cb101d028f9a0fd8770",
+      "ms1_peaks": 3,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "361": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_361.ms",
+      "ms_sha256": "ec13b102187ef4a65197bd3cd26e2db81c7221cf665e1b99178d423a6d81990e",
+      "jestr_spectrum_sha256": "bdea8866bf8c5cf733587b9674dabb3be4bc557515e97f6475aa72846322a589",
+      "ms1_peaks": 4,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "362": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_362.ms",
+      "ms_sha256": "c75af5f11c02fbca1c40e841a2c9dbadf89088787e36f3a754025be01409f2fb",
+      "jestr_spectrum_sha256": "2925ab3b876376fe8cdff960e10ecb94db9659ffde1eeb8962e037e663ea3982",
+      "ms1_peaks": 2,
+      "ms2_peaks": 98,
+      "collision_blocks": 3
+    },
+    "363": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_363.ms",
+      "ms_sha256": "08050dde360592acc25c05360cc429909c2956e45963016e3434e71aaec6c554",
+      "jestr_spectrum_sha256": "0fcf9e1983b95a9e9b3f01aaa53b039dc76edc620db9ef76f61e1d0e75b6dd53",
+      "ms1_peaks": 5,
+      "ms2_peaks": 205,
+      "collision_blocks": 3
+    },
+    "364": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_364.ms",
+      "ms_sha256": "266157872e159150483f90ca2f7aac0980a1d7d76acbebd9a2886d54ad4e25e3",
+      "jestr_spectrum_sha256": "e9e6b7edeecbb126e6ec76d59cc67ee20ce6b32c078a8f26105d44602424c8b8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 254,
+      "collision_blocks": 3
+    },
+    "365": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_365.ms",
+      "ms_sha256": "78b1a165b7f4a12709c9f37cfffb94968f559c4b101965fe9d69644943ac4274",
+      "jestr_spectrum_sha256": "bea00d15f274e013eda1e8bda85592e2142704138580645db40daa5b8ad4c986",
+      "ms1_peaks": 2,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "366": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_366.ms",
+      "ms_sha256": "22ebe5ac2181f8f651cb2e683a4a8aaadc796b00b691f6af6f53a4ac307dd0d9",
+      "jestr_spectrum_sha256": "0339aa8f53236ebdda39d4f386609a2e6cff41a57c854154d2e4bfb1d5faa265",
+      "ms1_peaks": 5,
+      "ms2_peaks": 188,
+      "collision_blocks": 3
+    },
+    "367": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_367.ms",
+      "ms_sha256": "d6588e23cc80045f757d15ee011e112f544bf1f05c71235b0f464df777c790bd",
+      "jestr_spectrum_sha256": "948aba4b156d57bed13cbc38211f673ae419952203bcb130d0a1f6b5e0244e3e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "368": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_368.ms",
+      "ms_sha256": "f7f553c13d818d923d9724e2fa6c7e8d494eb34575185d6ae57d308d43fff489",
+      "jestr_spectrum_sha256": "b626368a6a822b821990403da7a18279c11aeb51182a9ff1db3990fd63b318b5",
+      "ms1_peaks": 5,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "369": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_369.ms",
+      "ms_sha256": "9a3404567c0993366bedb9aa0591f167a2488b7a6389efeb1dcbd8bd0233e8d8",
+      "jestr_spectrum_sha256": "d93f1104f2cee8b5395b1c79083b51bf2efb8795d1cd515d63a94db6694ef210",
+      "ms1_peaks": 3,
+      "ms2_peaks": 133,
+      "collision_blocks": 3
+    },
+    "370": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_370.ms",
+      "ms_sha256": "fce31d6b920c6929ac6d52c126f52cad43da06b86341aed9188fdf1a5d91831b",
+      "jestr_spectrum_sha256": "5ff326ed0349c4618d6fa5d2db8178003fb45a765c81042244fd0a69372acdfc",
+      "ms1_peaks": 3,
+      "ms2_peaks": 27,
+      "collision_blocks": 3
+    },
+    "371": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_371.ms",
+      "ms_sha256": "273ec2a5a12dc0142e79d36e6687148b4a4df5725407a3172272e8115ad9065c",
+      "jestr_spectrum_sha256": "a820c0358012d96b9fe5b1d6d15dbce608ad1c4a7cc1bf4dc3cb5137066a6c68",
+      "ms1_peaks": 4,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "372": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_372.ms",
+      "ms_sha256": "093fc1143f639c12abb1c6236bad08203c32b1a4c0984c09fd7276d389a9c05c",
+      "jestr_spectrum_sha256": "e14169739ce1f3dcac0066fc0461cd80dac52130f6b1229ec5b9890e67bbff6f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 56,
+      "collision_blocks": 3
+    },
+    "373": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_373.ms",
+      "ms_sha256": "1fb609b900a8eb88db399d59cbf5a4f58a2de099f71e1a0817a6debe6966b636",
+      "jestr_spectrum_sha256": "37e60748be9f906e41419b8b3ecf219b0eff4ca1eb1868ed356a952514829e1a",
+      "ms1_peaks": 3,
+      "ms2_peaks": 30,
+      "collision_blocks": 3
+    },
+    "374": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_374.ms",
+      "ms_sha256": "fd0e7b4b95f74c9de2cce4a1923e2dfa2b0c76c254845eb7b2e877c3a1404603",
+      "jestr_spectrum_sha256": "6b12f5a3996fc2cbe79d2ee4f466f345aa5734e5fab420dc19b76b584b223a20",
+      "ms1_peaks": 3,
+      "ms2_peaks": 33,
+      "collision_blocks": 3
+    },
+    "375": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_375.ms",
+      "ms_sha256": "62d662ed26ce61c54611fb5194d702e6bae9d1ee85abacef65e38959b191cfbf",
+      "jestr_spectrum_sha256": "f4ae99a05269416b4c81a78ccfbadd98c4ac8f752a5df02fdc404c8943a5a125",
+      "ms1_peaks": 3,
+      "ms2_peaks": 70,
+      "collision_blocks": 3
+    },
+    "376": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_376.ms",
+      "ms_sha256": "abceae17000495a1ef777928e01334c009951b1161d7d04f9aeb56806a84c944",
+      "jestr_spectrum_sha256": "f89c228220f5852e27b269f553bd241f0ff6850c6d84fa3f24b7d52cedc9eb7c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "377": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_377.ms",
+      "ms_sha256": "b0e9c99f88856ea53e26c2f95b26a256c7432a242244f2f4a098bb92ca092b37",
+      "jestr_spectrum_sha256": "d9a04e246d71e83792a47961afd5361a89aaa610fa900c87bb6b91cdff440375",
+      "ms1_peaks": 2,
+      "ms2_peaks": 227,
+      "collision_blocks": 3
+    },
+    "378": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_378.ms",
+      "ms_sha256": "8260531bad1c31f69a840066f6bd4ffd8e6e35417741e323471a1db99e22d1dd",
+      "jestr_spectrum_sha256": "70b81ed79f9680ba7240161874de8d59fd266340189f14b5ac79983977129553",
+      "ms1_peaks": 5,
+      "ms2_peaks": 157,
+      "collision_blocks": 3
+    },
+    "379": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_379.ms",
+      "ms_sha256": "a3b17b15e422ec7ad10a173ec0d6e0b831af2fb74394a8356b96aa05e6febf19",
+      "jestr_spectrum_sha256": "ab5056057925ef8f4d1ee3749aa7b6e9254076007f828e5b1a008f132b40b5a0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "380": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_380.ms",
+      "ms_sha256": "0dfa35bfabff1601cdd1c5d47d778091f042944698dc27499e1ac67578604449",
+      "jestr_spectrum_sha256": "953f80099d7775a9c5e5b4ede9c2cfa1b555a688a2128e865f14334494f0dc06",
+      "ms1_peaks": 5,
+      "ms2_peaks": 42,
+      "collision_blocks": 3
+    },
+    "381": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_381.ms",
+      "ms_sha256": "3108d0567b4a035b1dce63efb4221bc21b192f65e679d12aea688ef75bc509b8",
+      "jestr_spectrum_sha256": "04b69ce37d8d50a45ed0b6d3cb983cb94a7686e6bf88863d2fb9a1239efa4897",
+      "ms1_peaks": 3,
+      "ms2_peaks": 67,
+      "collision_blocks": 3
+    },
+    "382": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_382.ms",
+      "ms_sha256": "1ff1204be18a1d341c9f45d89359ff9a1234a333b6e54e65139340444a107d07",
+      "jestr_spectrum_sha256": "872b2c3e71ebc640bbb3ad964317f731467a53dd859d7f85b27605f3c5579b78",
+      "ms1_peaks": 3,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "383": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_383.ms",
+      "ms_sha256": "185ca0874f0870c86f1c4da80c4ca0c07a918bb13b2b52832798f8baebf309f1",
+      "jestr_spectrum_sha256": "0084a08f3a7457a6b7ab2a292c81e3be1d5c3156d65199eee9d82b957d41f7b4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 99,
+      "collision_blocks": 3
+    },
+    "384": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_384.ms",
+      "ms_sha256": "1eed513c52e79f90ebffc11dfe119af30ea6700b58e49d9dfd7d34a550251562",
+      "jestr_spectrum_sha256": "e3c8471817d2ce2edde01c7625e5d888ffa44f51a3ead531d1132801289decdd",
+      "ms1_peaks": 4,
+      "ms2_peaks": 70,
+      "collision_blocks": 3
+    },
+    "385": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_385.ms",
+      "ms_sha256": "be7e5bc66af58f2dc55e494d0b8898dfdb70f4ed8b1cacbc95ff6f0e44c78b64",
+      "jestr_spectrum_sha256": "e646c2fafbdb167d3e6aa37097bce366094a367266855ef4fe44ebaedc6f140a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "386": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_386.ms",
+      "ms_sha256": "40d9c2e7c38fde649e7abd7360300a1325998bee47e50798f1f09a25688d1452",
+      "jestr_spectrum_sha256": "d61e9be68fe3b223dd3e66a0a36129c376ba672f05fbfc8f5269af105e79efab",
+      "ms1_peaks": 4,
+      "ms2_peaks": 22,
+      "collision_blocks": 3
+    },
+    "387": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_387.ms",
+      "ms_sha256": "74347084d8538ab4cddd3cb7799db1577dce1993607c060b2a4a7ec59e54279f",
+      "jestr_spectrum_sha256": "4dc55c9018f267ed2c6192a8fcaf29b9da1e0235b77c0e1644cb82c879065399",
+      "ms1_peaks": 3,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "388": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_388.ms",
+      "ms_sha256": "bf7a2d95357f80d20b406f68598001e663d9ec369e16432373f4f5feba6d4ef3",
+      "jestr_spectrum_sha256": "8bbf70774b78cbb1be6e1c1dd6b77a0978bd356889a07f5501339e30976306a2",
+      "ms1_peaks": 4,
+      "ms2_peaks": 97,
+      "collision_blocks": 3
+    },
+    "389": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_389.ms",
+      "ms_sha256": "34914065471a9a1e10d801c60354c5e340e789475e638a99945acf53941497dc",
+      "jestr_spectrum_sha256": "6bdcc53964c83a5618991973597fd497124a956304a768cdcb9fc098778ca028",
+      "ms1_peaks": 5,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "390": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_390.ms",
+      "ms_sha256": "86946a870331d28f3f5d6b790f7b7f9eeae7c761f6f7a19b3e16a639916b4c1e",
+      "jestr_spectrum_sha256": "396050bbb04785757be2e5c55f0a1cde754e052d4008e4f62d813c2b18e683e9",
+      "ms1_peaks": 3,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "391": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_391.ms",
+      "ms_sha256": "99c8a9a714dd1095348d1fd5d149530ecb90e8bb7e14f023809077362eb2847f",
+      "jestr_spectrum_sha256": "eb0c531c472858ceb9dea92b64a7f75c53dcdd7218e481eb03d24bf33508bb21",
+      "ms1_peaks": 2,
+      "ms2_peaks": 46,
+      "collision_blocks": 3
+    },
+    "392": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_392.ms",
+      "ms_sha256": "ce3e0662b9e11cccc058131eccec57a8d7d0c4cb1f71b855c46cc67f5aba6c0b",
+      "jestr_spectrum_sha256": "843a4563fd9f36592201b35bdd50b4f8888d95f21e7830d4b0db9d8e7cf50289",
+      "ms1_peaks": 3,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "393": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_393.ms",
+      "ms_sha256": "9ff36eb274692294433c265c7642eede3dffba58bd7675850a229894a562bf5c",
+      "jestr_spectrum_sha256": "acd950cc9d6bcbad8ccf4e6c11d2e66ae1e652ebf2781d6cb3ca0795442634c2",
+      "ms1_peaks": 5,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "394": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_394.ms",
+      "ms_sha256": "920696ad71c9f1425941b0b1cbad83d927449cb9d390e2474cff816c2e696f91",
+      "jestr_spectrum_sha256": "db2232d5cf82ccfd21e1b5bcdd9f3c289f37c6ebc5ea8cf17a7a8b66da041bcb",
+      "ms1_peaks": 5,
+      "ms2_peaks": 69,
+      "collision_blocks": 3
+    },
+    "395": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_395.ms",
+      "ms_sha256": "0a454a9d380993cd96a25c5c5f5731351aef544ec74d7c43c2cc5de0101da78d",
+      "jestr_spectrum_sha256": "ebda7bfaec8798abff2b5a502581f2aec840b16c0aa97204e201d451449bb54b",
+      "ms1_peaks": 3,
+      "ms2_peaks": 96,
+      "collision_blocks": 3
+    },
+    "396": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_396.ms",
+      "ms_sha256": "81a4922e397bddcc0cec8cc8131fff0ef4e09fc72df84e7807c0d24f8c4e1449",
+      "jestr_spectrum_sha256": "f8a81dc57ced8c7de1704b82eb0158ee8eaf689d07b9d2618c3adc98ad151fdc",
+      "ms1_peaks": 4,
+      "ms2_peaks": 231,
+      "collision_blocks": 3
+    },
+    "397": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_397.ms",
+      "ms_sha256": "e1c4530d5665d12946ae36b5d2f948ca66d60a0fdf0b1067aa2d57671aaa36ad",
+      "jestr_spectrum_sha256": "0365b6675b41517720ec0139c87fd23ca29147897c6381de0844219f56328604",
+      "ms1_peaks": 5,
+      "ms2_peaks": 238,
+      "collision_blocks": 3
+    },
+    "398": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_398.ms",
+      "ms_sha256": "01e8f751bcb90f208b3e8dc8817aea634ab8c06205116e48f614b80e9567aed6",
+      "jestr_spectrum_sha256": "0c52283f38c2b934c38a7863112994cc2bddc1117d9d3fd31452d5164fa11bcb",
+      "ms1_peaks": 3,
+      "ms2_peaks": 153,
+      "collision_blocks": 3
+    },
+    "399": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_399.ms",
+      "ms_sha256": "80907128e622fd4ffc65349b8936158b2f6e23413b0e93ef43589db133fbbee9",
+      "jestr_spectrum_sha256": "071f009b982023d32d6740054ea50878bed5ddcead6e3c9e26ac14a91e7256ac",
+      "ms1_peaks": 4,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    },
+    "400": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_400.ms",
+      "ms_sha256": "ba0258fa976ce315e6e623df650625e617a88bc8ca53be63ef176cea1352532f",
+      "jestr_spectrum_sha256": "032dd5c5b3c98e2cf4e1f9910746ea1c3d2b7cdca81e1b17a8d38d5d9f508559",
+      "ms1_peaks": 3,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "401": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_401.ms",
+      "ms_sha256": "16ed6d2fe5d265114af6d99a86018bf996a40685ceefcb7a596f7a837d2de8d9",
+      "jestr_spectrum_sha256": "60c09f3686d49623c7e03dadd4c9727b95bb303f480fa8645dcbd0d92bae7d8d",
+      "ms1_peaks": 5,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "402": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_402.ms",
+      "ms_sha256": "75b23b8c0973c189f05e11a034ab361244dc09b149e8a76867fd6cbdc1511c88",
+      "jestr_spectrum_sha256": "d2a7f1b0d6bd3d0fa726d333ed9f63b011fa9e50f72e5446ea2596c9c1fcd078",
+      "ms1_peaks": 2,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "403": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_403.ms",
+      "ms_sha256": "21dcaa36047fe8be0554a069e4395dce79cc4bca7cd91781568da201c9126798",
+      "jestr_spectrum_sha256": "3c10058ea0133478e6b017267984f34bffab20f1a369eb749449332f3bd83840",
+      "ms1_peaks": 4,
+      "ms2_peaks": 81,
+      "collision_blocks": 3
+    },
+    "404": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_404.ms",
+      "ms_sha256": "b08eaadf7ffe3ba4430cea51f8fa4ca7620f2e75263553c0884c6331e5fb0f40",
+      "jestr_spectrum_sha256": "c32564f72c45472955870dccae5835ef3d842d7443bc93977d1cf85b416d9dbf",
+      "ms1_peaks": 3,
+      "ms2_peaks": 197,
+      "collision_blocks": 3
+    },
+    "405": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_405.ms",
+      "ms_sha256": "64d8856f963b1030d583d0d5e265252aba6955aeed477e95e1080a5c8b262063",
+      "jestr_spectrum_sha256": "4dbbcf224aa2fb17fa67dc44d28f02650c6edb489deb712d75dfb75bc1bacd07",
+      "ms1_peaks": 4,
+      "ms2_peaks": 74,
+      "collision_blocks": 3
+    },
+    "406": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_406.ms",
+      "ms_sha256": "a86979b27bf3b172855040f65a16a7eb9779a2019bea8bf123a63ef928d3642e",
+      "jestr_spectrum_sha256": "a161fed32ae0d4fefb0fa4a62d68625f37198cbf2439556bd62a3f7cb94b073b",
+      "ms1_peaks": 2,
+      "ms2_peaks": 15,
+      "collision_blocks": 3
+    },
+    "407": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_407.ms",
+      "ms_sha256": "a108d87c6fb049fff4f0ebb70a9965c1cd97f983e14236411a6814bb5a3166b1",
+      "jestr_spectrum_sha256": "5837218940d8f1df95c71aafdff44af9c8a37cb274b1940d7bdf54b948eb9fee",
+      "ms1_peaks": 3,
+      "ms2_peaks": 94,
+      "collision_blocks": 3
+    },
+    "408": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_408.ms",
+      "ms_sha256": "18ee122f0fe0824626d7fa1d1fcb7c492618c98482d07eb01cf783200aa80f74",
+      "jestr_spectrum_sha256": "eb43714f614499338c75f773dfc414db489d13d1fead28e5d4d3938cda2e0d5c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 139,
+      "collision_blocks": 3
+    },
+    "409": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_409.ms",
+      "ms_sha256": "5adb3e6b6c8e3b4d4d1c0cf47558b2b76b09c54ea82d72d6cef15cc76df8d57f",
+      "jestr_spectrum_sha256": "2c91420070272df7cbd1b4a8353dc122422c59022e50cbc9587d313b7243be3d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 250,
+      "collision_blocks": 3
+    },
+    "410": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_410.ms",
+      "ms_sha256": "afee0193c583eccddd1f1f46d573d90ee1851a51faee02f78aec6e7c4d9276b8",
+      "jestr_spectrum_sha256": "2ab29b459ca3da11f0758d4b76df2e4b457f7a4c520a261b26162c4f44233917",
+      "ms1_peaks": 5,
+      "ms2_peaks": 45,
+      "collision_blocks": 3
+    },
+    "411": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_411.ms",
+      "ms_sha256": "bb38f9a70b16f5a6e94e30fbaeca49b60352750de7662ca56e226bba178b1aab",
+      "jestr_spectrum_sha256": "f3a8c4b2030722a24da0b27746d7907b1ca2c221931e17da59a39e2eb87456f5",
+      "ms1_peaks": 4,
+      "ms2_peaks": 65,
+      "collision_blocks": 3
+    },
+    "412": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_412.ms",
+      "ms_sha256": "9942c12f40464d4f9125600db50e4697a3f5641f767e68569647c2c3cad64d90",
+      "jestr_spectrum_sha256": "bb4a68904425410fe41d67455966c2993db8d9d0a53c13cc853332df392c6897",
+      "ms1_peaks": 5,
+      "ms2_peaks": 167,
+      "collision_blocks": 3
+    },
+    "413": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_413.ms",
+      "ms_sha256": "2fa0cc12906d77452504adb06c7e379de303f4f4e23bae15c30ec143bac89f9d",
+      "jestr_spectrum_sha256": "e3b9c8fd66eb314c86897147bdcafbb67e0960fba0e999f5c0bd7d1e6257c96b",
+      "ms1_peaks": 5,
+      "ms2_peaks": 129,
+      "collision_blocks": 3
+    },
+    "414": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_414.ms",
+      "ms_sha256": "282daeb74899ae6eeb7ab27a5d4c1c60e0970dccd98d7107f5766f479c344095",
+      "jestr_spectrum_sha256": "c70eba341c7fec1823a490dbec8d274f58bd7e5f133f486a0031ecaccfb3daab",
+      "ms1_peaks": 4,
+      "ms2_peaks": 70,
+      "collision_blocks": 3
+    },
+    "415": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_415.ms",
+      "ms_sha256": "a3145a0c34cf50b3ed2e488f9a34e5cdaa8fc51a13763b40b54750799a383541",
+      "jestr_spectrum_sha256": "61c69154b3f71090904bc7f830b858909a4c43992bec7fc69c57f98089b40198",
+      "ms1_peaks": 3,
+      "ms2_peaks": 66,
+      "collision_blocks": 3
+    },
+    "416": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_416.ms",
+      "ms_sha256": "7a919f07d8f05f87d9942a69fa44c9a84cf070f0257f2d3798ccf174ec529d19",
+      "jestr_spectrum_sha256": "7389ece6fb108bd0e8d6e0a4820750606e4b3ad9efac12ea8ead4561a865d58b",
+      "ms1_peaks": 2,
+      "ms2_peaks": 39,
+      "collision_blocks": 3
+    },
+    "417": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_417.ms",
+      "ms_sha256": "600a5ddcc8c5571f7245e014345206eceb62ec93cbc7698c794cab719e950043",
+      "jestr_spectrum_sha256": "accac8cf2640665272c002e62a7e5028952e3f2f9cca0bae9df396c6112de680",
+      "ms1_peaks": 4,
+      "ms2_peaks": 57,
+      "collision_blocks": 3
+    },
+    "418": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_418.ms",
+      "ms_sha256": "c7a542d035195016dbbe029337f94c63bc71700342429b338d3b9c8c15089965",
+      "jestr_spectrum_sha256": "bc62aeb25152364144291f6230f91f44e4c4cc710858008aeac8b016a225aa3a",
+      "ms1_peaks": 2,
+      "ms2_peaks": 40,
+      "collision_blocks": 3
+    },
+    "419": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_419.ms",
+      "ms_sha256": "7cf831ab752e927190f447fde77103e8e6f689068a383d96fbc131b9ca386a82",
+      "jestr_spectrum_sha256": "7f970eb821c7b981ef095bf63b7602e71130640811bd36d450baa8a81c054313",
+      "ms1_peaks": 4,
+      "ms2_peaks": 73,
+      "collision_blocks": 3
+    },
+    "420": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_420.ms",
+      "ms_sha256": "a98b8d9040bb17910dafee159bcb28b9c19a1c1ac0875882666670d18a6a5649",
+      "jestr_spectrum_sha256": "98393bf2a73d7a2cb328406978bd87e71eec9805ae73119af3fc22a0b66e6ffb",
+      "ms1_peaks": 4,
+      "ms2_peaks": 198,
+      "collision_blocks": 3
+    },
+    "421": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_421.ms",
+      "ms_sha256": "b5ceb2472874b918386adc9db906e927c42ec1ac756ed2c237cec72e1a2c29a7",
+      "jestr_spectrum_sha256": "67f1a6072f3fb64eaf9db26c9e7836f08e024dea687998e2161acaa4cc2e9eba",
+      "ms1_peaks": 4,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "422": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_422.ms",
+      "ms_sha256": "dabedb2cb10bfa279b90a1fc9404a098a61b84915f49bc068c8b2f47e7866922",
+      "jestr_spectrum_sha256": "69dce4e00e743b837733fce99eaa72113e6987ce26f0e620f6690a70aafe3d5d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 81,
+      "collision_blocks": 2
+    },
+    "423": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_423.ms",
+      "ms_sha256": "e0ae89e039642b93eb2b7778a4da42cda20374b84089bd96ff928a048729dd18",
+      "jestr_spectrum_sha256": "d75035254911ebcdbea3a0fd662d0b985212c2dfd5b8cc6a363839a1673eb093",
+      "ms1_peaks": 4,
+      "ms2_peaks": 274,
+      "collision_blocks": 3
+    },
+    "424": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_424.ms",
+      "ms_sha256": "4718a39e5f38d0a711da4c34dedb79c1fb9d83909da7306bd2b120320bbad5f2",
+      "jestr_spectrum_sha256": "f466bf35cd25d21d81106e3be0b947738d91dcb2d2b3631458762781c2efd920",
+      "ms1_peaks": 3,
+      "ms2_peaks": 58,
+      "collision_blocks": 3
+    },
+    "425": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_425.ms",
+      "ms_sha256": "34a137a475e4110a64189bbee1d65961dae29b81c9d865c9821a579a457d3d2c",
+      "jestr_spectrum_sha256": "899d9aeb6020adb82efad91fb57368d462593b43e3c8bb2c82315c8252161e12",
+      "ms1_peaks": 4,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "426": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_426.ms",
+      "ms_sha256": "4ba342c639aed63a5496b53f57a053c6cc6d4a41ec38467586570666e10970a0",
+      "jestr_spectrum_sha256": "f47df5588867738f0b65454937570b571f0576b3053280a0024b01d7028a509e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "427": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_427.ms",
+      "ms_sha256": "5ad627ce2cba5a117dade0d1cc0cc64f6ef85a6dc0745f9d77f55eb1af338fc0",
+      "jestr_spectrum_sha256": "86e6a40fb71d819b6dd2854419eb5f5ceda5c5959ffa512612d88bd8c5a4d935",
+      "ms1_peaks": 3,
+      "ms2_peaks": 59,
+      "collision_blocks": 3
+    },
+    "428": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_428.ms",
+      "ms_sha256": "f7c3eccf8e39d94059f6ef3d39f5587694f803924633970eb39eeba1c6710457",
+      "jestr_spectrum_sha256": "defbce325cb7ab6c04457cc70d0a0a687ab81b74bd1a09f088c67dbf1f36550e",
+      "ms1_peaks": 3,
+      "ms2_peaks": 128,
+      "collision_blocks": 3
+    },
+    "429": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_429.ms",
+      "ms_sha256": "f4c036479bd8547efdf859eec5b3c7d7dd0004c9d056611ee52526a230f45a76",
+      "jestr_spectrum_sha256": "53f86ebbc2afe315f619d2b6e2c1fdd25aadd8ebb820d7fd6805855d846e2022",
+      "ms1_peaks": 4,
+      "ms2_peaks": 34,
+      "collision_blocks": 3
+    },
+    "430": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_430.ms",
+      "ms_sha256": "bd481f3f13a7695319878faaac18ec9d454932c5e59ca92f27a10a06bf5b01c2",
+      "jestr_spectrum_sha256": "8ab614105bbb713500f7b4c2c3514f1918f3f214d3e848cefa540a769b8a18a8",
+      "ms1_peaks": 5,
+      "ms2_peaks": 102,
+      "collision_blocks": 3
+    },
+    "431": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_431.ms",
+      "ms_sha256": "39655df2574711926cc326f218ab2178678ce1a46ef06026d33308ec864138b2",
+      "jestr_spectrum_sha256": "c48111f7e15770ffe38a2c8e32d9d29e2f5a0be641ee07c2ec3f634d71d94572",
+      "ms1_peaks": 4,
+      "ms2_peaks": 297,
+      "collision_blocks": 3
+    },
+    "432": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_432.ms",
+      "ms_sha256": "b44af172863ba8394f169ce41026222b8da13cd86c100b3459135eab284af0cb",
+      "jestr_spectrum_sha256": "f9cc067fced075210c51364fa5fb569d160d9422aeaea8773d59f90236f90aa4",
+      "ms1_peaks": 4,
+      "ms2_peaks": 64,
+      "collision_blocks": 3
+    },
+    "433": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_433.ms",
+      "ms_sha256": "7992a280bbf40b39ebee90aaef5c03ffc888b7b332cec6cbd65582b025771f12",
+      "jestr_spectrum_sha256": "8f6a047a24454611e035973105cd05d7a1b291ab58703d3481f4e7c041312ce1",
+      "ms1_peaks": 3,
+      "ms2_peaks": 35,
+      "collision_blocks": 3
+    },
+    "434": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_434.ms",
+      "ms_sha256": "d9f77a2bc50d40a5f5d9f0e334411e41cc83cb542534024b13edb724543161eb",
+      "jestr_spectrum_sha256": "8e750c3e6a1006edf33b1da7d1f92c5b38231338ddf021393c360f5c505d8a9f",
+      "ms1_peaks": 5,
+      "ms2_peaks": 93,
+      "collision_blocks": 3
+    },
+    "435": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_435.ms",
+      "ms_sha256": "f687f78c9a739ae7f1c6b745376a1e214badf224c5a89ef823aa90ec82af79ea",
+      "jestr_spectrum_sha256": "74f72a60d7dfd70f0f0c7ce0ecad6432e5aa44aab233b83338f5831c406152c0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 51,
+      "collision_blocks": 3
+    },
+    "436": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_436.ms",
+      "ms_sha256": "716e44c4e2e135c230f4fdda50d49c474c83460fb4a065a7bb6053f1f0a5dcde",
+      "jestr_spectrum_sha256": "cb11704a13ba5f546215eeb2338f89b24281fb5d56d4a21418c59724e7a2c010",
+      "ms1_peaks": 2,
+      "ms2_peaks": 36,
+      "collision_blocks": 3
+    },
+    "437": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_437.ms",
+      "ms_sha256": "b246ce80866e72c86f58b6a11f30193d46d4dc7044d5f0d2c18d5772a78d9d37",
+      "jestr_spectrum_sha256": "cbdacae1f39bb8e2d233f4651ee44e08220a8d2428bd466fbc862c4c7033dc4d",
+      "ms1_peaks": 4,
+      "ms2_peaks": 144,
+      "collision_blocks": 3
+    },
+    "438": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_438.ms",
+      "ms_sha256": "6ae4e2419ecf66a095fe72638fee18cfa13d482ed1f9dd7f3d12883e7406a169",
+      "jestr_spectrum_sha256": "cf51029688ef915a8c3709b7fcae12fc395660db284a86312c3558a589421de5",
+      "ms1_peaks": 3,
+      "ms2_peaks": 65,
+      "collision_blocks": 3
+    },
+    "439": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_439.ms",
+      "ms_sha256": "efba8551dc3968e2eb641e4c209f5547faa602c9bef44c8c93538ef2ba97ed0b",
+      "jestr_spectrum_sha256": "fd6c39412ecd160d22f50fae2b6fbd8e6bca14d7bb83f862f0ed19e847795dd4",
+      "ms1_peaks": 3,
+      "ms2_peaks": 48,
+      "collision_blocks": 3
+    },
+    "440": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_440.ms",
+      "ms_sha256": "92ff93f9d6a3d1f43464997c9e14068ca1c09c29f243ea370e656b5d5923b3ee",
+      "jestr_spectrum_sha256": "0a4ab02d35c5098714ee85034acb9eb3313c61a362fb6bdd2f94ef82342740e0",
+      "ms1_peaks": 5,
+      "ms2_peaks": 37,
+      "collision_blocks": 3
+    },
+    "441": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_441.ms",
+      "ms_sha256": "f92e04d7cb650a7e314ec93e6e05b4e6c3b7e041457e6ac3d1d82a9ea928669d",
+      "jestr_spectrum_sha256": "491724632a887420d2fd0dc98cce9a79f7fd4df3a785559a34412cf8f797b314",
+      "ms1_peaks": 4,
+      "ms2_peaks": 41,
+      "collision_blocks": 3
+    },
+    "442": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_442.ms",
+      "ms_sha256": "978b2d5136c2971057a9e044d920f1b1507f3b4129c0c4e19b33ec0c15300450",
+      "jestr_spectrum_sha256": "603753babd00e6bd4c621a9aed3dc6e228807ae6a6182424e1add9f34199eadf",
+      "ms1_peaks": 4,
+      "ms2_peaks": 88,
+      "collision_blocks": 3
+    },
+    "443": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_443.ms",
+      "ms_sha256": "ab0cd914984fbd19924efed264a02568e156f6186186b263b41af1857197ccf1",
+      "jestr_spectrum_sha256": "4939c60cdeaa2f9d4adb06a2a6a7f2f1142148aa719bba695fa8ff63012f0844",
+      "ms1_peaks": 3,
+      "ms2_peaks": 107,
+      "collision_blocks": 3
+    },
+    "444": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_444.ms",
+      "ms_sha256": "69f8fe90e091cc6410dd6e3034503fe400cb722ce79e291c639c06f3b894b8d3",
+      "jestr_spectrum_sha256": "98a4f78fc1291299d92e372e502ed42e553f229f3c9cf3bf2675105f1a951c26",
+      "ms1_peaks": 3,
+      "ms2_peaks": 21,
+      "collision_blocks": 3
+    },
+    "445": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_445.ms",
+      "ms_sha256": "dcf7238554def32ed8aa8a38df4c99a88c4ae7a09669a74be0a218d03464e0d9",
+      "jestr_spectrum_sha256": "256b9854bed1714478effbb6bc276931d5c072267c65b68b8607fc99a82c5b4f",
+      "ms1_peaks": 3,
+      "ms2_peaks": 53,
+      "collision_blocks": 3
+    },
+    "446": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_446.ms",
+      "ms_sha256": "8af96fba23dfcc7f00881b75e403a906af938b79ff2737827f7fd1853180efd9",
+      "jestr_spectrum_sha256": "049ae5a299a7d35fd7b197620326372cf79e6e18195f6380b6371f07c131bfe0",
+      "ms1_peaks": 4,
+      "ms2_peaks": 317,
+      "collision_blocks": 3
+    },
+    "447": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_447.ms",
+      "ms_sha256": "fbb6c2b54e6f9f7f046a5290964ca353ddfc1475e3beb5415550dc082f1cd448",
+      "jestr_spectrum_sha256": "4db53b20a11a5388ac59c218a64c542c63af0f654251d2b31774d86767a595ad",
+      "ms1_peaks": 4,
+      "ms2_peaks": 51,
+      "collision_blocks": 3
+    },
+    "448": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_448.ms",
+      "ms_sha256": "38d9ee98a026ac06889065ef708ff8774c0c6d2b5d2cd04c09eb3c2a276f6be5",
+      "jestr_spectrum_sha256": "39821f4dde362c9aa4d52b5a1f04a9a95d60a216659b365972ead22680d1928f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 120,
+      "collision_blocks": 3
+    },
+    "449": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_449.ms",
+      "ms_sha256": "b1beda731b255693b5882dc98b4d5d5dc1adbd6cf69e31167ada94d2a644c984",
+      "jestr_spectrum_sha256": "a3fda27c0490f052bd42e2eabcdd2d056e85e3eab91bb779970d62465e89e433",
+      "ms1_peaks": 2,
+      "ms2_peaks": 85,
+      "collision_blocks": 3
+    },
+    "450": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_450.ms",
+      "ms_sha256": "7c4970521b413d2b7fefca2a1a33be4d544f9b424a6172f3aa45af321b5fc6c6",
+      "jestr_spectrum_sha256": "7e487798325a195c1bca7d45be533ffb81ff5d663d8a86edf839e7d3be486afa",
+      "ms1_peaks": 5,
+      "ms2_peaks": 99,
+      "collision_blocks": 3
+    },
+    "451": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_451.ms",
+      "ms_sha256": "8fdc2079df351f2559bf5b87e7dc7f9c3810c9bf1c57f302c80b21e285302e12",
+      "jestr_spectrum_sha256": "761aef70d4a3db252145778890efffcc5630f5bc00fc83b83ebf34e7056376b0",
+      "ms1_peaks": 3,
+      "ms2_peaks": 53,
+      "collision_blocks": 3
+    },
+    "452": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_452.ms",
+      "ms_sha256": "28a70b0aaa8eafa9c74e0a42e9358a94f6d8ec8ded3b82e28434005090c6a853",
+      "jestr_spectrum_sha256": "599f3f17d23e8ceceb05245015c63007c84ef1abdc50eb343e1110cd8043c0d5",
+      "ms1_peaks": 5,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "453": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_453.ms",
+      "ms_sha256": "f39c70ae961d9b59f310cd2f9cc530281b0285510478016324dfb4b32ce37e2a",
+      "jestr_spectrum_sha256": "df5815dddb390bd8815896d796073e76c98df54584e3a765dd86a6116f652272",
+      "ms1_peaks": 3,
+      "ms2_peaks": 77,
+      "collision_blocks": 3
+    },
+    "454": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_454.ms",
+      "ms_sha256": "5dc40e2ef32962b6075217e5284fbae7027c0d047d9375b1b026a31af5f7ea80",
+      "jestr_spectrum_sha256": "3edcbec64b322dfd18963e620df9aeba9e4fc9f6b0f069eecc4a8dfd0306c3e6",
+      "ms1_peaks": 3,
+      "ms2_peaks": 117,
+      "collision_blocks": 3
+    },
+    "455": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_455.ms",
+      "ms_sha256": "e664d38e6fbf261db3ab1a8a577cdb1dbe44f5328c8e4c5a5218afd12df944ea",
+      "jestr_spectrum_sha256": "edbf5a6a0fb24f25e0401759e7d0f1923698fcbc4541b3466bd8d7f48f6a6782",
+      "ms1_peaks": 3,
+      "ms2_peaks": 101,
+      "collision_blocks": 3
+    },
+    "456": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_456.ms",
+      "ms_sha256": "911cb389a3d0e645ae970f09be102fc68a7bacc28a70c6e73b552ee274d22609",
+      "jestr_spectrum_sha256": "7aa268c76c2a3c0e34d7ec2dfb0c217ed8ef959256eb2afdc8a6a003c181088c",
+      "ms1_peaks": 3,
+      "ms2_peaks": 127,
+      "collision_blocks": 3
+    },
+    "457": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_457.ms",
+      "ms_sha256": "35d0d127e94e60e185515f5221779f3b01745faf250edc450ed4780241992597",
+      "jestr_spectrum_sha256": "8afeeff76f757442fab013630be717af1816727b488c2034a2713d376471d44c",
+      "ms1_peaks": 3,
+      "ms2_peaks": 91,
+      "collision_blocks": 3
+    },
+    "458": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_458.ms",
+      "ms_sha256": "bd7917d2cb01f248d15a50e07f0a404edb226eaf4b580bcb288c980c3fc4516c",
+      "jestr_spectrum_sha256": "2026c5477bcb48964bffb5fb79ad9308d69bd3b1778e5be65d5cad31a564c27e",
+      "ms1_peaks": 4,
+      "ms2_peaks": 170,
+      "collision_blocks": 3
+    },
+    "459": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_459.ms",
+      "ms_sha256": "dc46df1234e1b6de9a5e232cb15c3ce7f67317d62c50d62367734a580cbef255",
+      "jestr_spectrum_sha256": "b34eca042ce6d762290922f73b7f01284dd0d77c0bdf05418164ba3565bd0252",
+      "ms1_peaks": 3,
+      "ms2_peaks": 47,
+      "collision_blocks": 3
+    },
+    "460": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_460.ms",
+      "ms_sha256": "59a7804407befcd479b51454b0f5d4a07c4927ea8655cee2cdd404ea9e81e056",
+      "jestr_spectrum_sha256": "ea42b99aab7be7bb63fb2ab3599705c50f28cccd0321dbf202be8cbc921fb76c",
+      "ms1_peaks": 4,
+      "ms2_peaks": 87,
+      "collision_blocks": 3
+    },
+    "461": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_461.ms",
+      "ms_sha256": "b4523ab906a385c78623ff87016b38b8292b7b6414f17ce5302cefab15e9015f",
+      "jestr_spectrum_sha256": "0ca89aa3d9417969f14fe63d09e549aaca69423113e2a38a77a682662e348114",
+      "ms1_peaks": 4,
+      "ms2_peaks": 43,
+      "collision_blocks": 3
+    },
+    "462": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_462.ms",
+      "ms_sha256": "e6be7b01ac82bf1d3b3ba2492762a3957c8b5061e06fbdac7a5fb95a33105115",
+      "jestr_spectrum_sha256": "814935b981376fe09259f00770200db2a4a11acdfb690fa38ac95b3d3d8b07a1",
+      "ms1_peaks": 2,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "463": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_463.ms",
+      "ms_sha256": "1be42d151ea3796e52f9b56df5aa45eff95dd985b4d9e174585433da1752125a",
+      "jestr_spectrum_sha256": "8b025f3c3ba0813350f9e86258e5755735966069f7dcec2c874b2267b1cecb3b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 177,
+      "collision_blocks": 3
+    },
+    "464": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_464.ms",
+      "ms_sha256": "cca76ea7c0fe69a4fd68bd3af53b9e77ca6fcb7a3849302b8d278d7e6bbdb2be",
+      "jestr_spectrum_sha256": "85885ae1b4d0d8a779500e31163c8f65019a1831c9e51fda5854ec886f57589a",
+      "ms1_peaks": 5,
+      "ms2_peaks": 118,
+      "collision_blocks": 3
+    },
+    "465": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_465.ms",
+      "ms_sha256": "c5c2a49cc7d0ebc4fd2c55cb7b3a6883f52c467c5b9feddbf76c7db24d23a9c4",
+      "jestr_spectrum_sha256": "042cc3b48b266ef2c297ed79326f1b4bceaadca929891013baf436ad72e9d2e8",
+      "ms1_peaks": 3,
+      "ms2_peaks": 61,
+      "collision_blocks": 3
+    },
+    "466": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_466.ms",
+      "ms_sha256": "99797bec0e6216c68883a13eb9ed76f57bc8c0189ea44e634da51831638e193f",
+      "jestr_spectrum_sha256": "b78ca2f44fd3aa3742450a097245f479b4bf37742a5f406bb774093eb6294810",
+      "ms1_peaks": 4,
+      "ms2_peaks": 426,
+      "collision_blocks": 3
+    },
+    "467": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_467.ms",
+      "ms_sha256": "73830350e9df8d8c731bb4fc12a5e030281ca6e48d506a77bc1b9822dc178dba",
+      "jestr_spectrum_sha256": "1057d1f8fd1b2904ab13cea8b1cea6cb06c3152c0f63d8778ce84a6c92a0eeae",
+      "ms1_peaks": 4,
+      "ms2_peaks": 52,
+      "collision_blocks": 3
+    },
+    "468": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_468.ms",
+      "ms_sha256": "3053bd61c1cfe4c7a3559df21fc9d337410a57f91117ad6e5f241dca68cab2ec",
+      "jestr_spectrum_sha256": "6bd8056d830693b717418cdf196a6b6908de232ed4a13da42f7ca923bc81c472",
+      "ms1_peaks": 4,
+      "ms2_peaks": 148,
+      "collision_blocks": 3
+    },
+    "469": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_469.ms",
+      "ms_sha256": "9e34ed6001bf016de974912132d93f0c297782492ab8867887075de14714bdd9",
+      "jestr_spectrum_sha256": "ed8e0ef2731fcd1cc927ee8d154d3d6c7d0ff78de202d89faa6720554f66a078",
+      "ms1_peaks": 4,
+      "ms2_peaks": 168,
+      "collision_blocks": 3
+    },
+    "470": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_470.ms",
+      "ms_sha256": "2a7291bf07af98cc4951da7e8cf5847756f991698bffcb7c6669c46b0d662e77",
+      "jestr_spectrum_sha256": "05f46bef4214c8738335060ae22c4b7564c433b021fd13c77844164ade9b4add",
+      "ms1_peaks": 4,
+      "ms2_peaks": 25,
+      "collision_blocks": 3
+    },
+    "471": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_471.ms",
+      "ms_sha256": "42b85013f126a252942600e589d056bcefdf8ce07066a624697116ed7d08ce18",
+      "jestr_spectrum_sha256": "9f3df0d3fb5242daf8979db17acd5097f44d48e5cb9697e420e63a8abe1f985f",
+      "ms1_peaks": 4,
+      "ms2_peaks": 191,
+      "collision_blocks": 3
+    },
+    "472": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_472.ms",
+      "ms_sha256": "3b58d4b34f592e5ccafa617583fa5da08cb6d2b6c1871ec3200efd323594cfbe",
+      "jestr_spectrum_sha256": "f63d6642ad15ee7f45a55acfaf98c0a72954e74e3cd8a135a408ca0b66629437",
+      "ms1_peaks": 5,
+      "ms2_peaks": 150,
+      "collision_blocks": 3
+    },
+    "473": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_473.ms",
+      "ms_sha256": "de992b306ba280d2f141ace3dcd29f311d76c1cdf925e30e30981f1eb04a76a9",
+      "jestr_spectrum_sha256": "19a56b072e0401415d49c4f6a1f1679eacaab68b7251ef9645a7f7f1fee91a2d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 189,
+      "collision_blocks": 3
+    },
+    "474": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_474.ms",
+      "ms_sha256": "555676760f6a97feea535e321ee20ca725524c0ca44269a9499d518bc41bed13",
+      "jestr_spectrum_sha256": "983e37d5dbc07c0e1c0e2fbbc6d43461deeefa85f06f907822a64e0b2d71a8f9",
+      "ms1_peaks": 4,
+      "ms2_peaks": 87,
+      "collision_blocks": 3
+    },
+    "475": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_475.ms",
+      "ms_sha256": "deb52153845a5b79c7faf6286151c5aae0415160b342b792a85ce72c5860c4d6",
+      "jestr_spectrum_sha256": "465060dac629659947efe99d5d2e8360d813c7dcf5ef606f366cd36c0091902b",
+      "ms1_peaks": 4,
+      "ms2_peaks": 79,
+      "collision_blocks": 3
+    },
+    "476": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_476.ms",
+      "ms_sha256": "79f93e0f6bdf97360a6769626d92b8c1e8988e356a5fbeab39d5a3ea10163279",
+      "jestr_spectrum_sha256": "2f33a1aa82d652d2cf43c5e3e159d761290fa4a4fd957a1a9b48fd288d2244d3",
+      "ms1_peaks": 4,
+      "ms2_peaks": 84,
+      "collision_blocks": 3
+    },
+    "477": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_477.ms",
+      "ms_sha256": "d43823123175009c7a6d0d8808026d3bddb267a4f7bc2d0982d210d45f1d908c",
+      "jestr_spectrum_sha256": "20d9a8bb992f689251b9902bc5f543e7972f2f345b8cd75bc8827a921555df9e",
+      "ms1_peaks": 3,
+      "ms2_peaks": 120,
+      "collision_blocks": 3
+    },
+    "478": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_478.ms",
+      "ms_sha256": "7a3fe5612fb499d914c177b66e10f762d7de4a49516b7dc740136ae4ef1f0401",
+      "jestr_spectrum_sha256": "b2c99d398a5113d737088871d934a7409f695fbceae1d525dba2ffb091858dc0",
+      "ms1_peaks": 4,
+      "ms2_peaks": 128,
+      "collision_blocks": 3
+    },
+    "479": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_479.ms",
+      "ms_sha256": "1879d8fec049905c070cf9500f0508efe9c6a9e2f1a90861b396e0c9468dc57e",
+      "jestr_spectrum_sha256": "cc85888f147152e76e0b53ed1ab5ca314ea92f37e3b2d8d650cd026f32fc5010",
+      "ms1_peaks": 4,
+      "ms2_peaks": 112,
+      "collision_blocks": 3
+    },
+    "480": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_480.ms",
+      "ms_sha256": "76c8bdbd0a78d6fdfe82694304a8c2b41df3b2e3fec21279daf36a63e6c9983e",
+      "jestr_spectrum_sha256": "6417b95421be1df8972da94c2d176c21a72dd54f10e0f7ceed4218a980eae032",
+      "ms1_peaks": 4,
+      "ms2_peaks": 154,
+      "collision_blocks": 3
+    },
+    "481": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_481.ms",
+      "ms_sha256": "b74dadaa3be0b6374b2e63ebbe19fef9a9465a3ef1124055a5602b9e5defc29d",
+      "jestr_spectrum_sha256": "f840c6f3e9f46602f8f8121bf80fb0c68d1614ba80c5f129c74c77da8f4d233a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 255,
+      "collision_blocks": 3
+    },
+    "482": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_482.ms",
+      "ms_sha256": "0ad2047d30ffe646af668aad64030fa29fcc4a4c7647ad70c560e66450a9f525",
+      "jestr_spectrum_sha256": "3ad8f2d3e3de4d89e18828b4733894c651f725852ded492ce73ae59212f59e44",
+      "ms1_peaks": 5,
+      "ms2_peaks": 412,
+      "collision_blocks": 3
+    },
+    "483": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_483.ms",
+      "ms_sha256": "ce6dac4fdef2d3bec164a0d5ceb3228984a38d3a526742024d5db485e4d6737a",
+      "jestr_spectrum_sha256": "35a56c9efc64ac7cdd4b3d925510ba20ff841051a8b77ccfdda9e08cee4267a4",
+      "ms1_peaks": 4,
+      "ms2_peaks": 65,
+      "collision_blocks": 3
+    },
+    "484": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_484.ms",
+      "ms_sha256": "053a8c564deab9f48de48927ae7c8541e8d3d0a1b20841dddba980798b6a7b7d",
+      "jestr_spectrum_sha256": "cdd5250394e4ad39d9b57829e792abcbabc16710572e575a24a8c00ad62b6e18",
+      "ms1_peaks": 5,
+      "ms2_peaks": 71,
+      "collision_blocks": 3
+    },
+    "485": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_485.ms",
+      "ms_sha256": "e7978acd1418b9059f6d2420a285cab4e87caa0bdfb820fbf5ae5aff47330b30",
+      "jestr_spectrum_sha256": "f32428197354599b23593b6756e862fc0ccb59f4ae78c6286ced99aba0f1e338",
+      "ms1_peaks": 4,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "486": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_486.ms",
+      "ms_sha256": "96ad839244ccda2f71611cfc85ba2997281aaf27fcf3180e5107c014f7017da1",
+      "jestr_spectrum_sha256": "2a638b637dd3aab89afb0d84eaa5fd64493d5ab613ae7a9c30423725829ca04c",
+      "ms1_peaks": 3,
+      "ms2_peaks": 80,
+      "collision_blocks": 3
+    },
+    "487": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_487.ms",
+      "ms_sha256": "37b1baad4894ffaad335911bb8feb5dc4eb250eceda916c98df6d191df9f889e",
+      "jestr_spectrum_sha256": "87c9b7b0f31bbe7a4ac3894660b9141c9dedec160b61c5faf9b6df691a10f0f2",
+      "ms1_peaks": 2,
+      "ms2_peaks": 60,
+      "collision_blocks": 3
+    },
+    "488": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_488.ms",
+      "ms_sha256": "977f0c27d5efebb9d6dd0d3c015227d4a12c49b85798c81e0f8919794d02ceba",
+      "jestr_spectrum_sha256": "ffb0d72e3551dfdc195378ffa4da962a7a6a991925c3ac93fef3d77a1420d9a1",
+      "ms1_peaks": 5,
+      "ms2_peaks": 78,
+      "collision_blocks": 3
+    },
+    "489": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_489.ms",
+      "ms_sha256": "02aab07e7de85d9b3d6da2a56377eacbd7c96db62bb2a98257f1ec0de54221ac",
+      "jestr_spectrum_sha256": "9cf8eb34f1caa87508754f3b0d7c3172e5211df2ef60adca559e86654a27d958",
+      "ms1_peaks": 4,
+      "ms2_peaks": 148,
+      "collision_blocks": 3
+    },
+    "490": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_490.ms",
+      "ms_sha256": "b43d571b5dcdcfdd8f20417d1bfffdb4a6d07f06252e5d5ebb73a904135cd19a",
+      "jestr_spectrum_sha256": "eb0455c3e0865074f80c7d48ca240d1c9d10e529a8b996a6a5763b7f5f632cdc",
+      "ms1_peaks": 4,
+      "ms2_peaks": 178,
+      "collision_blocks": 3
+    },
+    "491": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_491.ms",
+      "ms_sha256": "47942f375c816e61676ee22f59429311915420859ed7ac5601babd7d23ab9a97",
+      "jestr_spectrum_sha256": "988c257f29d2b269406679ff1d767a28b809fa948c5802ace243137ddc04415a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 163,
+      "collision_blocks": 3
+    },
+    "492": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_492.ms",
+      "ms_sha256": "ae5f3b6ba98894d71370e0414dc5fba68cca8d2e9973a63e94dfb555bc6791ec",
+      "jestr_spectrum_sha256": "aa57fb0e7670a07bb3ca1ccad85330bda3f7284911bf18cc192746911457ac5d",
+      "ms1_peaks": 3,
+      "ms2_peaks": 45,
+      "collision_blocks": 3
+    },
+    "493": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_493.ms",
+      "ms_sha256": "7674aff12e5d3192a637d2361242a6bc82f30c2b196ac245289916a7ee08f7cf",
+      "jestr_spectrum_sha256": "b3b8d422600676d1c3e078f98d585377a1cc766b55c0ae08676f7f071b6ee5d8",
+      "ms1_peaks": 4,
+      "ms2_peaks": 54,
+      "collision_blocks": 3
+    },
+    "494": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_494.ms",
+      "ms_sha256": "8fa076efa20e20bf0e59e7b903c6685d9e08cb56d9585a06cbf8560cc310a803",
+      "jestr_spectrum_sha256": "ffe954147effa9597303b456806f5e8cab62e141214df2d0c2ba12db5bfba3e2",
+      "ms1_peaks": 3,
+      "ms2_peaks": 38,
+      "collision_blocks": 3
+    },
+    "495": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_495.ms",
+      "ms_sha256": "e5fa5cf30cabc21bded2ee2e2a32dd357c42b0d80be513102ef987ee77960955",
+      "jestr_spectrum_sha256": "91212b6e5efd5ca10b23cf834f0e5c5ba11498ad237791f86d0239283bac5583",
+      "ms1_peaks": 4,
+      "ms2_peaks": 46,
+      "collision_blocks": 3
+    },
+    "496": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_496.ms",
+      "ms_sha256": "01d54cc413086dc89fc15f14e9165c5bccf64f8fbc02ab6a8429cec03e8aa196",
+      "jestr_spectrum_sha256": "70caca4ff1e49c28d72a7ab82d21d2e27f4f0363e5f4f2819ca49a09f49549dd",
+      "ms1_peaks": 3,
+      "ms2_peaks": 79,
+      "collision_blocks": 3
+    },
+    "497": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_497.ms",
+      "ms_sha256": "bf762a9dc2fc992b572ee38afabaaa5ffc853c99ce661d149bef37b141241f53",
+      "jestr_spectrum_sha256": "0f728c485326553669c610141094e9dd36fb900a02294d97f9a2fb785ce7fc65",
+      "ms1_peaks": 5,
+      "ms2_peaks": 115,
+      "collision_blocks": 3
+    },
+    "498": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_498.ms",
+      "ms_sha256": "3fefcf25d3b05043ccb2929ca2ffcd2c2326e15c0228c0b5aa383e045f066957",
+      "jestr_spectrum_sha256": "1f9c7e21d93287c61d733f51d022134a621e6ac37e83521bc9e9fd04e2b05c6a",
+      "ms1_peaks": 4,
+      "ms2_peaks": 112,
+      "collision_blocks": 3
+    },
+    "499": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_499.ms",
+      "ms_sha256": "72a8f91820979d6f0cff691a8a9c0ccbdeb4997a85170917926f3a6ccfce393e",
+      "jestr_spectrum_sha256": "8bcf5428ebfd402450f75524cbdc5dd05104ad45ca51401a26f67ab75721281b",
+      "ms1_peaks": 5,
+      "ms2_peaks": 50,
+      "collision_blocks": 3
+    },
+    "500": {
+      "ms_file": "benchmark/casmi2022/sirius_run/ms/challenge_500.ms",
+      "ms_sha256": "6b782d37dd1b3c203a2a46d9c869ad5a8a3b37ede928420111e24662d44fe786",
+      "jestr_spectrum_sha256": "6febbdeb92af00514ff58f56ada0c51ac52232935de851634427f744b99cb094",
+      "ms1_peaks": 2,
+      "ms2_peaks": 29,
+      "collision_blocks": 3
+    }
+  },
+  "code_root": "/private/tmp/claude-501/-Users-bowen-Documents-reasearch-01-Core-Projects-mzDesk/46692548-9c05-45e0-abca-108eb47d0813/scratchpad/code_v0.2.40",
+  "code_fingerprint": "f27849312c3c41e0",
+  "pipeline_sha256": "984b6664463e4ecde508a4742bd44474c572e8a89bb053522e2f9d416d18887a"
+}

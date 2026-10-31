@@ -10,15 +10,21 @@ DARK = theme.PLOT_DARK        # kept / explained / matched
 LIGHT = theme.PLOT_LIGHT      # removed / unexplained / unmatched
 FONT, MONO = theme.PLOT_FONT, theme.PLOT_MONO
 HEIGHT = 460
-STICK_PX = 2
+STICK_PX = 2                  # stick width; dense spectra get thinner sticks (stick_px)
 HEADROOM = 1.15               # y axis top = tallest peak x this, room for the m/z labels
 PRECURSOR_MATCH = 0.05        # default window (Da) for indicating a peak near the precursor m/z
 
 
 def axis_style():
-    """Thin dark axis line, outside ticks, muted tick font."""
-    return dict(showline=True, linecolor=theme.INK, linewidth=1, ticks="outside", tickcolor=theme.INK,
+    """x axis: a quiet baseline with short outside ticks, muted tick font (the sticks stand on the baseline)."""
+    return dict(showline=True, linecolor=theme.AXIS, linewidth=1, ticks="outside", tickcolor=theme.AXIS,
                 ticklen=4, tickfont=dict(color=theme.MUTED, size=11), zeroline=False)
+
+
+def y_axis_style():
+    """y axis: no line, only the light gridlines; the invisible ticks keep the tick labels off the plot."""
+    return dict(showline=False, ticks="outside", tickcolor="rgba(0,0,0,0)", ticklen=6,
+                tickfont=dict(color=theme.MUTED, size=11), zeroline=False, showgrid=True, gridcolor=theme.SURFACE_2)
 
 
 def axis_title(text):
@@ -32,9 +38,14 @@ def mz_range(mz, pad_min=5.0):
     return [max(0.0, lo - pad), hi + pad]
 
 
+def percent_ticks(top=100):
+    """y ticks every 20 % up to 100: the headroom above the base peak is for labels, not for values."""
+    return dict(tickvals=list(range(0, int(min(top, 100)) + 1, 20)))
+
+
 def base_layout(height=HEIGHT, *, x_range, y_range, y_title, yaxis=None, margin=None, shapes=(), annotations=()):
-    """Layout dict for ``fig.update_layout``: white, light y grid, no legend, hover by x, drag to zoom."""
-    y = dict(axis_style(), title=axis_title(y_title) if y_title else None, range=y_range, showgrid=True, gridcolor=theme.SURFACE_2)
+    """Layout dict for ``fig.update_layout``: transparent, light y grid, no legend, hover by x, drag to zoom."""
+    y = dict(y_axis_style(), title=axis_title(y_title) if y_title else None, range=y_range)
     y.update(yaxis or {})
     return dict(
         template="none", height=height, margin=margin or dict(l=62, r=22, t=30, b=50),
@@ -45,13 +56,19 @@ def base_layout(height=HEIGHT, *, x_range, y_range, y_title, yaxis=None, margin=
         xaxis=dict(axis_style(), title=axis_title("m/z"), range=x_range, showgrid=False, hoverformat=".4f"), yaxis=y)
 
 
-def stick_trace(mz, y, color, name, y0=0.0):
+def stick_px(mz, x_range):
+    """Stick width for this many peaks across ``x_range``: 2 px, thinner when sticks would run together (unit-mass EI)."""
+    per_100 = len(mz) / max(x_range[1] - x_range[0], 1e-9) * 100
+    return STICK_PX if per_100 <= 20 else 1.5 if per_100 <= 45 else 1.0
+
+
+def stick_trace(mz, y, color, name, y0=0.0, width=STICK_PX):
     """All sticks as ONE lines trace (None breaks): constant pixel width, never merges when zoomed."""
     xs, ys = [], []
     for m, h in zip(mz, y):
         xs += [float(m), float(m), None]
         ys += [y0, float(h), None]
-    return go.Scatter(x=xs, y=ys, mode="lines", line=dict(color=color, width=STICK_PX), hoverinfo="skip",
+    return go.Scatter(x=xs, y=ys, mode="lines", line=dict(color=color, width=width), hoverinfo="skip",
                       name=name, showlegend=False)
 
 
@@ -64,7 +81,7 @@ def hover_markers(mz, y, *, name="peaks", customdata=None, hovertemplate=None):
 
 
 def precursor_line(x, y0, y1):
-    """Dotted vertical line (Figure.tsx finds the precursor by this dash)."""
+    """Dotted vertical line from y0 to y1 (Figure.tsx finds the precursor by this dash and keeps labels off it)."""
     return dict(type="line", xref="x", yref="y", x0=x, x1=x, y0=y0, y1=y1, layer="below",
                 line=dict(color=theme.MUTED, width=1, dash="dot"))
 
@@ -125,9 +142,10 @@ def spectrum_figure(peaks, *, precursor_mz=None, precursor_tol=PRECURSOR_MATCH, 
     xr = mz_range(mz + ([precursor_mz] if precursor_mz else []))
 
     fig = go.Figure()
+    width = stick_px(mz, xr)
     for name, color, idx in (("dimmed", LIGHT, sorted(off)), ("kept", DARK, [i for i in range(n) if i not in off])):
         if idx:
-            fig.add_trace(stick_trace([mz[i] for i in idx], [ys[i] for i in idx], color, name))
+            fig.add_trace(stick_trace([mz[i] for i in idx], [ys[i] for i in idx], color, name, width=width))
     fig.add_trace(hover_markers(mz, ys))
 
     shapes, annotations, prec = [], [], None
@@ -135,12 +153,12 @@ def spectrum_figure(peaks, *, precursor_mz=None, precursor_tol=PRECURSOR_MATCH, 
         near = [i for i in range(n) if abs(mz[i] - precursor_mz) <= precursor_tol]
         prec = min(near, key=lambda i: abs(mz[i] - precursor_mz)) if near else None
         y0 = 0.0 if prec is None else ys[prec] + 0.08 * top      # start above the precursor peak's label
-        if y0 < top:
+        if top - y0 >= 0.1 * top:                                 # no stub between a tall precursor peak and the top
             shapes.append(precursor_line(precursor_mz, y0, top))
-        annotations.append(precursor_label(precursor_mz, f"precursor {fmt_mz(precursor_mz)}", xr))
+        annotations.append(precursor_label(precursor_mz, f"precursor {precursor_mz:.4f}", xr))
+    yaxis = dict(tickformat="~s") if ymax >= 1e4 else percent_ticks() if abs(ymax - 100) < 0.5 else None
     fig.update_layout(**base_layout(
-        height, x_range=xr, y_range=[0, top], y_title=y_title, shapes=shapes, annotations=annotations,
-        yaxis=dict(tickformat="~s") if ymax >= 1e4 else None))
+        height, x_range=xr, y_range=[0, top], y_title=y_title, shapes=shapes, annotations=annotations, yaxis=yaxis))
 
     cards = []
     for i, (m, y) in enumerate(peaks):

@@ -128,7 +128,7 @@ def fragment_atoms(parent, fragment_smiles, fragment_formula=""):
 
 def shown_rows(rows):
     """The explained fragment peaks that get a colour: the MAX_FRAGMENTS most intense, in m/z order. rows: MetFrag annotation rows."""
-    return sorted(sorted(rows, key=lambda r: -r.get("intensity", 0))[:MAX_FRAGMENTS], key=lambda r: r["mz"])
+    return sorted(sorted(rows, key=lambda r: -r.get("intensity", 0))[:MAX_FRAGMENTS], key=lambda r: r.get("mz", 0))
 
 
 def atom_coverage(smiles, rows, *, allow_charge=False):
@@ -177,20 +177,21 @@ def _figure(ann, colors, theo_mz, adduct, y_top):
     import plotly.graph_objects as go
 
     fig = go.Figure()
+    xs = [a["mz"] for a in ann]
+    lo, hi = min(xs + [theo_mz]), max(xs + [theo_mz])
+    x_range = [max(0.0, lo - max(0.1 * (hi - lo), 25.0)), hi + max(0.05 * (hi - lo), 5.0)]       # room on the left for a label beside the first peak
+    width = ms2_plot.stick_px(xs, x_range)
     plain = [(a, "dark" if a["annotated"] else "light") for i, a in enumerate(ann) if i not in colors]
     for key, opacity, name in (("light", 0.28, "unexplained"), ("dark", 0.8, "explained")):          # the whole spectrum in pure ink, paler when unexplained
         rows = [a for a, k in plain if k == key]
         if rows:
-            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], theme.PURE_INK, name).update(opacity=opacity))
+            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], theme.PURE_INK, name, width=width).update(opacity=opacity))
     for i, color in colors.items():
         a = ann[i]
-        fig.add_trace(ms2_plot.stick_trace([a["mz"]], [a["rel"]], color, f"{a['mz']:.4f}"))
-    xs = [a["mz"] for a in ann]
-    lo, hi = min(xs + [theo_mz]), max(xs + [theo_mz])
-    x_range = [max(0.0, lo - max(0.1 * (hi - lo), 25.0)), hi + max(0.05 * (hi - lo), 5.0)]       # room on the left for a label beside the first peak
+        fig.add_trace(ms2_plot.stick_trace([a["mz"]], [a["rel"]], color, f"{a['mz']:.4f}", width=max(width, 1.5)))
     fig.add_trace(ms2_plot.hover_markers(xs, [a["rel"] for a in ann]))
     fig.update_layout(**ms2_plot.base_layout(
-        430, x_range=x_range, y_range=[0, y_top], y_title="Relative intensity (%)",
+        430, x_range=x_range, y_range=[0, y_top], y_title="Relative intensity (%)", yaxis=ms2_plot.percent_ticks(),
         shapes=[ms2_plot.precursor_line(theo_mz, 0, y_top)],
         annotations=[ms2_plot.precursor_label(theo_mz, f"{adduct} {theo_mz:.4f}", x_range)]))
     return json.loads(fig.to_json())

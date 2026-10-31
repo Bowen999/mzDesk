@@ -8,6 +8,7 @@ LINE = "#E6E8ED"
 SURFACE = "rgba(0,0,0,0)"   # figures sit on the page's own white
 PAPER = "#FFFFFF"           # solid white where something must cover the plot (hover labels)
 SURFACE_2 = "#F0F2F5"       # plot gridlines
+AXIS = "#B9BFCA"            # plot baseline and x ticks (theme.css --line-hover): visible under the sticks, quieter than the data
 ACCENT = "#2D5BD0"
 
 # ---- data colours (6, chosen to sit together): series 1 is the accent blue

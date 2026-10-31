@@ -1,55 +1,42 @@
 import { useState } from "react";
-import type { AnnotationResult, Job } from "../types";
+import type { AnnotationResult } from "../types";
 import { FigureView } from "./Figure";
+import { HelpButton } from "./Help";
 import "./pipeline.css";
 
-const SYMBOLS: Record<string, string> = { queued: "–", running: "…", done: "✓", skipped: "–", failed: "!" };
-
-/** Counts completed steps, not elapsed time: steps 1 and 2 may run together. */
-export function WorkflowOverview({ job }: { job: Job }) {
-  const finished = job.steps.filter(s => ["done", "failed", "skipped"].includes(s.status)).length;
-  return <section className="workflow-overview" aria-label="Workflow progress">
-    <div className="workflow-heading"><h2>Workflow progress</h2><span>{finished} / {job.steps.length} steps finished</span></div>
-    {job.status === "queued" && job.note && <p className="workflow-note">{job.note}</p>}
-    <ol className="workflow-track">
-      {job.steps.map((s, i) => <li key={s.id} className={`workflow-node is-${s.status}`}>
-        <a href={`#workflow-step-${s.id}`} aria-label={`Step ${i + 1}: ${s.title}, ${s.status}`}>
-          <span className="workflow-symbol" aria-hidden="true">{SYMBOLS[s.status] ?? "–"}</span>
-          <span className="workflow-node-text"><span>{i + 1}. {s.title}</span><small>{s.status}</small></span>
-        </a>
-      </li>)}
-    </ol>
-  </section>;
-}
-
+/**
+ * The measured spectrum against the best judged library hit. Only shown when a library search finished and there is a hit to compare:
+ * without a search (skipped, not installed, no peaks) or without a hit there is nothing to put next to it, and the reason stays in the step's note.
+ * The explanations live behind the "?" next to the title; the plot is lower than on the module pages.
+ */
 export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
   const figures = result.visualization;
   const [view, setView] = useState<"query" | "library">(figures?.library ? "library" : "query");
-  // The query figure is generated even when no search was run. Step 3 records
-  // whether the library step completed, failed, or was skipped (e.g. no installed library).
   const libraryStep = result.steps?.find(s => s.id === 3);
-  if (!libraryStep || !["done", "failed"].includes(libraryStep.status)) return null;
   const query = figures?.query;
   const library = figures?.library;
-  const showLibrary = !!library && (!query || view === "library");
-  return <section className="workflow-evidence" aria-labelledby="workflow-spectrum-title">
-    <div className="workflow-heading"><div><h2 id="workflow-spectrum-title">Spectrum evidence</h2>
-      <p>Measured m/z {result.context.precursor_mz.toFixed(4)} · {result.context.polarity}</p></div></div>
-    <p className="workflow-caption">Library search: {libraryStep.status}.{libraryStep.note && <> {libraryStep.note}</>}</p>
-    {query && library && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
-      <button type="button" className={showLibrary ? "" : "selected"} aria-pressed={!showLibrary} onClick={() => setView("query")}>Experimental spectrum</button>
-      <button type="button" className={showLibrary ? "selected" : ""} aria-pressed={showLibrary} onClick={() => setView("library")}>Library comparison</button>
-    </div>}
-    {showLibrary && library ? <>
-      <p className="workflow-caption">Best judged library hit: <b>{library.name || library.accession}</b> · {library.library} · {library.accession}. This may not be the top-ranked final candidate.</p>
-      <FigureView data={library.figure} />
-      <p className="workflow-caption">Top: experimental. Bottom: library. Dark peaks are paired by greedy matching; the library similarity uses its own metric.</p>
-    </> : query && <>
-      <FigureView data={query} />
-      <p className="workflow-caption">Parsed experimental spectrum. Library search uses all peaks when run; engine steps use at most the 100 most intense peaks.</p>
-      {!library && <p className="workflow-caption">Library comparison figure unavailable.</p>}
-    </>}
-    {!query && !library && <p className="workflow-caption">Spectrum figures are unavailable.</p>}
+  if (!library || (libraryStep && libraryStep.status !== "done")) return null;
+  const showLibrary = !query || view === "library";
+  const help = [
+    `Measured m/z ${result.context.precursor_mz.toFixed(4)} · ${result.context.polarity}.`,
+    "Top: experimental. Bottom: library. Dark peaks are paired by greedy matching; the library similarity uses its own metric.",
+    "The best judged library hit may not be the top-ranked final candidate.",
+    "Only the main peaks (at least 5 % of the base peak) and the precursor are labelled; hover any peak for its details.",
+    ...(libraryStep ? [`Library search: ${libraryStep.status}.${libraryStep.note ? " " + libraryStep.note : ""}`] : []),
+  ];
+  return <section className="workflow-evidence spectrum-evidence" aria-labelledby="workflow-spectrum-title">
+    <div className="workflow-heading"><h2 id="workflow-spectrum-title">Spectrum evidence</h2><HelpButton lines={help} label="Help: Spectrum evidence" />
+      {query && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
+        <button type="button" className={showLibrary ? "" : "selected"} aria-pressed={!showLibrary} onClick={() => setView("query")}>Experimental spectrum</button>
+        <button type="button" className={showLibrary ? "selected" : ""} aria-pressed={showLibrary} onClick={() => setView("library")}>Library comparison</button>
+      </div>}
+    </div>
+    {showLibrary
+      ? <>
+        <p className="workflow-caption spectrum-hit">Best library hit: <b>{library.name || library.accession}</b> · {library.library} · {library.accession}</p>
+        <FigureView data={library.figure} />
+      </>
+      : query && <FigureView data={query} />}
   </section>;
 }
 

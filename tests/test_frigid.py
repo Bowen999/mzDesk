@@ -427,7 +427,7 @@ def test_frigid_is_turned_away_while_another_frigid_run_is_in_progress(fake_inst
     monkeypatch.setattr(fe, "BUSY_WAIT_S", 0.05)
     assert heavy_lock.LOCK.acquire(holder="FRIGID")
     try:
-        with pytest.raises(fe.FrigidError, match="busy: another De novo structure run"):
+        with pytest.raises(fe.FrigidError, match="busy: another De Novo Structure run"):
             fe.predict("C8H10N4O2", 195.0877, None, PEAKS)
     finally:
         heavy_lock.LOCK.release()
@@ -438,7 +438,7 @@ def test_msfinder_waits_for_frigid_and_says_so(monkeypatch):
     monkeypatch.setattr(mf, "BUSY_WAIT_S", 0.05)
     assert heavy_lock.LOCK.acquire(holder="FRIGID")
     try:
-        with pytest.raises(mf.MsFinderError, match="waiting for a De novo structure \\(FRIGID\\) run"):
+        with pytest.raises(mf.MsFinderError, match="waiting for a De Novo Structure \\(FRIGID\\) run"):
             mf.predict(195.0877, True, None, PEAKS)
     finally:
         heavy_lock.LOCK.release()
@@ -712,7 +712,7 @@ def test_buddy_formula_that_frigid_cannot_use_is_a_400(monkeypatch, fake_predict
 # ---------------------------------------------------------------- page definition
 def test_page_definition_is_live_with_the_agreed_inputs_and_blocks():
     m = _module()
-    assert m["live"] is True and m["subgroup"] == "ms2" and m["title"] == "De novo structure"
+    assert m["live"] is True and m["subgroup"] == "ms2" and m["title"] == "De Novo Structure"
     assert [f["id"] for f in m["inputs"]] == ["precursor", "ms2", "ms1", "formula", "mode", "halogen"]
     mode = m["inputs"][4]
     assert mode["options"] == ["Quick (16 samples)", "Full (up to 100 samples)"] and mode["value"] == "Quick (16 samples)"

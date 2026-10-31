@@ -98,7 +98,7 @@ def check_msfinder():
     """Return (mono, exe, ini) or raise MsFinderError with a message that says what to do."""
     s = status()
     if not s["mono"]:
-        raise MsFinderError("Structure prediction runs MS-FINDER through Mono, which is not installed here. The module is part of the local "
+        raise MsFinderError("Structure Prediction runs MS-FINDER through Mono, which is not installed here. The module is part of the local "
                             "version of mzDesk only (the online version has no Mono). On your own machine: install Mono (for example "
                             f"`brew install mono`), then run `{SETUP_COMMAND}`.")
     if not s["exe"] or not s["resources"]:
@@ -391,7 +391,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
 
     if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
         if _RUN_LOCK.holder == "FRIGID":
-            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
+            raise MsFinderError("MS-FINDER is waiting for a De Novo Structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
         raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
     try:
         t0 = time.monotonic()
@@ -553,7 +553,7 @@ def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_d
 
     if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
         if _RUN_LOCK.holder == "FRIGID":
-            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
+            raise MsFinderError("MS-FINDER is waiting for a De Novo Structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
         raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
     try:
         t0 = time.monotonic()
@@ -679,7 +679,7 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
 
     if not _RUN_LOCK.acquire(timeout=BUSY_WAIT_S, holder="MS-FINDER"):
         if _RUN_LOCK.holder == "FRIGID":
-            raise MsFinderError("MS-FINDER is waiting for a De novo structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
+            raise MsFinderError("MS-FINDER is waiting for a De Novo Structure (FRIGID) run to finish (one heavy run at a time). Try again in a minute.")
         raise MsFinderError("MS-FINDER is busy with another request (one run at a time, each needs about 2.3 GB of memory). Try again in a few seconds.")
     try:
         t0 = time.monotonic()

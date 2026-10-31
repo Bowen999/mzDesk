@@ -15,8 +15,8 @@ web/node_modules/
 web/dist/
 mzdesk/static/
 
-# copyrighted papers stay local
-paper/literature/*.pdf
+# copyrighted papers stay local (also in subfolders)
+paper/literature/**/*.pdf
 
 # CASMI2022 benchmark: raw data and large SIRIUS outputs stay local
 benchmark/casmi2022/raw/
@@ -37,3 +37,13 @@ benchmark/.mplcache/
 research_inputs/
 # Pan-ReDU snapshot: redistribution licence not confirmed yet
 mzdesk/gnps/redu_cache/*.gz
+
+# CASMI ablation: run outputs stay local; the scripts, README.md, scores.json, manifest.json and leak_lists/ are kept
+benchmark/casmi2022/mzdesk_ablation_*/replay/
+benchmark/casmi2022/mzdesk_ablation_*/store/
+benchmark/casmi2022/mzdesk_ablation_*/standalone/
+benchmark/casmi2022/mzdesk_ablation_*/step7_cache/
+benchmark/casmi2022/mzdesk_ablation_*/worker_logs/
+benchmark/casmi2022/mzdesk_ablation_*/.locks/
+benchmark/casmi2022/mzdesk_ablation_*/.inflight/
+benchmark/casmi2022/mzdesk_ablation_*/*.log

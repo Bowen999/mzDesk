@@ -124,7 +124,7 @@ def run_similarity(inputs):
     finite = [r for r in results if _finite(r.get("score"))]
     n_pass = sum(1 for r in finite if r["score"] >= threshold)
     summary = mirror_plot.match_summary(query, ref, tol)
-    fig = mirror_plot.build_mirror_figure(query, ref, query_mz, ref_mz, tolerance=tol, labels=("Query", "Reference"), height=480)
+    fig, cards = mirror_plot.build_mirror_figure(query, ref, query_mz, ref_mz, tolerance=tol, labels=("Query", "Reference"), height=480)
     return {"outputs": {
         "summary": {"values": {
             "Primary score": {"value": fmt(primary["score"], 4), "note": primary["method"]} if primary else common.MISSING,
@@ -132,7 +132,7 @@ def run_similarity(inputs):
             "Matched peaks": str(summary["matched_pairs"]),
             "Query matched": {"value": f"{summary['query_matched_pct']:.0f}", "note": f"{summary['query_matched']} / {summary['query_total']} peaks"},
             "Reference matched": {"value": f"{summary['ref_matched_pct']:.0f}", "note": f"{summary['ref_matched']} / {summary['ref_total']} peaks"}}},
-        "mirror": common.plotly(fig),
+        "mirror": common.plotly(fig, peaks=cards),
         "scores": {"rows": [[r["category"], r["method"], fmt(r.get("score"), 4),
                              common.MISSING if r.get("matches") is None else str(r["matches"]),
                              ("yes" if r["score"] >= threshold else "no") if _finite(r.get("score")) else common.MISSING,
@@ -338,9 +338,9 @@ def run_library(inputs):
     if hits and res["top_peaks"] is not None:
         top_mz, top_rel = res["top_peaks"]
         label = f"{hits[0]['library']} {hits[0]['accession']}"
-        fig = mirror_plot.build_mirror_figure(peaks, list(zip(top_mz.tolist(), top_rel.tolist())), precursor_mz, res["top_precursor"],
+        fig, cards = mirror_plot.build_mirror_figure(peaks, list(zip(top_mz.tolist(), top_rel.tolist())), precursor_mz, res["top_precursor"],
                                               tolerance=tol, labels=("Query", label), height=480)
-        outputs["mirror"] = common.plotly(fig)
+        outputs["mirror"] = common.plotly(fig, peaks=cards)
     return {"outputs": outputs, "warnings": warnings}
 
 

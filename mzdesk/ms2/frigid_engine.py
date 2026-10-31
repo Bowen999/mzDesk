@@ -80,8 +80,8 @@ ADDUCT_TABLE = {
 }
 ADDUCTS = list(ADDUCT_TABLE)                    # "Auto" on the page = the first entry
 _ALIASES = {"[M-H2O+H]+": "[M+H-H2O]+", "[M-2H2O+H]+": "[M+H-2H2O]+", "[M+H3N+H]+": "[M+NH4]+", "[M-H4O2+H]+": "[M+H-2H2O]+"}
-NEGATIVE_MESSAGE = ("De novo structure works in positive ion mode only: FRIGID and its MIST encoder were trained on positive-mode adducts. "
-                    "Choose Positive, or use Structure prediction (MS-FINDER) for negative-mode spectra.")
+NEGATIVE_MESSAGE = ("De Novo Structure works in positive ion mode only: FRIGID and its MIST encoder were trained on positive-mode adducts. "
+                    "Choose Positive, or use Structure Prediction (MS-FINDER) for negative-mode spectra.")
 
 
 class FrigidError(RuntimeError):
@@ -156,13 +156,13 @@ def check_frigid():
     """Return the status dict when everything is in place, else raise FrigidError with a message that says what to do."""
     s = status()
     if not s["driver"] or not s["length_model"]:
-        raise FrigidError(f"The mzDesk files for De novo structure are missing ({DRIVER.parent} or {LIB_DIR}); reinstall mzDesk.")
+        raise FrigidError(f"The mzDesk files for De Novo Structure are missing ({DRIVER.parent} or {LIB_DIR}); reinstall mzDesk.")
     missing = [label for key, label in (("python", "the Python environment (env/)"), ("clone", "the FRIGID code (FRIGID/)"),
                                         ("mps_patch", "FRIGID's device patch"), ("safe_patch", "the SAFE import patch"),
                                         ("dlm", "the DLM checkpoint (checkpoints/DLM.ckpt)"), ("mist", "the MIST checkpoint (checkpoints/mist_msg_aug.ckpt)"),
                                         ("tokenizer", "the SAFE tokenizer (hf_cache/)")) if not s[key]]
     if missing:
-        raise FrigidError("De novo structure runs FRIGID, which is part of the local version of mzDesk only (the online version does not have it) and "
+        raise FrigidError("De Novo Structure runs FRIGID, which is part of the local version of mzDesk only (the online version does not have it) and "
                           f"is not installed here: missing {', '.join(missing)} in {s['dir']}. "
                           f"Run once in a terminal: {SETUP_COMMAND} (about 3 GB download; MZDESK_FRIGID_DIR changes the folder).")
     return s
@@ -440,7 +440,7 @@ def predict(formula, precursor_mz, adduct, peaks, mode="quick", *, name="query",
     job = build_job(formula, precursor_mz, driver_adduct, peaks, mode, device=requested, seed=seed, name=name)
 
     if not heavy_lock.LOCK.acquire(timeout=BUSY_WAIT_S, holder="FRIGID"):
-        who = "MS-FINDER (Structure prediction)" if heavy_lock.LOCK.holder == "MS-FINDER" else "another De novo structure run"
+        who = "MS-FINDER (Structure Prediction)" if heavy_lock.LOCK.holder == "MS-FINDER" else "another De Novo Structure run"
         raise FrigidError(f"FRIGID is busy: {who} is running (one heavy run at a time; a FRIGID run needs about 4-5 GB of memory). Try again in a minute.")
     try:
         t0 = time.monotonic()

@@ -97,14 +97,21 @@ def test_predicted_spectrum_page_is_gone():
     assert "ms2_predicted" not in {mid for p in PIPELINES for s in p["stages"] for mid in s["modules"]}
 
 
-def test_the_only_workflow_is_esi_ms2_annotation():
-    assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation"]
-    assert PIPELINES[0]["title"] == "ESI MS/MS Annotation"
-    assert [(s["id"], s["title"]) for s in PIPELINES[0]["stages"]] == [
+def test_the_workflows():
+    assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
+    esi, ei_ms, targeted = PIPELINES
+    assert [p["title"] for p in PIPELINES] == ["ESI MS/MS Annotation", "EI MS Annotation", "Targeted Method"]
+    assert [(s["id"], s["title"]) for s in esi["stages"]] == [
         (1, "Adduct"), (2, "Formula"), (3, "Library search"), (4, "MS-FINDER structures"), (5, "FRIGID structures"),
         (6, "Merge and re-rank"), (7, "Isomer check"), (8, "Answer")]
-    assert "structure" not in {f["id"] for f in PIPELINES[0]["inputs"] if f.get("id")}       # the old "Candidate structure" field is gone
-    assert len(PIPELINES[0]["examples"]) == 2
+    assert "structure" not in {f["id"] for f in esi["inputs"] if f.get("id")}       # the old "Candidate structure" field is gone
+    assert len(esi["examples"]) == 2
+    assert [s["title"] for s in targeted["stages"]] == ["Identity", "Platform", "Separation", "Ionization", "Adducts", "Non-MS detection",
+                                                        "Derivatization", "Known methods", "Theoretical m/z"]
+    assert [s["title"] for s in ei_ms["stages"]] == ["Spectrum cleanup", "EI library search", "Derivatization markers", "Candidates", "Derivatives",
+                                                  "NEIMS prediction", "Similarity and rerank", "Kovats RI", "Answer"]
+    assert len({p["id"] for p in PIPELINES}) == len(PIPELINES)
+    assert all([s["id"] for s in p["stages"]] == list(range(1, len(p["stages"]) + 1)) for p in PIPELINES)
 
 
 def test_molecular_and_detectability_subgroups():

@@ -349,9 +349,9 @@ def test_page_example_uses_pubchem_and_metfrag_not_the_workflow_engine(engine, m
     assert body["status"] == "ok" and set(body["outputs"]) == {"same_formula", "isobaric", "isomers"} and calls == []
     table = body["outputs"]["isomers"]
     rows = table["rows"]
-    assert len(rows) == 2 and table["count"] == 1 and rows[0][0] == "caffeine" and rows[0][4]["badge"] == "your compound"
-    assert rows[1][1] == "PubChem CID 1" and rows[1][4]["badge"] == "no"
-    assert all(r[2]["text"] and "<svg" in r[2]["hover_svg"] for r in rows)
+    assert len(rows) == 2 and table["count"] == 1 and rows[0][0] == "caffeine" and rows[0][5]["badge"] == "your compound"      # Fragments is the second column
+    assert rows[1][2] == "PubChem CID 1" and rows[1][5]["badge"] == "no"
+    assert all(r[3]["text"] and "<svg" in r[3]["hover_svg"] for r in rows)
     assert "Not distinguished or not scored" in body["verdict"] and "Not exhaustive" in body["verdict"]
 
 

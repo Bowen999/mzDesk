@@ -13,6 +13,7 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, rdCoordGen
 from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.rdBase import BlockLogs
 
 from mzdesk.shared import colors as _theme, depict as _depict
 
@@ -490,3 +491,195 @@ def gc_assess(mol, groups, n_glycosyl=0) -> dict:
         return {"gc": "after derivatization", "stability": ok, "reasons": reasons,
                 "volatility": f"needs derivatization ({label}, {n_h} TMS → {mass:.2f} Da)"}
     return {"gc": "no", "volatility": f"derivative too heavy ({mass:.0f} Da)", "stability": ok, "reasons": reasons}
+
+
+# ---------------------------------------------------------------- GC derivative structures (EI MS Annotation workflow)
+# derive() above only counts labels and gives a formula; the EI workflow needs the derivative STRUCTURE (a SMILES for the NEIMS prediction) and the
+# way back (a library entry stored as its derivative -> the original compound). Same sites, same counts as derive(): the formula of the structure
+# built here equals derive()'s formula for the same reagent (asserted in tests/test_derivatization.py).
+EI_MODES = {"TMS": "GC · TMS (MSTFA / BSTFA)", "MeOx + TMS": "GC · MeOx + TMS", "TBDMS": "GC · TBDMS (MTBSTFA)"}
+_SILYL_TAG = {"TMS": "C[Si](C)C", "MeOx + TMS": "C[Si](C)C", "TBDMS": "C[Si](C)C(C)(C)C"}      # open valence on Si: the bond to the O / N / S site
+_OXIME_ETHER = Chem.MolFromSmarts("[#6X3]=[NX2]-[OX2]-[CH3]")                                    # C=N-OCH3, what MeOx makes of C=O
+_HETERO = (7, 8, 16)
+
+
+def _bond_neighbors(atom, atomic_num, bond_type=None):
+    """Indices of the neighbours of ``atom`` with this atomic number (and, if given, joined by this bond type)."""
+    mol = atom.GetOwningMol()
+    return [n.GetIdx() for n in atom.GetNeighbors() if n.GetAtomicNum() == atomic_num
+            and (bond_type is None or mol.GetBondBetweenAtoms(atom.GetIdx(), n.GetIdx()).GetBondType() == bond_type)]
+
+
+def _meox_edit(work, groups, mol, sites):
+    """MeOx on the editable molecule ``work`` (heavy-atom indices as in ``mol``): every C=O becomes C=N-OCH3 and every cyclic hemiacetal (the
+    anomeric carbon of a reducing sugar) is opened to C=N-OCH3, its ring oxygen becoming an OH. ``sites`` ({atom: silyl count}) and the
+    hydrogens to delete are updated: the anomeric OH is gone, the ring oxygen is a new silylation site. -> (list of H atoms to delete, new sites)"""
+    delete_h, new_sites = [], {}
+    carbonyl_c = [i for key in CARBONYL if key in groups for i in groups[key]["atoms"]]
+    kekulize = any(work.GetAtomWithIdx(i).GetIsAromatic() for i in carbonyl_c)
+    if kekulize:
+        Chem.Kekulize(work, clearAromaticFlags=True)
+    targets = []                                                                    # (nitrogen atom) that gets the O-CH3
+    for c in carbonyl_c:
+        oxygen = _bond_neighbors(work.GetAtomWithIdx(c), 8, Chem.BondType.DOUBLE)
+        if len(oxygen) != 1:
+            raise ValueError(f"MeOx reaction site {c} is not a carbonyl carbon.")
+        work.GetAtomWithIdx(oxygen[0]).SetAtomicNum(7)
+        targets.append(oxygen[0])
+    for match in mol.GetSubstructMatches(_HEMIACETAL):
+        oh, c, ring_o = match[0], match[1], match[2]
+        if oh not in sites:
+            continue
+        delete_h += _bond_neighbors(work.GetAtomWithIdx(oh), 1)
+        work.GetAtomWithIdx(oh).SetAtomicNum(7)
+        work.GetBondBetweenAtoms(c, oh).SetBondType(Chem.BondType.DOUBLE)
+        work.RemoveBond(c, ring_o)
+        targets.append(oh)
+        new_sites[ring_o] = 1
+        sites.pop(oh)
+    for n in targets:
+        o_new, c_new = work.AddAtom(Chem.Atom(8)), work.AddAtom(Chem.Atom(6))
+        work.AddBond(n, o_new, Chem.BondType.SINGLE)
+        work.AddBond(o_new, c_new, Chem.BondType.SINGLE)
+    return delete_h, new_sites
+
+
+def derivatize(smiles, reagent) -> dict:
+    """The derivative of ``smiles`` with a GC reagent (a key of EI_MODES.values(), e.g. "GC · TMS (MSTFA / BSTFA)").
+
+    -> {"smiles", "formula", "mass" (monoisotopic), "n_silyl", "n_meox", "n_labels" (what derive() reports as ``n``: silyl groups, plus MeOx for
+    MeOx + TMS), "neutralized"}. Sites and counts are derive()'s: every active-H atom of ACTIVE_H takes as many silyl groups as it has hydrogens
+    (a primary amine N(TMS)2, a primary amide too); MeOx first turns every C=O into C=N-OCH3 and opens the ring of a reducing sugar (the open-chain
+    oxime is the product, as derive() assumes); the silyl groups go on afterwards. No site: the (neutralised) parent comes back unchanged.
+    ValueError: unparsable SMILES or an unknown reagent."""
+    mode = next((m for m, option in EI_MODES.items() if option == reagent), None)
+    if mode is None:
+        raise ValueError(f"{reagent!r} is not a GC silylation reagent; use one of {', '.join(EI_MODES.values())}.")
+    mol = Chem.MolFromSmiles(smiles) if smiles else None
+    if mol is None:
+        raise ValueError("RDKit could not parse the structure.")
+    with BlockLogs():                                                               # the Uncharger logs "Running Uncharger" at INFO
+        mol, neutralized = neutralize(mol)
+    groups = find_groups(mol)
+    rule = REAGENTS[reagent][1]
+    labels = _labels(rule, groups)
+    sites = {}                                                                      # atom -> silyl groups it takes (= its hydrogens)
+    for key in labels:
+        for i in groups[key]["atoms"]:
+            sites[i] = mol.GetAtomWithIdx(i).GetTotalNumHs()
+    if sum(sites.values()) != sum(labels.values()):
+        raise ValueError(f"{reagent}: the silylation sites do not agree with the label count.")
+    work = Chem.RWMol(Chem.AddHs(mol))
+    delete_h, n_meox = [], 0
+    attach = dict(sites)
+    if mode == "MeOx + TMS":
+        n_meox = sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups) + count_hemiacetal(mol)
+        extra_h, new_sites = _meox_edit(work, groups, mol, attach)
+        delete_h += extra_h
+        attach.update(new_sites)
+        sites = {i: n for i, n in sites.items() if i in attach}                     # the anomeric OH is a nitrogen now: nothing to delete there
+    for i, n in sites.items():
+        hydrogens = _bond_neighbors(work.GetAtomWithIdx(i), 1)
+        if len(hydrogens) < n:
+            raise ValueError(f"{reagent} reaction site {i} has no removable hydrogen.")
+        delete_h += hydrogens[:n]
+    tag = Chem.MolFromSmiles(_SILYL_TAG[mode])
+    anchor = next(a.GetIdx() for a in tag.GetAtoms() if a.GetAtomicNum() == 14)
+    targets = [i for i, n in attach.items() for _ in range(n)]
+    product = work.GetMol()
+    if targets:
+        for i in sorted(set(delete_h), reverse=True):                               # hydrogens come last in the atom list: heavy-atom indices stay valid
+            edit = Chem.RWMol(product)
+            edit.RemoveAtom(i)
+            product = edit.GetMol()
+        product = _attach_at_sites(product, targets, tag, anchor, Chem.BondType.SINGLE)
+    elif delete_h:
+        raise ValueError("Hydrogens were removed without a silyl group to replace them.")
+    product = _clean_product(product)
+    formula = parent_formula(product)
+    return {"smiles": Chem.MolToSmiles(product), "formula": formula_string(formula), "mass": formula_mass(formula), "n_silyl": len(targets),
+            "n_meox": n_meox, "n_labels": len(targets) + n_meox, "neutralized": neutralized}
+
+
+def derivative_smiles(smiles, reagent):
+    """-> (derivative SMILES, number of labels): see derivatize()."""
+    d = derivatize(smiles, reagent)
+    return d["smiles"], d["n_labels"]
+
+
+def _silyl_groups(mol):
+    """[(Si atom, 'TMS' | 'TBDMS', heteroatom)] for every Si(CH3)3 / Si(CH3)2C(CH3)3 that sits on an O, N or S."""
+    found = []
+    for atom in mol.GetAtoms():
+        if atom.GetAtomicNum() != 14 or atom.GetDegree() != 4:
+            continue
+        hetero = [n for n in atom.GetNeighbors() if n.GetAtomicNum() in _HETERO]
+        carbons = [n for n in atom.GetNeighbors() if n.GetAtomicNum() == 6]
+        if len(hetero) != 1 or len(carbons) != 3:
+            continue
+        if not any(n.GetAtomicNum() not in (1, 14) for n in hetero[0].GetNeighbors()):
+            continue                                                                # Si-O-Si, Si-N-Si, Si-OH: a siloxane, silazane or silanol (reagent, column bleed), not a derivative of water or ammonia
+        methyl = [c for c in carbons if c.GetDegree() == 1]
+        tert = [c for c in carbons if c.GetDegree() == 4 and sum(1 for n in c.GetNeighbors() if n.GetAtomicNum() == 6 and n.GetDegree() == 1) == 3]
+        if len(methyl) == 3:
+            found.append((atom, "TMS", hetero[0]))
+        elif len(methyl) == 2 and len(tert) == 1:
+            found.append((atom, "TBDMS", hetero[0]))
+    return found
+
+
+def underivatize_info(smiles) -> dict:
+    """Undo the GC derivatization of a SMILES -> {"parent" (SMILES), "n_tms", "n_tbdms", "n_meox", "mode" (None | "TMS" | "TBDMS" | "MeOx" |
+    "MeOx + TMS" | "MeOx + TBDMS"), "changed"}. Every O/N/S-Si(CH3)3 and O/N/S-Si(CH3)2C(CH3)3 becomes O/N/S-H, every C=N-OCH3 becomes C=O. A cyclic sugar
+    that MeOx opened comes back as its open chain (a different InChIKey from the ring form). A plain organosilane (Si-C bonds only) is not a
+    derivative and stays as it is. ValueError: unparsable SMILES."""
+    mol = Chem.MolFromSmiles(smiles) if smiles else None
+    if mol is None:
+        raise ValueError("RDKit could not parse the structure.")
+    silyl = _silyl_groups(mol)
+    oximes = mol.GetSubstructMatches(_OXIME_ETHER)
+    work = Chem.RWMol(mol)
+    drop = set()
+    for si, kind, hetero in silyl:
+        drop.add(si.GetIdx())
+        for c in si.GetNeighbors():
+            if c.GetAtomicNum() == 6:
+                drop.add(c.GetIdx())
+                if c.GetDegree() == 4:                                              # the tert-butyl carbon takes its methyls with it
+                    drop.update(n.GetIdx() for n in c.GetNeighbors() if n.GetIdx() != si.GetIdx())
+        h = work.GetAtomWithIdx(hetero.GetIdx())
+        h.SetNumExplicitHs(h.GetNumExplicitHs() + 1)
+    for c, n, o, me in oximes:
+        work.GetAtomWithIdx(n).SetAtomicNum(8)
+        drop.update((o, me))
+    for i in sorted(drop, reverse=True):
+        work.RemoveAtom(i)
+    parent = work.GetMol()
+    Chem.SanitizeMol(parent)
+    n_tms, n_tbdms, n_meox = sum(1 for s in silyl if s[1] == "TMS"), sum(1 for s in silyl if s[1] == "TBDMS"), len(oximes)
+    kind = "TBDMS" if n_tbdms else "TMS" if n_tms else None
+    mode = " + ".join(x for x in ("MeOx" if n_meox else None, kind) if x) or None
+    return {"parent": Chem.MolToSmiles(parent), "n_tms": n_tms, "n_tbdms": n_tbdms, "n_meox": n_meox, "mode": mode,
+            "changed": bool(silyl or oximes)}
+
+
+def underivatize(smiles) -> str:
+    """The original compound behind a GC derivative SMILES (see underivatize_info())."""
+    return underivatize_info(smiles)["parent"]
+
+
+def nominal_mass(formula) -> int:
+    """Nominal mass of a formula ("C11H29NO2Si3" or a Counter): the sum of the integer masses of the most abundant isotopes (what an EI molecular ion is quoted as)."""
+    counts = parse_formula(formula) if isinstance(formula, str) else formula
+    return sum(PT.GetMostCommonIsotope(element) * n for element, n in counts.items())
+
+
+def carbonyl_count(smiles) -> int:
+    """C=O groups MeOx would turn into C=N-OCH3 (aldehydes, ketones, and the cyclic hemiacetal carbon of a reducing sugar); 0 for an unparsable SMILES."""
+    mol = Chem.MolFromSmiles(smiles) if smiles else None
+    if mol is None:
+        return 0
+    with BlockLogs():
+        mol, _ = neutralize(mol)
+    groups = find_groups(mol)
+    return sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups) + count_hemiacetal(mol)

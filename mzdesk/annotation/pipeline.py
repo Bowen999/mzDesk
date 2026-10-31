@@ -93,7 +93,7 @@ def parse_inputs(inputs):
     mz, positive, adduct = precursor(inputs)
     ms2, header_mz = spectrum(inputs, "ms2", "MS2 spectrum", warnings)
     if len(ms2) > MAX_INPUT_PEAKS:
-        raise InputError(f"The MS2 spectrum has {len(ms2)} peaks; at most {MAX_INPUT_PEAKS} are accepted. Clean it first (Spectrum cleanup page) or keep the strongest peaks.")
+        raise InputError(f"The MS2 spectrum has {len(ms2)} peaks; at most {MAX_INPUT_PEAKS} are accepted. Clean it first (Spectrum Cleanup page) or keep the strongest peaks.")
     mz = mz if mz is not None else header_mz
     if mz is None:
         raise InputError("Precursor m/z is required (or put it in the header of the MS2 spectrum).")

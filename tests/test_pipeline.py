@@ -22,6 +22,7 @@ from mzdesk.ms2 import library_index as lx
 from mzdesk.spec import CAFFEINE_MASSBANK_MS2, CAFFEINE_MS1, CAFFEINE_MSFINDER_MS2, PIPELINES
 
 client = TestClient(app_module.app)
+ESI = next(p for p in PIPELINES if p["id"] == pipeline.PIPELINE_ID)           # the other workflows have their own tests (test_workflows_scaffold.py)
 REAL_FRIGID, REAL_RERANK = frigid_step.run_frigid_layer, pipeline.rerank           # the originals, before a Rig replaces them
 CAFFEINE, ETHANOL, ETHER, PROPANOL = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C", "CCO", "COC", "CCCO"       # ethanol and dimethyl ether are isomers
 
@@ -480,7 +481,7 @@ def test_progress_reports_every_step_in_order_with_blocks(rig):
     table = next(b for e in events if e[3] for b in e[3] if b["id"] == "library_table")
     assert table["type"] == "table" and len(table["columns"]) == len(table["data"]["rows"][0]) and table["data"]["rows"][0][0] == "Caffeine"
     assert [s["id"] for s in result["steps"]] == list(range(1, 9)) and all(s["seconds"] >= 0 for s in result["steps"])
-    assert [s["title"] for s in result["steps"]] == [s["title"] for s in PIPELINES[0]["stages"]]
+    assert [s["title"] for s in result["steps"]] == [s["title"] for s in ESI["stages"]]
 
 
 def test_a_failing_progress_listener_does_not_stop_the_run(rig):
@@ -564,7 +565,7 @@ def test_parse_inputs_rejects_bad_forms(over, message):
 def test_spec_form_matches_the_pipeline():
     from mzdesk.platform_fit import adduct_rules
     from mzdesk import spec
-    pipe = PIPELINES[0]
+    pipe = ESI
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
                                                          "additive", "alkali", "ph", "lib_metric", "lib_threshold"}
@@ -582,12 +583,12 @@ def test_spec_form_matches_the_pipeline():
 
 
 def test_both_examples_parse_and_cover_the_library_and_the_no_library_path():
-    examples = {e["label"]: e["values"] for e in PIPELINES[0]["examples"]}
+    examples = {e["label"]: e["values"] for e in ESI["examples"]}
     assert len(examples) == 2
     library, plain = (pipeline.parse_inputs(v) for v in examples.values())
     assert library.libraries == ["MassBank", "GNPS"] and len(library.ms1) == 3 and len(library.ms2) == 19
     assert plain.libraries == [] and len(plain.ms2) == 27
-    assert set(next(iter(examples.values()))) <= {f["id"] for f in PIPELINES[0]["inputs"]}
+    assert set(next(iter(examples.values()))) <= {f["id"] for f in ESI["inputs"]}
 
 
 # ---------------------------------------------------------------- the job API
@@ -623,6 +624,10 @@ def test_run_unknown_pipeline_is_404_and_bad_form_is_400():
 
 def test_every_pipeline_has_a_runner():
     assert set(app_module._PIPELINE_RUNNERS) == {p["id"] for p in PIPELINES}
+    for p in PIPELINES:                                  # each runner module speaks the contract of the job API and names its own steps like the spec
+        runner = app_module._PIPELINE_RUNNERS[p["id"]]
+        assert runner.PIPELINE_ID == p["id"] and callable(runner.parse_inputs) and callable(runner.run_query)
+        assert runner.STEP_TITLES == {s["id"]: s["title"] for s in p["stages"]}
 
 
 def test_job_lifecycle_live_steps_then_result(monkeypatch):
@@ -644,7 +649,7 @@ def test_job_lifecycle_live_steps_then_result(monkeypatch):
     body = client.get(f"/api/pipelines/jobs/{job_id}").json()
     assert body["status"] == "running" and body["result"] is None and body["error"] is None
     steps = {s["id"]: s for s in body["steps"]}
-    assert [s["title"] for s in body["steps"]] == list(pipeline.STEP_TITLES.values()) and set(steps[3]) == {"id", "title", "status", "seconds", "note", "blocks"}
+    assert [s["title"] for s in body["steps"]] == list(pipeline.STEP_TITLES.values()) and set(steps[3]) == {"id", "title", "status", "seconds", "note", "blocks", "expected_s"}
     assert steps[1]["status"] == "done" and steps[1]["note"] == "adducts done" and steps[1]["blocks"][0]["id"] == "adduct_table"
     assert steps[2]["status"] == "running" and steps[2]["note"] == "scored 3/9" and steps[3]["status"] == "queued"
     go.set()

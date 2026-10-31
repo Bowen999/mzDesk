@@ -95,7 +95,7 @@ def test_results_survive_navigation_and_clear_only_current_page(browser):
 
     browser.get(URL.rstrip("/") + "/modules/structure_formats")
     button(browser, "Load example").click()
-    button(browser, "Run Structure & formats").click()
+    button(browser, "Run Structure & Formats").click()
     visible_text(browser, "Structure result retained")
     browser.find_element(By.CSS_SELECTOR, 'a[href$="/pipelines/esi_ms2_annotation"]').click()
     button(browser, "Load example: Caffeine, library match").click()
@@ -121,7 +121,7 @@ def test_run_finishes_while_another_page_is_open(browser):
     browser.get(URL.rstrip("/") + "/modules/structure_formats")
     browser.execute_script("window.__delayModule = true")
     button(browser, "Load example").click()
-    button(browser, "Run Structure & formats").click()
+    button(browser, "Run Structure & Formats").click()
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     WebDriverWait(browser, 5).until(lambda d: d.execute_script("return !!window.__releaseModule"))
@@ -139,7 +139,7 @@ def test_clear_ignores_a_late_result(browser):
     browser.get(URL.rstrip("/") + "/modules/structure_formats")
     browser.execute_script("window.__delayModule = true")
     button(browser, "Load example").click()
-    button(browser, "Run Structure & formats").click()
+    button(browser, "Run Structure & Formats").click()
     WebDriverWait(browser, 5).until(lambda d: d.execute_script("return !!window.__releaseModule"))
     button(browser, "Clear").click()
     visible_text(browser, "previous run may still finish")
@@ -148,7 +148,7 @@ def test_clear_ignores_a_late_result(browser):
     assert not browser.find_elements(By.XPATH, "//main//*[not(ancestor::*[@hidden]) and contains(text(), 'Old structure result')]")
     # Run a fresh request: if the old one can overwrite it, the page's state is not isolated.
     button(browser, "Load example").click()
-    button(browser, "Run Structure & formats").click()
+    button(browser, "Run Structure & Formats").click()
     visible_text(browser, "Structure result retained")
     assert len(browser.find_elements(By.CSS_SELECTOR, '[data-module="structure_formats"] .verdict')) == 1
 
@@ -213,7 +213,7 @@ def test_switching_pages_dismisses_pending_network_confirmation(browser):
     browser.back()
     button(browser, "Load example").click()
     browser.find_element(By.CSS_SELECTOR, 'button[aria-label="Internet search"]').click()
-    button(browser, "Run Structure & formats").click()
+    button(browser, "Run Structure & Formats").click()
     WebDriverWait(browser, 5).until(lambda d: d.find_elements(By.CSS_SELECTOR, '[role="dialog"][aria-modal="true"]'))
     browser.forward()
     button(browser, "Run workflow")

@@ -39,6 +39,14 @@ def test_spectrum_figures_are_json_safe_and_optional():
     assert visualization.spectrum_figures(peaks, 195.0, 0.02)["library"] is None
 
 
+def test_workflow_figures_are_lower_than_the_module_pages():
+    """The workflow page draws both plots about 30 % lower than the module pages (460 px spectrum, 520 px mirror)."""
+    reference = {"peaks": [(69.01, 1.0), (100.0, 0.5)], "name": "example", "library": "MassBank", "accession": "A1", "precursor_mz": 195.0}
+    result = visualization.spectrum_figures([(69.0, 20.0), (85.0, 100.0)], 195.0, 0.02, reference)
+    assert result["query"]["plotly"]["layout"]["height"] == visualization.QUERY_HEIGHT <= 0.72 * 460
+    assert result["library"]["figure"]["plotly"]["layout"]["height"] == visualization.MIRROR_HEIGHT <= 0.72 * 520
+
+
 def test_missing_library_reference_does_not_raise(monkeypatch):
     monkeypatch.setattr(library_step.lx, "load", lambda name: (_ for _ in ()).throw(OSError("unavailable")))
     assert library_step._reference_spectrum({"library": "MassBank", "row": 1}) is None

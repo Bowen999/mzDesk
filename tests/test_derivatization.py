@@ -365,3 +365,127 @@ def test_non_reducing_ring_gets_no_meox():
     r = _row(methyl_glucoside, "GC · MeOx + TMS")
     assert r["n_meox"] == 0 and r["n"] == 4
     assert r["mass"] == pytest.approx(_row(methyl_glucoside, "GC · TMS (MSTFA / BSTFA)")["mass"], abs=1e-6)
+
+
+# ---------------------------------------------------------------- GC derivative structures (derivatize / underivatize), used by the EI MS Annotation workflow
+TMS_OPTION, MEOX_OPTION, TBDMS_OPTION = d.EI_MODES["TMS"], d.EI_MODES["MeOx + TMS"], d.EI_MODES["TBDMS"]
+METABOLITES = {"glycine": "NCC(=O)O", "L-alanine": "C[C@H](N)C(=O)O", "lactic acid": "CC(O)C(=O)O", "L-serine": "N[C@@H](CO)C(=O)O", "succinic acid": "OC(=O)CCC(O)=O",
+               "citric acid": "OC(=O)CC(O)(CC(O)=O)C(O)=O", "pyruvic acid": "CC(=O)C(=O)O", "urea": "NC(N)=O", "indole": "c1ccc2[nH]ccc2c1",
+               "L-tryptophan": "N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O", "benzoic acid": "OC(=O)c1ccccc1", "cholesterol": "C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C",
+               "acetoacetic acid": "CC(=O)CC(O)=O", "glucose (open chain)": GLUCOSE_OPEN, "glucose (ring)": GLUCOSE, "fructose": "OC[C@H]1OC(O)(CO)[C@@H](O)[C@@H]1O",
+               "caffeine": CAFFEINE, "O-phosphoserine": "N[C@@H](COP(O)(O)=O)C(O)=O", "4-pyridone": "O=c1cc[nH]cc1"}
+
+
+def _key(smiles):
+    return Chem.MolToInchiKey(Chem.MolFromSmiles(smiles))
+
+
+@pytest.mark.parametrize("name", list(METABOLITES))
+@pytest.mark.parametrize("option", [TMS_OPTION, MEOX_OPTION, TBDMS_OPTION])
+def test_the_derivative_structure_has_the_formula_and_label_count_of_derive(name, option):
+    smiles = METABOLITES[name]
+    built, expected = d.derivatize(smiles, option), _row(smiles, option)
+    assert built["n_labels"] == expected["n"]
+    assert built["formula"] == (expected["formula"] or d.formula_string(d.parent_formula(Chem.MolFromSmiles(smiles))))
+    assert built["mass"] == pytest.approx(expected["mass"] if expected["mass"] else d.formula_mass(d.parent_formula(Chem.MolFromSmiles(smiles))), abs=1e-6)
+    assert d.derivative_smiles(smiles, option) == (built["smiles"], built["n_labels"])
+
+
+def test_known_derivative_formulas():
+    assert d.derivatize("NCC(=O)O", TMS_OPTION)["formula"] == "C11H29NO2Si3"                                   # glycine, 3 TMS (M 291)
+    assert d.derivatize("CC(O)C(=O)O", TMS_OPTION)["formula"] == "C9H22O3Si2"                                  # lactic acid, 2 TMS (M 234)
+    assert d.derivatize(GLUCOSE, TMS_OPTION)["formula"] == "C21H52O6Si5"                                       # glucose, ring form, 5 TMS
+    glucose_meox = d.derivatize(GLUCOSE, MEOX_OPTION)
+    assert glucose_meox["formula"] == "C22H55NO6Si5" and (glucose_meox["n_silyl"], glucose_meox["n_meox"], glucose_meox["n_labels"]) == (5, 1, 6)
+    assert d.derivatize(GLUCOSE_OPEN, MEOX_OPTION)["formula"] == "C22H55NO6Si5"
+    assert d.derivatize("C[C@H](N)C(=O)O", TBDMS_OPTION)["formula"] == "C21H49NO2Si3"                          # alanine, 3 TBDMS
+    assert d.nominal_mass("C11H29NO2Si3") == 291 and d.nominal_mass("C22H55NO6Si5") == 569 and d.nominal_mass(d.parse_formula("C6H12O6")) == 180
+
+
+def test_a_primary_amine_takes_two_silyl_groups_and_the_structure_shows_it():
+    smiles = d.derivatize("NCC(=O)O", TMS_OPTION)["smiles"]
+    assert Chem.MolFromSmiles(smiles).HasSubstructMatch(Chem.MolFromSmarts("[NX3]([Si](C)(C)C)([Si](C)(C)C)C"))
+    assert Chem.MolFromSmiles(smiles).HasSubstructMatch(Chem.MolFromSmarts("C(=O)O[Si](C)(C)C"))
+    tbdms = d.derivatize("NCC(=O)O", TBDMS_OPTION)["smiles"]
+    assert Chem.MolFromSmiles(tbdms).HasSubstructMatch(Chem.MolFromSmarts("N([Si](C)(C)C(C)(C)C)[Si](C)(C)C(C)(C)C"))
+
+
+def test_meox_turns_a_carbonyl_into_an_oxime_ether_and_opens_a_sugar_ring():
+    pyruvic = d.derivatize("CC(=O)C(=O)O", MEOX_OPTION)
+    assert pyruvic["smiles"] == "CON=C(C)C(=O)O[Si](C)(C)C" and (pyruvic["n_silyl"], pyruvic["n_meox"]) == (1, 1)
+    assert d.derivatize("CC(=O)C(=O)O", TMS_OPTION)["smiles"] == "CC(=O)C(=O)O[Si](C)(C)C"                       # TMS alone leaves the ketone
+    ring = Chem.MolFromSmiles(d.derivatize(GLUCOSE, MEOX_OPTION)["smiles"])
+    assert not ring.GetRingInfo().NumRings() and ring.HasSubstructMatch(Chem.MolFromSmarts("[CH]=NO[CH3]"))
+    assert d.carbonyl_count(GLUCOSE) == 1 and d.carbonyl_count(GLUCOSE_OPEN) == 1 and d.carbonyl_count("NCC(=O)O") == 0 and d.carbonyl_count("CC(=O)C(=O)O") == 1
+    assert d.carbonyl_count("not a smiles") == 0
+
+
+def test_a_zwitterion_is_neutralised_and_a_compound_without_a_site_comes_back_unchanged():
+    assert d.derivatize("[NH3+]CC(=O)[O-]", TMS_OPTION)["formula"] == "C11H29NO2Si3" and d.derivatize("[NH3+]CC(=O)[O-]", TMS_OPTION)["neutralized"]
+    caffeine = d.derivatize(CAFFEINE, TMS_OPTION)
+    assert (caffeine["n_labels"], caffeine["n_silyl"], caffeine["formula"]) == (0, 0, "C8H10N4O2") and _key(caffeine["smiles"]) == _key(CAFFEINE)
+
+
+def test_derivatize_rejects_a_bad_structure_or_reagent():
+    with pytest.raises(ValueError, match="could not parse"):
+        d.derivatize("not a smiles", TMS_OPTION)
+    with pytest.raises(ValueError, match="could not parse"):
+        d.derivatize("", TMS_OPTION)
+    with pytest.raises(ValueError, match="not a GC silylation reagent"):
+        d.derivatize("NCC(=O)O", "GC · Acylation (TFAA)")
+
+
+@pytest.mark.parametrize("name", [n for n in METABOLITES if n not in ("glucose (ring)", "fructose", "4-pyridone")])     # MeOx opens a sugar ring / changes a pyridone's tautomer
+def test_underivatize_gives_back_the_same_compound(name):
+    smiles = METABOLITES[name]
+    for option in (TMS_OPTION, MEOX_OPTION, TBDMS_OPTION):
+        derivative = d.derivatize(smiles, option)
+        assert _key(d.underivatize(derivative["smiles"])) == _key(smiles), (name, option)
+
+
+def test_underivatize_info_counts_the_groups_and_names_the_derivative():
+    info = d.underivatize_info(d.derivatize("NCC(=O)O", TMS_OPTION)["smiles"])
+    assert (info["n_tms"], info["n_tbdms"], info["n_meox"], info["mode"], info["changed"]) == (3, 0, 0, "TMS", True)
+    assert _key(info["parent"]) == _key("NCC(=O)O")
+    assert d.underivatize_info(d.derivatize("NCC(=O)O", TBDMS_OPTION)["smiles"])["mode"] == "TBDMS"
+    both = d.underivatize_info(d.derivatize(GLUCOSE_OPEN, MEOX_OPTION)["smiles"])
+    assert (both["mode"], both["n_tms"], both["n_meox"]) == ("MeOx + TMS", 5, 1) and _key(both["parent"]) == _key(GLUCOSE_OPEN)
+    assert d.underivatize_info("CC(=O)C(=O)O")["mode"] is None and not d.underivatize_info("CC(=O)C(=O)O")["changed"]
+    ring = d.underivatize(d.derivatize(GLUCOSE, MEOX_OPTION)["smiles"])
+    assert _key(ring)[:14] == _key(GLUCOSE_OPEN)[:14] and _key(ring)[:14] != _key(GLUCOSE)[:14]                   # MeOx opened the ring: the open chain comes back
+
+
+def test_a_library_style_derivative_smiles_maps_back_to_its_compound():
+    # MassBank stores LACTIC ACID-DI-TMS and an N-silylated indole this way (explicit [H] and aromatic nitrogen included)
+    assert _key(d.underivatize("O=C(O[Si](C)(C)C)C([H])(C)O[Si](C)(C)C")) == _key("CC(O)C(=O)O")
+    assert _key(d.underivatize("O=C(O[Si](C)(C)C)Cc(c1)c(c2)c(ccc2)n1[Si](C)(C)C")) == _key("OC(=O)Cc1c[nH]c2ccccc12")
+    assert _key(d.underivatize("C[Si](C)(C)Nc(c1)cc(cc1)O[Si](C)(C)C")) == _key("Nc1cccc(O)c1")
+    assert _key(d.underivatize("CCCCCC(=O)O[Si](C)(C)C")) == _key("CCCCCC(=O)O")
+
+
+@pytest.mark.parametrize("smiles", ["CCCCCCCC[Si](OCC)(OCC)OCC", "C[Si](C)(C)C(Cl)I", "c1ccccc1[SiH3]", "C[Si](C)(C)[Si](C)(C)C"])
+def test_an_organosilane_is_not_a_derivative(smiles):
+    info = d.underivatize_info(smiles)
+    assert not info["changed"] and info["mode"] is None and _key(info["parent"]) == _key(smiles)
+
+
+@pytest.mark.parametrize("smiles", ["CC1=CC(=O)c2ccccc2O1", "O=c1ccocc1", "O=c1cccccc1O", "O=c1cc(-c2ccccc2)oc2ccccc12", "O=c1cc[nH]cc1"])
+def test_meox_on_a_ring_carbonyl_that_rdkit_writes_as_aromatic_is_undone(smiles):
+    """chromones, pyranones, tropolones and pyridones come out of derivatize() as CON=c1...: the C=N-OCH3 test must accept an aromatic carbon."""
+    derivative = d.derivatize(smiles, MEOX_OPTION)["smiles"]
+    assert "CON=c" in derivative or "CON=C" in derivative
+    info = d.underivatize_info(derivative)
+    assert info["n_meox"] == 1 and _key(info["parent"]) == _key(smiles)
+
+
+@pytest.mark.parametrize("smiles", ["C[Si](C)(C)O[Si](C)(C)C", "C[Si](C)(C)N[Si](C)(C)C", "C[Si](C)(C)O", "CC(C)(C)[Si](C)(C)O", "CC(C)(C)[Si](C)(C)O[Si](C)(C)C(C)(C)C"])
+def test_a_siloxane_silazane_or_silanol_is_not_a_derivative_of_water_or_ammonia(smiles):
+    """Hexamethyldisiloxane, hexamethyldisilazane and the silanols are reagent / column-bleed compounds of their own; they used to come back as "O" / "N"."""
+    info = d.underivatize_info(smiles)
+    assert not info["changed"] and info["mode"] is None and info["parent"] == Chem.MolToSmiles(Chem.MolFromSmiles(smiles))
+    assert d.underivatize("CCO[Si](C)(C)C") == "CCO" and d.underivatize_info("C[Si](C)(C)n1ccnc1")["n_tms"] == 1       # a silyl group on a carbon-bearing O / N still is one
+
+
+def test_underivatize_rejects_a_bad_structure():
+    with pytest.raises(ValueError, match="could not parse"):
+        d.underivatize("not a smiles")

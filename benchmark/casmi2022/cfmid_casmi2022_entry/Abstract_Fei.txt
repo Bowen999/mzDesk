@@ -1,0 +1,5 @@
+We used CFM-ID 4 to predicted [M+H]+ and [M-H]- for compounds in the following database:
+ChEBI, DrugBank, MassBankEU, HMDB, DSSTox, ECMDB, FooDB, KEGG, LMSD, NP-MRD, STOFFIDENT, YMDB
+
+Since CFM-ID can only predict QToF spectra, we stacked predicted 10eV, 20eV, and 40eV QToF Spectra into one, and searching stacked CASMI spectra against predicted spectra. CASMI spectra is clean by remove any peak low then 1% int and centred to each peak with or 0.5Da window.
+Candidate selection is done by match precursor mass with a 10ppm window, candidate is ranked by Dice coefficient + DotProduct between predicted and CASMI spectra. In case there is no match found in the database in [M+H]+ ([M-H]-) adduct type, we attempted matching spectra with other adduct types by: 1. Get candidate base on their Mass ( computed from adduct type of choice and precursor mass). 2 match CASMI spectra with selected [M+H]+ ([M-H]-) spectra, 

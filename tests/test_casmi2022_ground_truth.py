@@ -1,4 +1,4 @@
-"""CASMI 2022 official key export and optional extracted-spectrum package."""
+"""CASMI 2022 official key and extracted-spectrum export."""
 import csv
 import importlib.util
 from pathlib import Path
@@ -25,7 +25,7 @@ BUILDER = load_builder()
 
 @pytest.fixture(scope="module")
 def records():
-    """Official records loaded from the flat one-row-per-challenge table."""
+    """Records loaded from the flat one-row-per-challenge table."""
     return BUILDER.load_records(DATA)
 
 
@@ -47,14 +47,14 @@ def test_flat_table_is_one_row_per_challenge_and_round_trips(tmp_path):
     assert reloaded.read_bytes() == DATA.read_bytes()
 
 
-def test_all_records_match_curated_key_and_only_have_official_fields(records):
+def test_all_records_match_curated_key_and_have_expected_fields(records):
     with (BASE / "metadata/casmi2022_challenges.csv").open(newline="", encoding="utf-8") as handle:
         metadata = {int(row["challenge_id"]): row for row in csv.DictReader(handle)}
     assert [r["challenge_id"] for r in records] == list(range(1, 501))
     assert set(metadata) == set(range(1, 501))
     for record in records:
         m = metadata[record["challenge_id"]]
-        assert set(record) == set(BUILDER.OFFICIAL_HEADERS)
+        assert set(record) == set(BUILDER.NAMES)
         for actual, metadata_key in (("formula", "formula"), ("smiles_official", "smiles"),
                                      ("inchikey", "inchikey"), ("adduct_official", "adduct"),
                                      ("priority", "priority"), ("file", "file"),
@@ -77,6 +77,16 @@ def test_extracted_records_still_have_blind_valid_inputs(extracted_records):
         assert query.polarity in ("Positive", "Negative")
         assert query.ms1 and query.ms2
         assert record["ms2_by_collision_energy"]
+
+
+def test_csv_spectra_match_extracted_records(records, extracted_records):
+    extracted = {r["challenge_id"]: r for r in extracted_records}
+    for record in records:
+        inputs = extracted[record["challenge_id"]]["inputs"]
+        assert record["ms1_isotope"] == inputs["ms1"]
+        assert record["ms2"] == inputs["ms2"]["value"]
+        assert record["ms1_isotope"] and record["ms2"]
+    assert len(records[250]["ms1_isotope"].splitlines()) == 1
 
 
 def test_extraction_caveats_are_retained(extracted_records):
@@ -125,7 +135,7 @@ def test_official_final_key_and_corrections(records):
         assert float(row["Precursor m/z (Da)"]) == pytest.approx(record["precursor_mz_given"], abs=1e-7)
 
 
-def test_rebuild_matches_packaged_data(records):
+def test_rebuild_matches_packaged_data(records, extracted_records):
     pytest.importorskip("openpyxl")
     assert BUILDER.build_records() == records
 

@@ -469,10 +469,11 @@ def build_figure(result, height=ms2_plot.HEIGHT):
     xs = [a["mz"] for a in ann]
     x_range = ms2_plot.mz_range(xs + ([theo] if theo else []))
 
+    width = ms2_plot.stick_px(xs, x_range)
     for name, color, rows in (("unannotated", ms2_plot.LIGHT, [a for a in ann if not a["annotated"]]),
                               ("annotated", ms2_plot.DARK, [a for a in ann if a["annotated"]])):
         if rows:
-            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], color, name, y0=-Y_FLOOR))
+            fig.add_trace(ms2_plot.stick_trace([a["mz"] for a in rows], [a["rel"] for a in rows], color, name, y0=-Y_FLOOR, width=width))
     fig.add_trace(ms2_plot.hover_markers(xs, [a["rel"] for a in ann]))
 
     shapes, annotations = [], []
@@ -480,13 +481,13 @@ def build_figure(result, height=ms2_plot.HEIGHT):
         # dotted marker above the precursor peak (and its m/z label) — or full height if absent
         prec_rel = max((a["rel"] for a in ann if a["kind"] == "precursor"), default=None)
         y_start = -Y_FLOOR if prec_rel is None else prec_rel + 9.0
-        if y_start < Y_TOP:
+        if Y_TOP - y_start >= 0.1 * Y_TOP:          # no stub between a tall precursor peak and the top
             shapes.append(ms2_plot.precursor_line(theo, y_start, Y_TOP))
         annotations.append(ms2_plot.precursor_label(
             theo, f"precursor {result.get('adduct', '')} {theo:.4f}".replace("  ", " "), x_range))
     fig.update_layout(**ms2_plot.base_layout(
         height, x_range=x_range, y_range=[-Y_FLOOR, Y_TOP], y_title="Relative intensity (%)",
-        shapes=shapes, annotations=annotations, yaxis=dict(tickvals=[0, 20, 40, 60, 80, 100])))
+        shapes=shapes, annotations=annotations, yaxis=ms2_plot.percent_ticks()))
     return fig
 
 

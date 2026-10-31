@@ -144,7 +144,7 @@ def test_isotope_match_page_is_gone_and_formula_moved():
     assert "ms1_match" not in ids
     assert [m["id"] for m in MODULES if m["subgroup"] == "ms1"] == ["ms1_search", "ms1_theory"]
     assert [m["id"] for m in MODULES if m["subgroup"] == "ms2"].index("ms1_formula") == [m["id"] for m in MODULES if m["subgroup"] == "ms2"].index("ms2_library") + 1
-    assert next(m["title"] for m in MODULES if m["id"] == "ms1_search") == "Mass search"
+    assert next(m["title"] for m in MODULES if m["id"] == "ms1_search") == "Mass Search"
     assert next(m["title"] for m in MODULES if m["id"] == "ms1_theory") == "Theoretical"
     assert all("ms1_match" not in s["modules"] for p in PIPELINES for s in p["stages"])
 

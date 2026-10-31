@@ -13,6 +13,7 @@ export type Field = {
   network_sources?: string[];      // spectrum: these input sources are fetched online
   network_modes?: string[];        // structure: these input modes are resolved online
   network_options?: string[];       // multiselect: these options use the internet
+  network_names?: boolean;          // textarea: a line that is not a SMILES / InChI is a name looked up online
 };
 /** Help text for a "?" popover: one string, or a list shown as bullets. */
 export type Help = string | string[];
@@ -98,6 +99,7 @@ export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, 
 export type JobBlock = Block & { data: BlockData };
 export type JobStep = {
   id: number; title: string; status: "queued" | "running" | "done" | "skipped" | "failed"; seconds: number; note: string; blocks: JobBlock[];
+  expected_s?: number;                  // typical seconds of this stage (spec stage(...)): its share of the progress bar and how fast a running stage fills
 };
 export type AnnotationAnswer = {
   type: "single" | "group" | "formula_only" | "mass_only" | "none"; ids: string[]; layer: string; layer_label: string; level: string; level_label: string;
@@ -121,4 +123,12 @@ export type AnnotationResult = {
   visualization?: { query: BlockData | null; library: { figure: BlockData; library: string; accession: string; name: string } | null } | null;
   fragment_query?: FragmentQuery | null;
 };
-export type Job = { status: "queued" | "running" | "done" | "error"; note: string; steps: JobStep[]; result: AnnotationResult | null; error: string | null };
+/** EI MS Annotation / Targeted Method (mzdesk/workflows/common.py): the generic result of every workflow except ESI MS/MS Annotation
+ *  (which has no `pipeline` key; see isWorkflowResult in pages/PipelinePage.tsx).
+ *  Every block has a unique id; facts are [label, value] pairs shown as a compact two-column list. */
+export type WorkflowAnswer = { statement: string; level: string | null; level_label: string | null; facts: [string, string][] };
+export type WorkflowResult = {
+  pipeline: string; answer: WorkflowAnswer; blocks: JobBlock[]; warnings: string[];
+  steps: { id: number; title: string; status: string; seconds: number; note: string }[];
+};
+export type Job = { status: "queued" | "running" | "done" | "error"; note: string; steps: JobStep[]; result: AnnotationResult | WorkflowResult | null; error: string | null };

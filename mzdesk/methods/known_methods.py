@@ -78,6 +78,9 @@ class Result:
     report_commit: str = ""
     n_datasets: int = 0
     n_jp: int = 0
+    # The true number of exact-match methods per source ("JP18", "RepoRT", as Method.source): ``exact`` lists at most cfg.max_exact_per_source per
+    # compound, this counts them all. 0 for a source that was not searched.
+    exact_totals: dict = field(default_factory=lambda: {"JP18": 0, "RepoRT": 0})
 
     @property
     def match(self):
@@ -221,6 +224,7 @@ def _exact(res, q, jp, rep):
         for comp in jp.index.exact(q.norm.key14):
             groups, ik2_of, role_of = _jp_groups(jp, comp)
             name = jp.index.names[comp] or q.norm.smiles
+            res.exact_totals["JP18"] += len(groups)
             res.exact += [_jp_method(jp, g, name, "exact", None, stereo, ik2_of, role_of) for g in groups[:cfg.max_exact_per_source]]
             if len(groups) > cfg.max_exact_per_source:
                 res.warnings.append(f"JP18: {len(groups)} distinct conditions for this compound; the first {cfg.max_exact_per_source} are shown.")
@@ -228,6 +232,7 @@ def _exact(res, q, jp, rep):
         for comp in rep.index.exact(q.norm.key14):
             name = rep.index.names[comp] or q.norm.smiles
             datasets = list(_report_datasets(rep, comp).items())
+            res.exact_totals["RepoRT"] += len(datasets)
             for ds_idx, (rts, ik2s) in datasets[:cfg.max_exact_per_source]:
                 res.exact.append(_report_method(rep, ds_idx, rts, name, "exact", None, stereo, ik2s))
             if len(datasets) > cfg.max_exact_per_source:
