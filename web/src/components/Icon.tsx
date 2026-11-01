@@ -12,7 +12,7 @@ const MODULE_ICONS = new Set([
   // Inorganic MS
   "icp_isotopes", "icp_interferences", "icp_idms", "icp_massbias", "icp_sp",
   // Molecular
-  "identity", "structure_formats", "properties",
+  "identity", "structure_formats", "properties", "lipid_short_name",
   // GNPS2
   "gnps_fastmasst", "gnps_redu", "gnps_massql",
   // Utilities

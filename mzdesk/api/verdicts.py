@@ -64,6 +64,18 @@ def properties(i, o):
     return text + ("; " + ", ".join(extra) if extra else "") + "."
 
 
+def lipid_short_name(i, o):
+    """Most specific name of each system: LIPID MAPS molecular species (else species), LIPID+ L3 (else L2, L1)."""
+    plus = [_card(o, "lipid_plus", k) for k in ("L3", "L2", "L1")]
+    maps = [_card(o, "lipid_maps", k) for k in ("Molecular species", "Species")]
+    plus, maps = next((x for x in plus if x), None), next((x for x in maps if x), None)
+    if not plus:
+        return None
+    if maps == plus:
+        return f"{_b(plus)} in LIPID+ and LIPID MAPS."
+    return f"{_b(plus)} in LIPID+" + (f", {_b(maps)} in LIPID MAPS." if maps else ".")
+
+
 def platform_fit(i, o):
     tiles = (o.get("platform") or {}).get("tiles") or []
     yes = [t["label"] for t in tiles if t.get("status") == "yes"]
@@ -396,7 +408,7 @@ def ccs(i, o):
     return f"No reference CCS for {adduct} of this compound in the data." + (f" {_note(o, 'summary', 'Verdict')}" if _note(o, "summary", "Verdict") else "")
 
 
-BUILDERS = {f.__name__: f for f in (identity, properties, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
+BUILDERS = {f.__name__: f for f in (identity, properties, lipid_short_name, platform_fit, separation, ionization, adducts, non_ms, derivatization, known_methods,
                                     ms1_theory, ms1_formula, ms1_search, ms2_clean, ms2_ei, ms2_esi, ms2_library, ms2_similarity, ms2_fragments,
                                     ms2_structure, ms2_denovo, nca, stability, mrm, ccs)}
 NO_VERDICT = {"structure_formats", "gnps_fastmasst", "gnps_redu", "gnps_massql"}    # tables / figures are the answer

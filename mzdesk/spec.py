@@ -389,6 +389,18 @@ MODULES = [
                       "The rule library is broad but not a universally exhaustive functional-group ontology."])],
         subgroup="molecular", live=True, example={"structure": _name("kaempferol")}),
 
+    module("lipid_short_name", "Lipid Short Name", "B", "A lipid <b>shorthand name</b> in; <b>LIPID+</b> and <b>LIPID MAPS</b> names and an <b>illustrative structure</b> out.",
+        [dict(text("name", "Lipid name", placeholder="PC 16:0/18:1"), required=True)],
+        [cards([("L1", "Sum composition"), ("L2", "Chains"), ("L3", "Chains with groups")], "LIPID+", id="lipid_plus", style="metric",
+               help="Chains in descending carbon number, no sn positions. A level is — when the name does not give it."),
+         cards([("Species", "Sum composition"), ("Molecular species", "Chains")], "LIPID MAPS", id="lipid_maps", style="metric",
+               help="LIPID MAPS shorthand. A name is — when it cannot be written from this input; the ? gives the reason."),
+         figure("Illustrative structure", id="structure"),
+         notes(None, id="no_structure"),
+         notes("Assumptions", id="assumptions", collapsed=True),
+         notes("Flags", id="flags", collapsed=True)],
+        subgroup="molecular", live=True, example={"name": "PC 16:0/18:1"}),
+
     # ---- Detectability：7 页。只有 Platform 的脂质组 / 代谢组部分接了引擎，其余都是占位 ----
     module("platform_fit", "Platform", "A", "Which <b>workflow</b> can measure it: lipidomics, metabolomics, CIL LC-MS or GC-MS (decided mainly by <b>extraction</b> and <b>derivatization</b>).",
         [structure()],

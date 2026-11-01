@@ -227,7 +227,8 @@ def test_each_requested_page_has_its_own_header_icon(browser):
 
     wanted = {"molecular", "ms1", "ms2", "gnps", "tools"}
     modules = [m for m in spec()["modules"] if m["subgroup"] in wanted]
-    assert len(modules) == 21
+    # every module page of these groups is visited below: the list must not shrink (21 before Lipid Short Name, 22 with it); a new module just adds a page to visit
+    assert len(modules) >= 22 and "lipid_short_name" in {m["id"] for m in modules}
     for module in modules:
         browser.get(URL.rstrip("/") + "/modules/" + module["id"])
         page = WebDriverWait(browser, 15).until(lambda d: d.find_element(By.CSS_SELECTOR, f'[data-module="{module["id"]}"]'))

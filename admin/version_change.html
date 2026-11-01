@@ -252,6 +252,7 @@ const SECTIONS = [
   {id:'ms1',   name:'MS1',        d:'理论 m/z · 同位素 · 分子式',        w:'mzdesk/ms1/ · mzdesk/api/runners/ms1.py'},
   {id:'ms2',   name:'Spectrum',   d:'EI / ESI 预测谱 · 库检索 · 相似度 · 碎片 · 结构预测 · 从头', w:'mzdesk/ms2/ · mzdesk/api/runners/ms2.py · mzdesk/api/runners/ms2_structure.py · mzdesk/api/runners/ms2_denovo.py · mzdesk/api/runners/ei_ms.py · mzdesk/api/runners/esi_msms.py · mzdesk/shared/ms2_*.py'},
   {id:'prop',  name:'Properties', d:'分子属性 · 平台适配',              w:'mzdesk/platform_fit/ · mzdesk/api/runners/structure.py'},
+  {id:'lipid', name:'Lipid Short Name', d:'脂质简写名 · LIPID MAPS 名 · 示意结构', w:'mzdesk/lipid/ · mzdesk/lipid_name_map/ · mzdesk/api/runners/lipid.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/dmpk/ · mzdesk/api/runners/nca.py · mzdesk/api/runners/stability.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
   {id:'pipe',  name:'Workflow',   d:'3 条流程：ESI MS/MS 注释 · EI MS 注释 · 靶向方法开发', w:'mzdesk/spec.py · mzdesk/workflows/'},
@@ -263,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.3.2', date:'2026-10-31', git:'',
+  title:'新模块 Lipid Short Name：脂质简写名 → LIPID+ 各级名 + LIPID MAPS 名 + 示意结构',
+  note:'主要未决问题：名字里写的双键/羟基位置和 sn 顺序不用于画图（图上会注明）；ST 大类、糖链类、N-/O-酰基类不画结构；俗名不支持。',
+  state:[['Lipid Short Name','名字 + 示意结构 · 单个输入'], ['版本','0.3.2']],
+  c:{
+   lipid:['feat','新增 Compound 组第 4 个模块 Lipid Short Name：输入一个脂质简写名（LIPID MAPS、SwissLipids、MS-DIAL、LipidMatch、LIPID+ 等写法），输出 LIPID+ L1/L2/L3、LIPID MAPS 种名/分子种名，并按模板画示意结构（猜的双键、官能团位置和拆链用颜色标出，分子式与名字一致才出图；ST 等类只给名字）。名字解析用内置的 lipid_name_map 0.4.0（原样复制）。',true,{w:'mzdesk/lipid/ · mzdesk/lipid_name_map/ · mzdesk/api/runners/lipid.py · mzdesk/spec.py · mzdesk/api/verdicts.py · web/src/assets/icons.svg · web/src/components/Icon.tsx · tests/test_lipid_short_name.py'}],
+   docs:['doc','版本号 0.3.2，本页加 v0.3.2。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.3.1', date:'2026-10-31', git:'',
   title:'ESI MS/MS Annotation：可选“观测 CCS”，第 6 步用 CCS 核对每个候选',
   note:'主要未决问题：与实测 CCS 不符的库匹配会排到没有结构的条目之后（没有结构的条目不算被实测否定），答案的等级跟着新的第 1 名走。实测强、预测弱的权重是 owner 定的起始规则，未用任何数据拟合。',
