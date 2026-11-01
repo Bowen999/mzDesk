@@ -668,7 +668,7 @@ def test_isotope_labels_are_flagged_on_the_lc_route_only(offline_module):
     d3 = "[2H]C([2H])([2H])n1cnc2c1c(=O)n(C)c(=O)n2C"
     result = run(d3)
     assert sheet(result)["Main ion"][0] == "[M+H]+" and abs(float(sheet(result)["Theoretical m/z"][0]) - 195.0877) <= 0.0005       # the labels do not reach the ESI m/z
-    assert any("isotope labels" in w and "unlabelled" in w for w in result["warnings"])
+    assert sum("isotope labels" in w for w in result["warnings"]) == 1 and any("isotope labels" in w and "unlabelled" in w for w in result["warnings"])       # once: not also the general note of api.common
     assert not any("isotope labels" in w for w in run(CAFFEINE)["warnings"])
     assert not any("isotope labels" in w for w in run(d3, instrument="GC-MS")["warnings"])                  # the EI M+• is calculated from the labelled mass
 

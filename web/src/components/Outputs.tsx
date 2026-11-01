@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type React from "react";
+import { useReportMode } from "../report/mode";
 import type { Block, BlockData, CardValue, Cell, Row } from "../types";
 import "../outputs-v2.css";
 import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
@@ -46,6 +47,7 @@ function CopyButton({ text }: { text: string }) {
 /** 同一内容的多种格式：一排小标签 + 一个代码框；记住上次选的标签。
  *  Several compounds (Structure & formats) add a compound tab row; the format tab stays selected when switching. */
 function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const report = useReportMode();
   const [tab, setTab] = useState("");
   const [setIndex, setSetIndex] = useState(0);
   useEffect(() => setSetIndex(0), [data]);
@@ -56,6 +58,16 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
   const cur = names.includes(tab) ? tab : names[0];
   const text = cur ? formats[cur] : undefined;
   const title = block.title ?? block.label;
+  // the report has no tabs: every format of every compound, one after the other
+  if (report) return (
+    <div className="out">
+      <h4 className="out-title">{title}</h4>
+      {(sets.length ? sets : [{ label: "", formats }]).map((set, i) => (
+        <div key={i}>
+          {sets.length > 1 && <div className="fig-label">{set.label}</div>}
+          {Object.entries(set.formats ?? {}).map(([name, value]) => <div key={name}><div className="fig-label">{name}</div><pre className="code">{value}</pre></div>)}
+        </div>))}
+    </div>);
   return (
     <div className="out">
       <h4 className="out-title">{title}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${title}`} />{text !== undefined && <CopyButton text={text} />}</h4>
@@ -75,6 +87,7 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
 
 /** Pagination and search operate only on the rows returned for the preview, never on the full download. */
 function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const report = useReportMode();
   const rows = data?.rows ?? [];
   const columns = data?.columns ?? block.columns ?? [];
   const size = block.page_size && block.page_size > 0 ? block.page_size : 0;
@@ -82,6 +95,13 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   const [filter, setFilter] = useState("");
   useEffect(() => { setPage(0); setFilter(""); }, [data]);
   if (!size) return <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} columnHelp={block.column_help} empty={empty} compact={block.compact} />;
+  if (report) {         // no pages, no filter: every row (RowsTable caps a very long table and says so)
+    const count = typeof data?.count === "number" ? data.count : rows.length;
+    return <div className="result-table">
+      {count > rows.length && <p className="result-table-note">Preview: first {rows.length} of {count.toLocaleString("en-US")} results.</p>}
+      <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} columnHelp={block.column_help} empty={empty} compact={block.compact} />
+    </div>;
+  }
   const cellText = (cell: Cell) => {
     if (cell === null || cell === undefined) return "";
     if (typeof cell !== "object") return String(cell);
@@ -119,6 +139,7 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
 }
 
 export function OutputBlock({ block, data, status }: { block: Block; data?: BlockData; status: Status }) {
+  const report = useReportMode();
   const empty = status === "none" ? "no result" : status === "off" ? "not connected yet" : "empty";
   const shown = data ? undefined : status;
   switch (block.type) {
@@ -165,12 +186,19 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
       return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
-        {data?.options?.length ? <Reaction svg={data.svg} options={data.options} /> : <div className="placeholder-box">{empty}</div>}
+        {data?.options?.length
+          // the report has no option buttons: every option, each with its label
+          ? report ? data.options.map((o, i) => <div key={i}><div className="fig-label"><RichText text={o.label} /></div><Reaction svg={data.svg} options={[o]} /></div>)
+            : <Reaction svg={data.svg} options={data.options} />
+          : <div className="placeholder-box">{empty}</div>}
       </div>);
     case "groupmap": return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
-        {data?.found?.length && data.svg ? <GroupMap svg={data.svg} found={data.found} /> : <div className="placeholder-box">{empty}</div>}
+        {data?.found?.length && data.svg
+          // the report cannot pick a group: one panel per group
+          ? report ? data.found.map((g, i) => <GroupMap key={i} svg={data.svg!} found={[g]} />) : <GroupMap svg={data.svg} found={data.found} />
+          : <div className="placeholder-box">{empty}</div>}
       </div>);
     case "figure":
       if (data) return (
@@ -206,13 +234,13 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         // After a run with no items there is nothing to show: render nothing, not even the title. (Before the run the title is the format preview.)
         const ran = !!data || status === "none";
         if (ran && !items.length) return null;
-        if (block.title) return <div className="out"><Title block={block} data={data} status={shown} extra={items} /></div>;
+        if (block.title && !report) return <div className="out"><Title block={block} data={data} status={shown} extra={items} /></div>;
         const lines = helpLines(block.help, data?.help);
         if (!items.length && !lines.length) return null;
         return (
           <div className="out">
             <details className="out-details">
-              <summary>Details</summary>
+              <summary>{block.title || "Details"}</summary>
               <ul className="notes">{[...lines, ...items].map((t, i) => <li key={i}><RichText text={emphasize(t)} /></li>)}</ul>
             </details>
           </div>);
@@ -272,7 +300,9 @@ function Skeleton({ block }: { block: Block }) {
  *  Placeholder module (live = false): the blocks show their format, as before. */
 export function OutputList({ blocks, exclude = [], outputs = null, live = false, busy = false }:
   { blocks: Block[]; exclude?: string[]; outputs?: Record<string, BlockData> | null; live?: boolean; busy?: boolean }) {
-  const shown = blocks.filter(b => !b.key || !exclude.includes(b.key));
+  const report = useReportMode();
+  // the report is a file: "Download" and placeholder buttons would do nothing (the files are in report.json)
+  const shown = blocks.filter(b => (!b.key || !exclude.includes(b.key)) && !(report && (b.type === "downloads" || b.type === "button")));
   const skeleton = live && (busy || !outputs);
   let n = 0;
   return (

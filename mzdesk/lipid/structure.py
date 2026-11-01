@@ -13,6 +13,7 @@ FA FOH CAR FA-etn FA-amide、胆固醇型固醇酯（ST-oacyl，CE / SE）、FAH
 
 出图前有一道分子式核对（illustrate）：画出来的 C、H、N、O、P、S 个数必须等于"类常数 + LIPID+ 解析出的总量 (C, DB, O)"，对不上就不出图（Unsupported），
 这样链太短丢了 C=C、未分型的氧没画上或多画了之类的拼装错误不会变成一张和名字不符的图。
+带甲基支链的名字（flag branch_dropped：iso- / anteiso- / (15Me)）不画（BranchedChain）：模板只会拼直链，而且 iso / anteiso 的碳数口径下直链分子式照样核对得上。
 """
 import math
 import re
@@ -33,6 +34,10 @@ class Unsupported(Exception):
 
 class NoStructureForClass(Unsupported):
     """这个类没有示意结构。"""
+
+
+class BranchedChain(Unsupported):
+    """名字里有甲基支链（iso / anteiso / (15Me)）：支链位置和 C 数口径对不上直链模板，只会画成一条直链，所以不画。"""
 
 
 @dataclass
@@ -638,6 +643,8 @@ def illustrate(name_or_result, raw=None):
         r = name_or_result
     else:
         r, raw = normalize(name_or_result), raw or name_or_result
+    if "branch_dropped" in r["flags"]:                       # 模板只有直链：带支链的名字不画，免得悄悄画成直链（分子式核对也会因此对得上，拦不住）
+        raise BranchedChain("methyl-branched chain")
     smiles, assump, _ = build(r, raw)
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ApiError, getFragmentJob, startFragments } from "../api";
+import { useReportMode } from "../report/mode";
 import type { FragmentItem, FragmentJob, FragmentQuery, FragmentTarget, FragmentView } from "../types";
 import { FigureView, ThemedSvg } from "./Figure";
 import "./fragment-view.css";
@@ -37,6 +38,7 @@ function Eye() {
 export function FragmentButton({ target }: { target: FragmentTarget }) {
   const shared = useContext(SharedContext);
   const [open, setOpen] = useState(false);
+  if (useReportMode()) return null;       // the Session report is a file: the dialog needs the app
   if (!shared) return <>—</>;
   return (
     <>

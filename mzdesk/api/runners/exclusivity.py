@@ -163,6 +163,7 @@ def run_exclusivity(inputs):
         name = (inputs.get("structure") or {}).get("value") or formula
     elif struct:
         formula = _neutral_formula(struct["smiles"], warnings)
+        common.note_isotope_labels(warnings, struct["smiles"], "The formula of the same-formula search and the theoretical precursor m/z are")
         name = common.record_name(inputs, struct["smiles"])
         if formula is None:
             warnings.append("The structure could not be converted to a molecular formula; the same-formula table is skipped.")

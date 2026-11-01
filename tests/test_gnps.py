@@ -5,6 +5,7 @@ import csv
 import gzip
 import io
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -344,19 +345,20 @@ def test_fastmasst_large_preview_and_missing_download_warning(tmp_path, monkeypa
 
 
 def test_local_cli_batch_dry_run_and_massql(tmp_path):
+    utf8 = {**os.environ, "PYTHONUTF8": "1"}          # the CLI prints Chinese messages; whatever the locale of the test run, it reads and writes UTF-8 here
     queries = tmp_path / "queries.json"
     queries.write_text(json.dumps([{"name": "example", "precursor": 300, "peaks": [[100, 100], [110, 20]]}]))
     batch = subprocess.run([sys.executable, "-m", "mzdesk.gnps.compound_db_check", "--queries", str(queries),
-                            "--out", str(tmp_path / "batch"), "--dry-run"], capture_output=True, text=True, encoding="utf-8", timeout=20)
+                            "--out", str(tmp_path / "batch"), "--dry-run"], capture_output=True, text=True, encoding="utf-8", timeout=20, env=utf8)
     assert batch.returncode == 0, batch.stderr
     assert "dry-run" in batch.stdout
     mgf = tmp_path / "input.mgf"
     mgf.write_bytes(MGF)
     output = tmp_path / "result.json"
     result = subprocess.run([sys.executable, "-m", "mzdesk.gnps.compound_db_check", "--massql", QUERY,
-                             "--massql-input", str(mgf), "--out", str(output)], capture_output=True, text=True, encoding="utf-8", timeout=20)
+                             "--massql-input", str(mgf), "--out", str(output)], capture_output=True, text=True, encoding="utf-8", timeout=20, env=utf8)
     assert result.returncode == 0, result.stderr
-    assert json.loads(output.read_text())["n_matches"] == 1
+    assert json.loads(output.read_text(encoding="utf-8"))["n_matches"] == 1
 
 
 def test_local_cli_replay_does_not_call_fastmasst(tmp_path, monkeypatch):

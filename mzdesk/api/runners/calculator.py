@@ -54,7 +54,7 @@ def run_calculator(inputs):
             warnings.append("Isotope labelling needs both a SMILES and a label.")
         else:
             try:
-                formula, _ = calculations.smiles_formula_mass(lab_smiles)
+                formula, _ = calculations.smiles_formula_mass(lab_smiles, warnings)
                 labels = calculations.parse_labels(lab_label)
                 result = calculations.labelled_distribution(formula, lab_adduct, labels)
                 crosstalk = calculations.crosstalk(formula, lab_adduct, result["nominal_shift"])

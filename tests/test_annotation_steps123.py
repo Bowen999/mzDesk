@@ -352,12 +352,29 @@ def test_formulas_that_miss_the_precursor_tolerance_are_dropped(buddy):
     assert wide.formula_strings == ["C10H20N2O5", "C9H16N4O4"]
 
 
+def test_the_no_formula_note_names_the_tolerance_buddy_really_searched(buddy):
+    fake = buddy({"[M+H]+": []})
+    adduct, formula = F.run_adduct_and_formula(300.0, True, peaks_with(300.0), adduct="[M+H]+", tol_ppm=20.0)
+    assert "no formula within 20 ppm" in formula.note and bd._tolerances(fake.calls[0]["preset"])[0] == 20.0
+
+
+# Up to 10 ppm the tightest preset that covers the tolerance. Above 10 ppm no preset covers it (qtof is the widest, 10 ppm): BUDDY must then get the
+# user's tolerance itself as (ms1_tol, ms2_tol) -- not fall back to qtof, which searched only +-10 ppm and silently lost formulas at 10-50 ppm.
+# The MS2 tolerance stays at the widest preset's 20 ppm.
 @pytest.mark.parametrize("tol_ppm, preset", [(1.0, "fticr"), (2.0, "fticr"), (3.0, "orbitrap"), (5.0, "orbitrap"),
-                                             (8.0, "qtof"), (10.0, "qtof"), (50.0, "qtof")])
+                                             (8.0, "qtof"), (10.0, "qtof"), (10.5, (10.5, 20.0)), (20.0, (20.0, 20.0)), (50.0, (50.0, 20.0))])
 def test_the_instrument_preset_follows_the_precursor_tolerance(buddy, tol_ppm, preset):
     fake = buddy(TABLE)
     F.run_adduct_and_formula(300.0, True, peaks_with(300.0), adduct="[M+H]+", tol_ppm=tol_ppm)
     assert fake.calls[0]["preset"] == preset
+
+
+@pytest.mark.parametrize("tol_ppm", [0.5, 2.0, 3.0, 10.0, 10.5, 15.0, 30.0, 100.0])
+def test_buddy_never_searches_a_narrower_window_than_the_precursor_tolerance(buddy, tol_ppm):
+    """The tolerance in "BUDDY found no formula within X ppm" and in the table is the user's; BUDDY must have searched at least that."""
+    fake = buddy(TABLE)
+    F.run_adduct_and_formula(300.0, True, peaks_with(300.0), adduct="[M+H]+", tol_ppm=tol_ppm)
+    assert bd._tolerances(fake.calls[0]["preset"])[0] >= tol_ppm
 
 
 def test_halogen_option_is_passed_on(buddy):

@@ -7,7 +7,7 @@ import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
-import type { Field, RunResult, Spec } from "../types";
+import type { Field, Module, RunResult, Spec } from "../types";
 
 type Run = { busy: boolean; result: RunResult | null; error: string; log: string; seconds: number | null; signature: string };
 const IDLE: Run = { busy: false, result: null, error: "", log: "", seconds: null, signature: "" };
@@ -42,6 +42,56 @@ function groupFields(fields: Field[]): Group[] {
   return groups;
 }
 
+export const modulePageClass = (mod: Module) => "page module-page" + (mod.subgroup === "detectability" ? " detectability-page" : "");
+
+/** The title of a module page and its one-line description. The Session report draws the same. */
+export function ModuleHead({ mod, spec }: { mod: Module; spec: Spec }) {
+  const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
+  const styledHeading = mod.subgroup === "detectability" || !mod.subgroup || ["molecular", "ms1", "ms2", "gnps"].includes(mod.subgroup);   // no subgroup = a standalone page (Calculator)
+  return (
+    <>
+      <div className="module-heading">
+        {styledHeading && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
+        <div className="module-heading-copy">
+          {styledHeading && subgroup && <div className="module-kicker">{subgroup}</div>}
+          <h1>{!styledHeading && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
+          {!mod.live && <div className="meta">Placeholder: shows the page format, nothing computes yet</div>}
+        </div>
+      </div>
+      <p className="one-liner"><RichText text={mod.one_liner} /></p>
+    </>
+  );
+}
+
+/** Everything under the inputs once a run has a result (or is running): the "Results" head, the verdict, the warnings and the output blocks.
+ *  The Session report draws it with ok = true. */
+export function ModuleResults({ mod, result, ok, busy, seconds, stale }:
+  { mod: Module; result: RunResult | null; ok: boolean; busy: boolean; seconds: number | null; stale: boolean }) {
+  const gnps = mod.subgroup === "gnps";
+  return (
+    <>
+      {ok && (
+        <div className="results-head">
+          <h2 className="panel-title">Results</h2>
+          {seconds !== null && <span className="msg">{seconds.toFixed(1)} s</span>}
+          {stale && <span className="msg warn-text">Inputs changed since this run.</span>}
+        </div>)}
+      {ok && result?.verdict && (
+        <div className="verdict" aria-live="polite">
+          <div className="verdict-label">Result</div>
+          <p className="verdict-text"><RichText text={result.verdict} /></p>
+        </div>
+      )}
+      {ok && stale && <div className="alert warn">Inputs changed since this run. The results below belong to the previous inputs; run again to update them.</div>}
+      {ok && gnps && !!result!.warnings?.length && <div className="alert warn gnps-notices" role="note">
+        <strong>Notes</strong><ul>{result!.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+      </div>}
+      {ok && !gnps && result!.warnings?.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
+      <OutputList blocks={mod.outputs} outputs={ok ? result!.outputs : null} live={mod.live} busy={busy} />
+    </>
+  );
+}
+
 export function ModulePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
   const mod = spec.modules.find(m => m.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(mod ? mod.inputs : []));
@@ -65,8 +115,6 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   if (!mod) return <p className="page">Unknown module.</p>;
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
-  const detectability = mod.subgroup === "detectability";
-  const styledHeading = detectability || !mod.subgroup || ["molecular", "ms1", "ms2", "gnps"].includes(mod.subgroup);   // no subgroup = a standalone page (Calculator)
   const gnps = mod.subgroup === "gnps";
   const signature = JSON.stringify(values);
   const ok = run.result?.status === "ok" && !run.busy;
@@ -159,16 +207,8 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   );
 
   return (
-    <div ref={pageRef} className={"page module-page" + (detectability ? " detectability-page" : "")} data-module={mod.id}>
-      <div className="module-heading">
-        {styledHeading && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
-        <div className="module-heading-copy">
-          {styledHeading && subgroup && <div className="module-kicker">{subgroup}</div>}
-          <h1>{!styledHeading && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
-          {!mod.live && <div className="meta">Placeholder: shows the page format, nothing computes yet</div>}
-        </div>
-      </div>
-      <p className="one-liner"><RichText text={mod.one_liner} /></p>
+    <div ref={pageRef} className={modulePageClass(mod)} data-module={mod.id}>
+      <ModuleHead mod={mod} spec={spec} />
 
       {folded ? (
         <div className="panel input-summary">
@@ -231,24 +271,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
       {mod.live && !ok && !run.busy && !run.error && (
         <p className="empty-hint">Results appear here after you run this module.{mod.example ? <> Or <button type="button" className="link-btn" onClick={loadExample}>load the example</button>.</> : null}</p>
       )}
-      {ok && (
-        <div className="results-head">
-          <h2 className="panel-title">Results</h2>
-          {run.seconds !== null && <span className="msg">{run.seconds.toFixed(1)} s</span>}
-          {stale && <span className="msg warn-text">Inputs changed since this run.</span>}
-        </div>)}
-      {ok && run.result?.verdict && (
-        <div className="verdict" aria-live="polite">
-          <div className="verdict-label">Result</div>
-          <p className="verdict-text"><RichText text={run.result.verdict} /></p>
-        </div>
-      )}
-      {ok && stale && <div className="alert warn">Inputs changed since this run. The results below belong to the previous inputs; run again to update them.</div>}
-      {ok && gnps && !!run.result!.warnings?.length && <div className="alert warn gnps-notices" role="note">
-        <strong>Notes</strong><ul>{run.result!.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-      </div>}
-      {ok && !gnps && run.result!.warnings?.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
-      <OutputList blocks={mod.outputs} outputs={ok ? run.result!.outputs : null} live={mod.live} busy={run.busy} />
+      <ModuleResults mod={mod} result={run.result} ok={ok} busy={run.busy} seconds={run.seconds} stale={stale} />
       {guard.dialog}
     </div>
   );

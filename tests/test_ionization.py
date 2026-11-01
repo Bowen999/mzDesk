@@ -238,7 +238,8 @@ def test_rule_of_thumb_for_the_molecular_ion(smiles, level):
 
 # ---------------------------------------------------------------- GC verdict = the Platform page's
 @pytest.mark.parametrize("smiles", [LIDOCAINE, IBUPROFEN, GLUCOSE, "Cn1cnc2c1c(=O)n(C)c(=O)n2C", "C[N+](C)(C)CCO", PC, "CC(N)Cc1ccccc1",
-                                    "c1cc2ccc3cccc4ccc(c1)c2c34", "C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C"])
+                                    "c1cc2ccc3cccc4ccc(c1)c2c34", "C[C@H](CCCC(C)C)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C",
+                                    "CCOP(=O)(OCC)OCC", "COP(C)(=O)OC", "OC(=O)CNCP(=O)(O)O", "C[N+](C)(C)CC(=O)[O-]", "[Na+].[O-]C(=O)c1ccccc1"])
 def test_gc_verdict_is_the_one_the_platform_page_shows(smiles):
     platform = client.post("/api/modules/platform_fit/run", json={"structure": {"mode": "SMILES / InChI", "value": smiles}}).json()
     gc, _mol = R.gc_verdict(smiles)
@@ -254,6 +255,10 @@ def test_gc_verdict_is_the_one_the_platform_page_shows(smiles):
     ("C[N+](C)(C)CCO", "no", "quaternary ammonium: ionic, not volatile"),
     (PC, "no", "phospholipid: ionic, MW 734"),
     ("c1cc2ccc3cccc4ccc(c1)c2c34", "yes", "PAH: volatile and stable"),
+    ("COP(=O)(OC)OC=C(Cl)Cl", "yes", "dichlorvos: a phosphate triester has no P-OH and runs in GC"),
+    ("CCOP(=O)(OCC)OCC", "yes", "triethyl phosphate"),
+    ("COP(C)(=O)OC", "yes", "DMMP: a phosphonate diester"),
+    ("OC(=O)CNCP(=O)(O)O", "no", "glyphosate: free P-OH, ionic"),
 ])
 def test_gc_amenability_expectations(smiles, expected, why):
     assert R.gc_verdict(smiles)[0]["gc"] == expected, why

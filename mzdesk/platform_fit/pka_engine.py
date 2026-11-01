@@ -27,6 +27,7 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 from mzdesk.platform_fit import pka_setup
 from mzdesk.platform_fit.molgpka_smarts import PATTERNS
+from mzdesk.platform_fit.structure_prep import largest_fragment, neutralize_anions, parts_note
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -169,35 +170,9 @@ class Prepared:
     permanent: bool                # has a charged atom with no opposite charge next to it (quaternary N+, N-alkylpyridinium ...)
 
 
-def _neutralize_anions(mol):
-    """Protonate O- / S- / N- that are not next to a cation: carboxylate, phosphate, phenolate, sulfonate ...
-
-    RDKit's Uncharger leaves such an anion alone when a quaternary N+ is in the molecule (betaine, phosphatidylcholine), which
-    would hide an ionizable site. Charge-separated groups (nitro, N-oxide, azide: anion next to a cation) are left as they are.
-    """
-    rw = Chem.RWMol(mol)
-    changed = False
-    for atom in rw.GetAtoms():
-        if atom.GetFormalCharge() == -1 and atom.GetSymbol() in ("O", "S", "N") and not any(n.GetFormalCharge() > 0 for n in atom.GetNeighbors()):
-            atom.SetFormalCharge(0)
-            atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
-            changed = True
-    if not changed:
-        return mol, False
-    try:
-        Chem.SanitizeMol(rw)
-    except Exception:  # noqa: BLE001 — keep the molecule as it was
-        return mol, False
-    return rw.GetMol(), True
-
-
-def _largest_fragment(mol):
-    frags = Chem.GetMolFrags(mol, asMols=True, sanitizeFrags=True)
-    if len(frags) == 1:
-        return mol, 1
-    def key(f):
-        return (any(a.GetSymbol() == "C" for a in f.GetAtoms()), f.GetNumHeavyAtoms(), Descriptors.MolWt(f))
-    return max(frags, key=key), len(frags)
+# 取最大片段和阴离子质子化在 structure_prep（Derivatization / Platform 页共用）；这里保留原来的名字
+_neutralize_anions = neutralize_anions
+_largest_fragment = largest_fragment
 
 
 def prepare(smiles):
@@ -208,7 +183,7 @@ def prepare(smiles):
     notes = []
     mol, n_frag = _largest_fragment(mol)
     if n_frag > 1:
-        notes.append(f"{n_frag} disconnected parts (salt or mixture): only the largest is analysed.")
+        notes.append(parts_note(n_frag))
     before = Chem.MolToSmiles(mol)
     mol, _ = _neutralize_anions(mol)
     mol = rdMolStandardize.Uncharger().uncharge(mol)

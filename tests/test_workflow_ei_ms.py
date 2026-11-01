@@ -499,6 +499,20 @@ def test_without_the_library_the_user_candidates_are_still_ranked(no_libs, fake_
     assert dict(r["answer"]["facts"])["Top library match"] == "none"
 
 
+def test_a_labelled_candidate_gets_one_note_about_its_derivative_mass(no_libs, fake_neims, names):
+    """The derivative formula and mass of step 5 come from the unlabelled formula (the NEIMS spectrum of step 6 uses the labelled structure)."""
+    glycine_13c, glycine_d2 = "N[13CH2]C(=O)O", "[2H]C([2H])(N)C(=O)O"
+
+    def notes(candidates):
+        return [w for w in run(GLYCINE_TMS, candidates=candidates)["warnings"] if "isotope labels" in w]
+
+    assert notes(glycine_13c) == [f"Candidate “{glycine_13c}” has isotope labels. The derivative formulas and masses are calculated for the unlabelled compound; "
+                                  "use Calculator › Isotope labelling for labelled masses."]
+    two = notes(f"{glycine_13c}\n{ALANINE}\n{glycine_d2}")                       # one note for the list, naming the labelled lines only
+    assert len(two) == 1 and f"Candidates “{glycine_13c}”, “{glycine_d2}” have isotope labels." in two[0] and ALANINE not in two[0]
+    assert notes(f"{GLYCINE}\n{ALANINE}") == [] and notes("") == []
+
+
 def test_without_the_neims_weights_the_library_evidence_alone_ranks(ei_libs, monkeypatch, tmp_path, names):
     monkeypatch.setattr(ne, "weights_path", lambda: str(tmp_path / "missing.npz"))
     r = run(LACTIC_TMS, molecular_ion="234", candidates=ALANINE)

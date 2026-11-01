@@ -12,6 +12,7 @@ Server 143.198.233.45 (Ubuntu 24.10, nginx in front of MCID / my-trip / mzDesk).
 | nginx | `location /mzdesk/` in `/etc/nginx/conf.d/bowenyang.conf` (`nginx-location.conf`), rate limits in `00-mzdesk-limits.conf` |
 
 Update after a change: `deploy/deploy.sh` (needs the deploy key `~/.ssh/mzdesk_deploy`).
+The service runs a single uvicorn worker (`--workers 1`): workflow tasks, the queue and the heavy-task lock are kept in process memory, so more workers would make task polls return 404 until the task store is shared.
 Logs: `journalctl -u mzdesk -f`. Restart: `systemctl restart mzdesk`. nginx backups: `/root/nginx-backup/`.
 
 GNPS2: install the updated `requirements.txt` in the server venv before restarting (MassQL mzML/mzXML needs
@@ -39,7 +40,7 @@ DigitalOcean permits outbound 587. `MZDESK_SMTP_FROM` must be an address the rel
 If SMTP is missing or fails, nothing is lost: the complete message is written as an `.eml` file under
 `/var/lib/mzdesk/feedback/`, the form still says "saved", and the failure is logged (`journalctl -u mzdesk | grep feedback`).
 
-The app also rate-limits feedback (30 s between messages, 8/hour per IP per worker) and has a hidden honeypot field.
+The app also rate-limits feedback (30 s between messages, 8/hour per IP) and has a hidden honeypot field.
 The nginx rule (`mzdesk_feedback`, 6/min) is an additional shared limit; reload nginx after changing
 `nginx-location.conf` / `00-mzdesk-limits.conf`:
 

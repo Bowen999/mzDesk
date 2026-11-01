@@ -39,6 +39,15 @@ ADDUCTS_NEGATIVE = ["[M-H]-", "[M+Cl]-", "[M+HCOO]-", "[M+CH3COO]-", "[M+Br]-"]
 # instrument -> (ms1 tol ppm, ms2 tol ppm), per msbuddy defaults
 INSTRUMENT_TOLS = {"orbitrap": (5, 10), "qtof": (10, 20), "fticr": (2, 5)}
 
+
+def _tolerances(ms_instr):
+    """(ms1_tol, ms2_tol) in ppm of `ms_instr`: a preset name (unknown name -> msbuddy's own defaults) or an explicit (ms1_tol, ms2_tol) pair."""
+    if isinstance(ms_instr, str):
+        return INSTRUMENT_TOLS.get(ms_instr, (5, 10))
+    ms1_tol, ms2_tol = ms_instr
+    return float(ms1_tol), float(ms2_tol)
+
+
 MAX_CANDIDATES = 5
 
 # msbuddy only annotates precursors with 1 < m/z < 1500
@@ -212,7 +221,9 @@ def annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
 
     Parameters map 1:1 to the tab inputs; ``ms2_peaks`` / ``ms1_peaks`` are
     tuples of (mz, intensity) pairs (or empty tuples); ``adduct=None`` means Auto
-    ([M+H]+ / [M-H]-); ``rt`` is in seconds and stored as metadata only. If
+    ([M+H]+ / [M-H]-); ``rt`` is in seconds and stored as metadata only.
+    ``ms_instr`` is a preset in INSTRUMENT_TOLS, or an explicit (ms1_tol, ms2_tol) pair in ppm
+    for a tolerance no preset covers (the pair is part of the cache key). If
     ``formula_input`` is a non-empty formula string it is used as the sole
     candidate and BUDDY's ML ranking is skipped entirely.
 
@@ -226,7 +237,7 @@ def annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
     """
     return copy.deepcopy(_annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
                                            tuple(map(tuple, ms2_peaks)), tuple(map(tuple, ms1_peaks)),
-                                           ms_instr, halogen))
+                                           ms_instr if isinstance(ms_instr, str) else tuple(float(t) for t in ms_instr), halogen))
 
 
 @lru_cache(maxsize=32)
@@ -251,7 +262,7 @@ def _annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
 
     # An MS¹ pattern whose peaks all miss the precursor cannot contribute isotope similarity,
     # but msbuddy would still switch to its "with MS1" model and score that similarity as 0.
-    ms1_tol_ppm = INSTRUMENT_TOLS.get(ms_instr, (5, 10))[0]
+    ms1_tol_ppm = _tolerances(ms_instr)[0]
     if ms1_peaks and not any(abs(ppm_error(mz, float(precursor_mz))) <= ms1_tol_ppm
                              for mz, _ in ms1_peaks):
         ms1_peaks = ()
@@ -266,7 +277,11 @@ def _annotate_formula(precursor_mz, positive, adduct, rt, formula_input,
         ms2=_spectrum(ms2_peaks),
     )
     with _BUDDY_LOCK:
-        engine = Msbuddy(MsbuddyConfig(ms_instr=ms_instr, halogen=bool(halogen)))
+        if isinstance(ms_instr, str):
+            config = MsbuddyConfig(ms_instr=ms_instr, halogen=bool(halogen))
+        else:                                   # no preset: msbuddy takes the tolerances as given (ppm)
+            config = MsbuddyConfig(ms_instr=None, ppm=True, ms1_tol=ms1_tol_ppm, ms2_tol=_tolerances(ms_instr)[1], halogen=bool(halogen))
+        engine = Msbuddy(config)
         engine.add_data([mf])
         engine.annotate_formula()
         meta = engine.data[0]

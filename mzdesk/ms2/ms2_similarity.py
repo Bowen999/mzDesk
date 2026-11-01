@@ -44,6 +44,7 @@ import json
 import os
 import sys
 import urllib.request
+import uuid
 from functools import lru_cache
 
 import numpy as np
@@ -54,6 +55,8 @@ from mzdesk.ms2 import metric_names as mn   # 指标名字与类别（与 spec.p
 # 模型下载地址（首次使用时自动下载并缓存到 ~/.cache/ms2_similarity/）
 # --------------------------------------------------------------------------- #
 CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "ms2_similarity")
+DOWNLOAD_TIMEOUT_S = 30        # 下载时连接、每次读取的等待上限（秒）；不是总时长上限
+DOWNLOAD_CHUNK = 1 << 20
 
 MS2DEEPSCORE_MODEL_URLS = [
     "https://zenodo.org/records/17826815/files/ms2deepscore_model.pt?download=1",
@@ -340,19 +343,39 @@ def _custom_scores(mz1, i1, mz2, i2, tolerance, results):
 
 
 def _download_file(url, dest):
-    """下载单个文件，成功返回 True。"""
+    """下载单个文件，成功返回 True。
+
+    连接和每次读取最多等 DOWNLOAD_TIMEOUT_S 秒（服务器停住时放弃，返回 False）；先写到同目录下本次独有的临时文件，
+    大小对得上（有 Content-Length 时）才 os.replace 成 dest，所以两个同时开始的下载不会互相覆盖，失败也不留文件。
+    """
+    tmp = None
     try:
         print(f"  Downloading: {url}", file=sys.stderr)
-        part = dest + ".part"
-        urllib.request.urlretrieve(url, part)
-        if os.path.getsize(part) == 0:
-            os.remove(part)
-            return False
-        os.replace(part, dest)   # a partial download must never become the cached model
+        with urllib.request.urlopen(url, timeout=DOWNLOAD_TIMEOUT_S) as resp:
+            expected = resp.headers.get("Content-Length")
+            tmp = f"{dest}.{uuid.uuid4().hex[:12]}.part"
+            # 0o666 & ~umask (like any file the process creates): mkstemp would make the cached model 0600
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o666)
+            size = 0
+            with os.fdopen(fd, "wb") as out:
+                while True:
+                    chunk = resp.read(DOWNLOAD_CHUNK)
+                    if not chunk:
+                        break
+                    out.write(chunk)
+                    size += len(chunk)
+        if size == 0:
+            raise OSError("the server sent an empty file")
+        if expected is not None and expected.strip().isdigit() and size != int(expected):
+            raise OSError(f"incomplete download: got {size} of {int(expected)} bytes")
+        os.replace(tmp, dest)   # a partial download must never become the cached model
         return True
     except Exception as exc:  # noqa: BLE001
         print(f"  Download failed: {exc}", file=sys.stderr)
         return False
+    finally:
+        if tmp and os.path.exists(tmp):
+            os.remove(tmp)
 
 
 def _get_ms2deepscore_model():

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useReportMode } from "../report/mode";
 import type { FoundGroup } from "../types";
 import { ThemedSvg } from "./Figure";
 import "./groupmap.css";
@@ -9,6 +10,7 @@ import "./groupmap.css";
  * alone, its sites (all together, or one at a time with atom numbers) and the SMARTS that was counted.
  */
 export function GroupMap({ svg, found }: { svg: string; found: FoundGroup[] }) {
+  const report = useReportMode();       // the report draws one panel per group, with no site buttons
   const [sel, setSel] = useState(0);        // index into found; -1 = plain input structure
   const [site, setSite] = useState(-1);     // -1 = all sites together
   const families = useMemo(() => {
@@ -31,12 +33,16 @@ export function GroupMap({ svg, found }: { svg: string; found: FoundGroup[] }) {
         {families.map(f => (
           <div className="gm-family" key={f.family}>
             <div className="gm-family-name">{f.family}</div>
-            {f.items.map(({ g, i }) => (
-              <button key={g.name} type="button" className={"gm-row" + (i === sel ? " on" : "")} aria-pressed={i === sel} onClick={() => choose(i)}>
+            {f.items.map(({ g, i }) => {
+              const row = <>
                 <ThemedSvg svg={g.svg} className="gm-thumb" alt={`Drawing of ${g.name}`} />
                 <span className="gm-name">{g.name}</span>
                 <span className="gm-count" title={`${g.count} site${g.count > 1 ? "s" : ""}`}>{g.count}</span>
-              </button>))}
+              </>;
+              return report
+                ? <div key={g.name} className={"gm-row" + (i === sel ? " on" : "")}>{row}</div>
+                : <button key={g.name} type="button" className={"gm-row" + (i === sel ? " on" : "")} aria-pressed={i === sel} onClick={() => choose(i)}>{row}</button>;
+            })}
           </div>))}
       </div>
       <div className="gm-view">
@@ -45,7 +51,7 @@ export function GroupMap({ svg, found }: { svg: string; found: FoundGroup[] }) {
             ? <><span className="gm-title">{cur.name}</span><span className="gm-sub">{cur.count} site{cur.count > 1 ? "s" : ""} · {cur.family}</span></>
             : <span className="gm-title">Input structure</span>}
         </div>
-        {cur && cur.count > 1 && (
+        {cur && cur.count > 1 && !report && (
           <div className="gm-sites" role="group" aria-label="Sites">
             <button type="button" className={"gm-site" + (site < 0 ? " on" : "")} aria-pressed={site < 0} onClick={() => setSite(-1)}>All sites</button>
             {cur.sites.map((s, i) => (

@@ -160,6 +160,7 @@ def run_fragments(inputs):
 
     warnings = []
     smiles = common.structure(inputs, label="Candidate structure", warnings=warnings)["smiles"]
+    common.note_isotope_labels(warnings, smiles, "The fragment ion formulas and m/z values are")       # the theoretical precursor m/z follows the labels
     precursor_mz, positive, adduct = common.precursor(inputs)
     peaks, file_mz = common.spectrum(inputs, "ms2", "MS2 spectrum", warnings)
     if precursor_mz is None and file_mz:

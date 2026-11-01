@@ -211,13 +211,15 @@ def fasst_search(peaks, precursor, library, cosine=0.7, min_peaks=3, pm_tol=0.05
                  max_wait_s=600, poll_s=8, return_raw=False, max_poll_errors=3):
     """返回汇总 dict (字段与旧版相同). return_raw=True 时返回 (汇总 dict, info),
     info = {"task_id", "raw" (API 原始命中列表, 失败时 None), "elapsed_s", "n_poll_errors"}.
-    轮询不快于 8 s; 状态/结果请求网络瞬断时最多连续容忍 max_poll_errors 次."""
+    轮询不快于 8 s; 状态/结果请求网络瞬断时最多连续容忍 max_poll_errors 次.
+    max_wait_s 是提交后等结果的截止时间 (time.monotonic, 请求本身的耗时也算在内); 最后一次请求可能越过截止时间, 所以总等待至多是
+    max_wait_s 加一次请求的时间."""
     poll_s = max(poll_s, 8)
-    t0 = time.time()
+    t0 = time.monotonic()
     info = {"task_id": None, "raw": None, "elapsed_s": None, "n_poll_errors": 0}
 
     def done(out):
-        info["elapsed_s"] = round(time.time() - t0, 1)
+        info["elapsed_s"] = round(time.monotonic() - t0, 1)
         return (out, info) if return_raw else out
 
     qs = json.dumps({"peaks": [[float(m), float(i)] for m, i in peaks],
@@ -229,11 +231,11 @@ def fasst_search(peaks, precursor, library, cosine=0.7, min_peaks=3, pm_tol=0.05
         return done({"error": r})
     tid = r["id"]
     info["task_id"] = tid
-    waited = 0
+    submitted = time.monotonic()
+    deadline = submitted + max_wait_s
     n_err = 0
-    while waited < max_wait_s:
-        time.sleep(poll_s)
-        waited += poll_s
+    while time.monotonic() < deadline:
+        time.sleep(min(poll_s, max(deadline - time.monotonic(), 0)))   # the last look is at the deadline
         st = get_json(f"{FASST}/search/status/{tid}")
         s = st.get("status")
         if s == "COMPLETED":
@@ -255,7 +257,7 @@ def fasst_search(peaks, precursor, library, cosine=0.7, min_peaks=3, pm_tol=0.05
             info["n_poll_errors"] += 1
             continue
         return done({"error": st})
-    return done({"error": f"timeout after {max_wait_s}s", "task_id": tid})
+    return done({"error": f"timeout after {time.monotonic() - submitted:.0f}s waiting for the search (limit {max_wait_s}s)", "task_id": tid})
 
 
 # ---------- Pan-ReDU 数据集检索 ----------

@@ -312,6 +312,10 @@ def _candidates(q, ctx, steps):
                 lib["state"] = None
     from_list, list_warnings = cands.from_lines(q.candidates, resolve.to_smiles) if q.candidates else ([], [])
     ctx["warnings"] += list_warnings
+    labelled = [c.user_text for c in from_list if common.has_isotope_labels(c.parent_smiles)]
+    if labelled:        # the derivative formula and mass of step 5 come from the unlabelled formula (the NEIMS prediction of step 6 uses the labelled structure)
+        who = ("Candidate " if len(labelled) == 1 else "Candidates ") + ", ".join(f"“{line}”" for line in labelled) + (" has" if len(labelled) == 1 else " have")
+        ctx["warnings"].append(common.isotope_note("The derivative formulas and masses are", who=who))
     candidates = cands.merge(from_library, from_list)
     lookup = cands.library_names([c.key for c in candidates if len(c.key) == 14 and (c.name_note or c.name == c.parent_smiles)])
     for c in candidates:                             # a name the derivative entry did not give, or a SMILES the user typed, gets the library's plain name

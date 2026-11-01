@@ -137,10 +137,12 @@ class _Buddy:
             if name is None:
                 return "unsupported", f"BUDDY does not support the adduct {adduct}."
             precursor_mz, positive, ms2, ms1, tol_ppm, halogen = self.args
-            # the tightest instrument preset whose MS1 window covers the user's precursor tolerance
+            # the tightest instrument preset whose MS1 window covers the user's precursor tolerance; a tolerance wider than every preset
+            # is searched as given (ppm), with the widest preset's MS2 tolerance, so BUDDY never searches a narrower window than the user's
             fits = [(tols[0], key) for key, tols in bd.INSTRUMENT_TOLS.items() if tols[0] >= tol_ppm]
-            preset = min(fits)[1] if fits else max((tols[0], key) for key, tols in bd.INSTRUMENT_TOLS.items())[1]
-            return "ok", bd.annotate_formula(precursor_mz, positive, name, None, "", ms2, ms1, preset, halogen)
+            widest = max(bd.INSTRUMENT_TOLS.values())
+            search = min(fits)[1] if fits else (float(tol_ppm), float(widest[1]))
+            return "ok", bd.annotate_formula(precursor_mz, positive, name, None, "", ms2, ms1, search, halogen)
         except ValueError as exc:                      # BUDDY only annotates 1 < m/z < 1500
             return "range", str(exc)
         except Exception as exc:                       # missing package, crash: do not try again for the other adducts
@@ -201,7 +203,7 @@ def run_adduct_and_formula(precursor_mz, positive, ms2_peaks, ms1_peaks=None, *,
     ms1_peaks     [(mz, intensity)] isotope pattern, or None
     adduct        None / "Auto" = rank the adducts of the polarity; a name (any spelling) = use it as is. ValueError if it is unknown
                   or of the other polarity.
-    tol_ppm       precursor tolerance (ppm): picks BUDDY's instrument preset and drops formulas that miss it
+    tol_ppm       precursor tolerance (ppm): BUDDY searches at least this window (instrument preset, or the tolerance itself above the widest preset); formulas that miss it are dropped
     tol_da        fragment tolerance (Da) for the MS2 diagnostic signals
     halogen       let BUDDY consider Cl / Br / F / I (as the Formula page's "Include halogens")
     """

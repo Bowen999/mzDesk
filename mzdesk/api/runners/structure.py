@@ -87,9 +87,20 @@ def _cap(text):
 _SUBSCRIPT = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
 
-def _formula_text(formula):
-    """C21H52O6Si5 -> C₂₁H₅₂O₆Si₅ (unicode subscripts: no markup, so a table cell stays short)."""
-    return re.sub(r"\d+", lambda m: m.group().translate(_SUBSCRIPT), formula)
+_SUPERSCRIPT = str.maketrans("0123456789+-", "⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻")
+
+
+def _formula_text(formula, charge=0):
+    """C21H52O6Si5 -> C₂₁H₅₂O₆Si₅ (unicode subscripts: no markup, so a table cell stays short); an ion gets its charge, C₇H₁₆NO₃⁺."""
+    text = re.sub(r"\d+", lambda m: m.group().translate(_SUBSCRIPT), formula)
+    if charge:
+        text += ((str(abs(charge)) if abs(charge) > 1 else "") + ("+" if charge > 0 else "-")).translate(_SUPERSCRIPT)
+    return text
+
+
+def _ion_note(charge):
+    """The page warning when the derivatives stay charged (a quaternary N+ cannot be neutralized)."""
+    return f"Net charge {charge:+d} stays (quaternary N⁺ or similar): formulas and masses are those of the ion, mass = m/z."
 
 
 def _reaction_options(results, *, detail, mol=None, groups=None):
@@ -119,7 +130,7 @@ def _reaction_options(results, *, detail, mol=None, groups=None):
         if r["heavy"] is not None:
             help_.append(f"Heavy mass: ¹³C₂-labelled reagent, +{2 * deriv.C13_SHIFT:.4f} Da per label ({r['n']} label{'s' if r['n'] > 1 else ''}).")
         help_.append(abbr + ".")
-        options.append(bl.reaction_option(label, steps, formula=_formula_text(r["formula"]), mass=round(r["mass"], 4),
+        options.append(bl.reaction_option(label, steps, formula=_formula_text(r["formula"], r["charge"]), mass=round(r["mass"], 4),
                                           heavy=round(r["heavy"], 4) if r["heavy"] is not None else None, help=help_, svg=svg, product_svg=product_svg))
     return options
 
@@ -141,8 +152,10 @@ def run_platform_fit(inputs):
     tiles = [bl.tile("Lipidomics", "yes" if lipid_on else "no", value=en.lipid_class_en(f) if lipid_on and f.lipid_class else None, help=lipid_help),
              bl.tile("Metabolomics", "yes" if metab_on else "no", help=metab_help)]
 
-    mol, neutralized = deriv.neutralize(Chem.MolFromSmiles(smiles))
-    warnings = ["Input neutralized (charges removed) for the CIL / GC-MS rules."] if neutralized else []
+    mol, n_parts, neutralized = deriv.prepare(Chem.MolFromSmiles(smiles))         # the neutral form of the largest fragment, as on the other pages
+    warnings = [deriv.parts_note(n_parts)] if n_parts > 1 else []
+    if neutralized:
+        warnings.append("Input neutralized (charges removed) for the CIL / GC-MS rules.")
     groups = deriv.find_groups(mol)
     cil = deriv.cil_assess(groups)
     gc = deriv.gc_assess(mol, groups, f.n_glycosyl)
@@ -167,9 +180,12 @@ def run_platform_fit(inputs):
     if wanted:
         derived = deriv.derive(smiles, wanted)
         options = _reaction_options(derived["results"], detail=True, mol=derived["mol"], groups=derived["groups"])
+        if options and Chem.GetFormalCharge(mol):
+            warnings.append(_ion_note(Chem.GetFormalCharge(mol)))
         if gc["gc"] == "yes" and options and options[-1]["label"].startswith("GC"):
             options[-1]["help"] = ["Optional: the molecule is volatile enough to run directly."] + options[-1].get("help", [])
     if options:
+        common.note_isotope_labels(warnings, smiles, "The derivative formulas and masses are")       # the molecular weight of the tiles follows the labels
         svg = deriv.highlight_svg(derived["mol"], deriv.reacting_groups(derived["results"], derived["groups"]))
         outputs["reactions"] = bl.reaction_data(options, svg=svg)
     else:             # nothing reacts: the block is still returned, with no options (the page hides an empty reaction block)
@@ -185,14 +201,20 @@ def run_derivatization(inputs):
         raise InputError("Structure: RDKit could not parse it.")
     chosen = inputs.get("reagents")                    # missing = the default reagents; an empty list = none selected
     res = deriv.derive(smiles, chosen)
-    warnings = ["Input neutralized (charges removed) before derivatization."] if res["neutralized"] else []
+    warnings = [deriv.parts_note(res["n_parts"])] if res["n_parts"] > 1 else []
+    if res["neutralized"]:
+        warnings.append("Input neutralized (charges removed) before derivatization.")
     shown = [r for r in res["results"] if r["n"]]
+    if shown and shown[0]["charge"]:
+        warnings.append(_ion_note(shown[0]["charge"]))
     if not res["results"]:
         warnings.append("No reagent selected.")
     elif not res["groups"]:
         warnings.append("No reactive group found in this structure.")
     elif not shown:
         warnings.append("None of the selected reagents reacts with the groups found in this structure.")
+    else:
+        common.note_isotope_labels(warnings, smiles, "The derivative formulas and masses are")
 
     tones = {"GC": "jp", "CIL": "report", "UV/FLD": "neutral"}         # badge colours by platform (blue / violet / grey)
     rows = []
@@ -201,7 +223,7 @@ def run_derivatization(inputs):
         if r["ions"]:
             help_.append("EI key ions: " + "; ".join(r["ions"]) + ".")
         help_ += [_cap(w) + "." for w in r["warns"]]
-        rows.append(bl.row([bl.badge(deriv.reagent_label(r["reagent"]), tones[r["platform"]]), str(r["n"]), _formula_text(r["formula"]), f"{r['mass']:.4f}",
+        rows.append(bl.row([bl.badge(deriv.reagent_label(r["reagent"]), tones[r["platform"]]), str(r["n"]), _formula_text(r["formula"], r["charge"]), f"{r['mass']:.4f}",
                             f"{r['heavy']:.4f}" if r["heavy"] is not None else common.MISSING], help=help_))
     skipped = [deriv.reagent_label(r["reagent"]) for r in res["results"] if not r["n"]]
     outputs = {"deriv_rows": bl.table_data(rows, count=len(rows), help=("No reactive group for: " + ", ".join(skipped) + ".") if skipped else None)}

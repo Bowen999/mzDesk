@@ -764,7 +764,7 @@ MODULES = [
     module("met_shift", "Mass-Shift Search", "B", "Search a peak or feature list for <b>phase I / II metabolites</b> of the parent.",
         [structure(label="Parent compound or formula"), precursor(label="Measured precursor m/z (optional; blank = theoretical)"),
          grid("features", "Peak / feature list", ["m/z", "RT", "Intensity"], "Paste or upload: one feature per line"), file("features_file", "Feature table (CSV, optional)", ".csv"),
-         multiselect("shifts", "Mass shifts", ["+O (hydroxylation)", "−2H (dehydrogenation)", "+2H (reduction)", "−CH2 (demethylation)", "+O −CH2", "+C6H8O6 glucuronide", "+SO3 sulfate", "+C2H2O acetyl", "+C10H15N3O6S GSH", "+C2H3NO2 glycine"]),
+         multiselect("shifts", "Mass shifts", ["+O (hydroxylation)", "−2H (dehydrogenation)", "+2H (reduction)", "−CH2 (demethylation)", "+O −CH2", "+C6H8O6 glucuronide", "+SO3 sulfate", "+C2H2O acetyl", "+C10H15N3O6S GSH", "+C2H3NO glycine"]),
          number("tol_ppm", "Tolerance (ppm)", 10.0, 0.1)],
         [table(["Shift", "Δ mass", "Expected m/z", "Found m/z", "Δ ppm", "RT", "Intensity", "Candidate reaction"], id="hits"),
          figure("Features with metabolite hits marked (m/z vs RT)", id="features_plot"), notes("Assumptions", id="notes")], subgroup="dmpk", live=True,

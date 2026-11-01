@@ -144,3 +144,38 @@ def test_calculator_api_errors_and_missing_molar_mass():
                            json={"conc_value": 10, "conc_from": "mg/L", "conc_to": "µM"})
     assert response.status_code == 200
     assert response.json()["warnings"]
+
+
+# ---------------------------------------------------------------- isotope labelling: a salt is analysed by its largest fragment
+PROPRANOLOL = "CC(C)NCC(COc1cccc2ccccc12)O"
+PARTS_NOTE = "2 disconnected parts (salt or mixture): only the largest is analysed."
+
+
+def _labelling(smiles, label="13C3", adduct="[M+H]+"):
+    response = client.post("/api/modules/calculator/run", json={"lab_smiles": smiles, "lab_label": label, "lab_adduct": adduct})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+@pytest.mark.parametrize("salt", [PROPRANOLOL + ".Cl", PROPRANOLOL + ".[Cl-]", "CC(C)[NH2+]CC(COc1cccc2ccccc12)O.[Cl-]"])
+def test_a_salt_gives_the_labelled_ion_and_crosstalk_of_the_free_base(salt):
+    """Propranolol + '.Cl' gave 13C3 [M+H]+ 299.1512 and 5.97 % crosstalk (the chlorine's isotopes); '.[Cl-]' an odd-electron C16H21ClNO2; no warning."""
+    free, body = _labelling(PROPRANOLOL), _labelling(salt)
+    assert free["outputs"]["isotope_labels"]["rows"][0][:2] == ["M (13C3)", "263.17457"] and free["outputs"]["crosstalk"]["rows"][0][2] == "0.1573"
+    assert body["outputs"]["isotope_labels"]["rows"] == free["outputs"]["isotope_labels"]["rows"]
+    assert body["outputs"]["crosstalk"]["rows"] == free["outputs"]["crosstalk"]["rows"]
+    assert body["warnings"].count(PARTS_NOTE) == 1 and PARTS_NOTE not in free["warnings"]
+
+
+def test_smiles_formula_mass_takes_the_neutral_largest_fragment():
+    notes = []
+    formula, mass = calculations.smiles_formula_mass(PROPRANOLOL + ".Cl", notes)
+    assert (formula, round(mass, 4)) == ("C16H21NO2", 259.1572) and notes == [PARTS_NOTE]
+    assert calculations.smiles_formula_mass(PROPRANOLOL + ".[Cl-]")[0] == "C16H21NO2"                       # no odd-electron formula
+    assert calculations.smiles_formula_mass("[Na+].[O-]C(=O)c1ccccc1")[0] == "C7H6O2"                       # the acid, not the benzoate anion
+    assert calculations.smiles_formula_mass("CC(C)[NH2+]CC(COc1cccc2ccccc12)O.[Cl-]")[0] == "C16H21NO2"      # not the protonated cation
+    assert calculations.smiles_formula_mass(PROPRANOLOL)[0] == "C16H21NO2"
+    assert calculations.smiles_formula_mass("C[N+](C)(C)CC(=O)[O-]")[0] == "C5H11NO2"                       # betaine is M as drawn: no H added for [M+H]+ to add again
+    one = []
+    calculations.smiles_formula_mass(PROPRANOLOL, one)
+    assert one == []

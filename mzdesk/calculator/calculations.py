@@ -9,6 +9,8 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors, rdMolDescriptors
 
 from mzdesk.ms1 import isotopes
+from mzdesk.platform_fit.derivatization import neutralize
+from mzdesk.platform_fit.structure_prep import largest_fragment, parts_note
 
 
 ELECTRON = isotopes._ELECTRON
@@ -183,10 +185,17 @@ def validate_labels(labels: list[IsotopeLabel], formula: str) -> None:
             raise ValueError(f"The label needs {count} {element} atom(s), but the molecule has {counts.get(element, 0)}.")
 
 
-def smiles_formula_mass(smiles: str) -> tuple[str, float]:
+def smiles_formula_mass(smiles: str, warnings: list | None = None) -> tuple[str, float]:
+    """Neutral formula and monoisotopic mass of a SMILES. A salt or mixture is taken by its largest fragment (the other pages' choice; the note goes
+    to ``warnings`` when given), and a charged fragment (benzoate, protonated amine) by its neutral form. A net-neutral zwitterion (betaine) is M as drawn."""
     mol = Chem.MolFromSmiles((smiles or "").strip())
     if mol is None:
         raise ValueError("The SMILES could not be parsed.")
+    mol, n_parts = largest_fragment(mol)
+    if n_parts > 1 and warnings is not None:
+        warnings.append(parts_note(n_parts))
+    if Chem.GetFormalCharge(mol):
+        mol, _ = neutralize(mol)
     formula = re.sub(r"[+-]\d*$", "", rdMolDescriptors.CalcMolFormula(mol))
     return formula, float(Descriptors.ExactMolWt(mol))
 

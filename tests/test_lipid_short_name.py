@@ -26,10 +26,10 @@ from mzdesk.lipid import draw, structure as ls, texts
 from mzdesk.lipid_name_map import __version__ as NAME_MAP_VERSION, contract, lm, normalize, reasons
 
 HERE = Path(__file__).parent
-GOLDEN = json.loads((HERE / "fixtures/lipid/name_map_golden.json").read_text())
-ILLUSTRATIONS = json.loads((HERE / "fixtures/lipid/illustration_golden.json").read_text())
+GOLDEN = json.loads((HERE / "fixtures/lipid/name_map_golden.json").read_text(encoding="utf-8"))
+ILLUSTRATIONS = json.loads((HERE / "fixtures/lipid/illustration_golden.json").read_text(encoding="utf-8"))
 ILLUSTRATIONS_ASSUMPTIONS = [a for v in ILLUSTRATIONS.values() for a in v.get("assumptions", [])]
-REFERENCE_FORMULAS = json.loads((HERE / "fixtures/lipid/reference_formulas.json").read_text())
+REFERENCE_FORMULAS = json.loads((HERE / "fixtures/lipid/reference_formulas.json").read_text(encoding="utf-8"))
 PACKAGE = Path(ls.__file__).resolve().parents[1] / "lipid_name_map"
 client = TestClient(app)
 
@@ -75,7 +75,7 @@ def test_golden_covers_every_status_and_level():
 def test_vendored_package_has_no_absolute_self_import_and_finds_its_data():
     """Relative imports only (a vendored copy must not need a top-level lipid_name_map), and every data file is inside the package."""
     absolute = re.compile(r"^\s*(?:from|import)\s+lipid_name_map\b", re.M)
-    offenders = [str(p.relative_to(PACKAGE)) for p in PACKAGE.rglob("*.py") if absolute.search(p.read_text())]
+    offenders = [str(p.relative_to(PACKAGE)) for p in PACKAGE.rglob("*.py") if absolute.search(p.read_text(encoding="utf-8"))]
     assert not offenders, offenders
     data = [p for p in (PACKAGE / "data").rglob("*") if p.is_file()]
     assert len(data) >= 19 and {p.suffix for p in data} == {".csv", ".json"}
@@ -84,7 +84,7 @@ def test_vendored_package_has_no_absolute_self_import_and_finds_its_data():
 
 
 def test_package_data_pattern_covers_the_data_files():
-    text = (HERE.parent / "pyproject.toml").read_text()
+    text = (HERE.parent / "pyproject.toml").read_text(encoding="utf-8")
     assert '"lipid_name_map/data/**/*"' in text
 
 
@@ -343,6 +343,50 @@ def test_a_name_that_cannot_be_drawn_to_its_formula_gets_no_drawing(name):
     assert o["lipid_plus"]["values"]["L1"]                                 # the names are still the answer
 
 
+@pytest.mark.parametrize("name, l1", [
+    ("FA 17:0(15Me)", "FA 17:0"),            # was drawn as the straight C17 acid (C17H34O2); the real molecule has one more carbon
+    ("FA iso-17:0", "FA 17:0"),
+    ("FA anteiso-17:0", "FA 17:0"),
+    ("FA 16:0(2Me)", "FA 16:0"),
+    ("PC 16:0/17:0(15Me)", "PC 33:0"),
+])
+def test_a_methyl_branched_chain_gets_no_drawing_and_says_why(name, l1):
+    """A straight chain would be a different molecule, so the page names the lipid but does not draw it. The names are unchanged."""
+    with pytest.raises(ls.BranchedChain):
+        ls.illustrate(name)
+    r = client.post("/api/modules/lipid_short_name/run", json={"name": name})
+    assert r.status_code == 200
+    o = r.json()["outputs"]
+    assert "structure" not in o and o["no_structure"]["items"] == ["Branched chain: structure not drawn."]
+    assert o["assumptions"]["items"] == []
+    assert o["lipid_plus"]["values"]["L1"] == l1 and run(name) == o
+
+
+METHYL_FLAG = "Methyl branch carbon not counted at the sum level."
+ISO_FLAG = "Branch type (iso/anteiso) not kept at the sum level."
+
+
+@pytest.mark.parametrize("name, lines", [
+    ("FA 17:0(15Me)", [METHYL_FLAG]),                  # positional methyl: the CH3 is not in L1
+    ("FA 16:0(2Me)", [METHYL_FLAG]),
+    ("FA 17:0-15me", [METHYL_FLAG]),
+    ("FA iso-17:0", [ISO_FLAG]),                       # iso / anteiso: the carbon count already holds the branch carbon, the branch type is what is lost
+    ("FA anteiso-17:0", [ISO_FLAG]),
+    ("PC 16:0/iso-17:0", [ISO_FLAG]),
+    ("PC iso-16:0/17:0(15Me)", [METHYL_FLAG, ISO_FLAG]),     # one of each, on two chains
+    ("PC 16:0/17:0(15Me) [M+H]+", ["Adduct removed from the name.", METHYL_FLAG]),
+])
+def test_the_branch_flag_says_what_the_name_lost(name, lines):
+    assert run(name)["flags"]["items"] == lines
+
+
+@pytest.mark.parametrize("name", ["PC 34:1", "PC 16:0/18:1", "TG 52:2", "PE P-18:0/20:4", "Cer 18:1;O2/16:0"])
+def test_common_unbranched_lipids_are_still_drawn(name):
+    o = run(name)
+    assert "structure" in o and o["no_structure"]["items"] == []
+    assert ls.illustrate(name).formula
+
+
 @pytest.mark.parametrize("name, formula", [
     ("CL 72:8;O4", "C81H142O21P2"),         # used to lose all 4 oxygens
     ("CL 18:2_18:2_18:2_18:2;O", "C81H142O18P2"),
@@ -596,6 +640,6 @@ def test_the_drawing_is_deterministic():
 
 
 def test_the_page_icon_exists():
-    icons = (HERE.parent / "web/src/assets/icons.svg").read_text()
+    icons = (HERE.parent / "web/src/assets/icons.svg").read_text(encoding="utf-8")
     assert 'id="lipid_short_name"' in icons
-    assert '"lipid_short_name"' in (HERE.parent / "web/src/components/Icon.tsx").read_text()
+    assert '"lipid_short_name"' in (HERE.parent / "web/src/components/Icon.tsx").read_text(encoding="utf-8")

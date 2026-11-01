@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from mzdesk import spec
 from mzdesk.api.app import app
+from mzdesk.calculator import mass_shift
 
 
 client = TestClient(app)
@@ -14,6 +15,23 @@ def _module(module_id):
 
 def _run(inputs):
     return client.post("/api/modules/met_shift/run", json=inputs)
+
+
+def test_every_spec_shift_option_is_known_to_the_engine():
+    options = next(field for field in _module("met_shift")["inputs"] if field["id"] == "shifts")["options"]
+    assert len(options) == len(set(options))
+    result = mass_shift.search([], 200.0, 1, options, 10.0)
+    assert [row["label"] for row in result["rows"]] == options
+    glycine = next(row for row in result["rows"] if "glycine" in row["label"])
+    assert abs(glycine["delta"] - 57.02146) < 1e-4
+    response = _run({
+        "structure": {"mode": "Name / ID / Formula", "value": "C8H10N4O2"},
+        "precursor": {"precursor_mz": "", "ion_mode": "Positive", "adduct": "Auto"},
+        "shifts": options,
+        "tol_ppm": 10,
+    })
+    assert response.status_code == 200, response.text
+    assert len(response.json()["outputs"]["hits"]["rows"]) == len(options)
 
 
 def test_example_matches_three_shifts_and_three_features():

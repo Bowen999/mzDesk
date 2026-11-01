@@ -53,7 +53,8 @@ FLAG_TEXT = {
     "alias_split": "The name had several aliases (A | B); they were combined.",
     "base_chain_unknown": "Which chain is the sphingoid base is not known.",
     "base_oxygen_assumed": "Sphingoid base oxygens assumed (d type, 2 OH).",
-    "branch_dropped": "Methyl branch not counted at the sum level.",
+    "branch_dropped": "Methyl branch carbon not counted at the sum level.",           # (15Me)：L1 不计甲基的 C
+    "branch_type_dropped": "Branch type (iso/anteiso) not kept at the sum level.",    # 不是名字包的码：iso / anteiso 的 C 已含支链碳，只是支链信息丢了（runner 按原文选）
     "class_implied_OH": "The class implies one OH.",
     "convention_unverified": "Naming convention not verified.",
     "ester_position_read": "The number before O(...) is the ester position, not an oxygen count.",

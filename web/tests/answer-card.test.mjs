@@ -26,7 +26,7 @@ const text = html => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
 
 test("the headline is the compound, its level and its score", () => {
   const html = view(group());
-  assert.match(html, /<p class="answer-headline"><span class="answer-name">Caffeine<\/span>/);
+  assert.match(html, /<p class="answer-headline"><span class="answer-name"><button type="button" class="cell-depict" aria-expanded="false">Caffeine<\/button><\/span>/);
   assert.match(html, /<span class="badge tone-good" title="Level 2a: probable structure[^"]*">Level 2a<\/span>/);
   assert.match(html, /title="Final score 0.800"><span class="sr-only">Final score <\/span>0\.80<\/span>/);
   assert.equal((html.match(/answer-headline/g) ?? []).length, 1);

@@ -33,6 +33,7 @@ def run_esi(inputs):
 
     warnings = []
     smiles = common.structure(inputs, label="Structure", warnings=warnings)["smiles"]
+    common.note_isotope_labels(warnings, smiles, "The precursor m/z and ion formula are")
     adduct = common.text(inputs, "adduct") or "[M+H]+"
     try:
         res = cf.run_cfmid(smiles, adduct)

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { darkColors } from "../darkColors";
+import { useReportMode } from "../report/mode";
 import { useTheme } from "../themeMode";
 import type { BlockData, PeakCard } from "../types";
 import { hitPeak, hoverCardPosition, stickBaseline, type PeakHit } from "./peakHover";
@@ -162,13 +163,15 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
   const [hover, setHover] = useState<{ p: PeakCard; x: number; y: number; hit: PeakHit } | null>(null);
   const [err, setErr] = useState("");
   const [ready, setReady] = useState(false);
+  const report = useReportMode();
   useEffect(() => {
     const el = ref.current as any;
     if (!el) return;
     let Plotly: any = null, alive = true, busy = false, ro: ResizeObserver | null = null;
     let removeHover = () => {};
+    let labelled: Promise<unknown> = Promise.resolve();      // the peak labels are a second drawing step
     setHover(null);
-    loadPlotly().then(P => {
+    const drawn = loadPlotly().then(P => {
       if (!alive) return;
       Plotly = P;
       const layout = { ...fig.layout, autosize: true, font: { ...(fig.layout.font ?? {}), family: SANS } };
@@ -196,7 +199,7 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
         const relabel = () => {
           busy = true;
           const anns = peakLabels(el, peaks, staticAnn, precursors, dark);
-          Plotly.relayout(el, { annotations: dark ? JSON.parse(darkColors(JSON.stringify(anns), true, keep)) : anns }).finally(() => { busy = false; });
+          labelled = Plotly.relayout(el, { annotations: dark ? JSON.parse(darkColors(JSON.stringify(anns), true, keep)) : anns }).finally(() => { busy = false; });
         };
         relabel();
         const clearHover = () => setHover(null);
@@ -226,6 +229,7 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
         });
       });
     }).catch(e => alive && setErr(String(e)));
+    report?.track(drawn.then(() => labelled));                // the Session report waits until the plot and its labels are drawn
     return () => { alive = false; removeHover(); ro?.disconnect(); if (Plotly) Plotly.purge(el); };
   }, [fig, peaks, keep]);   // fig changes with the theme too
   if (err) return <div className="out placeholder-box">Figure failed: {err}</div>;
@@ -283,12 +287,13 @@ export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; cla
   const [err, setErr] = useState("");
   const [ready, setReady] = useState(false);
   const { dark } = useTheme();
+  const report = useReportMode();
   useEffect(() => {
     let viewer: any = null, alive = true, ro: ResizeObserver | null = null;
     setReady(false);
     viewerRef.current = null;
     homeRef.current = null;
-    load3Dmol().then($3Dmol => {
+    const drawn = load3Dmol().then($3Dmol => {
       if (!alive || !ref.current) return;
       ref.current.innerHTML = "";
       viewer = $3Dmol.createViewer(ref.current, { backgroundColor: dark ? "#181B21" : "white" });
@@ -305,6 +310,7 @@ export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; cla
         ro.observe(ref.current);
       }
     }).catch(e => alive && setErr(String(e)));
+    report?.track(drawn);                                     // the Session report waits until the model is drawn
     return () => { alive = false; ro?.disconnect(); viewer?.clear?.(); viewerRef.current = null; homeRef.current = null; };
   }, [molblock, dark]);
 
@@ -319,7 +325,7 @@ export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; cla
   return (
     <div className="mol3d-holder">
       <div ref={ref} className={className} />
-      {ready && <button type="button" className="mol3d-reset" onClick={reset} title="Reset the view to the fitted scale" aria-label="Reset the 3D view">
+      {ready && !report && <button type="button" className="mol3d-reset" onClick={reset} title="Reset the view to the fitted scale" aria-label="Reset the 3D view">
         <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false">
           <path d="M13.2 8a5.2 5.2 0 1 1-1.5-3.7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           <path d="M13.2 2.6v3h-3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />

@@ -621,7 +621,7 @@ def test_real_index_counts_and_licence():
     meta = index.meta
     assert meta["commit"] == ccs_setup.COMMIT and meta["licence"] == "MIT" and meta["datasets"] == 26
     assert meta["rows_kept"] == len(index) == sum(meta["rows_by_type"].values()) > 14000
-    assert (ccs.ccs_dir() / "LICENSE.txt").is_file() and "Dylan" in (ccs.ccs_dir() / "LICENSE.txt").read_text()
+    assert (ccs.ccs_dir() / "LICENSE.txt").is_file() and "Dylan" in (ccs.ccs_dir() / "LICENSE.txt").read_text(encoding="utf-8")
     assert {r.ccs_type for r in index.rows} == {"DT", "TW", "TIMS"} and all(r.ccs > 0 for r in index.rows)
 
 

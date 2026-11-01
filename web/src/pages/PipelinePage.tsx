@@ -14,7 +14,7 @@ import { StructureProvider } from "../components/StructureHover";
 import { WorkflowProgress } from "../components/WorkflowProgress";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
-import type { AnnotationResult, Field, Job, Spec, WorkflowResult } from "../types";
+import type { AnnotationResult, Field, Job, JobStep, Pipeline, Spec, WorkflowResult } from "../types";
 
 const POLL_MS = 1500;
 const MAX_POLL_FAILURES = 3;                    // a dropped request is retried; an answer of the server (a job that is gone after a restart) ends the run at once
@@ -58,6 +58,55 @@ export function WorkflowResultView({ result }: { result: WorkflowResult }) {
       {blocks.length > 0 && <OutputList blocks={blocks} outputs={outputs} live />}
     </>
   );
+}
+
+/** The adduct the person asked for (not "Auto"): ESI MS/MS Annotation says when its answer uses another one. */
+export const requestedAdductOf = (pipeId: string, payload: Record<string, any>): string | null => {
+  const adduct = payload.precursor?.adduct;
+  return pipeId === ESI_PIPELINE && adduct && adduct !== "Auto" ? adduct : null;
+};
+
+/** The title of a workflow page and its one-line description. The Session report draws the same. */
+export function PipelineHead({ pipe }: { pipe: Pipeline }) {
+  return (
+    <>
+      <div className="module-heading">
+        <span className="module-emblem"><Icon name={pipelineIcon(pipe.id)} /></span>
+        <div className="module-heading-copy"><div className="module-kicker">Workflows</div><h1>{pipe.title}</h1></div>
+      </div>
+      <p className="one-liner" dangerouslySetInnerHTML={{ __html: pipe.one_liner }} />
+    </>
+  );
+}
+
+/** What a workflow page shows under its inputs and progress bar: the result (ESI MS/MS Annotation's own view, or the generic one) and the steps.
+ *  The Session report draws the same from the logged result and steps. */
+export function PipelineResults({ pipeId, jobResult, job, requestedAdduct }:
+  { pipeId: string; jobResult: AnnotationResult | WorkflowResult | null; job: { steps: JobStep[] } | null; requestedAdduct: string | null }) {
+  const result = pipeId === ESI_PIPELINE && jobResult && !isWorkflowResult(jobResult) ? jobResult : null;          // ESI MS/MS Annotation's own result
+  const workflowResult = pipeId !== ESI_PIPELINE && jobResult && isWorkflowResult(jobResult) ? jobResult : null;   // every other workflow
+  const content = (
+    <>
+      {result && (
+        <>
+          <AnswerCard result={result} requestedAdduct={requestedAdduct} />
+          <SpectrumEvidence result={result} />
+          <IsomerEvidence result={result} />
+          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
+            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
+          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
+            <CandidateTable candidates={result.candidates} />
+          </FragmentProvider>
+        </>)}
+      {workflowResult && <WorkflowResultView result={workflowResult} />}
+      {job && (
+        <>
+          <div className="results-head"><h2 className="panel-title">Steps</h2></div>
+          <StepList steps={job.steps} />
+        </>)}
+    </>
+  );
+  return pipeId === ESI_PIPELINE ? <StructureProvider result={result}>{content}</StructureProvider> : content;
 }
 
 export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
@@ -126,8 +175,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     const t0 = performance.now();
     try {
       const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
-      const adduct = payload.precursor?.adduct;
-      setRequestedAdduct(pipe.id === ESI_PIPELINE && adduct && adduct !== "Auto" ? adduct : null);
+      setRequestedAdduct(requestedAdductOf(pipe.id, payload));
       const { job_id } = await startPipeline(pipe.id, payload);
       if (ticket.current !== mine) return;
       setHasStartedJob(true);
@@ -162,37 +210,9 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     <div className={"field-slot" + (f.new_row ? " new-row" : "")} data-field={f.id} key={f.id ?? i}>
       <FieldInput field={f} value={f.id ? values[f.id] : undefined} error={f.id ? errors[f.id] : undefined} onChange={v => f.id && update(f.id, v)} />
     </div>);
-  const jobResult = job?.result ?? null;
-  const result = pipe.id === ESI_PIPELINE && jobResult && !isWorkflowResult(jobResult) ? jobResult : null;          // ESI MS/MS Annotation's own result
-  const workflowResult = pipe.id !== ESI_PIPELINE && jobResult && isWorkflowResult(jobResult) ? jobResult : null;   // every other workflow
-  const content = (
-    <>
-      {result && (
-        <>
-          <AnswerCard result={result} requestedAdduct={requestedAdduct} />
-          <SpectrumEvidence result={result} />
-          <IsomerEvidence result={result} />
-          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
-            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
-          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
-            <CandidateTable candidates={result.candidates} />
-          </FragmentProvider>
-        </>)}
-      {workflowResult && <WorkflowResultView result={workflowResult} />}
-      {job && (
-        <>
-          <div className="results-head"><h2 className="panel-title">Steps</h2></div>
-          <StepList steps={job.steps} />
-        </>)}
-    </>
-  );
   return (
     <div className="page module-page" data-pipeline={pipe.id}>
-      <div className="module-heading">
-        <span className="module-emblem"><Icon name={pipelineIcon(pipe.id)} /></span>
-        <div className="module-heading-copy"><div className="module-kicker">Workflows</div><h1>{pipe.title}</h1></div>
-      </div>
-      <p className="one-liner" dangerouslySetInnerHTML={{ __html: pipe.one_liner }} />
+      <PipelineHead pipe={pipe} />
       <div key={formVersion} className={"panel" + (busy ? " is-running" : "")}>
         <div className="panel-head"><h2 className="panel-title">Inputs</h2><span className="panel-note"><span className="req" aria-hidden="true">*</span> required</span></div>
         {groupFields(shown).map(g => {
@@ -214,7 +234,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
       {error && <div className="alert error" role="alert">{error}</div>}
       {(busy || job || (hasStartedJob && error)) && <WorkflowProgress job={job} awaitingFirstUpdate={hasStartedJob}
         trackingStopped={!!error && !busy && hasStartedJob && (!job || job.status === "running" || job.status === "queued")} />}
-      {pipe.id === ESI_PIPELINE ? <StructureProvider result={result}>{content}</StructureProvider> : content}
+      <PipelineResults pipeId={pipe.id} jobResult={job?.result ?? null} job={job} requestedAdduct={requestedAdduct} />
       {guard.dialog}
     </div>
   );

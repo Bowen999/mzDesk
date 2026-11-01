@@ -46,8 +46,11 @@ def run_adducts(inputs):
                 "m/z": {"value": " / ".join(part(t, "mz") for t in tops),
                         "note": " / ".join((t.formula or "") if t else "—" for t in tops)}}
     rows = [B.row([i.adduct, i.formula or common.MISSING, fmt(i.mz, 4), B.badge(i.likelihood, TONE[i.likelihood])], help=i.reason) for i in res.ions]
+    warnings = list(res.warnings)
+    if rows:
+        common.note_isotope_labels(warnings, smiles, "The ion formulas and m/z values are")
     return {"outputs": {"base": {"values": base}, "ions": B.table_data(rows, count=len(rows)), "rule_hits": {"items": res.notes}},
-            "warnings": res.warnings}
+            "warnings": warnings}
 
 
 RUNNERS = {"adducts": run_adducts}

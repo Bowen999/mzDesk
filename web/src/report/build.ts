@@ -1,15 +1,22 @@
+import { createElement } from "react";
+import { flushSync } from "react-dom";
+import { createRoot } from "react-dom/client";
 import iconsUrl from "../assets/icons.svg?url";
 import { initialValues, summarizeInputs } from "../components/Fields";
 import { resolvedTheme } from "../themeMode";
 import type { Field, Spec } from "../types";
 import { listRuns, type ReportEntry } from "./log";
+import { MAX_REPORT_ROWS, type ReportMode } from "./mode";
+import { ReportPage } from "./ReportPage";
 import { edmonton, newRunId, REPORT_TZ } from "./time";
 import { makeZip } from "./zip";
 
 /**
  * Session report: one folder (<run id>/) with report.json (inputs + raw results of every page that has a result) and
- * report.html (the same pages as they look on screen, one self-contained file: styles, fonts, icons and images inlined).
- * The HTML is taken from the pages that stay mounted in this tab (App.tsx), so it matches what the person sees.
+ * report.html (the same pages, one self-contained file: styles, fonts, icons and images inlined).
+ * Each page is drawn once more, off screen, from the result it logged, with the same components in report mode (report/mode.ts): folded
+ * blocks are native <details>, tables list their rows instead of paging, long text is whole, and controls that need the app are left out.
+ * That second drawing is a separate React root, so the pages on screen keep their open blocks, table pages and filters, and nothing flashes.
  * The folder is delivered as <run id>.zip, because a browser page cannot write a folder to disk.
  */
 export type BuiltReport = { runId: string; filename: string; blob: Blob; pages: number };
@@ -79,11 +86,8 @@ async function spriteSymbols(): Promise<string> {
 
 const STRIP = [":scope > .panel", ":scope > .run-progress", ":scope > .empty-hint", ":scope > .alert.error", ".modebar-container", ".hp-btn", ".copy", "script", "dialog"];
 
-/** Copy of a page as it is on screen, minus the controls that do nothing in a file. */
-async function clonePage(e: ReportEntry): Promise<string | null> {
-  const attr = e.kind === "module" ? "data-module" : "data-pipeline";
-  const src = document.querySelector<HTMLElement>(`[${attr}="${CSS.escape(e.id)}"]`);
-  if (!src) return null;
+/** Copy of a drawn page, minus the controls that do nothing in a file. */
+async function clonePage(src: HTMLElement): Promise<string> {
   const copy = src.cloneNode(true) as HTMLElement;
   for (const sel of STRIP) copy.querySelectorAll(sel).forEach(n => n.remove());
   // the hover previews (names, SMILES) need the app; in the file they are plain text
@@ -109,6 +113,41 @@ async function clonePage(e: ReportEntry): Promise<string | null> {
     if (i >= 0) u.setAttribute("href", h.slice(i));
   });
   return copy.outerHTML;
+}
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+const FIGURE_WAIT_MS = 20000;        // longest wait for the figures of one page
+
+/** A page is as wide here as the page area on screen (at most the width the report gives it), so a figure is drawn as wide as the person saw it. */
+const pageWidth = () => Math.min(1240, Math.max(720, document.querySelector<HTMLElement>("main.main")?.clientWidth || 1100));
+
+/** Draws the page in report mode in a hidden box outside the window, waits for its figures, and returns its HTML. */
+async function renderPage(spec: Spec, e: ReportEntry, n: number): Promise<string | null> {
+  const host = document.createElement("div");
+  host.className = "main";
+  host.setAttribute("aria-hidden", "true");
+  host.style.cssText = `position:fixed;left:-20000px;top:0;width:${pageWidth()}px;visibility:hidden;pointer-events:none`;
+  document.body.appendChild(host);
+  const pending: Promise<unknown>[] = [];
+  const mode: ReportMode = { maxRows: MAX_REPORT_ROWS, track: p => { pending.push(p); } };
+  const root = createRoot(host, { identifierPrefix: `rp${n}-` });      // the ids of this drawing never meet those of the live pages
+  try {
+    flushSync(() => root.render(createElement(ReportPage, { spec, entry: e, mode })));
+    // Plotly and 3Dmol draw after the first render: wait for them, then for what follows (peak labels, the "Loading" note, text fitted to its box)
+    const timeout = sleep(FIGURE_WAIT_MS);
+    for (let seen = 0; seen < pending.length;) {
+      const batch = pending.slice(seen);
+      seen = pending.length;
+      await Promise.race([Promise.allSettled(batch), timeout]);
+    }
+    for (let i = 0; i < 20 && host.querySelector(".fig-loading"); i++) await sleep(50);
+    await sleep(100);
+    const page = host.firstElementChild as HTMLElement | null;
+    return page ? await clonePage(page) : null;
+  } finally {
+    root.unmount();
+    host.remove();
+  }
 }
 
 /** Long strings (spectra, files) are shortened in the HTML view; report.json keeps them whole. */
@@ -144,6 +183,12 @@ const REPORT_CSS = `
 .rp-chip{display:inline-block;margin:0 6px 6px 0;padding:2px 9px;background:var(--canvas);border:1px solid var(--line);border-radius:99px;font-size:12px}
 .rp-inputs{margin:0 0 10px}.rp-inputs pre{max-height:360px;overflow:auto;padding:10px 12px;background:var(--canvas);border:1px solid var(--line);border-radius:8px;font-size:12px}
 .rp-entry .page{padding:6px 0 0;max-width:none}
+.rp-entry details.gt-group>summary{list-style:none;cursor:pointer}
+.rp-entry details.gt-group>summary::-webkit-details-marker{display:none}
+.rp-entry details.gt-group[open] .gt-caret{transform:rotate(45deg);margin-bottom:4px}
+.rp-entry .cand-row,.rp-entry div.gm-row{cursor:auto}
+.rp-entry div.gm-row{box-sizing:border-box}
+.rp-entry .cand-table .cand-detail>td{padding-left:12px}
 .rp-foot{margin-top:40px;color:var(--faint);font-size:12px}
 @media print{.rp-entry{break-before:page}.rp-entry:first-of-type{break-before:auto}}
 `;
@@ -154,7 +199,7 @@ function buildHtml(spec: Spec, runId: string, when: ReturnType<typeof edmonton>,
 <section class="rp-entry" id="rp-${i + 1}">
   <div class="rp-entry-head"><span class="rp-no">${i + 1} / ${entries.length}</span><span>${esc(e.section)}</span><span>finished ${esc(e.finishedAt.replace("T", " "))}</span>${e.seconds != null ? `<span>${e.seconds.toFixed(1)} s</span>` : ""}</div>
   ${inputsHtml(spec, e)}
-  ${pages[i] ?? `<p class="empty-hint">The page was not on screen when the report was made; its result is in report.json.</p>`}
+  ${pages[i] ?? `<p class="empty-hint">This page could not be drawn for the report; its result is in report.json.</p>`}
 </section>`).join("\n");
   return `<!doctype html>
 <html lang="en" data-theme="${theme}">
@@ -194,7 +239,10 @@ export async function buildReport(spec: Spec): Promise<BuiltReport | null> {
   const theme = resolvedTheme();
   const [css, sprite] = await Promise.all([collectCss(), spriteSymbols()]);
   const pages: (string | null)[] = [];
-  for (const e of entries) pages.push(await clonePage(e));
+  for (const [i, e] of entries.entries()) {
+    try { pages.push(await renderPage(spec, e, i + 1)); }
+    catch (err) { console.error("Session report: page not drawn", e.key, err); pages.push(null); }      // one page that fails does not stop the others
+  }
   const json = {
     report_format: 1,
     run_id: runId,

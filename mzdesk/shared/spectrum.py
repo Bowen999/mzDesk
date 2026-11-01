@@ -166,38 +166,140 @@ def _massbank_pairs(s):
     return out
 
 
-def _line_pairs(s):
-    """(pairs, any ``mz:int`` token) for line-based text; headers (lines not starting with a number) are skipped."""
-    peaks, colon = [], False
-    segments = []
-    for raw in s.splitlines():                           # ';' separates peaks only on lines that start with a number
-        segments += raw.split(";") if re.match(r"\s*[\d.+-]", raw) else [raw]
-    for raw in segments:
-        line = _COLON_GAP.sub(":", raw.strip())
-        toks = [t for t in _SEP.split(line) if t]
-        if not toks or not re.match(r"[\d.+-]", toks[0]):
+_NUM_START = re.compile(r"\s*[\d.+-]")
+_PLAIN = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")      # 138.0662  1e5
+_COMMA_NUM = re.compile(r"[-+]?\d+,\d+")                                # 138,0662 (decimal comma), 1,200 (thousands), or "mz,int" when nothing else separates the columns
+_THOUSANDS = re.compile(r"[-+]?\d{1,3}(?:,\d{3})+(?:\.\d+)?")           # 1,200  1,234,567  1,234.5
+_GROUP3 = re.compile(r"[-+]?\d{1,3},\d{3}(?:\.\d+)?")                  # 1,200  1,234.5: one thousands group; could also be 1.2 (three decimals) or the EI csv row 41,100.5
+_ZERO_FRAC = re.compile(r"[-+]?\d+,0\d+")                               # 195,0877: nobody writes an intensity 0877, so this comma is a decimal one
+NOTE_DECIMAL_COMMA = "Decimal commas (as in 138,0662) were read as decimal points."
+NOTE_THOUSANDS = "Commas in numbers like 1,200 were read as thousands separators (1200)."
+NOTE_EXTRA_NUMBERS = "Some lines have more than two numbers; only the first two (m/z, intensity) were used."
+
+
+def _note(notes, message):
+    if notes is not None and message not in notes:
+        notes.append(message)
+
+
+def _certain_thousands(cell):
+    """1,234,567 can only be thousands groups; 1,200 could also be 1.2 written with three decimals, and 41,100.5 an EI csv row."""
+    return bool(_THOUSANDS.fullmatch(cell)) and cell.count(",") > 1
+
+
+def _is_plain(cell):
+    """A number whose commas (if any) cannot be decimal commas."""
+    return bool(_PLAIN.fullmatch(cell)) or _certain_thousands(cell)
+
+
+def _cells(text):
+    """The tab / space separated cells of a line, without the cells that are only commas ("195.0877 , 100")."""
+    return [c for c in text.split() if c.strip(",")]
+
+
+def _starts_number(cells):
+    return bool(cells) and bool(_NUM_START.match(cells[0].lstrip(",")))
+
+
+def _proves_decimal_comma(cells):
+    """True when this row shows that the text writes decimals with a comma: 195,0877 (a 0 right after the comma), or a comma number
+    standing among plain ones (138,0662<TAB>100; 100 32,5) that is not a bare thousands group like 1,200."""
+    commas = [c for c in cells if _COMMA_NUM.fullmatch(c)]
+    if not commas:
+        return False
+    if any(_ZERO_FRAC.fullmatch(c) and not _GROUP3.fullmatch(c) for c in commas):
+        return True
+    if not any(_is_plain(c) for c in cells):
+        return False
+    return bool(_COMMA_NUM.fullmatch(cells[0])) or any(not _GROUP3.fullmatch(c) for c in commas)
+
+
+def _row_numbers(cells, decimal, notes):
+    """The cells of one peak row (split by tab / space / ';') -> number strings, once every comma has been given its meaning.
+
+    138,0662 is a decimal comma when another cell stands next to it (138,0662<TAB>100) or the text proves decimal commas elsewhere
+    (``decimal``); 1,200 after a dot-decimal m/z is a thousands group. With nothing else separating the columns a comma still
+    separates them: "41,100" is m/z 41, intensity 100 (the usual EI csv)."""
+    plain = any(_is_plain(c) for c in cells)
+    comma_mz = bool(_COMMA_NUM.fullmatch(cells[0]))
+    out = []
+    for i, cell in enumerate(cells):
+        if "," not in cell:
+            out.append(cell)
+        elif _certain_thousands(cell) or (i > 0 and plain and not (decimal or comma_mz) and _GROUP3.fullmatch(cell)):
+            out.append(cell.replace(",", ""))
+            _note(notes, NOTE_THOUSANDS)
+        elif not _COMMA_NUM.fullmatch(cell):
+            out += [t for t in cell.split(",") if t]                    # "195.0877,100": a csv pair
+        elif plain or decimal:
+            out.append(cell.replace(",", "."))
+            _note(notes, NOTE_DECIMAL_COMMA)
+        else:
+            out += cell.split(",")
+    return out
+
+
+def _line_pairs(s, notes=None):
+    """(pairs, any ``mz:int`` token) for line-based text; headers (lines not starting with a number) are skipped.
+
+    ``notes`` (a list, optional) receives what had to be guessed: decimal / thousands commas, rows with more than two numbers."""
+    lines = s.splitlines()
+    n_numeric = sum(1 for raw in lines if _NUM_START.match(raw))
+    rows = []                                            # ("colon", "mz:int ..." line) | ("cells", cells of one peak) | ("cols", cells of a ';' column row)
+    for raw in lines:                                    # ';' separates peaks only on lines that start with a number
+        parts = [q.strip() for q in raw.split(";")] if _NUM_START.match(raw) else [raw]
+        while parts and not parts[-1]:                   # "195.0877;100;" (a trailing ';')
+            parts.pop()
+        # "195.0877;100" and "195.0877;100;[M+H]+" are csv rows with ';' columns (m/z; intensity; …).
+        # One line of numbers only ("100.1;200.2;300.3") is a ';' separated list of m/z.
+        numeric = [bool(_PLAIN.fullmatch(p) or _COMMA_NUM.fullmatch(p) or _THOUSANDS.fullmatch(p)) for p in parts]
+        if len(parts) > 1 and numeric[0] and numeric[1] and (not any(numeric[2:]) or (all(numeric) and n_numeric > 1)):
+            rows.append(("cols", parts))
             continue
-        pairs = []
-        for tok in toks:
-            if ":" not in tok:
+        for part in parts:
+            line = _COLON_GAP.sub(":", part.strip())
+            rows.append(("colon", line) if ":" in line else ("cells", _cells(line)))
+    decimal = any(_proves_decimal_comma(r[1]) for r in rows if r[0] != "colon" and _starts_number(r[1]))
+    peaks, colon = [], False
+    for kind, data in rows:
+        if kind == "colon":
+            toks = [t for t in _SEP.split(data) if t]
+            if not toks or not re.match(r"[\d.+-]", toks[0]):
                 continue
-            mz_s, _, int_s = tok.partition(":")
-            mz = _finite(mz_s)
-            inten = 1.0 if int_s == "" else _finite(int_s)
+            pairs = []
+            for tok in toks:
+                if ":" not in tok:
+                    continue
+                mz_s, _, int_s = tok.partition(":")
+                mz = _finite(mz_s)
+                inten = 1.0 if int_s == "" else _finite(int_s)
+                if mz is not None and inten is not None:
+                    pairs.append((mz, inten))
+            colon = colon or bool(pairs)
+            if not pairs:                                # plain "mz [intensity] [extra…]" line
+                mz = _finite(toks[0])
+                inten = _finite(toks[1]) if len(toks) > 1 else 1.0
+                if mz is not None and inten is not None:
+                    pairs.append((mz, inten))
+            peaks.extend(pairs)
+            continue
+        # "41,100;55,85" is two "mz,int" peaks, not m/z 41.1 with intensity 55.85
+        split = kind == "cols" and not decimal and not any(_is_plain(c) for c in data)
+        for cells in [_cells(c) for c in data] if split else [data]:
+            if not _starts_number(cells):
+                continue
+            nums = _row_numbers(cells, decimal, notes)
+            mz = _finite(nums[0])
+            inten = _finite(nums[1]) if len(nums) > 1 else 1.0
             if mz is not None and inten is not None:
-                pairs.append((mz, inten))
-        colon = colon or bool(pairs)
-        if not pairs:                                    # plain "mz [intensity] [extra…]" line
-            mz = _finite(toks[0])
-            inten = _finite(toks[1]) if len(toks) > 1 else 1.0
-            if mz is not None and inten is not None:
-                pairs.append((mz, inten))
-        peaks.extend(pairs)
+                peaks.append((mz, inten))
+                if sum(_finite(t) is not None for t in nums) > 2:
+                    _note(notes, NOTE_EXTRA_NUMBERS)
     return peaks, colon
 
 
-def _extract(text):
-    """(format label, raw ``(mz, intensity)`` pairs) of a peak list in any supported format."""
+def _extract(text, notes=None):
+    """(format label, raw ``(mz, intensity)`` pairs) of a peak list in any supported format; ``notes`` as in _line_pairs."""
     s = (text or "").strip()
     if not s:
         return "Unknown", []
@@ -219,10 +321,10 @@ def _extract(text):
         nxt = _SIRIUS_NEXT.search(body)
         if nxt:
             body = body[:nxt.start()]
-        pairs, _ = _line_pairs(body)
+        pairs, _ = _line_pairs(body, notes)
         if pairs:
             return "SIRIUS .ms", pairs
-    pairs, colon = _line_pairs(s)
+    pairs, colon = _line_pairs(s, notes)
     if not pairs:
         return "Unknown", []
     if _HAS_MGF.search(s):
@@ -243,27 +345,36 @@ def detect_format(text):
     return _extract(text)[0]
 
 
-def parse_spectrum(text):
-    """Parse a peak list into a sorted list of ``(mz, intensity)`` tuples.
-
-    Auto-detects: one ``mz intensity`` pair per line (whitespace-, comma- or tab-separated; extra
-    columns ignored; a bare ``mz`` gets intensity 1.0, so HMDB peak lists, CSV and SIRIUS .ms
-    work), ``mz:intensity`` tokens (MS-DIAL / MoNA; several per line, ``mz:`` = 1.0), MSP, MGF,
-    GNPS ``[[mz, int], …]``, JSON objects, ``mz = [...]`` / ``intensities = [...]`` arrays,
-    HMDB ``<ms-ms-peak>`` XML and MassBank records (only the ``PK$PEAK`` lines). In line-based
-    text, lines that do not start with a number are headers (``Name: PG 36:2`` must not yield a
-    peak at m/z 36; ``PEPMASS=…``, ``Num Peaks: 13``). Malformed entries are skipped,
-    non-finite values, m/z <= 0 and intensity <= 0 are dropped, and duplicate m/z (rounded to
-    5 dp) are collapsed keeping the most intense.
-    """
+def parse_spectrum_notes(text):
+    """``(peaks, notes)``: parse_spectrum plus the list of guesses made while reading the text (decimal or thousands commas, rows with more
+    than two numbers). Shown to the user as page warnings by api.common.spectrum."""
+    notes = []
     agg = {}
-    for mz, inten in _extract(text)[1]:
+    for mz, inten in _extract(text, notes)[1]:
         if mz <= 0 or inten <= 0:
             continue
         key = round(mz, 5)
         if inten > agg.get(key, 0.0):
             agg[key] = inten
-    return sorted(agg.items())
+    return sorted(agg.items()), notes
+
+
+def parse_spectrum(text):
+    """Parse a peak list into a sorted list of ``(mz, intensity)`` tuples.
+
+    Auto-detects: one ``mz intensity`` pair per line (whitespace-, comma- or tab-separated; extra
+    columns ignored; a bare ``mz`` gets intensity 1.0, so HMDB peak lists, CSV and SIRIUS .ms
+    work), ``mz;intensity`` csv rows, ``mz:intensity`` tokens (MS-DIAL / MoNA; several per line, ``mz:`` = 1.0), MSP, MGF,
+    GNPS ``[[mz, int], …]``, JSON objects, ``mz = [...]`` / ``intensities = [...]`` arrays,
+    HMDB ``<ms-ms-peak>`` XML and MassBank records (only the ``PK$PEAK`` lines). In line-based
+    text, lines that do not start with a number are headers (``Name: PG 36:2`` must not yield a
+    peak at m/z 36; ``PEPMASS=…``, ``Num Peaks: 13``). A comma is a column separator when nothing else separates the columns
+    (``195.0877,100``); next to a tab, space or ``;`` it is a decimal comma (``138,0662<TAB>100``) or, after a dot-decimal m/z, a
+    thousands separator (``100.0 1,200``). Malformed entries are skipped,
+    non-finite values, m/z <= 0 and intensity <= 0 are dropped, and duplicate m/z (rounded to
+    5 dp) are collapsed keeping the most intense.
+    """
+    return parse_spectrum_notes(text)[0]
 
 
 _MGF_BEGIN = re.compile(r"^\s*BEGIN\s+IONS\s*$", re.I)

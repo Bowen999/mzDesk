@@ -33,14 +33,31 @@ def _maps_value(result, field, key):
     return {"value": "—", "help": texts.LM_REASON_TEXT.get(code, code)} if code else None
 
 
-def _flag_lines(result):
+# branch_dropped 只有一个码，两种写法的意思不同：位置甲基 (15Me) / -15me 的碳不计入 L1；iso- / anteiso- 的碳数已含支链碳。按原文分开说
+_POS_METHYL = re.compile(r"\d{1,3}-?[Mm]e(?![A-Za-z])")
+_ISO = re.compile(r"(?<![A-Za-z])(?:anteiso|iso|ai)-?(?![a-z])")
+
+
+def _flag_codes(result, raw):
+    """flag 码列表；branch_dropped 按原文换成 branch_dropped（位置甲基）和 / 或 branch_type_dropped（iso / anteiso）。"""
+    codes = []
+    for f in result["flags"]:
+        if f != "branch_dropped":
+            codes.append(f)
+            continue
+        methyl, iso = _POS_METHYL.search(raw), _ISO.search(raw)
+        codes += (["branch_dropped"] if methyl or not iso else []) + (["branch_type_dropped"] if iso else [])
+    return codes
+
+
+def _flag_lines(result, raw=""):
     """Flags 只给英文短句（不显示内部码）；卡片 "—" 的 "?" 已经说过的（同一个码）不再重复。"""
     from mzdesk.lipid import texts
 
     said = {c for c in (_blank_code(result, "species") if not result["LM_species"] else None,
                         _blank_code(result, "molecular") if not result["LM_molecular"] else None) if c}
     said_text = {texts.LM_REASON_TEXT.get(c, c) for c in said}
-    lines = [(f, texts.FLAG_TEXT.get(f, f)) for f in result["flags"]]
+    lines = [(f, texts.FLAG_TEXT.get(f, f)) for f in _flag_codes(result, raw)]
     return list(dict.fromkeys(t for f, t in lines if f not in said and t not in said_text))
 
 
@@ -61,6 +78,8 @@ def _structure(result, raw):
         ill = ls.illustrate(result, raw)
     except ls.NoStructureForClass:
         return None, [], "No illustrative structure for this lipid class."
+    except ls.BranchedChain:
+        return None, [], "Branched chain: structure not drawn."
     except ls.Unsupported:
         return None, [], "No illustrative structure for this name."
     except Exception:                       # noqa: BLE001 - the names are still the answer; a drawing bug must not hide them
@@ -90,7 +109,7 @@ def run_lipid_short_name(inputs):
                                                     ("Molecular species", _maps_value(r, "LM_molecular", "molecular"))) if v}},
         "no_structure": {"items": [no_structure] if no_structure else []},
         "assumptions": {"items": assumptions},
-        "flags": {"items": _flag_lines(r)},
+        "flags": {"items": _flag_lines(r, raw)},
     }
     if svg:
         outputs["structure"] = {"svg": svg}

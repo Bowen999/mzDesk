@@ -58,6 +58,8 @@ def run_theory(inputs):
         raise InputError(f"{adduct} is not a {'positive' if positive else 'negative'}-mode adduct.")
     resolution = _resolution(inputs)
     formula = _neutral_formula(struct, warnings)
+    if struct["kind"] == "smiles":
+        common.note_isotope_labels(warnings, struct["smiles"], "The ion formula, m/z values and isotope pattern are")
     try:
         pat = isotopes.pattern(formula, adduct, resolution)
     except ValueError as exc:

@@ -2,6 +2,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from rdkit import Chem
+from rdkit.Chem import Descriptors, rdMolDescriptors
 
 from mzdesk.api.app import app
 from mzdesk.platform_fit import derivatization as d
@@ -489,3 +490,137 @@ def test_a_siloxane_silazane_or_silanol_is_not_a_derivative_of_water_or_ammonia(
 def test_underivatize_rejects_a_bad_structure():
     with pytest.raises(ValueError, match="could not parse"):
         d.underivatize("not a smiles")
+
+
+# ---------------------------------------------------------------- phosphorus: only a free P-OH makes a compound non-volatile
+TRIESTERS = [("dichlorvos", "COP(=O)(OC)OC=C(Cl)Cl"), ("triethyl phosphate", "CCOP(=O)(OCC)OCC"), ("tributyl phosphate", "CCCCOP(=O)(OCCCC)OCCCC"),
+             ("triphenyl phosphate", "O=P(Oc1ccccc1)(Oc1ccccc1)Oc1ccccc1"), ("paraoxon", "CCOP(=O)(OCC)Oc1ccc([N+](=O)[O-])cc1"),
+             ("DMMP", "COP(C)(=O)OC"), ("parathion", "CCOP(=S)(OCC)Oc1ccc([N+](=O)[O-])cc1")]
+P_ACIDS = [("glyphosate", "OC(=O)CNCP(=O)(O)O"), ("glucose 6-phosphate", "OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1OP(=O)(O)O"),
+           ("diethyl phosphate", "CCOP(=O)(O)OCC"), ("methyl phosphate dianion", "COP(=O)([O-])[O-]"), ("methylphosphonic acid", "CP(=O)(O)O"),
+           ("diethyl thiophosphate", "CCOP(=S)(O)OCC")]
+
+
+def _gc(smiles):
+    mol, _ = d.neutralize(Chem.MolFromSmiles(smiles))
+    return d.gc_assess(mol, d.find_groups(mol))
+
+
+@pytest.mark.parametrize("name, smiles", TRIESTERS)
+def test_phosphate_triesters_and_phosphonate_esters_run_in_gc(name, smiles):
+    """The labile-group rule was P(=O)(O)O, which every phosphorus ester matches: dichlorvos, TEP, TBP, TPP, paraoxon and DMMP were 'not volatile'."""
+    gc = _gc(smiles)
+    assert gc["gc"] == "yes" and gc["volatility"] == "volatile as is", name
+    tile = _tiles(smiles)["GC-MS"]
+    assert tile["status"] == "yes" and tile["value"] == "Volatile as is", name
+
+
+@pytest.mark.parametrize("name, smiles", P_ACIDS)
+def test_phosphorus_with_a_free_p_oh_stays_not_volatile(name, smiles):
+    gc = _gc(smiles)
+    assert gc["gc"] == "no" and "phosphate / phosphonate" in " ".join(gc["reasons"]), name
+    assert _tiles(smiles)["GC-MS"]["status"] == "no", name
+
+
+# ---------------------------------------------------------------- salts and mixtures: the largest fragment, as on the other pages
+PARTS_NOTE = "2 disconnected parts (salt or mixture): only the largest is analysed."
+DOPAMINE = "NCCc1ccc(O)c(O)c1"
+
+
+def _page(module, smiles, **extra):
+    r = client.post(f"/api/modules/{module}/run", json={"structure": {"mode": "SMILES / InChI", "value": smiles}, **extra})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def _table(body):
+    return [[c if isinstance(c, str) else c.get("badge", "") for c in row["cells"]] for row in body["outputs"]["deriv_rows"]["rows"]]
+
+
+def test_a_salt_is_derivatized_by_its_largest_fragment():
+    """Dopamine hydrochloride used to give a TMS product with the chloride in the formula (C20H44ClNO2Si4, 477.2138)."""
+    res = d.derive(DOPAMINE + ".Cl", [TMS_OPTION])
+    r = res["results"][0]
+    assert res["n_parts"] == 2 and r["n"] == 4 and r["formula"] == "C20H43NO2Si4" and r["mass"] == pytest.approx(441.2371, abs=0.002)
+    product = d.derivatize(DOPAMINE + ".Cl", TMS_OPTION)
+    assert product["formula"] == "C20H43NO2Si4" and product["mass"] == pytest.approx(441.2371, abs=0.002) and "Cl" not in product["smiles"]
+    assert d.carbonyl_count("O=CCc1ccc(O)c(O)c1.Cl") == 1
+
+
+def test_derivatization_page_gives_a_salt_the_result_and_the_warning_of_the_free_base():
+    salt, free = _page("derivatization", DOPAMINE + ".Cl"), _page("derivatization", DOPAMINE)
+    assert _table(salt) == _table(free) and any(row[2] == "C₂₀H₄₃NO₂Si₄" and row[3] == "441.2371" for row in _table(salt))
+    assert salt["warnings"].count(PARTS_NOTE) == 1 and PARTS_NOTE not in free["warnings"]
+    assert "No reactive group found in this structure." not in salt["warnings"]
+
+
+def test_the_salt_warning_is_the_one_of_the_other_pages():
+    from mzdesk.platform_fit import pka_engine as pe
+    assert pe.prepare(DOPAMINE + ".Cl").notes[0] == PARTS_NOTE
+    for module in ("platform_fit", "derivatization"):
+        assert _page(module, DOPAMINE + ".[Cl-]")["warnings"].count(PARTS_NOTE) == 1, module
+
+
+def test_sodium_benzoate_has_a_carboxyl_channel_and_a_gc_verdict():
+    """It used to report 'No reactive group found' (Derivatization) and CIL no / GC no (Platform): the carboxylate was left as an anion."""
+    salt = "[Na+].[O-]C(=O)c1ccccc1"
+    body = _page("derivatization", salt)
+    assert "No reactive group found in this structure." not in body["warnings"] and PARTS_NOTE in body["warnings"]
+    rows = {row[0]: row for row in _table(body)}
+    assert rows["CIL · DmPA bromide"][2] == "C₁₇H₁₇NO₃" and rows["GC · TMS"][2] == "C₁₀H₁₄O₂Si"        # benzoic acid + DmPA / + TMS
+    tiles = _tiles(salt)
+    assert tiles["CIL LC-MS"]["status"] == "yes" and tiles["GC-MS"]["status"] != "no"
+    platform = _page("platform_fit", salt)
+    assert platform["warnings"].count(PARTS_NOTE) == 1
+    assert {o["label"] for o in platform["outputs"]["reactions"]["options"]} == {"CIL · DmPA bromide", "GC · TMS"}
+
+
+# ---------------------------------------------------------------- a quaternary N+ next to a carboxylate: protonate the carboxylate, keep the N+
+QUATERNARY_ACIDS = {"betaine": "C[N+](C)(C)CC(=O)[O-]", "L-carnitine": "C[N+](C)(C)C[C@H](O)CC(=O)[O-]", "acetylcarnitine": "CC(=O)OC(CC(=O)[O-])C[N+](C)(C)C",
+                    "trigonelline": "C[n+]1cccc(c1)C(=O)[O-]"}
+
+
+def test_neutralize_protonates_a_carboxylate_next_to_a_quaternary_n():
+    mol, changed = d.neutralize(Chem.MolFromSmiles(QUATERNARY_ACIDS["betaine"]))
+    assert changed and Chem.MolToSmiles(mol) == "C[N+](C)(C)CC(=O)O"
+    assert Chem.MolToSmiles(d.neutralize(Chem.MolFromSmiles("[NH3+]CC(=O)[O-]"))[0]) == "NCC(=O)O"            # an ordinary zwitterion still ends up neutral
+    assert not d.neutralize(Chem.MolFromSmiles("C[N+](=O)[O-]"))[1]                                           # nitro: not a charge to remove
+    pc, _ = d.neutralize(Chem.MolFromSmiles(PC))
+    assert d.find_groups(pc) == {}
+
+
+@pytest.mark.parametrize("name", list(QUATERNARY_ACIDS))
+def test_quaternary_ammonium_acids_get_the_carboxyl_channel_and_stay_not_gc_amenable(name):
+    smiles = QUATERNARY_ACIDS[name]
+    tiles = _tiles(smiles)
+    assert tiles["CIL LC-MS"]["status"] == "yes" and "carboxyl" in tiles["CIL LC-MS"]["chips"], name
+    assert tiles["GC-MS"]["status"] == "no" and "Rule:" in _help(tiles["GC-MS"]), name         # [NX4+] / ionic rule untouched
+    r = _row(smiles, "CIL · DmPA bromide (carboxyl)")
+    assert r["n"] == 1 and r["charge"] == 1, name
+    assert "No reactive group found in this structure." not in _page("derivatization", smiles)["warnings"], name
+
+
+def test_a_cationic_derivative_reports_the_ions_formula_and_mz():
+    """Carnitine + DmPA: the ester is a cation, C17H27N2O4+, m/z 323.1965 (not a neutral formula with an H too many or too few; RDKit as the check)."""
+    carnitine = QUATERNARY_ACIDS["L-carnitine"]
+    r = _row(carnitine, "CIL · DmPA bromide (carboxyl)")
+    ester = Chem.MolFromSmiles("CN(C)c1ccc(C(=O)COC(=O)CC(O)C[N+](C)(C)C)cc1")
+    assert r["formula"] == "C17H27N2O4" and rdMolDescriptors.CalcMolFormula(ester) == "C17H27N2O4+"
+    assert r["mass"] == pytest.approx(Descriptors.ExactMolWt(ester), abs=0.0005) == pytest.approx(323.1965, abs=0.0005)
+    assert r["heavy"] == pytest.approx(r["mass"] + 2 * d.C13_SHIFT, abs=1e-6)
+    tms = d.derivatize(carnitine, TMS_OPTION)                       # two silyl groups: COOH and OH
+    product = Chem.MolFromSmiles(tms["smiles"])
+    assert tms["n_silyl"] == 2 and tms["charge"] == 1 and tms["formula"] == "C13H32NO3Si2"
+    assert rdMolDescriptors.CalcMolFormula(product) == "C13H32NO3Si2+" and tms["mass"] == pytest.approx(Descriptors.ExactMolWt(product), abs=0.0005)
+    body = _page("derivatization", carnitine)
+    rows = {row[0]: row for row in _table(body)}
+    assert rows["CIL · DmPA bromide"][2:4] == ["C₁₇H₂₇N₂O₄⁺", "323.1965"] and rows["GC · TMS"][2] == "C₁₃H₃₂NO₃Si₂⁺"
+    assert any("Net charge +1" in w for w in body["warnings"])
+    option = next(o for o in _page("platform_fit", carnitine)["outputs"]["reactions"]["options"] if o["label"] == "CIL · DmPA bromide")
+    assert option["formula"] == "C₁₇H₂₇N₂O₄⁺" and option["mass"] == pytest.approx(323.1965, abs=0.0005)
+
+
+def test_a_neutral_derivative_has_no_charge_and_an_unchanged_mass():
+    r = _row("NCC(=O)O", TMS_OPTION)
+    assert r["charge"] == 0 and r["formula"] == "C11H29NO2Si3" and r["mass"] == pytest.approx(291.151, abs=0.002)
+    assert {row[0]: row for row in _table(_page("derivatization", "NCC(=O)O"))}["GC · TMS"][2] == "C₁₁H₂₉NO₂Si₃"

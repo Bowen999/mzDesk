@@ -17,7 +17,7 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 
-from mzdesk.shared.spectrum import USIError, fetch_usi, first_record, parse_spectrum
+from mzdesk.shared.spectrum import USIError, fetch_usi, first_record, parse_spectrum_notes
 
 RDLogger.DisableLog("rdApp.*")
 
@@ -87,6 +87,27 @@ def is_formula(s):
     return True
 
 
+def has_isotope_labels(smiles):
+    """True when a SMILES has a labelled atom ([2H], [13C], [15N] ...)."""
+    mol = Chem.MolFromSmiles(smiles) if smiles else None
+    return mol is not None and any(atom.GetIsotope() for atom in mol.GetAtoms())
+
+
+def isotope_note(what, who="The structure has"):
+    """The warning for outputs that ignore isotope labels. ``what`` names them in the page's own words and in the plural, e.g.
+    "The ion formulas and m/z values are"."""
+    return f"{who} isotope labels. {what} calculated for the unlabelled compound; use Calculator › Isotope labelling for labelled masses."
+
+
+def note_isotope_labels(warnings, smiles, what):
+    """Adds isotope_note(what) to ``warnings``, once, when ``smiles`` has labelled atoms.
+
+    A page calls it only when it really shows outputs that ignore the labels. A page that follows them (the molecular weight, the EI spectrum)
+    says nothing, and neither does a page that has nothing to calculate for this structure (no derivative, no ion)."""
+    if has_isotope_labels(smiles) and isotope_note(what) not in warnings:
+        warnings.append(isotope_note(what))
+
+
 def structure(inputs, key="structure", label="Structure", *, required=True, allow_formula=False, warnings=None):
     """Structure field -> {"kind": "smiles", "smiles": ...} | {"kind": "formula", "formula": ...} | None.
 
@@ -94,6 +115,7 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
     where the page allows one; anything else is resolved to a SMILES by mzdesk.identity.resolve.
     ``warnings`` (a list, optional) receives the ambiguity note for an input that is both a formula
     and a valid SMILES (CO, NO, ...): a structure page cannot know which one the user meant.
+    Isotope labels are kept in the SMILES; a page whose outputs ignore them says so with note_isotope_labels.
     """
     raw_value = inputs.get(key)
     if raw_value is not None and not isinstance(raw_value, dict):
@@ -190,7 +212,8 @@ def spectrum(inputs, key, label, warnings, *, required=True):
             warnings.append(f"{label}: the input holds {rec['n_records']} spectra; only the first"
                             + (f" ({rec['name']})" if rec["name"] else "") + " is used.")
         raw, file_precursor = rec["peaks_text"], rec["precursor_mz"]
-    peaks = parse_spectrum(raw)
+    peaks, notes = parse_spectrum_notes(raw)
+    warnings.extend(f"{label}: {note}" for note in notes)          # decimal / thousands commas, rows with more than two numbers
     if not peaks and (required or raw.strip()):
         raise InputError(f"{label}: no valid peaks. Use one 'm/z intensity' pair per line.")
     return peaks, file_precursor

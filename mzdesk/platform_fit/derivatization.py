@@ -1,6 +1,6 @@
 """Derivatization：找反应基团，按试剂算衍生物的分子式和单同位素质量，并给 Platform 页判断 CIL / GC-MS 适用性。
 
-母体取画出来的中性分子。质量全部用精确同位素质量（不用平均质量）。
+母体取中性化后的最大片段（盐和混合物只看主成分，见 prepare）；季铵 N+ 保留，衍生物是阳离子时分子式和质量是离子的（m/z）。质量全部用精确同位素质量（不用平均质量）。
 每个试剂还带一份官能团反应式（SCHEMES）；四个 CIL Channel 均生成完整产物结构，Platform 和 Derivatization 两页的 reaction 块共用。
 """
 from __future__ import annotations
@@ -15,9 +15,11 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.rdBase import BlockLogs
 
+from mzdesk.platform_fit.structure_prep import largest_fragment, neutralize_anions, parts_note  # noqa: F401 (parts_note: the runners' warning)
 from mzdesk.shared import colors as _theme, depict as _depict
 
 C13_SHIFT = 1.0033548          # 13C - 12C
+ELECTRON = 0.00054857990946    # 阳离子 m/z = 原子质量和 - 电子质量（与 ms1.isotopes 一致）
 PT = Chem.GetPeriodicTable()
 
 # 基团：key -> (名称, SMARTS, 代表原子在 SMARTS 里的序号)
@@ -144,6 +146,12 @@ def formula_mass(f) -> float:
     return sum(PT.GetMostCommonIsotopeMass(e) * n for e, n in f.items())
 
 
+def ion_mass(f, charge=0) -> float:
+    """Monoisotopic mass of formula ``f``; for an ion (``charge`` != 0) its m/z: (atoms - charge x electron) / |charge|. No H is added or removed."""
+    m = formula_mass(f)
+    return (m - charge * ELECTRON) / abs(charge) if charge else m
+
+
 def parse_formula(s: str) -> Counter:
     return Counter({e: int(n or 1) for e, n in re.findall(r"([A-Z][a-z]?)(\d*)", s)})
 
@@ -157,9 +165,18 @@ def _add(f, delta, n):
 
 # ---------------------------------------------------------------- 基团
 def neutralize(mol):
-    """去掉羧酸盐、两性离子等可中和的电荷（季铵等不可中和的保留）-> (中性分子, 是否改动)。"""
-    neutral = rdMolStandardize.Uncharger().uncharge(mol)
+    """去掉羧酸盐、两性离子等可中和的电荷 -> (中性分子, 是否改动)。季铵 N+ 保留；它旁边的 O- 先质子化（Uncharger 遇到季铵会放着不管）。"""
+    neutral, _ = neutralize_anions(mol)
+    neutral = rdMolStandardize.Uncharger().uncharge(neutral)
     return neutral, Chem.MolToSmiles(neutral) != Chem.MolToSmiles(mol)
+
+
+def prepare(mol):
+    """The molecule the CIL / GC rules and the derivatization engine work on: the largest fragment of a salt or mixture, neutralized
+    -> (mol, number of parts, neutralized). The same choice as the pKa / Ionization / Adducts / Separation pages (structure_prep)."""
+    mol, n_parts = largest_fragment(mol)
+    mol, neutralized = neutralize(mol)
+    return mol, n_parts, neutralized
 
 
 def find_groups(mol) -> Dict[str, dict]:
@@ -384,13 +401,16 @@ def _notes(name, labels, groups, mol, n_carbonyl, n_h_labels):
 
 
 def derive(smiles, reagents=None) -> dict:
-    """-> {"groups", "results", "n", "neutralized", "mol"}. ``results`` has one dict per known reagent, in order (``n`` is the list of their label counts):
-    reagent (key), name, platform, n (labels), labels, formula / mass / heavy (None when n = 0), text (groups labelled), ions (EI key ions),
-    warns (caveats), steps (functional-group scheme, reaction_steps)."""
+    """-> {"groups", "results", "n", "neutralized", "n_parts", "mol"}: of the neutral form of the largest fragment (a salt or mixture: prepare();
+    ``n_parts`` is how many parts the input had). ``results`` has one dict per known reagent, in order (``n`` is the list of their label counts):
+    reagent (key), name, platform, n (labels), labels, formula / mass / heavy (None when n = 0), charge (net charge of the derivative: a quaternary N+
+    stays, and then formula is the cation's and mass / heavy are its m/z), text (groups labelled), ions (EI key ions), warns (caveats),
+    steps (functional-group scheme, reaction_steps)."""
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError("RDKit could not parse the structure.")
-    mol, neutralized = neutralize(mol)
+    mol, n_parts, neutralized = prepare(mol)
+    charge = Chem.GetFormalCharge(mol)
     groups = find_groups(mol)
     base = parent_formula(mol)
     n_carbonyl = sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups)
@@ -403,7 +423,7 @@ def derive(smiles, reagents=None) -> dict:
         labels = _labels(rule, groups)
         n = sum(labels.values())
         res = {"reagent": option, "name": name, "platform": platform_of(option), "n": n, "labels": labels, "formula": None, "mass": None, "heavy": None,
-               "text": "", "ions": [], "warns": [], "steps": []}
+               "charge": charge, "text": "", "ions": [], "warns": [], "steps": []}
         text = "; ".join(f"{GROUPS[k][0]} ×{v}" for k, v in labels.items())
         if name == "MeOx + TMS":
             n_meox = n_carbonyl + n_hemi        # 开环后的活泼氢数不变：异头 OH 变 C=O，环 O 变 OH
@@ -417,14 +437,14 @@ def derive(smiles, reagents=None) -> dict:
         else:
             f = _add(base, delta, n)
         if n:
-            m = formula_mass(f)
-            heavy = m + 2 * C13_SHIFT * n if cil else None
+            m = ion_mass(f, charge)
+            heavy = m + 2 * C13_SHIFT * n / abs(charge or 1) if cil else None
             res.update(formula=formula_string(f), mass=m, heavy=heavy, text=text,
                        steps=reaction_steps(name, rule, groups, n_hemi if name == "MeOx + TMS" else 0))
             res["ions"], res["warns"] = _notes(name, labels, groups, mol, n_carbonyl + (n_hemi if name == "MeOx + TMS" else 0), res.get("n_tms", n))
         ns.append(res["n"])
         results.append(res)
-    return {"groups": groups, "results": results, "n": ns, "neutralized": neutralized, "mol": mol}
+    return {"groups": groups, "results": results, "n": ns, "neutralized": neutralized, "n_parts": n_parts, "mol": mol}
 
 
 # ---------------------------------------------------------------- Platform 页：CIL / GC-MS
@@ -450,7 +470,8 @@ def gc_option(mol, groups) -> str:
 
 
 _CHARGED_OK = Chem.MolFromSmarts("[$([N+](=O)[O-]),$([O-][N+]=O)]")      # 硝基不算离子
-_LABILE = [("quaternary ammonium", "[NX4+]"), ("phosphate / phosphonate", "P(=O)(O)O"),
+# 磷酸 / 膦酸只有带游离 P-OH（或 P-O-）才算不挥发：磷酸三酯、膦酸酯（敌敌畏、磷酸三乙酯、DMMP）没有酸性 OH，可以直接进 GC
+_LABILE = [("quaternary ammonium", "[NX4+]"), ("phosphate / phosphonate (free P–OH)", "[PX4](=[OX1,SX1])[OX2H1,OX1-]"),
            ("sulfate / sulfonate", "S(=O)(=O)[OX2H1,O-]")]
 
 
@@ -547,8 +568,9 @@ def _meox_edit(work, groups, mol, sites):
 def derivatize(smiles, reagent) -> dict:
     """The derivative of ``smiles`` with a GC reagent (a key of EI_MODES.values(), e.g. "GC · TMS (MSTFA / BSTFA)").
 
-    -> {"smiles", "formula", "mass" (monoisotopic), "n_silyl", "n_meox", "n_labels" (what derive() reports as ``n``: silyl groups, plus MeOx for
-    MeOx + TMS), "neutralized"}. Sites and counts are derive()'s: every active-H atom of ACTIVE_H takes as many silyl groups as it has hydrogens
+    -> {"smiles", "formula", "mass" (monoisotopic; the m/z of the cation when "charge" is not 0), "charge", "n_silyl", "n_meox", "n_labels" (what derive()
+    reports as ``n``: silyl groups, plus MeOx for MeOx + TMS), "neutralized"}. A salt or mixture is derivatized by its largest fragment (prepare()).
+    Sites and counts are derive()'s: every active-H atom of ACTIVE_H takes as many silyl groups as it has hydrogens
     (a primary amine N(TMS)2, a primary amide too); MeOx first turns every C=O into C=N-OCH3 and opens the ring of a reducing sugar (the open-chain
     oxime is the product, as derive() assumes); the silyl groups go on afterwards. No site: the (neutralised) parent comes back unchanged.
     ValueError: unparsable SMILES or an unknown reagent."""
@@ -559,7 +581,7 @@ def derivatize(smiles, reagent) -> dict:
     if mol is None:
         raise ValueError("RDKit could not parse the structure.")
     with BlockLogs():                                                               # the Uncharger logs "Running Uncharger" at INFO
-        mol, neutralized = neutralize(mol)
+        mol, _, neutralized = prepare(mol)
     groups = find_groups(mol)
     rule = REAGENTS[reagent][1]
     labels = _labels(rule, groups)
@@ -596,8 +618,8 @@ def derivatize(smiles, reagent) -> dict:
     elif delete_h:
         raise ValueError("Hydrogens were removed without a silyl group to replace them.")
     product = _clean_product(product)
-    formula = parent_formula(product)
-    return {"smiles": Chem.MolToSmiles(product), "formula": formula_string(formula), "mass": formula_mass(formula), "n_silyl": len(targets),
+    formula, charge = parent_formula(product), Chem.GetFormalCharge(product)
+    return {"smiles": Chem.MolToSmiles(product), "formula": formula_string(formula), "mass": ion_mass(formula, charge), "charge": charge, "n_silyl": len(targets),
             "n_meox": n_meox, "n_labels": len(targets) + n_meox, "neutralized": neutralized}
 
 
@@ -680,6 +702,6 @@ def carbonyl_count(smiles) -> int:
     if mol is None:
         return 0
     with BlockLogs():
-        mol, _ = neutralize(mol)
+        mol, _, _ = prepare(mol)
     groups = find_groups(mol)
     return sum(len(groups[k]["atoms"]) for k in CARBONYL if k in groups) + count_hemiacetal(mol)

@@ -9,6 +9,8 @@ const { candidateDetails, ccsNumbers, ccsText } = await ssr.load("/src/component
 after(() => ssr.close());
 
 const SMILES = "CN1C=NC2=C1C(=O)N(C)C(=O)N2C";
+// A name or SMILES that has a structure is a button (StructureHover) that opens the drawing; one without stays plain text.
+const depict = text => `<button type="button" class="cell-depict" aria-expanded="false">${text}</button>`;
 const candidate = (id, name, extra = {}) => ({
   id, rank: 1, name, smiles: SMILES, formula: "C8H10N4O2", adduct: "[M+H]+", layer: "library", layer_label: "library", level: "2a",
   level_label: "Level 2a: probable structure (library spectrum match)", level_reason: "Library spectrum passed the Level-2 gate.", final_score: 0.8, base_score: 1,
@@ -40,7 +42,7 @@ test("everything else is folded away: no SMILES, formula, adduct, layer, detecta
 test("rows keep the order they came in, even when the final score does not go down the list", () => {
   const html = view();
   const names = [...html.matchAll(/<td class="cand-name">(.*?)<\/td>/g)].map(m => m[1]);
-  assert.deepEqual(names, ["Caffeine", "Isocaffeine", "1 M+H"]);
+  assert.deepEqual(names, [depict("Caffeine"), depict("Isocaffeine"), "1 M+H"]);
   assert.deepEqual([...html.matchAll(/<td class="num">(.*?)<\/td>/g)].map(m => m[1]), ["0.800", "0.835", "0.813"]);
 });
 
@@ -71,7 +73,7 @@ test("an open row shows the folded columns in a detail line the toggle points at
   const detail = html.slice(html.indexOf('<tr class="cand-detail"'));
   const facts = Object.fromEntries([...detail.matchAll(/<dt>(.*?)<\/dt><dd>(.*?)<\/dd>/g)].map(m => [m[1], m[2]]));
   assert.deepEqual(facts, {
-    SMILES: "Cn1c(=O)c2ncn(C)c2n(C)c1=O", Formula: "C8H10N4O2", Adduct: "[M+H]+", Layer: "library",
+    SMILES: depict("Cn1c(=O)c2ncn(C)c2n(C)c1=O"), Formula: "C8H10N4O2", Adduct: "[M+H]+", Layer: "library",
     "Detectability (omics / ionizable / adduct)": "metabolome / moderate / high", "Isomer role": "not separated · challenger",
   });
   assert.equal((html.match(/class="cand-detail"/g) ?? []).length, 1, "only the open row has a detail line");
@@ -99,10 +101,10 @@ const withCcs = [
 test("the key columns do not change with a CCS check; a candidate the rule applied to gets a short flag after its name", () => {
   const html = view({ candidates: withCcs });
   assert.deepEqual(heads(html), ["Details", "Rank", "Name", "Level", "Final score", "Fragments"]);
-  assert.match(html, /<td class="cand-name">Caffeine<span class="cand-flag" title="Inconsistent · \+9\.80 % \(±1\.0 %\) · measured 139\.6 Å² · DTCCS N2 · Baker2017 · moved from rank 1">CCS ≠ measured<\/span><\/td>/);
-  assert.match(html, /<td class="cand-name">Aspirin<span class="cand-flag"[^>]*>CCS ≠ predicted<\/span><\/td>/);
+  assert.match(html, /<td class="cand-name"><button type="button" class="cell-depict" aria-expanded="false">Caffeine<\/button><span class="cand-flag" title="Inconsistent · \+9\.80 % \(±1\.0 %\) · measured 139\.6 Å² · DTCCS N2 · Baker2017 · moved from rank 1">CCS ≠ measured<\/span><\/td>/);
+  assert.match(html, /<td class="cand-name"><button type="button" class="cell-depict" aria-expanded="false">Aspirin<\/button><span class="cand-flag"[^>]*>CCS ≠ predicted<\/span><\/td>/);
   assert.equal((html.match(/cand-flag/g) ?? []).length, 2, "Consistent and No structure rows carry no flag");
-  assert.match(html, /<td class="cand-name">Isocaffeine<\/td>/);
+  assert.match(html, /<td class="cand-name"><button type="button" class="cell-depict" aria-expanded="false">Isocaffeine<\/button><\/td>/);
   assert.ok(!html.replace(/ title="[^"]*"/g, "").includes("Baker2017"), "the numbers stay in the detail line (the flag's hover title aside)");
 });
 

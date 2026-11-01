@@ -1,4 +1,5 @@
-import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useReportMode } from "../report/mode";
 import type { Cell, Help, Row, RowGroup, RxOption, StatusChip, Tile } from "../types";
 import { FragmentButton } from "./FragmentDialog";
 import { ThemedSvg } from "./Figure";
@@ -75,6 +76,7 @@ const isMultiline = (c: Cell) => cellText(c).includes("\n");
 /** Keep long identifiers readable without discarding their full value. */
 function CompactText({ text, column }: { text: string; column: string }) {
   const [open, setOpen] = useState(false);
+  if (useReportMode()) return <TextLines text={text} />;       // the report has no button to open it: the whole text
   const short = text.startsWith("mzspec:") ? `${text.slice(0, 46)}…${text.slice(-18)}` : `${text.slice(0, 80)}…`;
   return <span className={"compact-cell" + (open ? " is-open" : "")}>
     <span className="compact-cell-text">{open ? <TextLines text={text} /> : short}</span>
@@ -83,11 +85,28 @@ function CompactText({ text, column }: { text: string; column: string }) {
   </span>;
 }
 
+/** What a table shows in the Session report: no column of "View" buttons (the dialog needs the app), and at most `max` rows. */
+function reportView(columns: string[], rows: Row[], max: number) {
+  const cellsOf = (r: Row) => (Array.isArray(r) ? r : r.cells);
+  const isView = (c: Cell) => !!c && typeof c === "object" && "fragment" in c;
+  const drop = new Set(columns.map((_, j) => j).filter(j => rows.some(r => isView(cellsOf(r)[j]))
+    && rows.every(r => { const c = cellsOf(r)[j]; return isView(c) || c === "—" || c === null || c === undefined; })));
+  const keep = <T,>(cells: T[]) => (drop.size ? cells.filter((_, j) => !drop.has(j)) : cells);
+  return {
+    columns: keep(columns), total: rows.length,
+    rows: rows.slice(0, max).map(r => (Array.isArray(r) ? keep(r) : { ...r, cells: keep(r.cells) })),
+  };
+}
+
 /** The shared table body: header + rows (+ trailing "?" column when `rowHelp`; `columnHelp` puts a small "?" after a column's name).
  *  A wide table freezes its first column (theme.css); a "Fragments" column right after it is frozen too (fragment-view.css), so the View button
  *  stays in reach next to the compound while the rest scrolls. */
-export function RowsTable({ columns, rows, rowHelp = false, empty, compact = false, columnHelp }:
+export function RowsTable({ columns: allColumns, rows: allRows, rowHelp: withHelp = false, empty, compact = false, columnHelp }:
   { columns: string[]; rows: Row[]; rowHelp?: boolean; empty: string; compact?: boolean; columnHelp?: Record<string, Help> }) {
+  const report = useReportMode();
+  const rowHelp = withHelp && !report;       // no "?" column in the report: there are no popovers
+  const view = useMemo(() => (report ? reportView(allColumns, allRows, report.maxRows) : null), [report, allColumns, allRows]);
+  const columns = view?.columns ?? allColumns, rows = view?.rows ?? allRows;
   const wrap = useRef<HTMLDivElement>(null);
   const wide = columns.length > 6;
   const frozen2 = wide && columns[1] === "Fragments";
@@ -130,6 +149,7 @@ export function RowsTable({ columns, rows, rowHelp = false, empty, compact = fal
         </tbody>
       </table>
     </div>
+    {view && view.total > rows.length && <p className="result-table-note">First {rows.length} of {view.total.toLocaleString("en-US")} rows; all rows are in report.json.</p>}
     </>
   );
 }
@@ -138,6 +158,15 @@ export function RowsTable({ columns, rows, rowHelp = false, empty, compact = fal
 function GroupItem({ group, columns, rowHelp }: { group: RowGroup; columns: string[]; rowHelp: boolean }) {
   const [open, setOpen] = useState(false);
   const body = useId();
+  // the report: a native <details>, closed like the screen's groups, with the rows inside it so they are in the file and open without a script
+  if (useReportMode()) return (
+    <details className="gt-group">
+      <summary className="gt-head">
+        <span className="gt-toggle"><span className="gt-caret" aria-hidden="true" /><span className="gt-title"><RichText text={group.title} /></span></span>
+        {group.meta && <span className="gt-meta">{group.meta}</span>}
+      </summary>
+      <div className="gt-body"><RowsTable columns={columns} rows={group.rows ?? []} rowHelp={rowHelp} empty="no rows" /></div>
+    </details>);
   return (
     <div className={"gt-group" + (open ? " open" : "")}>
       {/* the whole header row toggles; the button inside is the keyboard target (its click bubbles to the row) */}
@@ -188,7 +217,7 @@ const LEVELS: Record<string, "good" | "possible" | "poor"> = {
 };
 
 function Pill({ chip }: { chip: StatusChip }) {
-  const lines = helpLines(chip.help);
+  const lines = useReportMode() ? [] : helpLines(chip.help);       // the report has no popovers: a plain chip
   const { triggerProps, popover } = useHelpPopover(lines);
   const lvl = LEVELS[String(chip.level).toLowerCase()] ?? "poor";
   const body = (

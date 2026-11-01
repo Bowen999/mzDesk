@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useReportMode } from "../report/mode";
 import type { AnnotationResult } from "../types";
 import { FigureView } from "./Figure";
 import { HelpButton } from "./Help";
@@ -11,6 +12,7 @@ import "./pipeline.css";
  * The explanations live behind the "?" next to the title; the plot is lower than on the module pages.
  */
 export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
+  const report = useReportMode();       // the report has no tabs: the library comparison, then the experimental spectrum
   const figures = result.visualization;
   const [view, setView] = useState<"query" | "library">(figures?.library ? "library" : "query");
   const libraryStep = result.steps?.find(s => s.id === 3);
@@ -27,7 +29,7 @@ export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
   ];
   return <section className="workflow-evidence spectrum-evidence" aria-labelledby="workflow-spectrum-title">
     <div className="workflow-heading"><h2 id="workflow-spectrum-title">Spectrum evidence</h2><HelpButton lines={help} label="Help: Spectrum evidence" />
-      {query && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
+      {query && !report && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
         <button type="button" className={showLibrary ? "" : "selected"} aria-pressed={!showLibrary} onClick={() => setView("query")}>Experimental spectrum</button>
         <button type="button" className={showLibrary ? "selected" : ""} aria-pressed={showLibrary} onClick={() => setView("library")}>Library comparison</button>
       </div>}
@@ -38,6 +40,10 @@ export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
         <FigureView data={library.figure} />
       </>
       : query && <FigureView data={query} />}
+    {report && showLibrary && query && <>
+      <p className="workflow-caption">Experimental spectrum</p>
+      <FigureView data={query} />
+    </>}
   </section>;
 }
 

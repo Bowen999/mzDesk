@@ -281,6 +281,16 @@ def test_cad_and_elsd_use_the_gc_verdict_and_mw():
     assert _rows(ionic)["CAD"][1] == "good"
 
 
+def test_cad_and_elsd_follow_the_corrected_gc_verdict_for_phosphate_esters():
+    """Triethyl phosphate / triphenyl phosphate used to be 'GC no' (every P(=O)(O)O ester matched), so CAD / ELSD were 'good'; as GC-volatile compounds they are
+    treated as volatile like any other (the CAD / ELSD rule itself is unchanged). A phosphate with a free P-OH is still not volatile."""
+    for smiles in ("CCOP(=O)(OCC)OCC", "O=P(Oc1ccccc1)(Oc1ccccc1)Oc1ccccc1"):
+        a = _a(smiles)
+        assert a.gc == "yes" and _rows(a)["CAD"][1] == "poor" and _rows(a)["ELSD"][1] == "poor" and "GC verdict yes" in _rows(a)["CAD"][2], smiles
+    g6p = _a("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1OP(=O)(O)O")
+    assert g6p.gc == "no" and _rows(g6p)["CAD"][1] == "good"
+
+
 def test_ri_is_always_possible_and_never_good():
     for s in (CAFFEINE, GLUCOSE_RING, "CCCCCC", BETA_CAROTENE):
         assert _rows(_a(s))["RI"][1] == "possible"

@@ -964,9 +964,9 @@ def test_device_patch_applies_to_the_pinned_files_once(tmp_path):
     clone = fe.status()["clone"]
     repo = tmp_path / "repo"
     for rel in ("src/dlm/sampler.py", "src/dlm/utils/spec2mol.py"):
-        text = subprocess.run(["git", "-C", str(clone), "show", f"{fe.FRIGID_COMMIT}:{rel}"], capture_output=True, text=True, check=True).stdout
+        text = subprocess.run(["git", "-C", str(clone), "show", f"{fe.FRIGID_COMMIT}:{rel}"], capture_output=True, text=True, encoding="utf-8", check=True).stdout
         (repo / rel).parent.mkdir(parents=True, exist_ok=True)
-        (repo / rel).write_text(text)
+        (repo / rel).write_text(text, encoding="utf-8")
     subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
     subprocess.run(["git", "-C", str(repo), "add", "."], check=True)
     subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "pinned"], check=True)

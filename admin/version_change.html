@@ -264,6 +264,20 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.3.5', date:'2026-11-01', git:'',
+  title:'审查后修正：磷酸酯 GC 判定、盐和混合物取最大片段、峰表解析、BUDDY 容差、Session report 离线完整、deploy 单 worker',
+  note:'主要未决问题：同位素标记结构的提示只覆盖部分页面，未逐页核完。磷酸三酯 / 膦酸酯能否进 GC 只按“有无游离 P–OH”判断，没有逐个化合物核对保留行为。',
+  state:[['GC 可行','磷酸三酯 / 膦酸酯可；带游离 P–OH 不可'], ['盐和混合物','Platform · Derivatization · Calculator 取最大片段并中和'], ['BUDDY 容差','> 10 ppm 按用户容差搜索'], ['Session report','report.html 含折叠、分页、截断的全部内容'], ['deploy','uvicorn 1 个 worker'], ['版本','0.3.5']],
+  c:{
+   ms1:['fix','前体容差 > 10 ppm 时 BUDDY 按用户容差搜索（ms2 仍 20 ppm），不再退回 ±10 ppm。',true,{w:'mzdesk/ms1/msbuddy_engine.py · mzdesk/annotation/formula_step.py · tests/test_annotation_steps123.py · tests/test_buddy_tolerance.py'}],
+   ms2:['fix','峰表：小数逗号、m/z;intensity 两列、带表头分号 CSV、千分位逗号读对并提示；前端峰数同步（共享用例 tests/fixtures/peak_table_cases.json）。深度相似度模型下载：30 s 超时、唯一临时文件、长度校验。',true,{w:'mzdesk/shared/spectrum.py · mzdesk/api/common.py · mzdesk/ms2/ms2_similarity.py · web/src/peakCount.ts · web/tests/peak-count.test.mjs · tests/fixtures/peak_table_cases.json · tests/test_spectrum.py · tests/test_common_inputs.py · tests/test_model_download.py'}],
+   prop:['fix','磷酸三酯 / 膦酸酯（敌敌畏、TEP、TBP、TPhP、对氧磷、DMMP）判 GC 可行；带游离 P–OH 的仍不可行（规则 [PX4](=[OX1,SX1])[OX2H1,OX1-]）；连带 Non-MS 页 CAD/ELSD 对它们从 good 变 poor。Platform、Derivatization、Calculator（同位素标记）取最大片段并中和，多片段给统一警告（新文件 mzdesk/platform_fit/structure_prep.py）；盐酸多巴胺 TMS 477.21 → 441.24，普萘洛尔盐酸盐 13C3 [M+H]+ 299.15 → 263.17。季铵两性离子（甜菜碱、肉碱、乙酰肉碱）的羧基被识别；带电衍生物显示阳离子分子式和 m/z，并有提示。',true,{w:'mzdesk/platform_fit/structure_prep.py · mzdesk/platform_fit/derivatization.py · mzdesk/platform_fit/pka_engine.py · mzdesk/calculator/calculations.py · mzdesk/api/runners/structure.py · mzdesk/api/runners/calculator.py · tests/test_structure_prep.py · tests/test_derivatization.py · tests/test_calculator.py · tests/test_non_ms.py · tests/test_ionization.py'}],
+   lipid:['fix','带甲基支链的脂肪酸不画示意结构，写明原因；支链 flag 文字区分位置甲基和 iso/anteiso。',true,{w:'mzdesk/lipid/structure.py · mzdesk/lipid/texts.py · mzdesk/api/runners/lipid.py · tests/test_lipid_short_name.py'}],
+   dmpk:['fix','Mass-Shift 甘氨酸选项改为 +C2H3NO。',true,{w:'mzdesk/spec.py · tests/test_met_shift.py'}],
+   other:['chg','同位素标记结构：按未标记计算的页面给出提示（部分页面，未逐页核完）。',false,{w:'mzdesk/api/common.py · mzdesk/api/runners/ms1.py · mzdesk/api/runners/ms2.py · mzdesk/api/runners/esi_msms.py · mzdesk/api/runners/exclusivity.py · mzdesk/api/runners/adducts.py · mzdesk/workflows/ei_ms_annotation.py · tests/test_workflow_ei_ms.py'}],
+   app:['fix','fastMASST 等待按真实时间计。deploy：uvicorn 改为 1 个 worker（任务、队列、锁都在进程内存里）。Session report：导出时用报告模式重新渲染，report.html 含折叠、分页、截断的全部内容（单表上限 500 行），去掉离线无效按钮，屏幕显示不变。前端过期测试更新；测试读文件 / 子进程统一 UTF-8。',false,{w:'mzdesk/gnps/compound_db_check.py · deploy/mzdesk.service · deploy/README.md · web/src/report/ReportPage.tsx · web/src/report/mode.ts · web/src/report/build.ts · web/src/pages/ModulePage.tsx · web/src/pages/PipelinePage.tsx · web/src/components/ · web/tests/ · tests/test_gnps_wait.py · tests/test_gnps.py · tests/test_ccs.py · tests/test_frigid.py'}],
+   docs:['doc','版本号 0.3.5，本页加 v0.3.5。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.3.4', date:'2026-10-31', git:'',
   title:'MS/MS Annotation：库检索相似度算法可多选（checkbox，10 个），阈值改名 Similarity threshold',
   note:'多个算法时“任意一个达标”即通过 Level-2 gate，所以勾选 Reverse dot product 这类宽松算法会让 Level 2a 更容易出现（owner 定的规则，未用数据校准）。排序和候选分数只看第一个勾选的算法；默认只勾 SpectralEntropy (weighted)，结果与 v0.3.3 相同。',
