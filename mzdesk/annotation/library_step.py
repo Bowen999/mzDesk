@@ -219,13 +219,13 @@ class _Gate:
     """The gate of one query. judge(hit) runs the six checks on one library hit and returns them with what was derived on the way."""
 
     def __init__(self, *, precursor_mz, tol_ppm, n_query, adducts, formulas, ms1, positive=True, halogen=False, metric=PRIMARY_METRIC,
-                 gate_similarity=GATE_SIMILARITY):
+                 gate_similarity=GATE_SIMILARITY, min_matched_peaks=GATE_MIN_MATCHED):
         self.precursor_mz, self.tol_ppm, self.halogen = precursor_mz, tol_ppm, halogen
         self.metrics = self.requested_metrics = as_metrics(metric)      # the chosen algorithms; self.metrics becomes what the search really used
         self.gate_similarity = gate_similarity
         self.list_threshold = list_threshold(gate_similarity)
         self.polarity = "Positive" if positive else "Negative"
-        self.min_matched = min(GATE_MIN_MATCHED, n_query)                      # "all of them" when the query has fewer peaks
+        self.min_matched = min(min_matched_peaks, n_query)                      # "all of them" when the query has fewer peaks
         self.adducts = [a for a in (canonical(getattr(x, "adduct", x)) for x in adducts or []) if a]
         self.formulas = _formula_lists(formulas)
         self.ms1 = ms1                                                          # usable MS1 peaks, or None
@@ -364,7 +364,7 @@ def _reference_spectrum(hit):
 
 
 def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formulas, ms1_peaks=None, tol_ppm=10.0, tol_da=0.02, halogen=False,
-                metric=PRIMARY_METRIC, gate_similarity=GATE_SIMILARITY):
+                metric=PRIMARY_METRIC, gate_similarity=GATE_SIMILARITY, min_matched_peaks=GATE_MIN_MATCHED):
     """Step 3 -> (LayerResult, GateSummary).
 
     ms2_peaks     [(mz, intensity)] query spectrum
@@ -381,6 +381,7 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     halogen       the halogen setting step 2 used (run_adduct_and_formula(halogen=...)): without it BUDDY cannot list a Cl / Br / F / I formula
     metric        the similarity algorithm of the gate and the search: one name or several (a hit passes when at least one reaches the threshold),
                   all from METRIC_CHOICES; one that cannot be computed is left out and CosineGreedy replaces all of them if none can
+    min_matched_peaks  the fewest matched peaks a hit may have (default GATE_MIN_MATCHED; all of them when the query has fewer)
     gate_similarity  the similarity threshold, 0-1; hits from this minus LIST_MARGIN (not below 0) on join the pool
     Raises ValueError for no algorithm, one outside METRIC_CHOICES, or a threshold outside 0-1.
 
@@ -395,7 +396,7 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     ms1_ok, _ = ms1_usable(ms1_peaks, precursor_mz, tol_ppm)
     gate = _Gate(precursor_mz=precursor_mz, tol_ppm=tol_ppm, n_query=len(peaks), adducts=adducts, formulas=formulas,
                  ms1=clean_peaks(ms1_peaks) if ms1_ok else None, positive=positive, halogen=halogen, metric=metric,
-                 gate_similarity=gate_similarity)
+                 gate_similarity=gate_similarity, min_matched_peaks=min_matched_peaks)
 
     def finish(status, note, candidates=(), summary=None):
         layer = LayerResult("library", status, note, time.perf_counter() - started, list(candidates))

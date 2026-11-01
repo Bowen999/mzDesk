@@ -801,6 +801,14 @@ def test_the_peak_requirement_is_four_or_all_of_a_shorter_query(tiny):
     assert summary.checks[1]["status"] == "fail" and summary.checks[1]["detail"] == "3 matched, 4 needed"
 
 
+def test_a_chosen_minimum_of_matched_peaks_replaces_the_four(tiny):
+    three_of_four = [(138.0663, 999), (110.0713, 101), (195.0878, 847), (60.0, 1)]
+    layer, summary = run(peaks=three_of_four, min_matched_peaks=3)                             # 3 matched peaks are enough now
+    assert summary.thresholds["min_matched_peaks"] == 3 and summary.passed and caffeine(layer).evidence["library"]["matched_peaks"] == 3
+    layer, summary = run(peaks=three_of_four, min_matched_peaks=6)                             # more than the spectrum has: still a fail, never an error
+    assert summary.thresholds["min_matched_peaks"] == 4 and not summary.passed
+
+
 def test_a_hit_without_an_adduct_fails_the_adduct_check(tiny):
     layer, summary = run(peaks=THEOBROMINE_PEAKS, mz=181.0720, formulas=[])
     top = layer.candidates[0]

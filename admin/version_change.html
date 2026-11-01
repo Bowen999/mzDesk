@@ -264,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.4.1', date:'2026-11-01', git:'',
+  title:'MS/MS Annotation：Advanced 加"最少匹配峰数"；步骤时间线的对号居中',
+  state:[['最少匹配峰数','Advanced，默认 4，最小 1；谱图峰数不够时按"全部匹配"算'], ['版本','0.4.1']],
+  c:{
+   pipe:['feat','Advanced 里新增 Minimum matched peaks（lib_min_peaks）：库命中的 Level-2 门要求至少这么多匹配峰，默认 4（原来写死的值）。查询谱峰数少于它时，要求全部峰匹配。',true,{w:'mzdesk/spec.py · mzdesk/annotation/pipeline.py · mzdesk/annotation/library_step.py · tests/test_pipeline.py · tests/test_annotation_steps123.py'}],
+   app:['fix','Steps 时间线：已完成节点里的对号居中（web/src/design.css）。',false,{w:'web/src/design.css'}],
+   docs:['doc','版本号 0.4.1，本页加 v0.4.1。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.4.0', date:'2026-11-01', git:'',
   title:'布局重做：一个主题蓝 + 一个警示色、去小标题、"有什么 → 要什么"一行描述、Based on 页脚和 Docs 页、开场动画、缓动进度条、Steps 时间线、结果长短自适应、手机 / 平板',
   note:'开场动画每个会话（标签页）播一次，约 2 秒，点一下跳过；关掉标签页再开会重播。DMPK / ICP-MS / MRM（本版不显示）的文案没改。Docs 页是改写前的原文，还没整理成正式 Document。答案句不再写"其他异构体未排除"，FRIGID 不再标"hypotheses"：这些原文都在 Docs 里。图里的化学高亮色（酸 / 碱位点、碎片色）没动。',

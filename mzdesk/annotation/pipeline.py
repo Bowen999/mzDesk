@@ -80,6 +80,7 @@ class Query:
     local_isomers: bool
     lib_metrics: tuple = (library_step.PRIMARY_METRIC,)      # the library similarity algorithms: a hit passes the gate when at least one reaches lib_threshold
     lib_threshold: float = library_step.GATE_SIMILARITY
+    lib_min_peaks: int = library_step.GATE_MIN_MATCHED          # the fewest matched peaks a library hit may have
     ccs: ccs_step.CcsQuery | None = None
     warnings: list = field(default_factory=list)
 
@@ -142,6 +143,7 @@ def parse_inputs(inputs):
         halogen=flag(inputs, "halogen", "Allow Cl/Br in formulas"),
         local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metrics=lib_metrics,
         lib_threshold=number(inputs, "lib_threshold", "Similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
+        lib_min_peaks=int(number(inputs, "lib_min_peaks", "Minimum matched peaks", default=library_step.GATE_MIN_MATCHED, minimum=1, maximum=1000)),
         ccs=ccs, warnings=warnings)
 
 
@@ -417,7 +419,7 @@ def run_query(q, progress=None):
         def library():
             layer, summary = library_step.run_library(q.ms2, q.precursor_mz, q.positive, q.libraries, adducts=retained, formulas=formulas,
                                                       ms1_peaks=q.ms1 or None, tol_ppm=q.tol_ppm, tol_da=q.tol_da, halogen=q.halogen,
-                                                      metric=q.lib_metrics, gate_similarity=q.lib_threshold)
+                                                      metric=q.lib_metrics, gate_similarity=q.lib_threshold, min_matched_peaks=q.lib_min_peaks)
             return layer.status, layer.note, _library_blocks(layer, summary), (layer, summary)
         got = steps.guarded(3, library)
         if got:

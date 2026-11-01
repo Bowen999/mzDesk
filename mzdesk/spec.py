@@ -990,7 +990,9 @@ _PIPELINE_ADVANCED = [
     {**multiselect("lib_metrics", "Library similarity algorithms", PIPELINE_LIBRARY_METRICS, [METRIC_NAMES.ENTROPY_WEIGHTED]), "checkboxes": True, "required": True,
      "help": "A hit passes when any ticked algorithm reaches the threshold; the first ticked one orders the hits."},
     {**number("lib_threshold", "Similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
-     "help": "Minimum similarity for a Level-2 library match."}]
+     "help": "Minimum similarity for a Level-2 library match."},
+    {**number("lib_min_peaks", "Minimum matched peaks", 4, 1), "min": 1,
+     "help": "A library hit needs at least this many matched peaks (all of them if the spectrum has fewer)."}]
 # MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
     {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0, "new_row": True,
@@ -1015,7 +1017,7 @@ EI_DIPENTYL_PHTHALATE = "104.0257 8\n105.03365 10\n121.02855 21\n122.03618 5\n12
 def _caffeine_example(libraries, ms2):
     return {"precursor": _prec("195.0877"), "ms2": _paste(ms2), "ms1": CAFFEINE_MS1, "libraries": libraries, "tol_ppm": 10.0, "tol_da": 0.02,
             "omics": "Either / unknown", "halogen": False, "local_isomers": False, "additive": "Unknown", "alkali": "Unknown", "ph": 2.7,
-            "lib_metrics": [METRIC_NAMES.ENTROPY_WEIGHTED], "lib_threshold": 0.80}
+            "lib_metrics": [METRIC_NAMES.ENTROPY_WEIGHTED], "lib_threshold": 0.80, "lib_min_peaks": 4}
 
 
 PIPELINES = [

@@ -542,6 +542,7 @@ def test_parse_inputs_reads_the_form():
     q = pipeline.parse_inputs(form(lib_metrics=["Binned cosine", "CosineGreedy", "SpectralEntropy (weighted)"]))
     assert q.lib_metrics == ("SpectralEntropy (weighted)", "CosineGreedy", "Binned cosine") and q.lib_metric == "SpectralEntropy (weighted)"       # the choices' order
     assert pipeline.parse_inputs(form(lib_metric="CosineGreedy")).lib_metrics == ("CosineGreedy",)                      # the older single-name field still works
+    assert d.lib_min_peaks == 4 and pipeline.parse_inputs(form(lib_min_peaks="6")).lib_min_peaks == 6
     assert pipeline.parse_inputs(form(lib_threshold=0)).lib_threshold == 0 and pipeline.parse_inputs(form(lib_threshold=1)).lib_threshold == 1
 
 
@@ -558,7 +559,7 @@ def test_parse_inputs_uses_the_header_precursor():
     ({"omics": "Proteomics"}, "Omics must be"), ({"additive": "Water"}, "additive must be"), ({"alkali": "maybe"}, "Sodium / potassium"),
     ({"ph": 15}, "at most 14"),
     ({"lib_metrics": ["Spec2Vec"]}, "Similarity algorithm must be"), ({"lib_metrics": []}, "at least one"), ({"lib_metrics": ["CosineGreedy", "MS2DeepScore"]}, "Similarity algorithm must be"), ({"lib_threshold": 1.5}, "at most 1"), ({"lib_threshold": -0.1}, "at least 0"),
-    ({"lib_threshold": "high"}, "must be a number"), ({"tol_da": 0}, "must be positive"), ({"halogen": "yes"}, "true or false"),
+    ({"lib_threshold": "high"}, "must be a number"), ({"lib_min_peaks": 0}, "at least 1"), ({"lib_min_peaks": "many"}, "must be a number"), ({"tol_da": 0}, "must be positive"), ({"halogen": "yes"}, "true or false"),
     ({"ms2": {"source": "Paste", "value": "no peaks"}}, "no valid peaks")])
 def test_parse_inputs_rejects_bad_forms(over, message):
     with pytest.raises(InputError, match=message):
@@ -571,14 +572,15 @@ def test_spec_form_matches_the_pipeline():
     pipe = ESI
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
-                                                         "additive", "alkali", "ph", "lib_metrics", "lib_threshold",
+                                                         "additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks",
                                                          "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"}      # the last four: Ion Mobility (tests/test_annotation_ccs.py)
     assert fields["tol_da"]["value"] == 0.02 and fields["omics"]["options"][0] == "Either / unknown" and fields["omics"]["options"] == list(pipeline.OMICS_CHOICES)
     assert fields["additive"]["options"] == ["Unknown", *adduct_rules.ADDITIVES] and spec.PIPELINE_ADDITIVES == list(adduct_rules.ADDITIVES)
     assert fields["halogen"]["label"] == "Allow Cl/Br in formulas" and fields["halogen"]["value"] is False and fields["local_isomers"]["value"] is False
     assert fields["local_isomers"]["label"] == "Compare with database isomers"
-    assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metrics", "lib_threshold")} == {"Advanced"}
-    assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:5] == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold"]
+    assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks")} == {"Advanced"}
+    assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:6] == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks"]
+    assert fields["lib_min_peaks"]["value"] == library_step.GATE_MIN_MATCHED == 4 and fields["lib_min_peaks"]["min"] == 1
     assert fields["lib_metrics"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and len(spec.PIPELINE_LIBRARY_METRICS) == 10
     assert fields["lib_metrics"]["type"] == "multiselect" and fields["lib_metrics"]["checkboxes"] and fields["lib_metrics"]["required"]
     assert fields["lib_metrics"]["value"] == [library_step.PRIMARY_METRIC] and fields["lib_threshold"]["label"] == "Similarity threshold"
