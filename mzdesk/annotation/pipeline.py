@@ -196,8 +196,7 @@ def _formula_blocks(res):
     if not rows:
         return []
     table = _table("formula_table", "Formulas", ["Rank", "Adduct", "Formula", "BUDDY rank (within adduct)", "BUDDY probability", "Error (ppm)", "Isotope fit"], rows)
-    table["caption"] = ("Rank is the list position, not a joint probability: the list is interleaved by BUDDY rank across the adducts (best adduct first within each rank). "
-                        "Filtered formulas can leave gaps in BUDDY rank.")
+    table["caption"] = "Rank is the list position; formulas are interleaved by BUDDY rank across the adducts."
     return [table]
 
 
@@ -233,8 +232,7 @@ def _ranked_blocks(ranked):
     columns = ["Rank", "Name", "Formula", "Adduct", "Layer", "Level", "Base score", "Final score", "Omics", "Ionizable", "Adduct fit"]
     if not rows:
         return []
-    note = ("Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, "
-            "so the Final score column does not always go down the list.")
+    note = "Candidates within 10 % of the best base score are ordered by base score × detectability; the others by base score."
     return [_table("ranked_table", "Ranked candidates", columns, rows), _notes("ranked_note", "How the rank is set", [note])]
 
 
@@ -267,10 +265,9 @@ def _ccs_blocks(ranked, q):
         rows.append([c.rank, _label(c), x.get("adduct") or c.adduct or "—", blk.badge(verdict, CCS_TONES.get(verdict, "neutral"), help=help_),
                      signed(x.get("delta_pct"), 2), f"±{x['tolerance_pct']:.1f}" if x.get("tolerance_pct") is not None else "—", _ccs_source(x)])
     table = _table("ccs_table", "CCS check", ["Rank", "Candidate", "Adduct", "Verdict", "Δ %", "Tolerance %", "Source"], rows)
-    table["caption"] = (f"Observed CCS {q.label}. Δ = (observed − reference) / reference. A candidate that disagrees with a measured reference goes behind all the "
-                        "others; one that disagrees with a predicted value only goes behind the other near-ties (within 10% of the best base score). "
-                        "Levels do not change.")
-    items = [f"Moved by CCS: {'; '.join(moves)}." if moves else "No candidate was moved by the CCS."]
+    table["caption"] = f"Observed CCS {q.label}. Δ = (observed − reference) / reference."
+    items = ["A candidate that disagrees with a measured CCS goes behind all others; with a predicted CCS, behind the near-ties.",
+             f"Moved by CCS: {'; '.join(moves)}." if moves else "No candidate was moved by the CCS."]
     return [table, _notes("ccs_note", "How the CCS check ranks", items)]
 
 
@@ -454,7 +451,7 @@ def run_query(q, progress=None):
 
             def frigid():
                 layer, warns = frigid_step.run_frigid_layers(q.precursor_mz, targets, ms2_engine, top_n=FRIGID_TOP_N)
-                return layer.status, layer.note, _engine_blocks("frigid", "FRIGID structures (hypotheses)", layer), (layer, warns)
+                return layer.status, layer.note, _engine_blocks("frigid", "FRIGID structures", layer), (layer, warns)
             got = steps.guarded(5, frigid)
             if got:
                 layers.append(got[0])

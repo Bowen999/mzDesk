@@ -55,7 +55,7 @@ def weights_path():
 def _load(path):
     """npz -> {"acid": model, "base": model}；BatchNorm（推理时）折成 x * scale + shift。"""
     if not os.path.isfile(path):
-        raise PkaError(f"MolGpKa weights not found at {path}. Run once: {pka_setup.SETUP_COMMAND}")
+        raise PkaError(f"MolGpKa weights not found at {path}. Run: {pka_setup.SETUP_COMMAND}")
     try:
         with np.load(path) as z:
             w = {k: z[k] for k in z.files}
@@ -192,7 +192,7 @@ def prepare(smiles):
     if mol.GetNumHeavyAtoms() > MAX_HEAVY_ATOMS:
         raise ValueError(f"Structure has {mol.GetNumHeavyAtoms()} heavy atoms; MolGpKa is limited to {MAX_HEAVY_ATOMS}.")
     if mol.GetNumHeavyAtoms() > WARN_HEAVY_ATOMS:
-        notes.append(f"{mol.GetNumHeavyAtoms()} heavy atoms: far larger than the drug-like molecules MolGpKa was trained on; treat pKa values with caution.")
+        notes.append(f"{mol.GetNumHeavyAtoms()} heavy atoms: far larger than the drug-like molecules MolGpKa was trained on.")
     odd = sorted({a.GetSymbol() for a in mol.GetAtoms()} - set(SYMBOLS))
     if odd:
         notes.append(f"Element(s) {', '.join(odd)} not in the MolGpKa training set (C H N O S P F Cl Br I): pKa values are unreliable.")
@@ -200,7 +200,7 @@ def prepare(smiles):
     fixed = sum(a.GetFormalCharge() for a in charged)
     permanent = any(not any(n.GetFormalCharge() * a.GetFormalCharge() < 0 for n in a.GetNeighbors()) for a in charged)
     if permanent:
-        notes.append(f"Permanent charge (net {fixed:+d}, e.g. quaternary N+): counted as fixed; there is no uncharged form, so logD is not defined.")
+        notes.append(f"Permanent charge (net {fixed:+d}, e.g. quaternary N+): counted as fixed; no uncharged form, so logD is not defined.")
     return Prepared(mol=mol, notes=notes, fixed_charge=fixed, permanent=permanent)
 
 

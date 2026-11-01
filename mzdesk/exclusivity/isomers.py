@@ -248,11 +248,10 @@ def discriminate(candidates, peaks, precursor_mz, adduct, *, tol_da=DEFAULT_TOL_
     res["verdict"], res["group"] = (SINGLE, [top["id"]]) if len(group) == 1 else (INDISTINGUISHABLE, group)
 
     n = len(cands) - 1
-    res["notes"][:0] = [f"Relative to the {n + 1} candidates considered (the top candidate and {n} isomer{'s' if n != 1 else ''}); "
-                        "an isomer outside this set is not ruled out.",
-                        f"{len(considered)} of {len(clean)} peaks considered: at least 1 % of the base peak, without the precursor and its isotope "
-                        "peaks. A distinguishing peak must be at least 5 % of the base peak."]
+    res["notes"][:0] = [f"Relative to the {n + 1} candidates considered (the top candidate and {n} isomer{'s' if n != 1 else ''}).",
+                        f"{len(considered)} of {len(clean)} peaks considered (≥ 1 % of the base peak, no precursor or isotope peaks); "
+                        "distinguishing peaks need ≥ 5 %."]
     if unscored:
-        res["notes"].append(f"MS-FINDER did not score {', '.join(unscored)}; not ruled out, so kept in the group.")
+        res["notes"].append(f"MS-FINDER did not score {', '.join(unscored)}; kept in the group.")
     res["notes"].append(f"MS-FINDER {mf.VERSION}: fragments within {tol_da:g} Da, tree depth 2; formula search from the theoretical m/z {theo:.4f}.")
     return res

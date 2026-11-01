@@ -20,7 +20,6 @@ from mzdesk.annotation.schema import LAYER_FORMULA, LAYER_LABELS
 ANSWER_SINGLE, ANSWER_GROUP, ANSWER_FORMULA, ANSWER_MASS, ANSWER_NONE = "single", "group", "formula_only", "mass_only", "none"
 VERDICT_SINGLE, VERDICT_GROUP, VERDICT_NOT_RUN = "single", "indistinguishable", "not run"      # insufficient: anything else
 ROLE_TOP, ROLE_SEPARATED, ROLE_NOT_SEPARATED = "top", "separated", "not separated"
-ISOMER_CAVEAT = "The isomer verdict only holds for the candidates that were considered; an isomer that is not in the candidate list has not been ruled out."
 
 
 def _ids(items):
@@ -89,8 +88,7 @@ def build_answer(ranked, isomer_result=None, *, formula_list=None, precursor_mz=
     level = fallback_level(bool(rows), precursor_mz is not None)
     if rows:
         shown = [f"{r.formula} ({r.adduct})" if r.adduct else r.formula for r in rows]
-        statement = (f"No structure could be proposed. The data support {_plural(len(rows), 'molecular formula')}: {_join(shown)}. "
-                     "This is formula-level evidence only.")
+        statement = f"No structure could be proposed. The data support {_plural(len(rows), 'molecular formula')}: {_join(shown)}."
         return _answer(ANSWER_FORMULA, [r.id for r in rows], LAYER_FORMULA, level, statement)
     if level:
         return _answer(ANSWER_MASS, [], "", level, f"Only the exact mass is available: precursor m/z {float(precursor_mz):.4f}. "
@@ -109,24 +107,22 @@ def _structure_answer(structural, isomer_result):
     by_id = {c.id: c for c in structural}
     top = by_id.get(result.get("top_id")) or structural[0]
     where = f"{LAYER_LABELS[top.layer]}, {level_name(top.level)}"
-    formula = f" of {top.formula}" if top.formula else ""
     group = [top.id] + [i for i in _ids(result.get("group")) if i != top.id and i in by_id]
 
     if verdict == VERDICT_GROUP and len(group) > 1:
         names = [_label(by_id[i]) for i in group]
-        statement = (f"The spectrum cannot separate {_plural(len(group), 'isomer')}: {_join(names)}. "
-                     f"The top-ranked one is {names[0]} ({where}). {ISOMER_CAVEAT}")
+        statement = f"The spectrum cannot separate {_plural(len(group), 'isomer')}: {_join(names)}. The top-ranked one is {names[0]} ({where})."
         kind, ids = ANSWER_GROUP, group
     else:
         statement = f"{_label(top)} is the top-ranked structure ({where}). "
         if verdict == VERDICT_SINGLE:
-            statement += f"Fragment peaks tell it apart from every other isomer that was considered. {ISOMER_CAVEAT}"
+            statement += "Fragment peaks tell it apart from every other isomer that was considered."
         elif not result:
-            statement += f"The isomer check was not run, so other isomers{formula} are not ruled out."
+            statement += "The isomer check was not run."
         else:
             notes = result.get("notes") or ["no isomer comparison was possible"]
             why = notes if isinstance(notes, str) else notes[0]
-            statement += f"The isomer check could not be done ({why.rstrip('.')}), so other isomers{formula} are not ruled out."
+            statement += f"The isomer check could not be done ({why.rstrip('.')})."
         kind, ids = ANSWER_SINGLE, [top.id]
 
     challengers = [_label(by_id[i]) for i in _ids(result.get("challengers")) if i in by_id and i != top.id]

@@ -142,8 +142,7 @@ def structure(inputs, key="structure", label="Structure", *, required=True, allo
         except resolve.ResolveError as exc:
             raise InputError(f"{label}: {exc}") from None
         if warnings is not None and detected == "SMILES" and is_formula(s):
-            warnings.append(f"'{s}' is both a valid molecular formula and a valid SMILES; it was read as SMILES. "
-                            "If you meant a formula, use Formula Annotation (this page needs a structure).")
+            warnings.append(f"'{s}' is both a molecular formula and a SMILES; it was read as SMILES. For a formula, use Formula Annotation.")
         return {"kind": "smiles", "smiles": smiles}
     if s.startswith("InChI="):
         mol = Chem.MolFromInchi(s)

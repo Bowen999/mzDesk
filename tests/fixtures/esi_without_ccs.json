@@ -10,7 +10,7 @@
     "layer_label": "MS-FINDER",
     "level": "3",
     "level_label": "Level 3: tentative candidate",
-    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with), so other isomers of C8H10N4O2 are not ruled out.",
+    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with).",
     "top_id": "c1",
     "type": "single"
    },
@@ -391,7 +391,7 @@
     {
      "data": {
       "items": [
-       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+       "Candidates within 10 % of the best base score are ordered by base score × detectability; the others by base score."
       ]
      },
      "id": "ranked_note",
@@ -412,7 +412,7 @@
     "layer_label": "library",
     "level": "2a",
     "level_label": "Level 2a: probable structure (library spectrum match)",
-    "statement": "Caffeine is the top-ranked structure (library, Level 2a). Fragment peaks tell it apart from every other isomer that was considered. The isomer verdict only holds for the candidates that were considered; an isomer that is not in the candidate list has not been ruled out.",
+    "statement": "Caffeine is the top-ranked structure (library, Level 2a). Fragment peaks tell it apart from every other isomer that was considered.",
     "top_id": "c1",
     "type": "single"
    },
@@ -765,7 +765,7 @@
     {
      "data": {
       "items": [
-       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+       "Candidates within 10 % of the best base score are ordered by base score × detectability; the others by base score."
       ]
      },
      "id": "ranked_note",
@@ -786,7 +786,7 @@
     "layer_label": "MS-FINDER",
     "level": "3",
     "level_label": "Level 3: tentative candidate",
-    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with), so other isomers of C8H10N4O2 are not ruled out.",
+    "statement": "CN1C=NC2=C1C(=O)N(C(=O)N2C)C is the top-ranked structure (MS-FINDER, Level 3). The isomer check could not be done (No isomer to compare with).",
     "top_id": "c1",
     "type": "single"
    },
@@ -1189,7 +1189,7 @@
     {
      "data": {
       "items": [
-       "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list."
+       "Candidates within 10 % of the best base score are ordered by base score × detectability; the others by base score."
       ]
      },
      "id": "ranked_note",

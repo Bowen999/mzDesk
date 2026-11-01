@@ -596,7 +596,7 @@ def test_runner_reports_what_auto_became(fake_predict):
 def test_page_has_the_element_boxes_and_extended_range_off_by_default():
     fields = {f["id"]: f for m in MODULES if m["id"] == "ms2_structure" for f in m["inputs"]}
     for fid, label in (("halogen", "Include halogens (F, Cl, Br, I)"), ("silicon", "Include Si"),
-                       ("extended", "Extended element range (PFAS / unusual compositions)")):
+                       ("extended", "Extended element range")):
         assert fields[fid]["type"] == "checkbox" and fields[fid]["label"] == label and fields[fid]["value"] is False
     assert not any(k in m.get("example", {}) for m in MODULES if m["id"] == "ms2_structure" for k in ("halogen", "silicon", "extended"))
 

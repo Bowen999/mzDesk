@@ -291,8 +291,8 @@ def test_the_ccs_check_block_lists_every_candidate_in_the_final_order(rig, fake_
     assert (rows[0][4], rows[0][5], rows[0][6]) == ("+0.00", "±1.0", "Measured 140.5 Å² · DTCCS N2 · fakeDT")
     assert (rows[1][4], rows[1][5]) == ("+4.31", "±2.0")
     note = next(b for b in blocks if b["id"] == "ccs_note")["data"]["items"]
-    assert note == ["Moved by CCS: Aspirin: rank 1 to 2 (+4.3 % from the measured 134.7 Å² (±2.0 %))."]
-    assert "Levels do not change" in table["caption"] and "140.5 Å²" in table["caption"]
+    assert note[0].startswith("A candidate that disagrees with a measured CCS goes behind all others") and note[1:] == ["Moved by CCS: Aspirin: rank 1 to 2 (+4.3 % from the measured 134.7 Å² (±2.0 %))."]
+    assert table["caption"].startswith("Observed CCS 140.5 Å²") and table["caption"].endswith("Δ = (observed − reference) / reference.")
     ranked = next(b for b in blocks if b["id"] == "ranked_table")["data"]["rows"]
     assert [r[1] for r in ranked] == ["Caffeine", "Aspirin"], "the ranked table shows the final order"
 

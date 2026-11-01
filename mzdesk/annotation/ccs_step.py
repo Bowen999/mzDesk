@@ -122,8 +122,8 @@ def check(candidates, q, run_adduct, progress=None):
     if not comparable:
         return Outcome(message=f"The observed CCS ({q.label}) was not used: {reason}", short=short)
     if not engine.installed():
-        return Outcome(message=f"The observed CCS ({q.label}) was not used: the CCS reference data is not installed. Run `{engine.SETUP_COMMAND}` once "
-                               "(it downloads about 5 MB and trains the prediction model), then run the workflow again.", short="CCS data not installed")
+        return Outcome(message=f"The observed CCS ({q.label}) was not used: the CCS reference data is not installed. Run `{engine.SETUP_COMMAND}`, "
+                               "then run the workflow again.", short="CCS data not installed")
     try:
         engine.load()
         checks = {}

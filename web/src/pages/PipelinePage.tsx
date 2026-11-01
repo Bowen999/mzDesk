@@ -3,11 +3,12 @@ import { ApiError, getJob, startPipeline } from "../api";
 import { AnswerCard } from "../components/AnswerCard";
 import { CandidateTable } from "../components/CandidateTable";
 import { FieldInput, initialValues, missingRequired, visibleFields } from "../components/Fields";
-import { Icon, pipelineIcon } from "../components/Icon";
+import { pipelineIcon } from "../components/Icon";
 import { FragmentProvider } from "../components/FragmentDialog";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { HelpButton } from "../components/Help";
 import { OutputList } from "../components/Outputs";
+import { PageFoot, PageHead } from "../components/PageHead";
 import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
 import { StepList } from "../components/StepList";
 import { StructureProvider } from "../components/StructureHover";
@@ -36,9 +37,9 @@ function groupFields(fields: Field[]): { title: string; fields: Field[]; collaps
   return groups;
 }
 
-const FRAGMENT_NOTE = "The isomer comparison on this page uses MS-FINDER; this view uses MetFrag, so the explained peaks can differ between the two.";
-const RANK_NOTE = "Candidates within 10% of the best base score are ordered by base score x detectability; the others follow in base-score order, so the Final score column does not always go down the list.";
-const CCS_RANK_NOTE = "With an observed CCS, a candidate that disagrees with a measured reference goes behind all the others; one that disagrees with a predicted value only goes behind the other near-ties. Such a candidate carries a CCS flag, and the levels do not change.";
+const FRAGMENT_NOTE = "Isomer comparison uses MS-FINDER, this view uses MetFrag: explained peaks can differ.";
+const RANK_NOTE = "Candidates within 10% of the best score are ordered by score × detectability.";
+const CCS_RANK_NOTE = "A CCS that disagrees with a measured value moves a candidate to the end; with a predicted value, behind its near-ties.";
 
 /** The generic result (mzdesk/workflows/common.py): the answer (statement, level badge, facts), the warnings, then the headline blocks. */
 export function WorkflowResultView({ result }: { result: WorkflowResult }) {
@@ -49,7 +50,6 @@ export function WorkflowResultView({ result }: { result: WorkflowResult }) {
   return (
     <>
       <div className="verdict" aria-live="polite">
-        <div className="verdict-label">Answer</div>
         <p className="verdict-text">{a.statement}</p>
       </div>
       {a.level && <div className="pill-row"><span className="badge" title={a.level_label ?? undefined}>{a.level}</span></div>}
@@ -66,17 +66,9 @@ export const requestedAdductOf = (pipeId: string, payload: Record<string, any>):
   return pipeId === ESI_PIPELINE && adduct && adduct !== "Auto" ? adduct : null;
 };
 
-/** The title of a workflow page and its one-line description. The Session report draws the same. */
+/** The title of a workflow page and its "have → get" line. The Session report draws the same. */
 export function PipelineHead({ pipe }: { pipe: Pipeline }) {
-  return (
-    <>
-      <div className="module-heading">
-        <span className="module-emblem"><Icon name={pipelineIcon(pipe.id)} /></span>
-        <div className="module-heading-copy"><div className="module-kicker">Workflows</div><h1>{pipe.title}</h1></div>
-      </div>
-      <p className="one-liner" dangerouslySetInnerHTML={{ __html: pipe.one_liner }} />
-    </>
-  );
+  return <PageHead icon={pipelineIcon(pipe.id)} title={pipe.title} flow={pipe.one_liner} />;
 }
 
 /** What a workflow page shows under its inputs and progress bar: the result (ESI MS/MS Annotation's own view, or the generic one) and the steps.
@@ -99,11 +91,7 @@ export function PipelineResults({ pipeId, jobResult, job, requestedAdduct }:
           </FragmentProvider>
         </>)}
       {workflowResult && <WorkflowResultView result={workflowResult} />}
-      {job && (
-        <>
-          <div className="results-head"><h2 className="panel-title">Steps</h2></div>
-          <StepList steps={job.steps} />
-        </>)}
+      {job && <StepList steps={job.steps} />}
     </>
   );
   return pipeId === ESI_PIPELINE ? <StructureProvider result={result}>{content}</StructureProvider> : content;
@@ -214,20 +202,19 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     <div className="page module-page" data-pipeline={pipe.id}>
       <PipelineHead pipe={pipe} />
       <div key={formVersion} className={"panel" + (busy ? " is-running" : "")}>
-        <div className="panel-head"><h2 className="panel-title">Inputs</h2><span className="panel-note"><span className="req" aria-hidden="true">*</span> required</span></div>
         {groupFields(shown).map(g => {
           const body = g.fields.every(f => f.type === "checkbox")
             ? <div className="check-row">{g.fields.map(field)}</div>
             : <div className="fields">{g.fields.map(field)}</div>;
           return g.collapsed
             ? <details className="form-section" key={g.title}><summary>{g.title}</summary>{body}</details>
-            : g.title ? <fieldset className="form-section" key={g.title}><legend>{g.title}</legend>{body}</fieldset> : <div key="plain">{body}</div>;
+            : <div className="form-section" key={g.title || "plain"}>{body}</div>;
         })}
         <div className="actions">
-          <button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />Running…</> : "Run workflow"}</button>
+          <button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />Running…</> : "Run"}</button>
           <button className="btn ghost" type="button" onClick={clear}>Clear</button>
           {(pipe.examples ?? []).map(ex => (
-            <button className="btn secondary" type="button" key={ex.label} disabled={busy} onClick={() => loadExample(ex.values)}>Load example: {ex.label}</button>))}
+            <button className="btn secondary" type="button" key={ex.label} disabled={busy} onClick={() => loadExample(ex.values)}>{ex.label}</button>))}
           <span className="msg" aria-live="polite">{netNote}</span>
         </div>
       </div>
@@ -235,6 +222,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
       {(busy || job || (hasStartedJob && error)) && <WorkflowProgress job={job} awaitingFirstUpdate={hasStartedJob}
         trackingStopped={!!error && !busy && hasStartedJob && (!job || job.status === "running" || job.status === "queued")} />}
       <PipelineResults pipeId={pipe.id} jobResult={job?.result ?? null} job={job} requestedAdduct={requestedAdduct} />
+      <PageFoot id={pipe.id} basedOn={pipe.based_on} />
       {guard.dialog}
     </div>
   );

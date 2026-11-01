@@ -11,6 +11,9 @@ checkbox, slider, file, table, heading。
 模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / gnps，以及 2.0 才开放的 dmpk / inorganic；ms2 的显示名是 Spectrum），
   None = 直接列在 Modules 下（Calculator）。DEFERRED_* 里的模块已做好但本版不显示。live=True 表示已接引擎（后端 mzdesk/api/runners/ 包里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
+  one_liner：一行 "<已有的输入> → <得到的结果>"，纯文本，不写引擎名（引擎名放 based_on）；本机才能跑的页面（Docker / Mono / 大型本地安装）末尾加 "(Local version only)"。
+  based_on：页脚 "Based on …" 的名单（module() 的参数；PIPELINES 的每个字典里也有）。页面真正依赖的外部引擎 / 模型 / 数据在前，纯 mzDesk 自己的规则写 "mzDesk"，最多 4 个。
+  help / column_help / caption 只写读结果所需的一两句短话；删掉的长说明原样存在 mzdesk/docs/<id>.md（应用内 Docs 页显示）。
 """
 import base64
 
@@ -70,7 +73,7 @@ def spectrum(id="ms2", label="MS2 spectrum", multi=False):
     """network_sources: input sources fetched online (see mzdesk/api/common.py spectrum())."""
     return {"type": "spectrum", "id": id, "label": label, "multi": multi, "network_sources": ["USI"]}
 def ms1(id="ms1"):
-    return {"type": "ms1", "id": id, "label": "MS1 isotope pattern (m/z intensity per line, optional)"}
+    return {"type": "ms1", "id": id, "label": "MS1 isotope pattern (optional)", "placeholder": "m/z intensity per line"}
 def number(id, label, value=None, step=None, placeholder=None):
     return {"type": "number", "id": id, "label": label, "value": value, "step": step, "placeholder": placeholder}
 def text(id, label, value="", placeholder=None):
@@ -80,7 +83,7 @@ def textarea(id, label, value="", placeholder=None, rows=5):
 def select(id, label, options, value=None):
     return {"type": "select", "id": id, "label": label, "options": options, "value": value or options[0]}
 def multiselect(id, label, options, value=None, network_options=None):
-    """network_options: options that use the internet when selected (e.g. models downloaded on first use)."""
+    """network_options: options that use the internet when selected (e.g. the deep-learning scores)."""
     f = {"type": "multiselect", "id": id, "label": label, "options": options, "value": value if value is not None else options}
     if network_options:
         f["network_options"] = list(network_options)
@@ -88,7 +91,7 @@ def multiselect(id, label, options, value=None, network_options=None):
 def radio(id, label, options, value=None):
     return {"type": "radio", "id": id, "label": label, "options": options, "value": value or options[0]}
 def checkbox(id, label, value=False, network=False):
-    """network: ticking it uses the internet (first use only for model downloads)."""
+    """network: ticking it uses the internet."""
     f = {"type": "checkbox", "id": id, "label": label, "value": value}
     if network:
         f["network"] = True
@@ -193,12 +196,16 @@ def grouptable(columns, title=None, id=None, help=None, caption=None, key=None, 
 
 
 # ---- 模块 ----
-def module(id, title, cls, one_liner, inputs, outputs, group="modules", subgroup=None, live=False, example=None, network=None):
-    """network: a sentence saying what the page sends online; the frontend asks first when Internet search is off."""
+def module(id, title, cls, one_liner, inputs, outputs, group="modules", subgroup=None, live=False, example=None, network=None, based_on=None):
+    """network: a sentence saying what the page sends online; the frontend asks first when Internet search is off.
+    based_on: short names of what the page relies on, the most important first, at most 4 (external engines / models / data, then "mzDesk" for its own rules);
+    the frontend writes "Based on …" at the foot of the page."""
     m = {"id": id, "title": title, "cls": cls, "group": group, "subgroup": subgroup, "live": live,
          "one_liner": one_liner, "inputs": inputs, "outputs": outputs, "example": example}
     if network:
         m["network"] = network
+    if based_on:
+        m["based_on"] = list(based_on)
     return m
 
 
@@ -282,7 +289,7 @@ _MASSQL_EXAMPLE = base64.b64encode(b"BEGIN IONS\nTITLE=example\nPEPMASS=132.102\
 
 
 MODULES = [
-    module("gnps_fastmasst", "Spectrum in Which Set", "A", "Search a spectrum in <b>public datasets</b> and the <b>GNPS reference library</b> (GNPS2 fastMASST).",
+    module("gnps_fastmasst", "Spectrum in Which Set", "A", "MS2 spectrum → matching public datasets and reference library hits",
         [dict(spectrum("spectrum", "MS2 spectrum"), required=True, section="Query"),
          dict(number("precursor_mz", "Precursor m/z", step=0.0001), header_fallback=True, section="Query"),
          dict(text("name", "Query name"), section="Query"),
@@ -292,53 +299,55 @@ MODULES = [
          dict(number("pm_tol", "Precursor tolerance (Da)", 0.05, 0.001), section="Search"),
          dict(number("frag_tol", "Fragment tolerance (Da)", 0.05, 0.001), section="Search"),
          dict(number("query_min_rel", "Query noise threshold (% base peak)", 0, 0.1), section="Search"),
-         dict(text("diagnostic", "Diagnostic ions (m/z, comma-separated)"), section="Optional verification"),
-         dict(text("diag_required", "Required ions (m/z, comma-separated)"), section="Optional verification"),
+         dict(text("diagnostic", "Diagnostic ions (m/z)", placeholder="86.0964, 44.0495"), section="Optional verification"),
+         dict(text("diag_required", "Required ions (m/z)", placeholder="86.0964"), section="Optional verification"),
          dict(text("diag_rule", "Rule: all, any, k, or k-of-n", "all"), section="Optional verification"),
          dict(number("diag_tol", "Diagnostic tolerance (Da)", 0.01, 0.001), section="Optional verification"),
          dict(number("diag_min_rel", "Minimum intensity (% base peak)", 0, 0.1), section="Optional verification"),
-         dict(number("verify_max", "Maximum spectra to verify per search (0–20)", 20, 1), section="Optional verification"),
-         dict(checkbox("redu_join", "Join Pan-ReDU metadata and enrichment"), section="Pan-ReDU"),
+         dict(number("verify_max", "Max spectra to verify per search", 20, 1), section="Optional verification"),
+         dict(checkbox("redu_join", "Join Pan-ReDU metadata"), section="Pan-ReDU"),
          dict(select("redu_bg", "Background", ["pos_lc_or_unknown", "pos_lc", "neg_lc_or_unknown", "neg_lc", "all"]),
               section="Pan-ReDU", visible_when={"field": "redu_join", "equals": True},
-              help="Choose the background for your ion mode. The default includes positive, alternating and unknown polarity but excludes negative and GC/EI.")],
+              help="Choose the background for your ion mode.")],
         [table(["Search", "Passing hits", "Before filter", "Best cosine", "Task ID"], "Searches", id="searches"),
          downloads("Full results", id="downloads"),
          table(["Search", "Dataset", "Hits"], "Top datasets", id="datasets", page_size=10, compact=True),
-         table(["Name", "Cosine", "Matched peaks", "Adduct", "Accession", "Entries"], "Top reference-library names", id="reference_hits",
-               help="Names are grouped as in the original script; a library match is not proof of structure identity.", compact=True),
+         table(["Name", "Cosine", "Matched peaks", "Adduct", "Accession", "Entries"], "Top reference-library names", id="reference_hits", compact=True),
          table(["Name", "Cosine", "Matched peaks", "Adduct", "Accession", "Entries"], "Top suspect names", id="suspect_hits",
-               help="Suspect entries are propagated annotations, not reference standards.", compact=True),
+               help="Suspect names are propagated annotations.", compact=True),
          table(["Search", "Dataset", "USI", "Cosine", "Matched peaks", "Name", "Adduct", "Verification", "Diagnostic pass", "ReDU match"], "Passing hits", id="hits", page_size=10, compact=True),
          table(["Search", "Candidates", "Verified", "Diagnostic pass", "Not selected", "Fetch failed"], "Diagnostic verification", id="verification"),
          table(["Search", "Hit set", "Column", "Value", "Hit files", "Hit datasets", "File enrichment", "Dataset enrichment", "Dataset-weighted enrichment"], "Pan-ReDU enrichment", id="redu", page_size=10, compact=True)], subgroup="gnps", live=True,
         example={"spectrum": _paste(LEUCINE_GNPS_MS2), "precursor_mz": "132.102", "name": "L-leucine"},
-        network="The spectrum is sent to GNPS2 fastMASST, and hits are verified through the public GNPS USI service."),
+        network="The spectrum is sent to GNPS2 fastMASST, and hits are verified through the public GNPS USI service.",
+        based_on=["fastMASST", "GNPS", "Pan-ReDU"]),
 
-    module("gnps_redu", "Dataset Finder", "B", "Find <b>public datasets</b> by sample metadata and ion polarity (GNPS2 Pan-ReDU).",
+    module("gnps_redu", "Dataset Finder", "B", "Sample metadata + polarity → matching public datasets",
         [text("organism", "Organism name or NCBI taxid", placeholder="Mus musculus or 10090"),
          text("body_part", "Body part", placeholder="brain"),
-         dict(textarea("where", "Other filters (one column=value per line)", placeholder="SampleType=animal", rows=3),
-              help="Use Pan-ReDU column names; comma-separated values within a column are alternatives. Different columns are combined."),
+         dict(textarea("where", "Other filters", placeholder="SampleType=animal", rows=3),
+              help="One column=value per line; commas separate alternatives."),
          number("min_files", "Minimum matching files per dataset", 1, 1),
          select("polarity", "Required polarity", ["any", "positive", "negative", "both"])],
         [cards([("Cache date", ""), ("Cached rows", ""), ("Matched files", ""), ("Passed datasets", ""), ("Undetermined", "")], "Summary", id="summary", style="metric"),
          downloads("Full results", id="downloads"),
          table(["Status", "Dataset", "Source", "Files", "Positive", "Negative", "Alternating", "Unknown", "Other"], "Datasets", id="datasets", page_size=10, compact=True),
          table(["Column", "Value", "Files"], "Matched metadata values", id="values", page_size=10, compact=True)],
-        subgroup="gnps", live=True, example={"organism": "Mus musculus", "body_part": "brain", "min_files": 13, "polarity": "both"}),
+        subgroup="gnps", live=True, example={"organism": "Mus musculus", "body_part": "brain", "min_files": 13, "polarity": "both"},
+        based_on=["Pan-ReDU", "GNPS"]),
 
-    module("gnps_massql", "Fragment Pattern", "A", "Find MS2 spectra by <b>fragment, neutral-loss and precursor patterns</b> in one uploaded file (MassQL).",
+    module("gnps_massql", "Fragment Pattern", "A", "MS file + fragment or neutral-loss query → matching MS2 spectra",
         [dict(textarea("query", "MassQL query", "QUERY scaninfo(MS2DATA) WHERE MS2PROD=44.04942:TOLERANCEMZ=0.01", rows=4), required=True),
-         dict(file("input_file", "mzML / mzXML / MGF file (one, max 20 MB)", ".mzml,.mzxml,.mgf"), required=True, binary=True, max_bytes=20_000_000,
-              help="Only the migrated MS2 subset is supported. Files are processed on the mzDesk server, not sent to GNPS2.")],
+         dict(file("input_file", "mzML / mzXML / MGF file", ".mzml,.mzxml,.mgf"), required=True, binary=True, max_bytes=20_000_000,
+              help="Processed on the mzDesk server, not sent to GNPS2.")],
         [cards([("Input file", ""), ("MS2 spectra", ""), ("Matches", "")], "Summary", id="summary", style="metric"),
          downloads("Full results", id="downloads"),
          table(["Scan", "Precursor m/z", "RT (min)", "Polarity", "Charge", "Peaks", "Title", "Matched conditions"], "Matching spectra", id="matches", page_size=10, compact=True)], subgroup="gnps", live=True,
         example={"query": "QUERY scaninfo(MS2DATA) WHERE MS2PROD=44.04942:TOLERANCEMZ=0.01",
-                 "input_file": {"name": "leucine-example.mgf", "base64": _MASSQL_EXAMPLE}}),
+                 "input_file": {"name": "leucine-example.mgf", "base64": _MASSQL_EXAMPLE}},
+        based_on=["MassQL", "pyOpenMS"]),
 
-    module("identity", "Identity", "B", "Who is this compound: <b>names</b>, <b>database IDs</b>, synonyms, classification and background (online lookup).",
+    module("identity", "Identity", "B", "Compound → names, IDs, classification",
         [structure(), select("kind", "Input type", IDENTITY_KINDS)],
         [cards([("Name", ""), ("Formula", ""), ("PubChem CID", "")], "Resolved", id="resolved", style="metric"),
          figure("2D depiction", id="depiction", span="half"),
@@ -346,125 +355,100 @@ MODULES = [
          table(["Database", "ID"], "Database IDs", id="database_ids"),
          table(["PubChem CID", "Title"], "Other matches for this name", id="candidates"),
          table(["Synonym"], "Synonyms", id="synonyms"),
-         table(["System", "Level", "Term"], "Classification", id="classification",
-               help=["ClassyFire and LOTUS records are source annotations; NPClassifier is a natural-product-oriented structure classifier.",
-                     "LIPID MAPS rows appear for LMSD records. mzDesk rows come from the local lipid / metabolite rules. Different systems need not agree."]),
-         table(["Origin", "Evidence", "Source"], "Origin", id="origin",
-               help="Evidence of association or occurrence, not proof of exclusive origin. Human-associated records do not by themselves prove endogenous biosynthesis."),
-         table(["Pathway", "Database", "Link"], "Pathways", id="pathways",
-               help="KEGG, Reactome and HMDB / SMPDB annotations. Reactome uses the numeric ChEBI identifier and human pathway projection."),
-         table(["Biofluid", "Normal concentration", "Unit", "Source"], "Biofluid concentrations", id="biofluids",
-               help=["Read from a local HMDB XML only; values are never inferred. Set MZDESK_HMDB_XML to the unzipped HMDB metabolites XML path.",
-                     "Normal ranges depend on cohort, matrix, method and units. Check the linked HMDB record before reuse."]),
-         table(["Species", "Source"], "Species", id="species",
-               help="Reported species-level LOTUS occurrences, deduplicated across taxonomic providers. Absence of a row is not evidence of absence."),
-         table(["Vendor", "CAS", "Purity"], "Standards & availability", id="standards",
-               help="PubChem vendor availability is a link-out, not a certified-standard claim. Product grade and purity must be checked with each vendor."),
-         table(["Source", "Signal", "Hazard statements"], "GHS safety", id="ghs",
-               help="Reporter-specific GHS classifications from PubChem. Reports can differ by jurisdiction, impurities and additives; this is not a safety data sheet.")],
+         table(["System", "Level", "Term"], "Classification", id="classification", help="Each system classifies on its own."),
+         table(["Origin", "Evidence", "Source"], "Origin", id="origin"),
+         table(["Pathway", "Database", "Link"], "Pathways", id="pathways"),
+         table(["Biofluid", "Normal concentration", "Unit", "Source"], "Biofluid concentrations", id="biofluids"),
+         table(["Species", "Source"], "Species", id="species"),
+         table(["Vendor", "CAS", "Purity"], "Standards & availability", id="standards"),
+         table(["Source", "Signal", "Hazard statements"], "GHS safety", id="ghs")],
         subgroup="molecular", live=True, example={"structure": _name("aspirin"), "kind": "Auto"},
-        network="Identity looks the compound up in PubChem and UniChem, then loads classification and background from public sources."),
+        network="Identity looks the compound up in PubChem and UniChem, then loads classification and background from public sources.",
+        based_on=["PubChem", "UniChem", "LOTUS", "ClassyFire"]),
 
-    module("structure_formats", "Structure & Formats", "B", "Enter up to <b>three structures</b>, compare them in <b>2D / 3D</b>, and export each as <b>SMILES, InChI, InChIKey or MOL</b>.",
+    module("structure_formats", "Structure & Formats", "B", "Up to 3 structures → 2D / 3D views, SMILES, InChI, InChIKey, MOL",
         [dict(structure(label="Compound 1"), required=True, label_field=True),
          {**structure("structure_2", "Compound 2", optional=True), "label_field": True},
          {**structure("structure_3", "Compound 3", optional=True), "label_field": True}],
-        [compare("Compounds", id="compare",
-                 help=["One card per compound, with the 2D depiction and the 3D viewer in boxes of the same width and height, so the columns line up.",
-                       "With one compound the two boxes sit side by side; with two or three they stack in one column per compound.",
-                       "The 3D viewer shows one low-energy conformer (ETKDG + MMFF), not an ensemble; when the embedding fails the card keeps the 2D depiction."]),
-         formats("Structure in every format", "Structure formats", id="formats",
-                 help="Pick the compound above the format tabs; the same format stays selected when you switch.")],
-        subgroup="molecular", live=True, example={"structure": _name("testosterone")}),
+        [compare("Compounds", id="compare", help="3D: one low-energy conformer."),
+         formats("Structure in every format", "Structure formats", id="formats")],
+        subgroup="molecular", live=True, example={"structure": _name("testosterone")}, based_on=["RDKit"]),
 
-    module("properties", "Properties & Groups", "B", "<b>Formula</b>, <b>masses</b>, physicochemical descriptors and <b>functional groups</b>.",
+    module("properties", "Properties & Groups", "B", "Compound → formula, masses, descriptors, functional groups",
         [structure()],
         [cards([("Formula", ""), ("Monoisotopic mass", "Da"), ("Average MW", "Da"), ("Net charge", "formal")], "Composition", id="summary", style="metric"),
          table(["Group", "Descriptor", "Value"], "Descriptors", id="descriptors"),
          groupmap("Functional groups", id="functional_groups",
-                help=["Transparent local SMARTS search over more than 170 curated groups, ring systems and biomolecule motifs; every matching rule is listed, "
-                      "including overlapping generic and specific groups (for example alcohol and secondary alcohol).",
-                      "Click a group to see where it sits on your structure; a group with several sites shows all of them in different colours, and each site can be shown alone with its atom numbers (one-based, in the parsed input).",
-                      "The group drawing is the usual sketch of the group, R is the rest of the molecule. Open a group for the exact SMARTS that was counted.",
-                      "The rule library is broad but not a universally exhaustive functional-group ontology."])],
-        subgroup="molecular", live=True, example={"structure": _name("kaempferol")}),
+                help=["Click a group to see its sites on the structure.", "Overlapping groups are all listed."])],
+        subgroup="molecular", live=True, example={"structure": _name("kaempferol")}, based_on=["RDKit", "mzDesk"]),
 
-    module("lipid_short_name", "Lipid Short Name", "B", "A lipid <b>shorthand name</b> in; <b>LIPID+</b> and <b>LIPID MAPS</b> names and an <b>illustrative structure</b> out.",
+    module("lipid_short_name", "Lipid Short Name", "B", "Lipid shorthand → standardized names and an illustrative structure",
         [dict(text("name", "Lipid name", placeholder="PC 16:0/18:1"), required=True)],
         [cards([("L1", "Sum composition"), ("L2", "Chains"), ("L3", "Chains with groups")], "LIPID+", id="lipid_plus", style="metric",
-               help="Chains in descending carbon number, no sn positions. A level is — when the name does not give it."),
+               help="No sn positions. — = the name does not give that level."),
          cards([("Species", "Sum composition"), ("Molecular species", "Chains")], "LIPID MAPS", id="lipid_maps", style="metric",
-               help="LIPID MAPS shorthand. A name is — when it cannot be written from this input; the ? gives the reason."),
+               help="— = cannot be written from this input; the ? says why."),
          figure("Illustrative structure", id="structure"),
          notes(None, id="no_structure"),
          notes("Assumptions", id="assumptions", collapsed=True),
          notes("Flags", id="flags", collapsed=True)],
-        subgroup="molecular", live=True, example={"name": "PC 16:0/18:1"}),
+        subgroup="molecular", live=True, example={"name": "PC 16:0/18:1"}, based_on=["LIPID+", "RDKit"]),
 
     # ---- Detectability：7 页。只有 Platform 的脂质组 / 代谢组部分接了引擎，其余都是占位 ----
-    module("platform_fit", "Platform", "A", "Which <b>workflow</b> can measure it: lipidomics, metabolomics, CIL LC-MS or GC-MS (decided mainly by <b>extraction</b> and <b>derivatization</b>).",
+    module("platform_fit", "Platform", "A", "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS",
         [structure()],
         [portal("Platform", id="platform",
-                help=["Rule-based screen of which workflow should work, not a measurement.",
-                      "Yes: expected to work. Partial: only after derivatization. No: not expected. The ? on a tile gives its rule hits."]),
+                help=["Yes: expected to work. Partial: after derivatization. No: not expected.", "The ? on a tile gives the reason."]),
          reaction("Why and how", id="reactions",
-                  help=["Shown when CIL or GC-MS applies. Choosing a reagent updates the structure to highlight only its reactive groups.",
-                        "All four CIL channels show complete substrate and product structures, including every label; other reagents use functional-group schemes. Masses are monoisotopic."])],
-        subgroup="detectability", live=True, example={"structure": _name("L-tyrosine")}),
+                  help=["Pick a reagent to highlight its reactive groups.", "Masses are monoisotopic."])],
+        subgroup="detectability", live=True, example={"structure": _name("L-tyrosine")}, based_on=["RDKit", "mzDesk"]),
 
-    module("separation", "Separation", "B", "Which <b>column</b>, and what <b>charge</b> the molecule carries at each pH (MolGpKa pKa prediction; needs a one-time weights download).",
+    module("separation", "Separation", "B", "Compound + pH → charge, logD, suitable separation modes",
         [structure(), slider("ph", "Mobile phase pH", 1, 13, 0.1, 2.7)],
-        [cards([("logD at pH", "", "logD = logP (Crippen) + log10(fraction of fully uncharged molecules). Ions are assumed not to partition and zwitterions count as charged, "
-                                   "so logD is a lower bound at low or high pH."),
-                ("Dominant charge state", "", "Most probable net charge at this pH, summed over the predicted sites (a zwitterion is net 0)."),
-                ("Fraction neutral", "", "Share of the molecules with no charge at all; a zwitterion counts as charged.")],
+        [cards([("logD at pH", "", "logP corrected for the neutral fraction at this pH."),
+                ("Dominant charge state", "", "Most probable net charge at this pH."),
+                ("Fraction neutral", "", "Share of molecules with no charge.")],
                "pH behaviour", id="ph_summary", style="metric"),
-         figure("logD and net charge vs pH", id="ph_curves", help=["Solid line, left axis: logD. Dashed line, right axis: net charge.", "Dotted line: the chosen pH."]),
-         figure("Ionizable sites on the structure", id="sites_structure", span="half", help=["Coral: acid site. Teal: base site. Violet: both.", "Label: atom and pKa."]),
+         figure("logD and net charge vs pH", id="ph_curves", help="Solid: logD (left axis). Dashed: net charge (right axis). Dotted: chosen pH."),
+         figure("Ionizable sites on the structure", id="sites_structure", span="half", help="Coral: acid. Teal: base. Violet: both. Label: atom and pKa."),
          chips("Separation mode", id="modes",
-               help=["Simple rules on logD, net charge, TPSA, MW and stereocentres (thresholds: mzdesk/platform_fit/separation_rules.py).",
-                     "Green: good. Amber: possible. Grey: poor or not needed. Hover or click a mode for its reason."]),
+               help="Green: good. Amber: possible. Grey: poor or not needed. Hover for the reason."),
          table(["Site", "pKa", "Type"], "Ionizable sites", id="sites",
-               help=["Site: element and atom number, counted from 1 as in the SMILES.", "Acid: loses H. Base: takes H.",
-                     "Base sites on amide, sulfonamide and pyrrole-type N are ignored (see Notes)."]),
+               help=["Site: element and atom number (from 1).", "Acid loses H; base takes H."]),
          notes("Notes", id="rule_hits", collapsed=True)],
-        subgroup="detectability", live=True, example={"structure": _name("ibuprofen"), "ph": 2.7}),
+        subgroup="detectability", live=True, example={"structure": _name("ibuprofen"), "ph": 2.7}, based_on=["MolGpKa", "RDKit", "mzDesk"]),
 
-    module("ionization", "Ionization", "B", "<b>ESI polarity</b> for LC-MS and <b>EI usability</b> for GC-MS.",
+    module("ionization", "Ionization", "B", "Compound + pH → ESI polarity and EI usability",
         [structure(), slider("ph", "Mobile phase pH", 1, 13, 0.1, 2.7)],
         [chips("Ionization", id="chips",
-               help=["Polarity: the better ESI mode (+, −, or both); poor = weak in both",
-                     "Simple rules at the chosen pH: pKa sites (MolGpKa; textbook group values without its weights), O/N counts, GC amenability and the NEIMS molecular ion",
-                     "Thresholds: mzdesk/platform_fit/ionization_rules.py"]),
-         figure("Ionizable sites", id="sites_structure", span="half", help=["Coral: acid site. Teal: base site. Violet: both.", "Label: atom and pKa.", "acids above pKa 10 are left out"]),
+               help=["Polarity: the better ESI mode (+, −, both); poor = weak in both.", "Hover a chip for the reason."]),
+         figure("Ionizable sites", id="sites_structure", span="half", help="Coral: acid. Teal: base. Violet: both. Label: atom and pKa."),
          notes("Rule hits", id="rule_hits", collapsed=True)],
-        subgroup="detectability", live=True, example={"structure": _name("lidocaine"), "ph": 2.7}),
+        subgroup="detectability", live=True, example={"structure": _name("lidocaine"), "ph": 2.7}, based_on=["MolGpKa", "NEIMS", "mzDesk"]),
 
-    module("adducts", "Adducts", "B", "Which <b>ions</b> appear (adducts, in-source losses, dimers) for the chosen polarity and mobile phase additive, and which is <b>strongest</b>. Rule-based: pKa sites (MolGpKa) and lipid class.",
+    module("adducts", "Adducts", "B", "Compound + ion mode + additive → expected ions, strongest first",
         [structure(), radio("ion_mode", "Ion mode", ["Positive", "Negative"]),
          select("additive", "Mobile phase additive", ["Formic acid", "Ammonium formate", "Ammonium acetate", "Acetic acid", "None"]),
-         checkbox("alkali", "Sodium / potassium present (glassware, salts, biological matrix)", True)],
+         checkbox("alkali", "Sodium / potassium present", True)],
         [cards([("Dominant ion", ""), ("m/z", "")], "Expected base ion", id="base", style="metric"),
          table(["Ion", "Formula", "m/z", "Likelihood"], "Ions", id="ions", row_help=True,
-               help=["Ranked by expected intensity: a rule score (high / medium / low), not a measured intensity.",
-                     "m/z computed as on the Theoretical m/z page."]),
+               help="Ranked by expected intensity (high / medium / low)."),
          notes("Rule hits", id="rule_hits", collapsed=True)],
         subgroup="detectability", live=True,
         example={"structure": _name("POPC"),
-                 "ion_mode": "Negative", "additive": "Ammonium formate", "alkali": True}),
+                 "ion_mode": "Negative", "additive": "Ammonium formate", "alkali": True},
+        based_on=["MolGpKa", "mzDesk"]),
 
-    module("non_ms", "Non-MS Detection", "B", "Can it be measured <b>without MS</b>: <b>UV</b> chromophore, <b>fluorescence</b>, or <b>universal detectors</b> (CAD / ELSD / RI). Rule-based.",
-        [structure(), select("mobile_phase", "Mobile phase (changes the low-UV advice)", ["Water/acetonitrile + phosphate", "Water/methanol + formic acid"])],
+    module("non_ms", "Non-MS Detection", "B", "Compound → suitability for UV, fluorescence, CAD / ELSD / RI",
+        [structure(), select("mobile_phase", "Mobile phase", ["Water/acetonitrile + phosphate", "Water/methanol + formic acid"])],
         [portal("Detectors", id="detectors",
-                help=["yes = good, partial = possible, no = poor",
-                      "UV/PDA value: chromophore strength and estimated λmax. strong: aromatic or two or more conjugated π units; weak: one isolated C=O, C=C or amide; none: no π system",
-                      "FLD value: native fluorescence (likely / possible / unlikely)",
-                      "Rules and thresholds: mzdesk/platform_fit/non_ms_rules.py"]),
-         figure("Chromophores", id="chromophore_structure", span="half", help=["blue: strong, amber: weak", "numbers = atoms (as in the SMILES, from 1)"]),
+                help=["yes = good, partial = possible, no = poor.", "UV/PDA: chromophore strength and λmax. FLD: native fluorescence."]),
+         figure("Chromophores", id="chromophore_structure", span="half", help="Blue: strong. Amber: weak. Numbers are atom numbers (from 1)."),
          notes("Rule hits", id="rule_hits", collapsed=True)],
-        subgroup="detectability", live=True, example={"structure": _name("quinine"), "mobile_phase": "Water/methanol + formic acid"}),
+        subgroup="detectability", live=True, example={"structure": _name("quinine"), "mobile_phase": "Water/methanol + formic acid"},
+        based_on=["RDKit", "mzDesk"]),
 
-    module("derivatization", "Derivatization", "B", "<b>Reactive groups</b> and the <b>derivatized molecule</b> for GC-MS, CIL LC-MS or LC-UV / FLD.",
+    module("derivatization", "Derivatization", "B", "Compound + reagents → reactive groups, derivative formula and mass",
         [structure(),
          multiselect("reagents", "Reagents",
                      ["GC · TMS (MSTFA / BSTFA)", "GC · MeOx + TMS", "GC · TBDMS (MTBSTFA)", "GC · Acylation (TFAA)",
@@ -474,98 +458,82 @@ MODULES = [
                      ["GC · TMS (MSTFA / BSTFA)", "GC · MeOx + TMS", "CIL · Dansyl chloride (amine / phenol)",
                       "CIL · Dansyl chloride, base-activated (hydroxyl)", "CIL · DmPA bromide (carboxyl)", "CIL · Dansylhydrazine (carbonyl)"])],
         [table(["Reagent", "Labels", "Formula", "Mass", "Heavy mass"], "Derivatives", id="deriv_rows", row_help=True,
-               help=["Full derivatization, one row per selected reagent that has a reactive group. Labels: reagent groups added.",
-                     "Mass is monoisotopic; heavy mass (CIL only) is with a ¹³C₂-labelled reagent. The ? on a row lists the groups labelled, EI key ions and caveats."]),
+               help=["Labels = reagent groups added.", "Heavy mass: ¹³C₂-labelled reagent (CIL only)."]),
          reaction("Reactions", id="deriv_reactions",
-                  help=["All four CIL channels show complete substrate and product structures, including every label. Other reagents use functional-group schemes; ×n = number of groups.",
-                        "Choose a reagent above the scheme; the substrate highlights only its reactive groups."])],
-        subgroup="detectability", live=True, example={"structure": _name("D-glucose")}),
+                  help=["×n = number of groups.", "Pick a reagent to highlight its reactive groups."])],
+        subgroup="detectability", live=True, example={"structure": _name("D-glucose")}, based_on=["RDKit", "mzDesk"]),
 
-    module("known_methods", "Known Methods", "B", "Is there a <b>published method</b> (pharmacopoeia, RepoRT)? If not, what do the <b>most similar compounds</b> use?",
+    module("known_methods", "Known Methods", "B", "Compound → published methods, or those of similar compounds",
         [structure(), multiselect("sources", "Sources", ["Japanese Pharmacopoeia", "RepoRT"])],
-        [cards([("Match", "", "Exact: the compound itself has a published method. Similar: only similar compounds do. None: neither."),
-                ("Methods found", "", "Exact matches plus the methods listed under the similar compounds."),
-                ("Sources", "", "Which sources were searched; licence and citation.")], "Summary", id="summary", style="metric"),
+        [cards([("Match", "", "Exact: the compound itself. Similar: only similar compounds. None: neither."),
+                ("Methods found", "", "Exact matches plus the methods of similar compounds."),
+                ("Sources", "")], "Summary", id="summary", style="metric"),
          table(["Source", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)"], "Exact matches", id="exact", row_help=True,
-               help=["The compound itself: same connectivity key (first 14 characters of the InChIKey after largest fragment and neutralisation); stereo is noted in the row's ?.",
-                     "The ? on a row gives match details, the reference and the printed JP conditions or the RepoRT gradient. RepoRT is LC-MS: RT is the compound's retention time in that dataset (min). JP18 has no RT."]),
+               help=["Same compound; stereo is noted per row.", "? on a row: reference and conditions. RT: RepoRT only."]),
          grouptable(["Source", "Test / dataset", "Column", "Mobile phase", "Detector", "RT (min)"], "Similar compounds", id="similar", row_help=True,
-                    help="Click a compound to see its methods. RT is that compound's retention time.")],
-        subgroup="detectability", live=True, example={"structure": _name("captopril"), "sources": ["Japanese Pharmacopoeia", "RepoRT"]}),
+                    help="Click a compound to see its methods.")],
+        subgroup="detectability", live=True, example={"structure": _name("captopril"), "sources": ["Japanese Pharmacopoeia", "RepoRT"]},
+        based_on=["Japanese Pharmacopoeia", "RepoRT", "RDKit"]),
 
     # ---- MS1 ----
-    module("ms1_search", "Mass Search", "A", "Which <b>database compounds</b> match the precursor m/z, optionally filtered by the <b>isotope pattern</b>.",
+    module("ms1_search", "Mass Search", "A", "Precursor m/z → matching database compounds",
         [precursor(), number("tol_ppm", "Mass tolerance (ppm)", 5.0, 0.1), multiselect("databases", "Exact-mass databases", DATABASES, ["HMDB", "PubChem"]),
          ms1(), select("resolution", "Resolution", list(RESOLUTIONS)), number("isotope_min", "Isotope score threshold", 0.8, 0.05)],
-        [cards([("Compounds", "", "One row per PubChem compound (CID). Stereoisomers and salts have their own CIDs, so they count separately."),
-                ("Formulas", "", "Different molecular formulas among the hits."),
-                ("Closest hit", "", "The compound with the smallest |Δ ppm|; among equals, one listed in a chosen database comes first."),
-                ("Databases searched", "", "Compounds PubChem finds in the mass window, per database (before the 100-per-database limit).")],
+        [cards([("Compounds", "", "Counted per PubChem CID."),
+                ("Formulas", ""), ("Closest hit", ""), ("Databases searched", "")],
                "Summary", id="summary", style="metric"),
          grouptable(["Name", "IDs", "PubChem CID"], "Exact-mass hits", id="hits",
-                    help=["Every database is searched online through PubChem, so hits come from PubChem's copy of each database "
-                          "(HMDB, DrugBank, ChEBI, KEGG, LIPID MAPS; NORMAN is its Suspect List Exchange, which includes SusDat).",
-                          "One group per formula and adduct, closest first. Δ ppm = (observed m/z − theoretical m/z) / theoretical m/z × 10<sup>6</sup>; "
-                          "the theoretical m/z comes from the compound's monoisotopic mass and the adduct, as on the Theoretical page.",
-                          "Auto tries every adduct of the ion mode. A compound is listed once, under its best-fitting adduct. "
-                          "Permanently charged compounds (e.g. choline) only match [M]+.",
-                          "At most 100 compounds are listed per database. PubChem alone can have thousands: compounds deposited by more "
-                          "PubChem sources come first (depositor count), then lower CIDs (older, usually better known).",
-                          "IDs are the databases' own IDs, taken from PubChem cross-references; PubChem has no ID for NORMAN.",
-                          "With an isotope MS, each group's theoretical pattern (IsoSpecPy, merged to the chosen resolution) is compared with it: every theoretical peak "
-                          "takes the most intense observed peak within the mass tolerance (Unit mass: 0.5 Da), each observed peak once; the score is the cosine "
-                          "between theoretical abundances and matched intensities, and a theoretical peak with no match counts as 0.",
-                          "Observed peaks that match no theoretical peak are ignored (they may be other ions). Groups below the threshold are hidden; "
-                          "groups whose formula cannot be scored (e.g. isotope labels) are kept and marked N/A."])],
+                    help=["One group per formula and adduct, closest first.", "Groups below the isotope threshold are hidden."])],
         subgroup="ms1", live=True,
         example={"precursor": _prec("130.1087"), "tol_ppm": "5", "databases": ["HMDB", "PubChem"],
                  "ms1": METFORMIN_MS1, "resolution": "Unit mass", "isotope_min": "0.8"},
-        network="Mass Search queries PubChem through NCBI E-utilities and PUG REST; every database is searched in its PubChem copy."),
+        network="Mass Search queries PubChem through NCBI E-utilities and PUG REST; every database is searched in its PubChem copy.",
+        based_on=["PubChem", "IsoSpecPy"]),
 
-    module("ms1_theory", "Theoretical", "A", "<b>Precursor m/z</b> and <b>isotope pattern</b> of a structure or formula for an adduct.",
+    module("ms1_theory", "Theoretical", "A", "Compound or formula + adduct → precursor m/z, isotope pattern",
         [structure(label="Compound or formula"),
          precursor(label="Adduct", adducts={"Positive": ADDUCTS_POS[1:], "Negative": ADDUCTS_NEG[1:]}, mz=False),
          select("resolution", "Resolution", list(RESOLUTIONS))],
-        [cards([("Precursor m/z", "theoretical", "m/z of the ion made of the most abundant isotope of each element (M), as the Mass Search page uses it."),
+        [cards([("Precursor m/z", "theoretical", "Ion with the most abundant isotope of each element (M)."),
                 ("Ion formula", ""), ("Most abundant peak", "")], "Theory", id="theory", style="metric"),
          table(["Peak", "m/z", "Relative abundance (%)"], "Isotope pattern", id="pattern",
-               help=["Computed with IsoSpecPy from the ion formula (isotope fine structure), then merged to the chosen resolution: "
-                     "peaks closer than the FWHM (m/z ÷ resolution) become one peak (intensity-weighted m/z, summed abundance); Unit mass merges by nominal mass.",
-                     "M is the ion with the most abundant isotope of every element (<sup>11</sup>B, <sup>79</sup>Br, <sup>35</sup>Cl …). Lighter peaks are M−1 (e.g. <sup>10</sup>B).",
-                     "Peaks that stay apart at the chosen resolution carry (a), (b) after the label. Peaks below 0.1 % of the largest are dropped."]),
-         figure("Theoretical isotope pattern", id="pattern_plot", help="Hover a peak for its m/z and relative abundance.")],
-        subgroup="ms1", live=True, example={"structure": _name("crisaborole"), "precursor": _prec("", adduct="[M+H]+"), "resolution": "Orbitrap 60k"}),
+               help=["M uses the most abundant isotope of every element.", "(a), (b): peaks resolved at this resolution."]),
+         figure("Theoretical isotope pattern", id="pattern_plot")],
+        subgroup="ms1", live=True, example={"structure": _name("crisaborole"), "precursor": _prec("", adduct="[M+H]+"), "resolution": "Orbitrap 60k"},
+        based_on=["IsoSpecPy", "mzDesk"]),
 
     # ---- Spectrum（subgroup id 仍是 ms2）----
-    module("ms2_clean", "Spectrum Cleanup", "B", "<b>Clean</b> an MS2 spectrum, <b>see</b> it, and get it in <b>every common format</b> (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).",
+    module("ms2_clean", "Spectrum Cleanup", "B", "MS2 spectrum → cleaned spectrum in every common format",
         [spectrum("spectrum", "MS2 spectrum (any common format)"), number("precursor_mz", "Precursor m/z (optional)", step=0.0001),
          radio("ion_mode", "Ion mode (for exported headers)", ["Positive", "Negative"]),
          number("noise_pct", "Noise threshold (% of base peak)", 0, 0.1), select("normalize", "Normalize", NORMALIZE),
          number("precursor_tol", "Precursor tolerance (Da)", 0.02, 0.001), select("sort_by", "Sort by", SORT_BY),
          checkbox("remove_precursor", "Remove precursor")],
         [cards([("Detected format", ""), ("Peaks in", ""), ("Peaks out", ""), ("Removed", "noise · precursor")], id="summary", style="metric"),
-         figure("Cleaned spectrum", id="spectrum", help=["Grey: removed peaks.", "Hover a peak for details."]),
+         figure("Cleaned spectrum", id="spectrum", help="Grey: removed peaks."),
          table(["m/z", "Intensity", "Rel. intensity (%)", "Kept", "Reason"], "Peaks", "Rel. intensity: % of the input base peak. Reason: noise, precursor", id="peaks"),
          formats("Cleaned spectrum in every format", "Formats", id="formats")],
         subgroup="ms2", live=True,
         example={"spectrum": _paste(SULFAMETHOXAZOLE_MASSBANK_MS2), "precursor_mz": "252.0448", "ion_mode": "Negative",
-                 "noise_pct": "1", "normalize": "Base peak = 100", "remove_precursor": True}),
+                 "noise_pct": "1", "normalize": "Base peak = 100", "remove_precursor": True},
+        based_on=["mzDesk"]),
 
-    module("ms2_similarity", "Similarity", "A", "How alike are <b>two spectra</b>: 14 classic scores, optional deep-learning scores, <b>mirror plot</b>.",
+    module("ms2_similarity", "Similarity", "A", "Two MS2 spectra → similarity scores and a mirror plot",
         [spectrum("query", "Query spectrum"), number("query_precursor", "Query precursor m/z (optional)", step=0.0001),
          spectrum("reference", "Reference spectrum"), number("reference_precursor", "Reference precursor m/z (optional)", step=0.0001),
          number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001), number("threshold", "Score threshold", 0.7, 0.05),
          radio("ion_mode", "Ion mode", ["Positive", "Negative"]),
-         checkbox("deep", "Deep-learning scores (MS2DeepScore, Spec2Vec)", network=True)],
+         checkbox("deep", "Deep-learning scores", network=True)],
         [cards([("Primary score", "spectral entropy, weighted"), ("Metrics ≥ threshold", "n / N"), ("Matched peaks", "pairs"),
                 ("Query matched", "%"), ("Reference matched", "%")], id="summary", style="metric"),
-         figure("Mirror plot", id="mirror", help=["Up: query. Down: reference.", "Dark: matched peaks."]),
+         figure("Mirror plot", id="mirror", help="Up: query. Down: reference. Dark: matched peaks."),
          table(["Category", "Metric", "Score", "Matched peaks", "≥ threshold", "Note"], "Scores", id="scores")],
         subgroup="ms2", live=True,
         example={"query": _paste("197.04643 10\n255.22775 92\n256.23184 31\n277.60822 10\n283.24814 20"),
-                 "reference": _paste("197.04643 8\n255.22775 100\n256.23184 28\n277.60822 7\n283.24814 22")}),
+                 "reference": _paste("197.04643 8\n255.22775 100\n256.23184 28\n277.60822 7\n283.24814 22")},
+        based_on=["matchms", "ms_entropy", "MS2DeepScore", "Spec2Vec"]),
 
-    module("ms2_library", "Library Search", "A", "Search a spectrum against <b>MassBank</b> and <b>GNPS</b> with the similarity metrics you choose.",
+    module("ms2_library", "Library Search", "A", "MS/MS or EI spectrum → ranked library matches",
         [radio("spectrum_type", "Spectrum type", ["MS/MS", "EI"]), spectrum(label="Query spectrum"),
          precursor(label="Precursor m/z (MS/MS only)"),
          number("tol_ppm", "Precursor tolerance (ppm, MS/MS only)", 10.0, 0.1),
@@ -573,162 +541,126 @@ MODULES = [
          multiselect("libraries", "Libraries", LIBRARIES),
          multiselect("metrics", "Metrics", LIBRARY_METRICS, LIBRARY_DEFAULT_METRICS, network_options=METRIC_NAMES.DEEP),
          number("threshold", "Score threshold", 0.7, 0.05)],
-        [cards([("Best hit", "name", "The first row of the table: the hit with the highest score on the ranking metric."),
-                ("Rank score", "ranking metric"), ("Hits ≥ threshold", "n"),
+        [cards([("Best hit", "name"), ("Rank score", "ranking metric"), ("Hits ≥ threshold", "n"),
                 ("Candidates scored", "n"), ("Libraries", "version")], id="summary", style="metric"),
          table(["Rank", "Library", "Accession", "Name", "Adduct", "Precursor m/z", "Δ ppm", "Matched peaks"] + LIBRARY_DEFAULT_METRICS + ["Instrument / CE"],
                "Library hits", id="hits",
-               help=["A spectrum is a hit when ANY selected metric is at or above the threshold (N/A scores are ignored). The table shows the best 100.",
-                     "Hits are ranked by the first selected metric that applies, in the order of the Metrics list (not the order you clicked them); a metric that is N/A for every hit is skipped. Ties: more matched peaks first.",
-                     "Matched peaks: peak pairs matched one-to-one within the fragment tolerance (greedy, as in CosineGreedy). Δ ppm: query minus library precursor.",
-                     "MS/MS: the precursor m/z is required (a header in an MGF / MSP spectrum counts). Candidates are the library MS/MS spectra within the precursor tolerance, in the same ion mode "
-                     "(and with the chosen adduct, unless Auto); every candidate is scored with every selected metric. With both libraries selected, GNPS copies of MassBank spectra are hidden when the MassBank original is also a candidate.",
-                     "EI: the precursor is not used. Fragments are matched at unit mass (0.5 Da). Candidates = top 5000 by entropy similarity; a spectrum with low entropy but high other scores can be missed.",
-                     "Deep-learning scores need torch / gensim and a one-time model download; they are N/A where those are missing."]),
-         figure("Mirror: query vs top hit", id="mirror", help=["Up: query. Down: the top-ranked hit.", "Dark: matched peaks."])],
+               help=["Hit: any selected metric ≥ threshold.", "Ranked by the first selected metric; ties: more matched peaks."]),
+         figure("Mirror: query vs top hit", id="mirror", help="Up: query. Down: top hit. Dark: matched peaks.")],
         subgroup="ms2", live=True,
-        example={"spectrum_type": "MS/MS", "ms2": _paste(CAFFEINE_MASSBANK_MS2), "precursor": _prec("195.0877")}),
+        example={"spectrum_type": "MS/MS", "ms2": _paste(CAFFEINE_MASSBANK_MS2), "precursor": _prec("195.0877")},
+        based_on=["MassBank", "GNPS", "matchms", "ms_entropy"]),
 
-    module("ms1_formula", "Formula Annotation", "A", "<b>Rank molecular formulas</b> for the precursor from its MS1 isotopes and MS2 (BUDDY).",
+    module("ms1_formula", "Formula Annotation", "A", "Precursor m/z + isotopes + MS2 → ranked molecular formulas",
         [precursor(adducts=BUDDY_ADDUCTS), ms1(), spectrum(label="MS2 spectrum (optional)"),
          select("instrument", "Instrument", ["Orbitrap", "Q-TOF", "FT-ICR"]),
-         text("formula", "Formula (optional: skip ranking, explain the MS2 with it)", placeholder="C8H10N4O2"),
+         text("formula", "Formula (optional)", placeholder="C8H10N4O2"),
          checkbox("halogen", "Include halogens (F, Cl, Br, I)")],
         [cards([("Top formula", ""), ("Adduct used", ""), ("MS1 isotope peaks used", "")], id="summary", style="metric"),
          table(["Rank", "Formula", "Theoretical m/z", "Δ ppm", "Probability", "FDR", "MS1 isotope similarity"], "Formula candidates", id="candidates"),
-         figure("MS2 fragment formulas · top candidate", id="fragments_plot", help="Hover a peak for its formula, Δ ppm and neutral loss."),
+         figure("MS2 fragment formulas · top candidate", id="fragments_plot"),
          table(["m/z", "Rel. intensity (%)", "Fragment formula", "Δ ppm", "Neutral loss", "Other fits"], id="fragments")],
         subgroup="ms2", live=True,
-        example={"precursor": _prec("237.1022"), "ms1": CARBAMAZEPINE_MS1, "ms2": _paste(CARBAMAZEPINE_MASSBANK_MS2)}),
+        example={"precursor": _prec("237.1022"), "ms1": CARBAMAZEPINE_MS1, "ms2": _paste(CARBAMAZEPINE_MASSBANK_MS2)},
+        based_on=["BUDDY"]),
 
-    module("ms2_structure", "Structure Prediction", "A", "<b>Ranked candidate structures</b> from MS-FINDER (offline, local structure DB). Local version only: needs Mono.",
+    module("ms2_structure", "Structure Prediction", "A", "Precursor + MS2 spectrum → ranked candidate structures (Local version only)",
         [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1(),
          checkbox("halogen", "Include halogens (F, Cl, Br, I)"), checkbox("silicon", "Include Si"),
-         checkbox("extended", "Extended element range (PFAS / unusual compositions)")],
+         checkbox("extended", "Extended element range")],
         [cards([("Top candidate", ""), ("Top formula", ""), ("Adduct used", ""), ("Elements searched", ""), ("Candidates", "structures / formulas")], id="summary", style="metric"),
          table(["Rank", "Structure", "Name", "SMILES", "Formula", "Score", "Ontology", "InChIKey", "Databases"], "Structure candidates", id="structures",
-               help=["Candidates come from MS-FINDER's local structure databases (HMDB, ChEBI, PubChem-derived, COCONUT, UNPD and others). Nothing is sent online, and a compound that is not in them cannot be returned.",
-                     "Score: MS-FINDER's total score from in-silico fragmentation (hydrogen-rearrangement rules, tree depth 2) against the MS2 peaks; higher is better. Candidates of different formulas are listed together; the Formula column shows which one each belongs to.",
-                     "Structures are searched for the 5 best formulas only. The table shows the best 50. Databases: where the structure is listed; the ? shows the IDs."]),
+               help=["Score: fragmentation fit to the MS2; higher is better.", "Databases: where it is listed (? shows IDs)."]),
          table(["Rank", "Formula", "Neutral mass", "Mass error (mDa)", "Score"], "Formula candidates", id="formulas",
-               help=["Formula score: mass accuracy, the isotope pattern (when MS1 is given) and how well the MS2 fragments and neutral losses fit. Only formulas with a positive score are listed (best 50).",
-                     "Search limits of the shipped parameter file: precursor tolerance 1 mDa (isotope peaks must sit within 0.5 mDa of the precursor m/z), fragment tolerance 10 mDa, elements C H N O P S. "
-                     "F, Cl, Br, I and Si are searched only when you tick Include halogens / Include Si (each off by default; the Elements searched card shows what was used).",
-                     "Mass error (mDa) is observed − theoretical (the same sign as Δ ppm elsewhere); positive means the measured m/z is heavier. "
-                     "Atoms per carbon atom allowed by MS-FINDER's common range: H 4, N 2, O 2.5, S 1, P 0.5, and with the boxes ticked F 1.5, Cl 1, Br 1, I 0.5, Si 0.5. "
-                     "A compound with more fluorine than 1.5 per carbon (for example a perfluorinated acid) is outside it.",
-                     "[M]+ is a permanent cation: the formula is the cation's own."])],
+               help=["Score: mass accuracy, isotope pattern and MS2 fit.", "Mass error (mDa) = observed − theoretical."])],
         subgroup="ms2", live=True,
-        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)}),
+        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
+        based_on=["MS-FINDER"]),
 
-    module("ms2_denovo", "De Novo Structure", "A", "<b>Generated candidate structures</b> from FRIGID when the compound is not in any database (hypotheses). Local version only.",
+    module("ms2_denovo", "De Novo Structure", "A", "Precursor + MS2 spectrum → generated candidate structures (Local version only)",
         [precursor(label="Precursor m/z (positive mode only)", adducts=FRIGID_ADDUCTS), spectrum(), ms1(),
-         text("formula", "Formula (optional; blank = BUDDY's top-1 formula)", placeholder="C8H10N4O2"),
-         select("mode", "Mode", FRIGID_MODES), checkbox("halogen", "Include halogens (BUDDY formula fallback)")],
+         text("formula", "Formula (optional)", placeholder="C8H10N4O2"),
+         select("mode", "Mode", FRIGID_MODES), checkbox("halogen", "Include halogens (F, Cl, Br, I)")],
         [cards([("Top candidate", ""), ("Formula used", ""), ("Device", ""), ("Samples", "generated / shown")], id="summary", style="metric"),
          table(["Rank", "Structure", "SMILES", "Formula", "Score", "InChIKey (2D)"], "Generated candidates", id="candidates",
-               help=["These are hypotheses, not identifications. FRIGID does not search a database: it writes structures for the formula you give and the molecular fingerprint it predicts from the MS/MS, so a candidate can be a molecule that exists nowhere. Check any candidate against a reference standard, a library spectrum (Library Search) or a predicted spectrum (MS/MS Prediction).",
-                     "How often the right structure is among them (the authors' benchmark of FRIGID-base, revised 2026-10-21, with the true formula given): MassSpecGym top-1 8.21 %, top-10 9.82 %; NPLIB1 top-1 13.31 %, top-10 20.15 %. Real-world accuracy is likely lower. Quick mode draws 16 samples, so it is a first look; Full mode draws until 10 different formula-matched structures or 100 samples.",
-                     "Score: Tanimoto similarity (Morgan fingerprint, radius 2, 4096 bits) between the candidate and the fingerprint FRIGID predicted from the spectrum. It is a similarity, not a probability, and scores of different spectra are not comparable.",
-                     "Only candidates with the right formula are shown; isotope-labelled, radical, wrongly charged and duplicate structures are hidden. SMILES carry no stereochemistry (FRIGID does not predict it), so the InChIKey is the 2D block only.",
-                     "A familiar compound can come back because the model saw it in training, not because it read this spectrum.",
-                     "Formula: if you leave it blank the page takes the top-1 formula of BUDDY (Orbitrap settings; halogens are off unless you tick Include halogens) and says so under Formula used; a wrong formula gives wrong structures. FRIGID knows C H N O P S F Cl Br I B Si Se As Fe Co Na K, and only positive-mode adducts.",
-                     "Local version only: needs the one-time install python -m mzdesk.ms2.frigid_setup (about 3 GB). A run takes roughly 20-40 s and 4-5 GB of memory, and one heavy job (this page or Structure Prediction) runs at a time."])],
+               help="Score: similarity to the fingerprint predicted from the spectrum.")],
         subgroup="ms2", live=True,
-        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2), "formula": "C8H10N4O2"}),
+        example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2), "formula": "C8H10N4O2"},
+        based_on=["FRIGID", "BUDDY"]),
 
-    module("ms2_ei", "EI-MS Prediction", "A", "Predict the <b>70 eV electron-ionization spectrum</b> of a structure (NEIMS). One ion type: [M]+•.",
+    module("ms2_ei", "EI-MS Prediction", "A", "Structure → predicted 70 eV EI spectrum",
         [structure()],
         [cards([("Ion", ""), ("Formula", ""), ("Molecular ion m/z", ""), ("Base peak m/z", "")], id="summary", style="metric"),
-         figure("Predicted EI spectrum", id="spectrum", help=["Unit mass resolution.", "Hover a peak for details."]),
+         figure("Predicted EI spectrum", id="spectrum", help="Unit mass resolution."),
          table(["m/z", "Rel. intensity (%)"], "Peaks", id="peaks"),
          formats("Predicted spectrum in every format", "Formats", id="formats")],
-        subgroup="ms2", live=True, example={"structure": _name("cholesterol")}),
+        subgroup="ms2", live=True, example={"structure": _name("cholesterol")}, based_on=["NEIMS"]),
 
-    module("ms2_esi", "MS/MS Prediction", "A", "Predict the <b>ESI MS/MS spectrum</b> of a structure at <b>10 / 20 / 40 eV</b> (CFM-ID 4; MSRB rules for lipids). Needs Docker.",
+    module("ms2_esi", "MS/MS Prediction", "A", "Structure + adduct → predicted MS/MS at 10 / 20 / 40 eV (Local version only)",
         [structure(), select("adduct", "Adduct", ESI_ADDUCTS, "[M+H]+")],
         [cards([("Engine", ""), ("Precursor m/z", ""), ("Ion formula", ""), ("Peaks", "")], id="summary", style="metric"),
          figure("Low energy (10 eV)", id="spectrum_low"), figure("Medium energy (20 eV)", id="spectrum_medium"),
          figure("High energy (40 eV)", id="spectrum_high"),
-         table(["Energy", "m/z", "Rel. intensity (%)", "Fragment"], "Peaks", "Fragment: formula · SMILES from the engine", id="peaks"),
+         table(["Energy", "m/z", "Rel. intensity (%)", "Fragment"], "Peaks", "Fragment: formula · SMILES", id="peaks"),
          formats("Predicted spectra (one record per energy)", "Formats", id="formats")],
-        subgroup="ms2", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+"}),
+        subgroup="ms2", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+"}, based_on=["CFM-ID", "MSRB"]),
 
-    module("ms2_fragments", "Fragment Explanation", "A", "Which <b>peaks</b> the candidate structure explains, and with which <b>fragment</b> (MetFrag).",
-        [structure(label="Candidate structure"), precursor(label="Precursor m/z (optional; blank = theoretical)", adducts=METFRAG_ADDUCTS), spectrum(),
+    module("ms2_fragments", "Fragment Explanation", "A", "Structure + MS2 spectrum → explained peaks and fragments",
+        [structure(label="Candidate structure"), precursor(label="Precursor m/z (optional)", adducts=METFRAG_ADDUCTS), spectrum(),
          slider("tree_depth", "Tree depth (bond cleavages)", 1, 4, 1, 2),
          number("tol_abs", "Absolute tolerance (Da)", 0.002, 0.001), number("tol_ppm", "Relative tolerance (ppm)", 10.0, 1)],
         [cards([("Explained peaks", "n / N"), ("Explained intensity", "%"), ("Theoretical precursor m/z", ""), ("Ion formula", "")], id="summary", style="metric"),
-         figure("Observed spectrum", id="spectrum", help="Hover a peak: fragment formula, Δ ppm, neutral loss and fragment structure."),
+         figure("Observed spectrum", id="spectrum"),
          table(["Observed m/z", "Rel. intensity (%)", "Kind", "Ion formula", "Theoretical m/z", "Δ ppm", "Neutral loss", "Fragment structure"], id="peaks")],
         subgroup="ms2", live=True,
-        example={"structure": _name("DOPG"), "precursor": _prec("", "Negative", "[M-H]-"), "ms2": _paste(PG_36_2_MS2)}),
+        example={"structure": _name("DOPG"), "precursor": _prec("", "Negative", "[M-H]-"), "ms2": _paste(PG_36_2_MS2)},
+        based_on=["MetFrag"]),
 
-    module("exclusivity", "Alternative Explanations", "A", "Is there <b>another explanation</b>: same formula, isobaric interference, isomers.",
+    module("exclusivity", "Alternative Explanations", "A", "Compound or formula + m/z → same-formula compounds, isobars, isomers",
         [structure(label="Compound or formula", optional=True), precursor(), number("tol_ppm", "Tolerance (ppm)", 5.0, 0.1),
          multiselect("databases", "Databases", DATABASES, ["HMDB", "PubChem"]),
-         spectrum(label="MS2 spectrum (optional, for isomer check)"), number("tol_da", "Fragment tolerance (Da, isomer check)", 0.01, 0.001)],
+         spectrum(label="MS2 spectrum (optional)"), number("tol_da", "Fragment tolerance (Da)", 0.01, 0.001)],
         [table(["InChIKey (first block)", "Name", "Databases", "Stereoisomers / isotopes collapsed"], "Same-formula candidates",
                id="same_formula",
-               help=["Structures PubChem lists with exactly this formula, in its copies of the selected databases (online; at most the first 100 "
-                     "are examined). One row per connectivity (InChIKey first 14 characters), so stereoisomers and isotopologues fold into one row.",
-                     "Databases: which of the selected databases list the structure. PubChem is the source of every row; it is shown when no other "
-                     "selected database has the structure. A run takes a few seconds."]),
+               help=["One row per connectivity (stereoisomers folded).", "Databases: which selected databases list it."]),
          table(["Formula", "Name", "Database", "Exact m/z", "Δ ppm"], "Isobaric interferences", "Different formula, same m/z within tolerance",
                id="isobaric",
-               help=["Compounds with a different formula whose m/z falls within the tolerance at the chosen adduct, in PubChem's copies of the "
-                     "selected databases (online); one row per formula, closest first, at most 50.",
-                     "Exact m/z and Δ ppm use the compound's closest adduct. Same-formula hits are in the table above, not here.",
-                     "At most 100 compounds per database are examined, so a crowded m/z window is not exhaustive."]),
+               help="Exact m/z and Δ ppm use the closest adduct."),
          table(["Isomer", "Fragments", "Source", "SMILES", "Explained peaks", "Distinguishable by MS2", "Distinguishing fragments", "Atoms covered"], "Isomers",
                id="isomers",
                column_help={
-                   "Explained peaks": "Peaks MetFrag explains for this structure, and their share of the intensity.",
-                   "Distinguishable by MS2": "yes: a peak of at least 5 % is explained for your compound but not for this isomer. A model result, not proof.",
-                   "Distinguishing fragments": "Those peaks, each with the fragment that explains it.",
-                   "Atoms covered": "Share of this structure's non-hydrogen atoms inside the coloured fragments (the 8 strongest explained peaks): how much of it the MS2 accounts for.",
-                   "Fragments": "View: the explained peaks drawn on the structure. Computed when you click."},
-               help=["PubChem same-formula candidates (online), independent of the Databases field: at most its first 100 CIDs are retrieved, "
-                     "and at most 9 other usable connectivities are compared with your compound. The run reports truncation; the set is not exhaustive. "
-                     "Structures with the same connectivity are collapsed, so stereoisomers are not assessed.",
-                     "Distinguishable: MetFrag predicts an observed peak for your compound but not the isomer (local in-silico fragmentation, tree depth 2). "
-                     "This is model-dependent and does not establish a unique identity; not-scored candidates are not ruled out. "
-                     "Requires Java and mzdesk/lib/MetFragCommandLine-2.5.2.jar; the comparison is limited to 120 seconds.",
-                     "Peaks: at least 1 % of the base peak, without the precursor and its isotope peaks; a distinguishing peak must be at least 5 %. "
-                     "Explained peaks: how many of those peaks the structure explains · their share of the intensity.",
-                     "For structures recognised as lipids this check is skipped: conventional MS/MS usually cannot reliably determine C=C or sn-positions; "
-                     "specific methods or additional evidence may distinguish them.",
-                     "Fragments: View opens that structure with the peaks MetFrag explains for it, each fragment in its own colour on the structure and in the "
-                     "spectrum. It is computed when you click (a few seconds, with a progress bar), with the same peaks and tolerance as this table. "
-                     "Where a fragment fits several places on the structure, one is drawn and the card says how many others fit equally well."])],
+                   "Explained peaks": "Peaks explained, and their share of the intensity.",
+                   "Distinguishable by MS2": "yes: a peak is explained for your compound but not for this isomer.",
+                   "Distinguishing fragments": "Those peaks and the fragments that explain them.",
+                   "Atoms covered": "Share of heavy atoms inside the coloured fragments.",
+                   "Fragments": "View: explained peaks drawn on the structure."})],
         subgroup="ms2", live=True,
         example={"structure": _name("caffeine"), "precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
-        network="Name / ID inputs are resolved online. The same-formula and isobaric tables and isomer candidate search query PubChem with the formula or mass; MetFrag runs locally."),
+        network="Name / ID inputs are resolved online. The same-formula and isobaric tables and isomer candidate search query PubChem with the formula or mass; MetFrag runs locally.",
+        based_on=["PubChem", "MetFrag"]),
 
     # ---- Orthogonal ----
-    module("ccs", "CCS", "A", "Does the <b>ion mobility</b> agree: the <b>reference CCS</b> of the same compound and adduct, or a model prediction if there is none.",
+    module("ccs", "CCS", "A", "Compound + adduct + observed CCS → reference or predicted CCS, match check",
         [structure(), select("adduct", "Adduct", ADDUCTS_POS[1:] + ADDUCTS_NEG[1:]),
-         text("observed", "Observed CCS (Å², optional; several values comma-separated, e.g. two conformers)", placeholder="152.3 or 152.3, 160.1"),
+         text("observed", "Observed CCS (Å², optional)", placeholder="152.3 or 152.3, 160.1"),
          select("platform", "Platform", CCS_PLATFORMS),
          select("gas", "Drift gas", CCS_GASES),
          select("tw_calibration", "TWIMS calibration (TWIMS only)", CCS_TW_CALIBRATIONS)],
-        [cards([("Reference CCS", "Å²", "The reference value used: the one closest to your observed value, or the median of the measured values when there is nothing to compare. "
-                                         "If the index has no value for this compound and adduct, the model prediction."),
-                ("Source", "", "Measured: a published N₂ value from the CCSbase source data (CCS type and dataset in the note). Predicted: a model, weaker than a measurement."),
-                ("Observed", "Å²", "Your value(s). With several, the one closest to each reference is used."),
-                ("Δ", "%", "(observed − reference) / reference × 100, with the tolerance for this platform pair."),
-                ("Verdict", "", "Consistent: within the tolerance. Inconsistent: outside it; this never excludes the compound. Not comparable: He, TWIMS calibrated with He, or FAIMS / DMS. "
-                                "No observed value, or no reference value for this compound and adduct.")], "Summary", id="summary", style="metric",
-               help="Observed CCS against the N₂ reference CCS of the same compound and adduct."),
+        [cards([("Reference CCS", "Å²", "The measured value closest to yours, else the median; a model prediction if none."),
+                ("Source", "", "Measured: published N₂ value. Predicted: model estimate."),
+                ("Observed", "Å²", "With several values, the closest to each reference is used."),
+                ("Δ", "%", "(observed − reference) / reference, in %."),
+                ("Verdict", "", "Consistent: within tolerance. Inconsistent: outside it. Not comparable: He, FAIMS / DMS.")],
+               "Summary", id="summary", style="metric", help="Observed vs. the N₂ reference CCS of the same adduct."),
          table(["Source dataset", "CCS type", "Method", "CCS (Å²)", "Δ %", "Tolerance %", "Verdict"], "Reference values", id="reference", row_help=True,
-               help=["Every measured N₂ value in the index for this compound and adduct. Δ is taken against the observed value closest to that reference.",
-                     "The tolerance depends on the platform of your measurement and the CCS type of the row. The ? on a row gives the publication and the name in the source."]),
+               help=["Measured N₂ values for this compound and adduct.", "The ? on a row gives the publication."]),
          table(["Adduct", "CCS (Å²)", "CCS type", "Source dataset"], "Other ions of this compound", id="other_ions",
-               help="The same compound as other adducts. Information only: a CCS depends on the adduct, so these are not compared."),
+               help="Other adducts of this compound; not compared."),
          table(["Predicted CCS (Å²)", "Tolerance %", "Test median error %", "Test 95th percentile %", "Training domain"], "Prediction", id="prediction", row_help=True,
-               help="Only when the index has no value for this compound and adduct. A model prediction, weaker than a measured value; the ? gives the model and its test error."),
-         notes("Assumptions", id="notes", help="Comparison rules, tolerances with their sources, the prediction model, and the data source with its licence and citation.")],
-        subgroup="orthogonal", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+", "observed": "140.4", "platform": "DTIMS (single field)", "gas": "N₂"}),
+               help="Shown only when no measured value exists; the ? gives the model and its error."),
+         notes("Assumptions", id="notes", help="Comparison rules, tolerances, model and data source.")],
+        subgroup="orthogonal", live=True, example={"structure": _name("caffeine"), "adduct": "[M+H]+", "observed": "140.4", "platform": "DTIMS (single field)", "gas": "N₂"},
+        based_on=["CCSbase", "mzDesk"]),
 
     module("mrm", "MRM Transitions", "B", "Pick <b>precursor–product pairs</b> and <b>collision energies</b> for a targeted method.",
         [radio("start_from", "Start from", ["Structure (predicted fragments)", "Library spectrum", "My spectrum"]), structure(optional=True), spectrum(label="MS2 spectrum (if starting from my spectrum)"),
@@ -741,13 +673,14 @@ MODULES = [
          formats("Method table (CSV)", id="method_table"),
          notes("Assumptions", id="notes")], subgroup=None, live=True,
         example={"start_from": "My spectrum", "ion_mode": "Positive", "n_transitions": 3, "ce_unit": "eV",
-                 "ms2": _paste("BEGIN IONS\nPEPMASS=195.0877\n" + CAFFEINE_MASSBANK_MS2 + "\nEND IONS")}),
+                 "ms2": _paste("BEGIN IONS\nPEPMASS=195.0877\n" + CAFFEINE_MASSBANK_MS2 + "\nEND IONS")},
+        based_on=["CFM-ID", "MassBank", "MetFrag"]),
 
-    module("calculator", "Calculator", "B", "Everyday calculations. Own inputs, nothing shared.",
+    module("calculator", "Calculator", "B", "Masses, concentrations, retention times → ppm error, dilution, CE, Kovats RI",
         [heading("ppm error"), number("ppm_theoretical", "Theoretical m/z", step=0.0001), number("ppm_observed", "Observed m/z", step=0.0001),
          heading("Isotope labelling"), text("lab_smiles", "SMILES"), text("lab_label", "Label", placeholder="13C6, d4, 15N2"), select("lab_adduct", "Adduct", ADDUCTS_POS[1:]),
          heading("Concentration"), number("conc_value", "Value"), select("conc_from", "From", ["µM", "mM", "ng/mL", "µg/mL", "mg/L"]), select("conc_to", "To", ["µM", "mM", "ng/mL", "µg/mL", "mg/L"]),
-         number("conc_mw", "Molar mass (g/mol, for mass ↔ molar)", step=0.01),
+         number("conc_mw", "Molar mass (g/mol)", step=0.01, placeholder="for mass ↔ molar"),
          heading("Dilution"), number("target_conc", "Target concentration"), number("final_volume", "Final volume (mL)", step=0.1),
          heading("Collision energy"), number("ce_nce", "NCE"), number("ce_ev", "eV"), number("ce_mz", "Precursor m/z", step=0.0001), number("ce_z", "Charge", 1, 1),
          heading("GC retention index (Kovats)"), grid("alkanes", "Alkane series", ["Carbon number", "RT"]), number("ri_rt", "Analyte RT", step=0.01)],
@@ -758,7 +691,8 @@ MODULES = [
          notes("Assumptions", id="notes")], subgroup=None, live=True,
         example={"ppm_theoretical": 260.1645, "ppm_observed": 260.1651, "lab_smiles": PROPRANOLOL, "lab_label": "13C3", "lab_adduct": "[M+H]+",
                  "conc_value": 25.935, "conc_from": "mg/L", "conc_to": "µM", "conc_mw": 259.35, "target_conc": 10, "final_volume": 10,
-                 "ce_nce": 30, "ce_mz": 260.1645, "ce_z": 1, "alkanes": "C8 8.00\nC9 9.00\nC10 10.00\nC11 11.00", "ri_rt": 9.50}),
+                 "ce_nce": 30, "ce_mz": 260.1645, "ce_z": 1, "alkanes": "C8 8.00\nC9 9.00\nC10 10.00\nC11 11.00", "ri_rt": 9.50},
+        based_on=["IsoSpecPy", "mzDesk"]),
 
     # ---- DMPK（非核心）----
     module("met_shift", "Mass-Shift Search", "B", "Search a peak or feature list for <b>phase I / II metabolites</b> of the parent.",
@@ -770,7 +704,8 @@ MODULES = [
          figure("Features with metabolite hits marked (m/z vs RT)", id="features_plot"), notes("Assumptions", id="notes")], subgroup="dmpk", live=True,
         example={"structure": _name("acetaminophen"), "precursor": _prec("152.0706", "Positive", "[M+H]+"),
                  "features": "m/z RT Intensity\n152.0706 3.2 100000\n168.0655 2.1 18000\n328.1027 2.8 9000\n232.0274 3.5 4000",
-                 "shifts": ["+O (hydroxylation)", "−2H (dehydrogenation)", "+C6H8O6 glucuronide", "+SO3 sulfate"], "tol_ppm": 10}),
+                 "shifts": ["+O (hydroxylation)", "−2H (dehydrogenation)", "+C6H8O6 glucuronide", "+SO3 sulfate"], "tol_ppm": 10},
+        based_on=["IsoSpecPy", "mzDesk"]),
 
     module("som", "Site of Metabolism", "B", "Which <b>atoms</b> are metabolized first.",
         [structure(), multiselect("enzymes", "Enzymes", ["CYP3A4", "CYP2D6", "CYP2C9", "CYP2C19", "CYP1A2", "UGT", "All"], ["All"])],
@@ -785,7 +720,8 @@ MODULES = [
          table(["Parameter", "Value", "Unit", "Assumption"], caption="Scaling factors used", id="parameters"),
          notes("Assumptions", id="notes")], subgroup="dmpk", live=True,
         example={"timecourse": "Time (min)\t% remaining\n0\t100\n5\t82\n15\t61\n30\t40\n45\t26",
-                 "system": "Liver microsomes", "protein": 0.5, "species": "Human"}),
+                 "system": "Liver microsomes", "protein": 0.5, "species": "Human"},
+        based_on=["mzDesk"]),
 
     module("nca", "NCA Pharmacokinetics", "B", "<b>Non-compartmental parameters</b> from a concentration–time profile.",
         [grid("profile", "Concentration–time", ["Time (h)", "Concentration (ng/mL)"]), number("dose", "Dose (mg)", step=0.01),
@@ -795,7 +731,8 @@ MODULES = [
          figure("Concentration–time (semi-log) with λz fit", id="profile_plot"), table(["Parameter", "Value", "Unit", "Method"], id="parameters"),
          notes("Assumptions", id="notes")], subgroup="dmpk", live=True,
         example={"profile": "Time (h) Concentration (ng/mL)\n0.5 42\n1 88\n2 131\n4 152\n6 121\n8 84\n12 41\n24 9",
-                 "dose": 100, "route": "Oral", "lambda_points": 4}),
+                 "dose": 100, "route": "Oral", "lambda_points": 4},
+        based_on=["mzDesk"]),
 
     module("sil_is", "Isotope-Labelled Internal Standard", "B", "Which <b>labelling</b> to buy: mass shift, stable positions, crosstalk.",
         [structure(label="Analyte"), spectrum(label="Analyte MS2 (optional)"), number("min_shift", "Minimum mass shift (Da)", 3, 1), checkbox("check_vendors", "Check vendor availability", True)],
@@ -817,7 +754,7 @@ MODULES = [
                help=["Candidates: ⁷Li / ⁶Li, ⁹Be, ⁴⁵Sc, ⁷²Ge / ⁷⁴Ge, ⁸⁹Y, ¹⁰³Rh, ¹¹⁵In, ¹⁵⁹Tb, ¹⁶⁵Ho, ¹⁷⁵Lu, ¹⁸⁵Re, ²⁰⁹Bi; the analyte element itself is excluded.",
                      "Combined distance = 0.5 × (|candidate isotope mass − analyte average mass| / analyte average mass + |candidate IE − analyte IE| / analyte IE); lower is better. First ionization energies are from NIST ASD for all offered elements.",
                      "This ranks only mass and first-ionization-energy closeness. It does not model recovery, ionization suppression, contamination, stability or instrument-specific response."])],
-        subgroup="inorganic", live=True, example={"element": "As", "matrix": list(MATRIX_ELEMENTS)}),
+        subgroup="inorganic", live=True, example={"element": "As", "matrix": list(MATRIX_ELEMENTS)}, based_on=["IsoSpecPy", "NIST ASD", "mzDesk"]),
 
     module("icp_interferences", "Interferences", "B", "Enumerate isotope-specific atomic isobars, M²⁺ ions and 2–3-atom polyatomic ions at an ICP-MS target nominal mass.",
         [text("target", "Target isotope", "75As", "75As or As-75"),
@@ -831,7 +768,7 @@ MODULES = [
                      "Likelihood score = product of constituent natural isotope abundances. It is not an intensity or ion-formation probability. Rows are score-sorted and capped at 50. No collision/reaction-cell recommendation is made."]),
          notes("Scope & assumptions", id="notes", collapsed=True)],
         subgroup="inorganic", live=True,
-        example={"target": "75As", "matrix": list(MATRIX_ELEMENTS), "max_atoms": "3", "charge_states": ["1+", "2+"]}),
+        example={"target": "75As", "matrix": list(MATRIX_ELEMENTS), "max_atoms": "3", "charge_states": ["1+", "2+"]}, based_on=["IsoSpecPy", "mzDesk"]),
 
     module("icp_idms", "Isotope Dilution (IDMS)", "B", "Single-spike, mole-based isotope dilution with composition-specific molar masses, ratio sensitivity and an optimal-blend hint.",
         [select("element", "Element", list(ELEMENT_SYMBOLS), "Ag"),
@@ -850,7 +787,8 @@ MODULES = [
          notes("Equation & limits", id="notes", collapsed=True)],
         subgroup="inorganic", live=True,
         example={"element": "Ag", "isotope_a": "107Ag", "isotope_b": "109Ag", "a_x": "", "b_x": "", "a_y": "0.01", "b_y": "0.99",
-                 "spike_concentration": "10", "spike_unit": "µg/g", "m_x": "1", "m_y": "0.5", "r_b": "1"}),
+                 "spike_concentration": "10", "spike_unit": "µg/g", "m_x": "1", "m_y": "0.5", "r_b": "1"},
+        based_on=["IsoSpecPy", "mzDesk"]),
 
     module("icp_massbias", "Mass Bias & δ Values", "B", "Correct isotope ratios with three mass-bias laws or standard–sample bracketing, and convert between ratios and δ values.",
         [heading("Mass-bias factor from a standard"),
@@ -882,7 +820,8 @@ MODULES = [
         subgroup="inorganic", live=True,
         example={"mb_a": "107Ag", "mb_b": "109Ag", "mb_measured_std": "0.99", "mb_true_std": "1", "mb_measured_sample": "0.995",
                  "bracket_sample": "0.995", "bracket_before": "0.990", "bracket_after": "0.992", "bracket_true": "1",
-                 "delta_sample": "1.002", "delta_standard": "1", "delta_per_mil": "2"}),
+                 "delta_sample": "1.002", "delta_standard": "1", "delta_per_mil": "2"},
+        based_on=["IsoSpecPy", "mzDesk"]),
 
     module("icp_sp", "Single-Particle ICP-MS", "B", "Convert detected particle-event signals to spherical diameter and number concentration using dissolved-standard calibration and transport efficiency.",
         [select("material", "Particle material", list(PARTICLE_PRESETS) + ["Custom"], "Au"),
@@ -906,7 +845,8 @@ MODULES = [
         subgroup="inorganic", live=True,
         example={"material": "Au", "custom_formula": "", "density": "", "element": "Au", "sensitivity": "1000",
                  "sensitivity_unit": SENSITIVITY_DWELL, "dwell_ms": "1", "flow": "0.3", "transport_pct": "5", "background": "2",
-                 "intensities": "5054.728\n6200\n4500", "n_events": "3", "acquisition_s": "60", "threshold": "3000"}),
+                 "intensities": "5054.728\n6200\n4500", "n_events": "3", "acquisition_s": "60", "threshold": "3000"},
+        based_on=["IsoSpecPy", "mzDesk"]),
 ]
 
 
@@ -957,16 +897,13 @@ _configure_forms("ms2_clean",
     [("Spectrum", ["spectrum", "precursor_mz", "ion_mode"]),
      ("Cleaning", ["noise_pct", "normalize", "remove_precursor", "precursor_tol", "sort_by"])],
     required=("spectrum",), header_fallback=("precursor_mz",),
-    help={"spectrum": "Paste any common format, upload a file, or resolve a USI. The precursor m/z and name in an MGF / MSP header are used when the fields are blank.",
-          "precursor_mz": "Blank = read from the MGF / MSP header when present."})
+    help={"precursor_mz": "Blank = read from the spectrum header."})
 _configure_forms("ms2_similarity",
     [("Query", ["query", "query_precursor"]), ("Reference", ["reference", "reference_precursor"]),
      ("Matching & scores", ["tol_da", "threshold", "ion_mode", "deep"])],
     required=("query", "reference"), header_fallback=("query_precursor", "reference_precursor"),
     visible={"ion_mode": {"field": "deep", "equals": True}},
-    help={"ion_mode": "Used only by MS2DeepScore / Spec2Vec; the classic scores do not need it.",
-          "deep": "First use downloads the models (internet).",
-          "query": "Paste a peak list or upload an MGF / MSP file. A header precursor m/z is used when that field is blank."})
+    help={"query": "A header precursor m/z is used when that field is blank."})
 _configure_forms("ms2_library",
     [("Query", ["spectrum_type", "ms2", "precursor", "tol_ppm", "tol_da"]),
      ("Search", ["libraries", "metrics", "threshold"])],
@@ -976,61 +913,47 @@ _configure_forms("ms2_library",
              "tol_ppm": {"field": "spectrum_type", "equals": "MS/MS"},
              "tol_da": {"field": "spectrum_type", "equals": "MS/MS"}},
     auto_labels={"precursor": "Auto (any adduct)"},
-    help={"precursor": "Required for MS/MS unless the spectrum header carries it. Auto = any adduct; a chosen adduct must also match the library record.",
-          "tol_da": "Peak-matching tolerance for MS/MS. EI always uses unit mass (0.5 Da) and hides this field.",
-          "metrics": "Hits are ranked by the first selected metric in this list order, not by the order you clicked.",
-          "libraries": "A selected library that is not installed is skipped with the one-time setup command."})
+    help={"precursor": "Required unless the spectrum header has it. Auto = any adduct.",
+          "metrics": "Hits are ranked by the first selected metric in list order."})
 _configure_forms("ms1_formula",
     [("Query", ["precursor", "ms1", "ms2"]), ("Formula search", ["instrument", "formula", "halogen"])],
     required=("precursor",), header_fallback=("precursor",),
-    help={"precursor": "Required unless the MS2 spectrum header carries it. BUDDY supports m/z 1–1500.",
-          "formula": "Optional: if given, ranking is skipped and the MS2 is explained with this formula. It must be a neutral formula (no charge); clear it to use MS1 and rank candidates.",
-          "halogen": "Only used when Formula is blank; it widens BUDDY's element search.",
-          "ms1": "Optional isotope pattern around the precursor (m/z intensity per line). A pattern that misses the precursor is ignored with a warning."})
+    help={"precursor": "Required unless the MS2 header has it.",
+          "formula": "Skips ranking; the MS2 is explained with this neutral formula.",
+          "halogen": "Ignored when a formula is given."})
 _configure_forms("ms2_structure",
     [("Query", ["precursor", "ms2", "ms1"]), ("Search scope", ["halogen", "silicon", "extended"])],
     required=("precursor", "ms2"), header_fallback=("precursor",),
-    auto_labels={"precursor": "Auto ([M+H]+ / [M-H]+)"},
-    help={"precursor": "MS-FINDER searches the formula from this m/z and adduct. Auto = [M+H]+ in positive mode, [M-H]- in negative mode.",
-          "ms1": "Optional isotope pattern; the first peak within 0.5 mDa of the precursor is used.",
-          "halogen": "F, Cl, Br and I are off by default because they widen the formula search.",
-          "silicon": "Si is off by default; tick it for silicon-containing compounds.",
-          "extended": "Switches MS-FINDER from CommonRange to ExtendedRange, which allows more F per carbon (PFAS) and other unusual compositions. Slower and more false formulas."})
+    auto_labels={"precursor": "Auto ([M+H]+ / [M-H]-)"},
+    help={"extended": "Allows more F per carbon (PFAS) and other unusual compositions."})
 _configure_forms("ms2_denovo",
     [("Query", ["precursor", "ms2", "ms1"]), ("Generation", ["formula", "mode", "halogen"])],
     required=("precursor", "ms2"), header_fallback=("precursor",),
     ion_modes={"precursor": ["Positive"]},
     auto_labels={"precursor": "Auto ([M+H]+)"},
-    help={"precursor": "FRIGID only generates positive-mode structures; the negative option is hidden.",
-          "ms1": "Optional isotope pattern. It is used only when Formula is blank, to improve BUDDY's top-1 formula.",
-          "formula": "Blank = BUDDY's top-1 formula (not available for [M]+ or [M+H-2H2O]+; enter a formula there). FRIGID only knows C H N O P S F Cl Br I B Si Se As Fe Co Na K.",
-          "halogen": "Used only when Formula is blank: widen BUDDY's formula search to F, Cl, Br and I.",
-          "mode": "Quick = 16 samples (a first look). Full = up to 100 samples and takes longer."})
+    help={"ms1": "Used only when Formula is blank.",
+          "formula": "Blank = BUDDY's top formula. Enter one for [M]+ or [M+H-2H2O]+.",
+          "halogen": "Used only when Formula is blank."})
 _configure_forms("ms2_ei",
     [("Structure", ["structure"])],
-    required=("structure",),
-    help={"structure": "NEIMS predicts EI from the neutral structure; a formula alone cannot be used here."})
+    required=("structure",))
 _configure_forms("ms2_esi",
     [("Structure", ["structure"]), ("Ion", ["adduct"])],
     required=("structure",),
-    help={"adduct": "MSRB covers seven lipid adducts; the CFM-ID ML fallback only supports [M+H]+ and [M-H]-. Other adducts return a clear error instead of a different ion.",
-          "structure": "A salt keeps its largest component; a charged structure is neutralised before the adduct is added."})
+    help={"adduct": "Lipids: seven adducts. Other compounds: [M+H]+ and [M-H]- only."})
 _configure_forms("ms2_fragments",
     [("Candidate", ["structure", "precursor"]), ("Spectrum", ["ms2"]), ("Fragmentation", ["tree_depth", "tol_abs", "tol_ppm"])],
     required=("structure", "ms2"), header_fallback=("precursor",),
     auto_labels={"precursor": "Auto ([M+H]+ / [M-H]-)"},
-    help={"precursor": "Blank = theoretical m/z from the structure and adduct. A measured value is used for neutral losses and a mismatch warning.",
-          "ms2": "The measured MS2 spectrum; MetFrag annotates its peaks.",
-          "tree_depth": "Bond cleavages considered by MetFrag; higher is slower and can over-explain."})
+    help={"precursor": "Blank = theoretical m/z."})
 _configure_forms("exclusivity",
     [("Input", ["structure", "precursor"]), ("Search", ["tol_ppm", "databases"]), ("Isomer check", ["ms2", "tol_da"])],
     allow_formula=("structure",),
-    help={"structure": "Draw or paste a structure, or choose Name / ID / Formula and type a formula (e.g. C8H10N4O2). "
-                       "With only a precursor m/z, only isobaric interferences are searched.",
-          "precursor": "Blank = the theoretical m/z of the structure or formula (used for the isobaric search and the isomer check).",
-          "databases": "Used by the same-formula and isobaric tables (PubChem, online). The isomer check searches PubChem independently of this selection.",
-          "ms2": "Optional. Without it the isomer check is skipped; the two database tables still run.",
-          "tol_da": "Absolute fragment tolerance for MetFrag's in-silico fragments (isomer table only; relative tolerance 0 ppm)."})
+    help={"structure": "Structure or formula. With only a precursor m/z, only isobars are searched.",
+          "precursor": "Blank = theoretical m/z of the compound.",
+          "databases": "Used by the same-formula and isobaric tables.",
+          "ms2": "Needed for the isomer check.",
+          "tol_da": "Isomer check only."})
 
 # Also expose the formula capability on the pages whose runners pass allow_formula=True.
 for _mid, _fid in (("ms1_theory", "structure"), ("met_shift", "structure")):
@@ -1061,22 +984,19 @@ PIPELINE_LIBRARY_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.ENTROPY_
                             METRIC_NAMES.MOD_COSINE_GREEDY, METRIC_NAMES.MOD_COSINE_HUNGARIAN, METRIC_NAMES.NEUTRAL_LOSSES, METRIC_NAMES.NIST_DOT,
                             METRIC_NAMES.REVERSE_DOT, METRIC_NAMES.BINNED_COSINE]
 _PIPELINE_ADVANCED = [
-    {**select("additive", "Mobile phase additive", ["Unknown"] + PIPELINE_ADDITIVES), "help": "Unknown = the best additive counts for each candidate's adduct."},
-    {**select("alkali", "Sodium / potassium present", ["Unknown", "Present", "Absent"]), "help": "Glassware, salts, biological matrix. Unknown counts as present."},
-    {**number("ph", "Mobile phase pH", 2.7, 0.1), "help": "For the ionization check of each candidate (default: 0.1 % formic acid)."},
+    {**select("additive", "Mobile phase additive", ["Unknown"] + PIPELINE_ADDITIVES), "help": "Unknown = the best additive for each adduct."},
+    {**select("alkali", "Sodium / potassium present", ["Unknown", "Present", "Absent"]), "help": "Unknown counts as present."},
+    {**number("ph", "Mobile phase pH", 2.7, 0.1), "help": "Default 2.7 (0.1 % formic acid)."},
     {**multiselect("lib_metrics", "Library similarity algorithms", PIPELINE_LIBRARY_METRICS, [METRIC_NAMES.ENTROPY_WEIGHTED]), "checkboxes": True, "required": True,
-     "help": "Tick one or more. Each library hit is scored with every ticked algorithm and passes the Level-2 gate when at least one reaches the similarity threshold; "
-             "the first ticked algorithm orders the hits. One that cannot be computed is left out (CosineGreedy replaces all of them if none can be)."},
+     "help": "A hit passes when any ticked algorithm reaches the threshold; the first ticked one orders the hits."},
     {**number("lib_threshold", "Similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
-     "help": "A library hit needs this similarity, on at least one ticked algorithm, to pass the Level-2 gate. Hits join the candidate pool from this value minus 0.10."}]
+     "help": "Minimum similarity for a Level-2 library match."}]
 # MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
     {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0, "new_row": True,
-     "help": "Optional. One value measured in N₂. Each candidate is compared with its CCS in the local reference data (same compound and adduct), or with a "
-             "predicted value if there is none. A candidate that disagrees with a measured value goes behind the others; a predicted value only reorders near-ties. "
-             "For TIMS enter the CCS your vendor software reports, not 1/K0."},
+     "help": "One N₂ value. For TIMS, use the CCS your software reports, not 1/K0."},
     {**select("ccs_platform", "Platform", [""] + CCS_PLATFORMS, value=""), "placeholder": "Select the platform",
-     "help": "Required when a CCS is given: the allowed difference depends on the platform."},
+     "help": "Required with a CCS."},
     select("ccs_gas", "Drift gas", CCS_GASES),
     {**select("ccs_tw_calibration", "TWIMS calibration", CCS_TW_CALIBRATIONS), "visible_when": {"field": "ccs_platform", "equals": "TWIMS"}}]
 _PIPELINE_SPECTRUM = _section("Spectrum", {**precursor(), "required": True, "header_fallback": True, "auto_label": "Auto (rank the adducts)"},
@@ -1100,15 +1020,14 @@ def _caffeine_example(libraries, ms2):
 
 PIPELINES = [
     {"id": "esi_ms2_annotation", "title": "MS/MS Annotation",
-     "one_liner": "I have an <b>ESI MS/MS spectrum</b> and a precursor m/z. Find the adduct and formula, search the libraries and, if no library spectrum "
-                  "matches, propose structures; then let detectability order the near-ties (candidates within 10% of the best score) and check which isomers the spectrum can tell apart. "
-                  "If you also have an <b>observed CCS</b>, each candidate is checked against its reference or predicted CCS.",
+     "one_liner": "ESI MS/MS spectrum → adduct, formula and ranked structure candidates",
+     "based_on": ["BUDDY", "MS-FINDER", "FRIGID", "MassBank/GNPS"],
      "inputs": (_PIPELINE_SPECTRUM
                 + _section("Search", multiselect("libraries", "Libraries", LIBRARIES),
                            number("tol_ppm", "Precursor tolerance (ppm)", 10.0, 0.1), number("tol_da", "Fragment tolerance (Da)", 0.02, 0.001),
                            select("omics", "Omics", ["Either / unknown", "Metabolomics", "Lipidomics"]))
                 + _section("Options", checkbox("halogen", "Allow Cl/Br in formulas"),
-                           checkbox("local_isomers", "Also compare with database isomers (slower, stricter)"))
+                           checkbox("local_isomers", "Compare with database isomers"))
                 + _section("Advanced", *_PIPELINE_ADVANCED, *_PIPELINE_CCS)),       # closed by default; the observed CCS (Ion Mobility) is its last four fields
      # expected_s: Adduct includes the formula search (step 2 only reads it back): CASMI 2022 500 challenges median 5.0 s, caffeine cold 9.6-10.3 s;
      # Merge and re-rank: 0.03-0.2 s on the examples; an observed CCS adds about 0.01 s per structure, plus 1.0 s once per server process for loading the CCS prediction model
@@ -1119,18 +1038,18 @@ PIPELINES = [
      "examples": [{"label": "Caffeine, library match", "values": _caffeine_example(LIBRARIES, CAFFEINE_MASSBANK_MS2)},
                   {"label": "Caffeine, no library (MS-FINDER)", "values": _caffeine_example([], CAFFEINE_MSFINDER_MS2)}]},
     {"id": "ei_ms_annotation", "title": "EI MS Annotation",
-     "one_liner": "Enter one EI spectrum (usually from GC-MS). Get candidate metabolites, named as the original underivatized compounds, with evidence.",
+     "one_liner": "EI spectrum (GC-MS) → candidate metabolites with evidence",
+     "based_on": ["NEIMS", "MassBank", "RDKit", "mzDesk"],
      "inputs": (_section("Spectrum",
                          {**spectrum("spectrum", "EI spectrum"), "required": True},
-                         {**select("derivatization", "Derivatization", EI_DERIVATIZATIONS), "help": "Auto reads the marker ions: m/z 73 backed by 75 or 147 for TMS (m/z 147 alone when the scan starts above m/z 73); M-31 (MeOx) and M-57 (TBDMS) need the molecular ion."},
-                         {**number("molecular_ion", "Molecular ion m/z", None, 0.0001), "help": "Optional. The M+• of the derivative when derivatized."},
-                         {**textarea("candidates", "Candidate structures", placeholder="One SMILES or name per line", rows=4), "network_names": True,
-                          "help": "Optional. A name is looked up online."})
+                         {**select("derivatization", "Derivatization", EI_DERIVATIZATIONS), "help": "Auto reads the marker ions; MeOx and TBDMS need the molecular ion."},
+                         {**number("molecular_ion", "Molecular ion m/z", None, 0.0001), "help": "M+• of the derivative, if derivatized."},
+                         {**textarea("candidates", "Candidate structures", placeholder="One SMILES or name per line", rows=4), "network_names": True})
                 + _section("Retention index",
                            # no required_when: Fields.tsx marks any field that has one with a permanent star, and both of these are optional; the pairing is
                            # enforced by ei_ms_annotation.parse_inputs (HTTP 400)
                            grid("alkanes", "Alkane series", ["Carbon number", "RT"]),
-                           {**number("sample_rt", "Sample RT", None, 0.01), "help": "Same unit as the alkane RTs. Give it together with the alkane series."})),
+                           {**number("sample_rt", "Sample RT", None, 0.01), "help": "Same unit as the alkane RTs. Needs the alkane series."})),
      # expected_s: both examples run in-process: EI library search is 6.2 s on the first query of a process (index load / JIT; up to ~15 s on a cold disk
      # cache) and 0.25-0.3 s afterwards, every other step is 0.01-0.13 s (NEIMS 0.13 s cold); stats DB: 3 runs, median 7.1 s in total
      "stages": [stage(1, "Spectrum cleanup", 0.1), stage(2, "EI library search", 7.0), stage(3, "Derivatization markers", 0.05), stage(4, "Candidates", 0.2),
@@ -1140,10 +1059,11 @@ PIPELINES = [
                   {"label": "Dipentyl phthalate, high resolution (MassBank MSBNK-NILU-NL0043)",
                    "values": {"spectrum": _paste(EI_DIPENTYL_PHTHALATE), "derivatization": EI_DERIVATIZATIONS[0]}}]},
     {"id": "targeted_method", "title": "Targeted Method",
-     "one_liner": "Enter one compound. Get a method sheet: can it be measured, platform, column, pH, polarity, main ion, derivatization and published methods.",
-     "inputs": ([{**structure(label="Compound"), "required": True, "help": "Name, database ID, SMILES or InChI. A name or ID is looked up online."}]
+     "one_liner": "Compound → method sheet: platform, column, pH, polarity, main ion, methods",
+     "based_on": ["MolGpKa", "PubChem", "RepoRT", "mzDesk"],
+     "inputs": ([{**structure(label="Compound"), "required": True}]
                 + _section("Conditions",
-                           {**number("ph", "pH", None, 0.1, "2.7"), "min": 0, "max": 14, "help": "Mobile-phase pH. Blank = 2.7 (0.1 % formic acid)."},
+                           {**number("ph", "pH", None, 0.1, "2.7"), "min": 0, "max": 14, "help": "Blank = 2.7 (0.1 % formic acid)."},
                            select("additive", "Mobile-phase additive", PIPELINE_ADDITIVES),
                            select("instrument", "Instrument", TARGETED_INSTRUMENTS))),
      # expected_s: both examples run in-process (cold / warm): 0.0-0.4 s per step except Adducts (2.4 s cold) and an uncached name lookup in Identity (1-2 s);

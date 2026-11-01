@@ -139,8 +139,8 @@ def test_library_page_definition():
     hits = next(b for b in mod["outputs"] if b.get("id") == "hits")
     assert hits["columns"] == ["Rank", "Library", "Accession", "Name", "Adduct", "Precursor m/z", "Δ ppm", "Matched peaks", ENT, COS, "Instrument / CE"]
     text = " ".join(hits["help"])
-    assert "first selected metric" in text and "precursor m/z is required" in text
-    assert f"{ls.EI_TOLERANCE} Da" in text and f"top {ls.EI_PREFILTER_N} by entropy similarity" in text     # the help text and the engine constants cannot drift apart
+    assert "first selected metric" in text and "threshold" in text
+    assert "first selected metric" in f["metrics"]["help"] and "header" in f["precursor"]["help"]       # the ranking rule and the header fallback stay on the form
     assert [b["id"] for b in mod["outputs"]] == ["summary", "hits", "mirror"]
     assert [lbl for lbl, *_ in [(i["label"],) for i in mod["outputs"][0]["items"]]] == [
         "Best hit", "Rank score", "Hits ≥ threshold", "Candidates scored", "Libraries"]
@@ -493,7 +493,7 @@ def test_ei_prefilter_keeps_the_top_entropy_spectra_and_says_so(libs, monkeypatc
     res = _search(EI_QUERY, kind="EI", metrics=[COS], threshold=-1)
     assert res["n_candidates"] == 2 and res["prefilter"] == {"total": 5, "kept": 2, "dropped": True}
     assert {h["accession"] for h in res["hits"]} == {"MSBNK-FIX-E001", "MSBNK-FIX-E002"}       # the two caffeine EI spectra have the highest entropy similarity
-    assert any("top 2" in w and "low entropy" in w for w in res["warnings"])
+    assert any("top 2" in w and "weighted entropy similarity" in w and "low entropy" not in w for w in res["warnings"])
     body = _run(spectrum_type="EI", ms2=_paste(EI_QUERY), libraries=["MassBank"], metrics=[COS], threshold="-1").json()
     assert "top 2 of 5" in body["outputs"]["summary"]["values"]["Candidates scored"]["note"]
     monkeypatch.setattr(ls, "EI_PREFILTER_N", default)                                        # everything fits: exact, and no warning

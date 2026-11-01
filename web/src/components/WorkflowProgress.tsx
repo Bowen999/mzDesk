@@ -4,6 +4,8 @@ import "./workflow-progress.css";
 import { isActive, measurable, newTracker, phaseOf, track, type Phase, type StepLike, type Tracker } from "./workflowProgressModel";
 
 const TICK_MS = 200;                 // redraw rate while the run moves; the CSS width transition smooths the steps in between
+const HOLD_MS = 1100;                // how long "Completed" stays before the bar folds away
+const FOLD_MS = 450;                 // the fold-away transition (workflow-progress.css)
 const ENDED = new Set(["done", "skipped", "failed"]);
 const name = (s: StepLike) => s.title || "Unnamed stage";
 
@@ -32,9 +34,9 @@ function describe(phase: Phase, job: Job | null, steps: StepLike[], usable: bool
   }
 }
 
-/** One compact block: current stage and percentage on one line, a pseudo-linear bar below, at most one short note.
- *  The percentage is an estimate (see workflowProgressModel.ts): it creeps while a stage runs, glides to the next slice when one ends,
- *  never goes backwards, and reaches 100 only when the job is done. */
+/** One compact block: current stage and percentage on one line, an eased bar below, at most one short note.
+ *  The percentage is an estimate (see workflowProgressModel.ts): it starts at once, is fast early and slow late, glides to the next slice when a stage
+ *  ends, never goes backwards, and reaches 100 only when the job is done. */
 export function WorkflowProgress({ job, awaitingFirstUpdate = false, trackingStopped = false }:
   { job: Job | null; awaitingFirstUpdate?: boolean; trackingStopped?: boolean }) {
   const [, setTick] = useState(0);
@@ -54,9 +56,19 @@ export function WorkflowProgress({ job, awaitingFirstUpdate = false, trackingSto
     return () => clearInterval(id);
   }, [moving]);
 
+  // a run that finished cleanly says "Completed" for a moment, then the bar folds away: the answer and the steps below tell the rest
+  const clean = phase === "done" && !steps.some(s => s.status === "failed");
+  const [leave, setLeave] = useState<"" | "leaving" | "gone">("");
+  useEffect(() => {
+    if (!clean) { setLeave(""); return; }
+    const a = window.setTimeout(() => setLeave("leaving"), HOLD_MS), b = window.setTimeout(() => setLeave("gone"), HOLD_MS + FOLD_MS);
+    return () => { window.clearTimeout(a); window.clearTimeout(b); };
+  }, [clean]);
+  if (leave === "gone") return null;
+
   const { label, note } = describe(phase, job, steps, measurable(steps));
   const tone = phase === "done" ? " is-done" : phase === "error" ? " is-error" : phase === "stopped" || phase === "unknown" ? " is-stopped" : " is-active";
-  return <section className={"wf-progress" + tone} aria-label="Workflow progress">
+  return <section className={"wf-progress" + tone + (leave === "leaving" ? " is-leaving" : "")} aria-label="Workflow progress">
     <div className="wf-progress-head">
       <span className="wf-progress-stage" role="status" title={label}>{label}</span>
       <span className="wf-progress-percent">{shown === null ? "—" : `${shown}%`}</span>

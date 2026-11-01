@@ -277,12 +277,10 @@ def build(smiles, peaks, adduct, precursor_mz, *, tol_da=0.01, tol_ppm=0.0, tree
         tick(0.82 + 0.15 * (n + 1) / len(shown), "Placing fragments on the structure")
     unplaced = [f for f in fragments if not f["placed"]]
     if unplaced:
-        notes.append(f"{len(unplaced)} fragment{'s' if len(unplaced) != 1 else ''} could not be placed on the structure (no fit, or the atoms do not "
-                     "match the ion formula); the fragment's own structure is drawn instead.")
+        notes.append(f"{len(unplaced)} fragment{'s' if len(unplaced) != 1 else ''} could not be placed on the structure; the fragment's own structure is drawn instead.")
     ambiguous = [f for f in fragments if f["alternatives"]]
     if ambiguous:
-        notes.append("Where the same fragment fits several places (symmetric or repeated units), the drawing marks the one whose hydrogen counts "
-                     "agree best; the card says how many other places fit equally well.")
+        notes.append("A fragment that fits several places is drawn at the best fit; its card counts the others.")
 
     tick(0.98, "Drawing the spectrum")
     y_top = max([a["rel"] for a in ann] + [1.0]) * Y_HEADROOM

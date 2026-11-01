@@ -541,8 +541,7 @@ def _spec2vec_score(mz1, i1, pmz1, mz2, i2, pmz2, model_path, results, ionmode=N
     cat, name = mn.CAT_DEEP, mn.SPEC2VEC
     if ionmode == "negative":
         _add_result(results, cat, name,
-                    note="N/A: the pretrained model is GNPS AllPositive, i.e. positive-mode "
-                         "spectra only, so a negative-mode score would be meaningless")
+                    note="N/A: the pretrained model covers positive-mode spectra only")
         return
     try:
         import gensim  # noqa: F401

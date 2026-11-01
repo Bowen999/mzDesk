@@ -53,10 +53,9 @@ def run_non_ms(inputs):
     values = {"UV/PDA": uv_value, "FLD": a.fluor, "CAD": cad_value, "ELSD": cad_value, "RI": "isocratic only"}
     helps = {name: _lines(reason) for name, (_, reason) in detail.items()}      # the UV reason names the chromophore class
     if usable:
-        helps["UV/PDA"] += [f"λmax by {a.lam_method}: approximate ({nm.LAMBDA_ERROR}); solvent and pH are not modelled"]
+        helps["UV/PDA"] += [f"λmax by {a.lam_method}: {nm.LAMBDA_ERROR}"]
     if a.strength != nm.STRONG:
         helps["UV/PDA"] += _lines(nm.deriv_hint(a.reagents))          # none / weak chromophore: OPA / FMOC / DNPH (the FLD reason already carries it)
-    helps["FLD"] += ["a structural alert only: quantum yield depends on solvent, pH and quenchers"]
     tiles = [B.tile(name, STATUS[detail[name][0]], values[name], help=helps[name]) for name in ("UV/PDA", "FLD", "CAD", "ELSD", "RI")]
 
     # figure: the chromophore list explains the atom numbers

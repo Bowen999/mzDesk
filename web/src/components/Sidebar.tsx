@@ -93,8 +93,8 @@ function InternetSwitch({ compact = false }: { compact?: boolean }) {
   const on = useInternet();
   const toggle = () => setInternet(!on);
   const title = on
-    ? "Internet search is on: online lookups run without asking. Click to turn off."
-    : "Internet search is off: a run that needs the internet asks first. Click to turn on.";
+    ? "Internet search is on. Click to turn off."
+    : "Internet search is off: a run that needs it asks first. Click to turn on.";
   if (compact) return (
     <button type="button" className={"rail-btn internet-rail" + (on ? "" : " off")} onClick={toggle} title={title}
       aria-label={`Internet search: ${on ? "on" : "off"}`} aria-pressed={on}>

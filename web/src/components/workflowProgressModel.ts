@@ -1,7 +1,11 @@
-/** Pseudo-linear progress for a workflow run. Pure functions only: the component owns the clock, the refs and the render.
+import { ease } from "../progressCurve";
+
+/** Progress of a workflow run. Pure functions only: the component owns the clock, the refs and the render.
  *
- *  The server reports stage statuses, never a percentage, so the bar is an estimate that must never look stuck, never jump and never move backwards:
- *   - the first PRE_CEIL % belong to "submitting / waiting / queued": a slow creep from PRE_START towards PRE_CEIL, so the bar is never at 0;
+ *  The server reports stage statuses, never a percentage, so the bar is an estimate that must never look stuck, never jump and never move backwards.
+ *  It is not linear: the share of the work that is done goes through the shared ease-out curve (progressCurve.ts), so the bar moves fast at the start
+ *  and slows down towards the end instead of waiting near 0.
+ *   - the first PRE_CEIL % belong to "submitting / waiting / queued": from PRE_START at once, a quick creep towards PRE_CEIL, so the bar is never at 0;
  *   - the rest is shared by the stages in proportion to their expected duration (`expected_s` of the spec; equal shares when no stage has one).
  *     A stage that is skipped takes no share. A stage that has ended contributes its whole share, a running stage contributes
  *     RUN_CAP * (1 - exp(-t / tau)) of it, where t is the time since the UI first saw it running and tau = TAU_PER_EXPECTED * expected_s * k
@@ -19,9 +23,9 @@ export type StepLike = { id?: number | string | null; title?: string | null; sta
  *  shown / at: the value on screen and when it was set (null before the first sample); last: the previous phase. */
 export type Tracker = { since: number; seen: Record<string, number>; max: number; shown: number; at: number | null; last: Phase | null };
 
-export const PRE_START = 2;        // % shown the moment the run is submitted
-export const PRE_CEIL = 6;         // % the pre-run creep approaches; stages fill the band between this and 100
-export const PRE_TAU = 20;         // seconds: time constant of the pre-run creep
+export const PRE_START = 6;        // % shown the moment the run is submitted
+export const PRE_CEIL = 12;        // % the pre-run creep approaches; stages fill the band between this and 100
+export const PRE_TAU = 2.5;        // seconds: time constant of the pre-run creep
 export const RUN_CAP = 0.9;        // share of its slice a running stage can fill before it ends
 export const TAU_DEFAULT = 8;      // seconds: stage time constant until a stage has finished
 export const TAU_MIN = 2;          // clamp of the fallback tau (no expected_s)
@@ -32,7 +36,7 @@ export const TAU_EXPECTED_MAX = 300;
 export const SPEED_MIN = 0.25;         // clamp of k, the observed / expected duration ratio of the finished stages
 export const SPEED_MAX = 4;
 export const SPEED_PRIOR_S = 3;        // seconds added to both sides of that ratio so a few milliseconds of noise do not move it
-export const MAX_RATE = 15;            // points per second the bar may advance towards its target
+export const MAX_RATE = 25;            // points per second the bar may advance towards its target
 export const ACTIVE_MAX = 99;      // only a finished job shows 100
 
 const ENDED = new Set(["done", "skipped", "failed"]);
@@ -89,6 +93,9 @@ export function tauOf(step: StepLike, steps: readonly StepLike[], speed = speedF
 /** Before the first stage runs: PRE_START creeping towards PRE_CEIL, never reaching it. */
 export const creep = (elapsedSeconds: number) => PRE_START + (PRE_CEIL - PRE_START) * (1 - Math.exp(-Math.max(0, elapsedSeconds) / PRE_TAU));
 
+/** Percent for `share` (0-1) of the stages' work: the band between PRE_CEIL and 100 through the ease-out curve. */
+export const band = (share: number) => PRE_CEIL + (100 - PRE_CEIL) * ease(share);
+
 /** Share of its slice a stage fills after `elapsedSeconds` of running: 0 at the start, approaching RUN_CAP, never 1. */
 export const stageFraction = (elapsedSeconds: number, tau: number) => RUN_CAP * (1 - Math.exp(-Math.max(0, elapsedSeconds) / tau));
 
@@ -112,7 +119,7 @@ export function estimateProgress(input: Input & { since: number; seen: Record<st
       units += weights[i] * stageFraction((nowMs - (input.seen[stepKey(s, i)] ?? nowMs)) / 1000, tauOf(s, steps, speed));
   });
   if (total <= 0) return ACTIVE_MAX;
-  return Math.min(ACTIVE_MAX, PRE_CEIL + (100 - PRE_CEIL) * units / total);
+  return Math.min(ACTIVE_MAX, band(units / total));
 }
 
 /** Advance the tracker with the current job state at time `nowMs`. Returns the new tracker, the percent to show (null = indeterminate) and the

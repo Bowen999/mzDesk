@@ -38,8 +38,7 @@ def _row_help(res, row, comp):
              f"Name in the source: {row.name}. Adduct {row.adduct}, m/z {_num(row.mz, 4)} as listed."]
     mismatch = ccs.mz_mismatch(row, res.cfg)
     if mismatch:
-        lines.append(f"Check this row: the listed m/z ({_num(mismatch[0], 4)}) differs from the m/z calculated for this structure and adduct ({_num(mismatch[1], 4)}). "
-                     "The source may list average masses, or its name, structure or adduct may not match.")
+        lines.append(f"Check this row: the listed m/z ({_num(mismatch[0], 4)}) differs from the calculated m/z ({_num(mismatch[1], 4)}).")
     if comp.delta_pct is not None:
         lines.append(f"Closest observed value: {_obs(comp.observed)} Å². Δ = (observed − reference) / reference.")
     return lines
@@ -73,15 +72,11 @@ def _prediction_table(res):
     if p is None:
         return B.table_data([])
     info = res.meta["model"]
-    split, outside = info["split"], info["domain"]["test_outside"]
+    split = info["split"]
     thr = res.cfg.domain_min_tanimoto
-    help_ = [f"{p.model} trained on {split['train_rows'] + split['val_rows']} measured values of {split['trainval_compounds']} compounds "
-             "(features: m/z, adduct, 42 MQN descriptors); it was chosen against HistGradientBoosting on a validation set.",
-             f"Test error: {split['test_rows']} values of {split['test_compounds']} compounds the model never saw. Median {p.median_pct:.2f} %, "
-             f"95th percentile {p.q95_pct:.2f} %. The tolerance is the 95th percentile rounded up to 0.1 %.",
-             f"Nearest training compound: Tanimoto {p.max_tanimoto:.2f} (Morgan radius 2, 2048 bits). Below {thr:g} the compound is outside the training domain."]
-    if outside.get("q95_pct") is not None:
-        help_[-1] += f" In the test set those compounds had a 95th percentile error of {outside['q95_pct']:.1f} % (n = {outside['n']})."
+    help_ = [f"{p.model} trained on {split['train_rows'] + split['val_rows']} measured values of {split['trainval_compounds']} compounds (m/z, adduct, 42 MQN descriptors).",
+             f"Test error on {split['test_rows']} values of {split['test_compounds']} unseen compounds: median {p.median_pct:.2f} %, 95th percentile {p.q95_pct:.2f} %.",
+             f"Nearest training compound: Tanimoto {p.max_tanimoto:.2f}; below {thr:g} the compound is outside the training domain."]
     domain = B.badge("Inside" if p.in_domain else "Outside", "good" if p.in_domain else "warn",
                      help=f"Nearest training compound: Tanimoto {p.max_tanimoto:.2f}; threshold {thr:g}.")
     return B.table_data([B.row([_num(p.ccs), _tol(p.tolerance_pct), f"{p.median_pct:.2f}", f"{p.q95_pct:.2f}", domain], help=help_)], count=1)
@@ -94,39 +89,22 @@ def _notes(res):
     pct = lambda v: f"{v:.1f} %"      # noqa: E731
     items = []
     if not res.installed:
-        items.append(f"The CCS reference data is not installed. Run `{ccs.SETUP_COMMAND}` once: it downloads about 5 MB from GitHub (needs git), builds the index "
-                     "and trains the prediction model (needs scikit-learn; a few minutes). After that the page works offline.")
+        items.append(f"The CCS reference data is not installed. Run `{ccs.SETUP_COMMAND}`.")
     items += [
-        "Comparison rule: the same compound (first 14 characters of the InChIKey after taking the largest fragment and neutralising; stereo is ignored) "
-        "and the same adduct. Other adducts of the compound are listed for information only. When several measured values exist, the summary uses the one closest "
-        "to your value (relative to its tolerance): one agreeing measurement is enough. Every value is listed in the table.",
-        "N₂ scale only. All reference values were measured in N₂ (DTCCS N2; TWCCS N2, calibrated with N₂ values; TIMSCCS N2). A value measured in He, "
-        "or a TWIMS value calibrated with He reference values (TWCCS N₂→He), is reported as not comparable. FAIMS / DMS gives a compensation voltage, "
-        "not a CCS, so nothing is compared. For TIMS, enter the CCS your vendor software reports (Å²), not 1/K0.",
-        f"Tolerance, by the platform type of the observed value and of the reference row: same type {pct(cfg.tol_same)}; DT and TIMS {pct(cfg.tol_dt_tims)}; "
-        f"DT and TW {pct(cfg.tol_dt_tw)}; TIMS and TW {pct(cfg.tol_tims_tw)}. Basis: DTIMS interlaboratory RSD 0.29 % and single-field bias 0.54 % "
-        "(Stow et al., Anal. Chem. 2017); DT vs TIMS within ±1 % and DT vs TW within ±2 % for 95 % of ions (Feuerstein et al., J. Am. Soc. Mass Spectrom. 2022, "
-        "steroids); TIMS vs TW is derived (the two biases against DT added up), not measured. With several observed values (for example two conformers) "
-        "the one closest to each reference is used.",
-        "A value outside the tolerance is flagged inconsistent and never used to exclude a compound: in the same study fewer than 1.5 % of ions "
-        "differed by up to 7 % between platforms (conformers, protomers).",
+        "Compared: the same compound (InChIKey first block) and the same adduct; other adducts are for information.",
+        "N₂ values only: He, TWIMS calibrated with He, and FAIMS / DMS are not comparable. For TIMS, enter CCS in Å², not 1/K0.",
+        f"Tolerance: same type {pct(cfg.tol_same)}; DT and TIMS {pct(cfg.tol_dt_tims)}; DT and TW {pct(cfg.tol_dt_tw)}; TIMS and TW {pct(cfg.tol_tims_tw)}.",
     ]
     if not res.installed:
         return {"items": items}
     meta, model = res.meta, res.meta.get("model")
     if model:
         test = model["test"]
-        items.append(f"Prediction: only when the index has no value for the compound and adduct, and only for adducts with at least {cfg.min_adduct_rows} training rows "
-                     f"({', '.join(model['adducts'])}). {model['name']} on m/z, adduct and MQN descriptors. On compounds it never saw: median error "
-                     f"{test['median_pct']:.2f} %, 95th percentile {test['q95_pct']:.2f} %, so the tolerance is {_tol(model['tolerance_pct'])} %. A prediction is weaker than a "
-                     f"measured value; a compound whose nearest training compound has a Tanimoto below {cfg.domain_min_tanimoto:g} is flagged as outside the training domain.")
+        items.append(f"Prediction (no value in the index): median test error {test['median_pct']:.2f} %, 95th percentile {test['q95_pct']:.2f} %, "
+                     f"tolerance {_tol(model['tolerance_pct'])} %.")
     if res.prediction_note:
         items.append(res.prediction_note)
-    by = meta.get("rows_by_type") or {}
-    items.append(f"Data: CCSbase source data (c3sdb, commit {str(meta.get('commit', ''))[:10]}, {meta.get('licence')} licence): {meta.get('rows_kept', 0):,} values of "
-                 f"{meta.get('compounds', 0):,} compounds from {meta.get('datasets')} published datasets (DT {by.get('DT', 0)}, TW {by.get('TW', 0)}, TIMS {by.get('TIMS', 0)}), "
-                 "all measured in N₂. Structures come from the source or were assigned to the compound names by the c3sdb authors (lipid structures can be generic); "
-                 f"values without a structure were skipped. {ccs.CITATION}")
+    items.append(f"Data: CCSbase source data (Ross et al., Anal. Chem. 2020; c3sdb commit {str(meta.get('commit', ''))[:10]}, {meta.get('licence')} licence).")
     return {"items": items}
 
 
@@ -162,9 +140,9 @@ def _summary(res):
     # verdict
     verdict = {"value": res.verdict}
     if res.verdict in (ccs.CONSISTENT, ccs.INCONSISTENT):
-        verdict["note"] = "vs measured reference" if res.source == "measured" else "vs prediction (weaker)"
+        verdict["note"] = "vs measured reference" if res.source == "measured" else "vs prediction"
     if res.verdict == ccs.INCONSISTENT:
-        verdict["help"] = "Outside the tolerance. This does not exclude the compound: conformers or protomers can differ between platforms."
+        verdict["help"] = "Outside the tolerance."
     elif res.verdict == ccs.NOT_COMPARABLE:
         verdict.update(note=res.reason_short, help=res.reason)
     elif res.verdict == ccs.NO_REFERENCE:
@@ -197,10 +175,10 @@ def run_ccs(inputs):
     if platform != "TWIMS" and tw == ccs.TW_CALIBRATIONS[1]:
         warnings.append("The TWIMS calibration choice only applies to TWIMS and was ignored.")
     if not res.installed:
-        warnings.append(f"The CCS reference data is not installed. Run {ccs.SETUP_COMMAND} once, then run this page again.")
+        warnings.append(f"The CCS reference data is not installed. Run {ccs.SETUP_COMMAND}.")
     elif res.prediction is not None and not res.prediction.in_domain:
         warnings.append(f"Outside the model's training domain: the most similar training compound has Tanimoto {res.prediction.max_tanimoto:.2f} "
-                        f"(threshold {res.cfg.domain_min_tanimoto:g}). Treat the predicted CCS with extra care.")
+                        f"(threshold {res.cfg.domain_min_tanimoto:g}).")
     empty = B.table_data([])
     outputs = {
         "summary": {"values": _summary(res)},

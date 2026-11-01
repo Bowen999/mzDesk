@@ -19,10 +19,7 @@ CACHE_FILE = "jp18_index.npz"
 PDF_URL = "https://www.mhlw.go.jp/content/11120000/{file}"
 VOLUMES = {"000904440.pdf": "Official Monographs A–L", "000904449.pdf": "Official Monographs M–Z", "000904450.pdf": "Crude Drugs and Related Drugs",
            "000945683.pdf": "General Notices and General Tests", "000904454.pdf": "General Information"}
-LICENCE_NOTE = ("Japanese Pharmacopoeia, 18th edition (English version) with Supplements I and II, Ministry of Health, Labour and Welfare "
-                "(Ministerial Notification; not protected by copyright under Article 13 of the Japanese Copyright Act). Parameters were extracted from the "
-                "PDF text layer of the 'Operating conditions' blocks, with the printed page; the English version is a convenience translation, so check "
-                "the printed page before relying on a value (errata published after the supplements are not applied).")
+LICENCE_NOTE = "Data: Japanese Pharmacopoeia 18th ed. (English), MHLW Ministerial Notification (Copyright Act Art. 13: no copyright)."
 
 
 @dataclass

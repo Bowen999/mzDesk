@@ -542,7 +542,7 @@ def test_runner_fills_both_blocks_and_says_where_the_formula_came_from(fake_pred
     assert rows[0][0] == "1" and rows[0][1]["img"].startswith("data:image/png;base64,") and rows[0][2:] == [SMILES_CAFFEINE, "C8H10N4O2", "1.000", "RYYVLZVUVIJVGH"]
     assert [r_[4] for r_ in rows] == ["1.000", "0.515", "0.500", "0.333"]
     assert "Hidden" not in " ".join(body["warnings"])
-    assert body["verdict"] == f"Top generated candidate: <b>{SMILES_CAFFEINE}</b>, similarity 1.000 · 4 formula-matched candidates (hypotheses)."
+    assert body["verdict"] == f"Top generated candidate: <b>{SMILES_CAFFEINE}</b>, similarity 1.000 · 4 formula-matched candidates."
 
 
 def test_runner_passes_formula_adduct_mode_and_peaks_to_the_engine(fake_predict):
@@ -724,12 +724,11 @@ def test_page_definition_is_live_with_the_agreed_inputs_and_blocks():
     assert m["example"]["ms2"]["value"] == CAFFEINE_MSFINDER_MS2
 
 
-def test_help_text_is_honest_about_what_the_page_gives():
-    text = " ".join(_module()["outputs"][1]["help"])
-    for needle in ("hypotheses", "8.21", "9.82", "13.31", "20.15", "likely lower", "Tanimoto", "not a probability", "stereochemistry", "saw it in training",
-                   "BUDDY", "frigid_setup"):
-        assert needle in text, needle
-    assert "Local version only" in _module()["one_liner"] and "hypotheses" in _module()["one_liner"]
+def test_help_text_explains_the_score_and_the_page_says_it_is_local():
+    help_ = _module()["outputs"][1]["help"]
+    text = help_ if isinstance(help_, str) else " ".join(help_)
+    assert "Score" in text and "fingerprint" in text
+    assert "Local version only" in _module()["one_liner"] and "generated" in _module()["one_liner"]
 
 
 # ---------------------------------------------------------------- shipped files
@@ -1041,7 +1040,7 @@ def test_real_run_example_through_the_api(monkeypatch):
     assert scores == sorted(scores, reverse=True) and 0 < scores[0] <= 1
     assert res["device"] in ("mps", "cpu") and res["n_samples"] == 16 and res["n_peaks_assigned"] > 0
     assert res["seconds"] < fe.TIMEOUT_S["quick"] and 0 < res["peak_footprint_mb"] < fe.FOOTPRINT_CAP_MB
-    assert body["verdict"].startswith("Top generated candidate:") and "(hypotheses)" in body["verdict"]
+    assert body["verdict"].startswith("Top generated candidate:") and "hypotheses" not in body["verdict"]
     assert not heavy_lock.LOCK.locked()
 
 

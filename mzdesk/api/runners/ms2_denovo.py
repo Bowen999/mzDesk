@@ -55,7 +55,7 @@ def _formula_from_buddy(fe, precursor_mz, adduct, ms2, ms1, halogen, warnings):
     others = [c["formula"] for c in cands[1:3]]
     settings = "Orbitrap settings" + ("" if halogen else ", no halogens")
     warnings.append(f"No formula was entered, so BUDDY's top-1 formula {formula}" + (f" (probability {prob:.2f})" if isinstance(prob, (int, float)) else "")
-                    + f" was used ({settings}). If it is wrong, every structure below is wrong too"
+                    + f" was used ({settings})"
                     + (f"; BUDDY's next candidates: {', '.join(others)}" if others else "") + ". Enter the formula to override it.")
     return formula, note
 
@@ -131,8 +131,7 @@ def run_denovo(inputs):
     hidden = _dropped_text(dropped)
     if not cands:
         warnings.append(f"FRIGID generated no usable structure for {formula} in {res['n_samples']} samples" + (f" ({hidden} hidden)" if hidden else "") + ". "
-                        + ("Try Full mode or check the formula; " if res["mode"] == "quick" else "Check the formula; ")
-                        + "the compound may also be outside what FRIGID can generate.")
+                        + ("Try Full mode or check the formula." if res["mode"] == "quick" else "Check the formula."))
     elif hidden:
         warnings.append(f"Hidden: {hidden} (not valid candidates for this formula and adduct).")
     if cands and res["mode"] == "quick" and len(cands) < 3:
@@ -141,8 +140,7 @@ def run_denovo(inputs):
     top = cands[0] if cands else None
     gb = (res["peak_footprint_mb"] or 0) / 1024
     device = DEVICE_NAMES.get(res["device"], str(res["device"] or common.MISSING).upper())
-    device_help = ["Device auto picks the Apple GPU (MPS) only when the Mac has at least 12 GB of memory available and swap to spare; otherwise the CPU. "
-                   "MZDESK_FRIGID_DEVICE = auto | mps | cpu overrides it."]
+    device_help = ["Device auto picks the Apple GPU (MPS) when enough memory is free, otherwise the CPU (MZDESK_FRIGID_DEVICE overrides)."]
     if res.get("device_reason"):
         device_help.insert(0, "This run: " + res["device_reason"] + ".")
     sample_help = [f"{res['n_samples']} molecules sampled, {res['n_valid']} valid SMILES, {res['n_formula_matched']} with the right formula "

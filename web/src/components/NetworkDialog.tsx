@@ -55,7 +55,7 @@ function NetworkDialog({ uses, onCancel, onContinue }: { uses: string[]; onCance
         <h2 id="net-dialog-title">Internet search is off</h2>
         <p id="net-dialog-desc">This run needs the internet:</p>
         <ul className="dialog-list">{uses.map((u, i) => <li key={i}>{u}</li>)}</ul>
-        <p className="dialog-note">Only this run continues. The switch stays off, so the next online run asks again.</p>
+        <p className="dialog-note">This run only. The switch stays off.</p>
         <div className="dialog-actions">
           <button type="button" className="btn secondary" onClick={onCancel}>Cancel</button>
           <button type="button" className="btn" ref={continueButton} onClick={onContinue}>Continue</button>

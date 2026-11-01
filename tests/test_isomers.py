@@ -352,7 +352,7 @@ def test_page_example_uses_pubchem_and_metfrag_not_the_workflow_engine(engine, m
     assert len(rows) == 2 and table["count"] == 1 and rows[0][0] == "caffeine" and rows[0][5]["badge"] == "your compound"      # Fragments is the second column
     assert rows[1][2] == "PubChem CID 1" and rows[1][5]["badge"] == "no"
     assert all(r[3]["text"] and "<svg" in r[3]["hover_svg"] for r in rows)
-    assert "Not distinguished or not scored" in body["verdict"] and "Not exhaustive" in body["verdict"]
+    assert "Not distinguished or not scored" in body["verdict"] and "Not exhaustive" not in body["verdict"]
 
 
 def test_page_distinguishes_only_the_tested_candidates(engine, monkeypatch):
@@ -374,7 +374,7 @@ def test_page_distinguishes_only_the_tested_candidates(engine, monkeypatch):
                  "precursor": {"precursor_mz": "285.0405", "ion_mode": "Negative", "adduct": "Auto"},
                  "ms2": {"source": "Paste", "value": peaks}}).json()
     assert "can be distinguished from 1 tested isomer" in body["verdict"]
-    assert "not a unique identification" in body["verdict"] and calls == []
+    assert "can be distinguished from" in body["verdict"] and "unique identification" not in body["verdict"] and calls == []
 
 
 def test_page_without_ms2_gives_no_verdict_and_a_bare_mz_still_runs(engine):

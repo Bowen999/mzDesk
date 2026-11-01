@@ -50,7 +50,7 @@ def check_docker():
     if proc.returncode != 0:
         err = (proc.stderr or "").strip()
         if "No such image" in err:
-            raise CFMIDError(f"The CFM-ID image is not installed. Run once in a terminal: {PULL_CMD}", err)
+            raise CFMIDError(f"The CFM-ID image is not installed. Run: {PULL_CMD}", err)
         raise CFMIDError(DOCKER_DOWN, err)
 
 

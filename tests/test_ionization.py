@@ -329,7 +329,7 @@ def test_page_runs_without_molgpka_and_without_neims(monkeypatch):
 def test_spec_page_is_live_with_the_requested_inputs_and_outputs():
     m = next(m for m in MODULES if m["id"] == "ionization")
     assert m["live"] and m["subgroup"] == "detectability"
-    assert m["one_liner"] == "<b>ESI polarity</b> for LC-MS and <b>EI usability</b> for GC-MS."
+    assert m["one_liner"] == "Compound + pH → ESI polarity and EI usability"
     ids = [f["id"] for f in m["inputs"]]
     assert ids == ["structure", "ph"] and "platform" not in ids
     ph = m["inputs"][1]
@@ -361,7 +361,7 @@ def test_page_outputs_for_lidocaine():
     assert out["sites_structure"]["svg"].startswith("<?xml") or "<svg" in out["sites_structure"]["svg"]
     items = out["rule_hits"]["items"]
     assert any("MolGpKa" in t for t in items) and any("N3 base" in t for t in items) and any("amide N" in t for t in items)
-    assert any("Solution pKa is not gas-phase" in t for t in items) and any("qualitative" in t for t in items)
+    assert any("basic pKa ≥" in t and "acidic pKa ≤" in t for t in items)                  # the pKa thresholds of the rule; no general disclaimers
     assert body["warnings"] == []
 
 

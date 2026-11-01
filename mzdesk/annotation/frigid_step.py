@@ -173,4 +173,4 @@ def _run(result, precursor_mz, adduct, ms2_peaks, formula, top_n, mode):
     best, total = candidates[0], len(res["candidates"])
     count = f"{len(candidates)} structure{'' if total == 1 else 's'}" if len(candidates) == total else f"{len(candidates)} of {total} structures"
     return result(STATUS_DONE, f"{count} for {formula} ({label}); best fingerprint similarity {best.layer_score:.2f}, "
-                               f"normalised {best.layer_score_norm:.2f}: hypotheses, not identifications.", candidates)
+                               f"normalised {best.layer_score_norm:.2f}.", candidates)

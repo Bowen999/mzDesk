@@ -99,12 +99,11 @@ def check_msfinder():
     s = status()
     if not s["mono"]:
         raise MsFinderError("Structure Prediction runs MS-FINDER through Mono, which is not installed here. The module is part of the local "
-                            "version of mzDesk only (the online version has no Mono). On your own machine: install Mono (for example "
-                            f"`brew install mono`), then run `{SETUP_COMMAND}`.")
+                            f"version of mzDesk only. Install Mono (for example `brew install mono`), then run `{SETUP_COMMAND}`.")
     if not s["exe"] or not s["resources"]:
         missing = f"{EXE_NAME} is" if not s["exe"] else "the MS-FINDER databases (Resources/) are"
         raise MsFinderError(f"MS-FINDER is not installed: {missing} missing in {s['dir']}. "
-                            f"Run once in a terminal: {SETUP_COMMAND} (MZDESK_MSFINDER_DIR changes the folder).")
+                            f"Run {SETUP_COMMAND} (MZDESK_MSFINDER_DIR changes the folder).")
     if not s["ini"]:
         raise MsFinderError(f"The mzDesk parameter file {INI_PATH} is missing; reinstall mzDesk.")
     return s["mono"], s["exe"], s["ini"]

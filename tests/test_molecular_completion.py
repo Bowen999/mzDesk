@@ -111,7 +111,7 @@ def test_identity_annotations_from_all_sources(monkeypatch):
     assert ("Purine metabolism", "HMDB / SMPDB") in pathways
     assert ("Metabolic pathways", "KEGG") in pathways
     assert ("Caffeine metabolism", "Reactome") in pathways
-    assert out["standards"]["rows"][0][1:] == ["58-08-2", "Not standardised; verify with each vendor"]
+    assert out["standards"]["rows"][0][1:] == ["58-08-2", "Varies by vendor"]
     assert len(out["ghs"]["rows"]) == 2
     reporter_a = next(row for row in out["ghs"]["rows"] if row[0]["text"] == "Reporter A")
     assert reporter_a[1:] == ["Danger", "H301; H315"]

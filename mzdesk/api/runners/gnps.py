@@ -102,7 +102,7 @@ def _ions(inputs, key, label):
 
 
 def run_fastmasst(inputs):
-    warnings = ["The query spectrum is sent to GNPS2; an MS/MS match alone does not establish compound identity."]
+    warnings = []
     peaks, header_mz = common.spectrum(inputs, "spectrum", "MS2 spectrum", warnings)
     mz = common.number(inputs, "precursor_mz", "Precursor m/z", positive=True) or header_mz
     if mz is None or not math.isfinite(mz) or mz <= 0:
@@ -163,7 +163,7 @@ def run_fastmasst(inputs):
         cols = ["search", "Dataset", "USI", "Cosine", "Matching Peaks", "CompoundName", "Adduct", "verify_status", "diag_pass", "redu_match"]
         hits, n_hits = _read_preview(result.get("outputs", {}).get("hits_tsv", ""), cols, passed=True)
         if n_hits > PREVIEW_ROWS:
-            warnings.append(f"Only the first {PREVIEW_ROWS} of {n_hits} passing hits are available in the preview.")
+            warnings.append(f"Only the first {PREVIEW_ROWS} of {n_hits} passing hits are shown.")
         verification = result.get("verification") or {}
         ver = [[key.replace("masst_", ""), str(v.get("n_candidates", 0)), str(v.get("n_verified_ok", 0)),
                 str(v.get("n_diag_pass", 0)), str(v.get("n_not_selected", 0)), str(v.get("n_fetch_failed", 0))]
@@ -171,12 +171,11 @@ def run_fastmasst(inputs):
         rcols = ["search", "hit_set", "column", "value", "n_hit_files", "n_hit_datasets", "file_enrich", "ds_enrich", "dsw_enrich"]
         redu, n_redu = _read_preview(result.get("outputs", {}).get("redu_summary_tsv", ""), rcols)
         if n_redu > PREVIEW_ROWS:
-            warnings.append(f"Only the first {PREVIEW_ROWS} of {n_redu} ReDU rows are available in the preview.")
+            warnings.append(f"Only the first {PREVIEW_ROWS} of {n_redu} ReDU rows are shown.")
         if join:
             for key, record in (result.get("redu") or {}).items():
                 info = record.get("all", {})
                 warnings.append(f"{key}: unmatched ReDU fractions — hits {info.get('unmatched_frac_hits')}, files {info.get('unmatched_frac_files')}, datasets {info.get('unmatched_frac_datasets')}.")
-            warnings.append("ReDU enrichment describes the selected background and matched metadata, not a statistical significance test.")
         downloads = _file_downloads(result, warnings)
         public = dict(result)
         public["outputs"] = {k: Path(v).name for k, v in result.get("outputs", {}).items()}
@@ -213,13 +212,16 @@ def run_redu(inputs):
         raise EngineError(f"Pan-ReDU cache could not be read: {exc}") from None
     cols = ["status", "dataset", "source", "n_files", "pos", "neg", "alt", "unk", "other"]
     datasets = [[status, *(d.get(k, "") for k in cols[1:])] for status, key in (("passed", "passed"), ("undetermined", "undetermined")) for d in result[key]]
-    warnings = ["Undetermined means at least one matched file has unreported polarity; it is not a confirmed match."]
+    warnings = []
     if len(datasets) > PREVIEW_ROWS:
-        warnings.append(f"Only the first {PREVIEW_ROWS} of {len(datasets)} datasets are available in the preview.")
+        warnings.append(f"Only the first {PREVIEW_ROWS} of {len(datasets)} datasets are shown.")
     matched = [[c, v, str(n)] for c, values in result["matched_values"].items() for v, n in values]
+    shown = {"rows": datasets[:PREVIEW_ROWS], "count": len(datasets)}
+    if result["undetermined"]:
+        shown["help"] = "Undetermined: some matched files report no polarity."
     return {"outputs": {"summary": {"values": {"Cache date": date, "Cached rows": str(total), "Matched files": str(result["n_files_matched"]),
                                                    "Passed datasets": str(len(result["passed"])), "Undetermined": str(len(result["undetermined"]))}},
-                        "datasets": {"rows": datasets[:PREVIEW_ROWS], "count": len(datasets)}, "values": {"rows": matched, "count": len(matched)},
+                        "datasets": shown, "values": {"rows": matched, "count": len(matched)},
                         "downloads": {"files": [_download("pan-redu-datasets.tsv", _csv_text(cols, datasets)),
                                                _download("pan-redu.json", json.dumps({"query": {"filters": filters, "min_files": minimum, "polarity": polarity},
                                                                                      "cache_date": date, **result}, ensure_ascii=False, indent=2))]}},
@@ -277,9 +279,9 @@ def run_massql(inputs):
         for filename in result["files"]:
             with open(os.path.join(directory, filename), encoding="utf-8") as f:
                 files.append(_download(filename, f.read()))
-    warnings = ["This is the migrated MS2 subset, not the complete official MassQL implementation.", *result["warnings"]]
+    warnings = [*result["warnings"]]
     if result["n_matches"] > PREVIEW_ROWS:
-        warnings.append(f"Only the first {PREVIEW_ROWS} of {result['n_matches']} matches are available in the preview.")
+        warnings.append(f"Only the first {PREVIEW_ROWS} of {result['n_matches']} matches are shown.")
     display = [["—" if v is None or v == "" else str(v) for v in row] for row in result["rows"]]
     return {"outputs": {"summary": {"values": {"Input file": name, "MS2 spectra": str(result["n_spectra"]), "Matches": str(result["n_matches"])}},
                         "matches": {"rows": display, "count": result["n_matches"]}, "downloads": {"files": files}}, "warnings": warnings}

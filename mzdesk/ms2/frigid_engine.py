@@ -162,9 +162,9 @@ def check_frigid():
                                         ("dlm", "the DLM checkpoint (checkpoints/DLM.ckpt)"), ("mist", "the MIST checkpoint (checkpoints/mist_msg_aug.ckpt)"),
                                         ("tokenizer", "the SAFE tokenizer (hf_cache/)")) if not s[key]]
     if missing:
-        raise FrigidError("De Novo Structure runs FRIGID, which is part of the local version of mzDesk only (the online version does not have it) and "
+        raise FrigidError("De Novo Structure runs FRIGID, which is part of the local version of mzDesk only and "
                           f"is not installed here: missing {', '.join(missing)} in {s['dir']}. "
-                          f"Run once in a terminal: {SETUP_COMMAND} (about 3 GB download; MZDESK_FRIGID_DIR changes the folder).")
+                          f"Run {SETUP_COMMAND} (about 3 GB; MZDESK_FRIGID_DIR changes the folder).")
     return s
 
 

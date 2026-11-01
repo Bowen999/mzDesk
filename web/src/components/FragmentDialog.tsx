@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ApiError, getFragmentJob, startFragments } from "../api";
+import { easedPercent, waitingPercent } from "../progressCurve";
 import { useReportMode } from "../report/mode";
 import type { FragmentItem, FragmentJob, FragmentQuery, FragmentTarget, FragmentView } from "../types";
 import { FigureView, ThemedSvg } from "./Figure";
@@ -98,19 +99,19 @@ function useFragmentJob(target: FragmentTarget, query: FragmentQuery, attempt: n
   return { job, error };
 }
 
-/** Percent, stage and elapsed seconds (ticking). */
+/** Stage and elapsed seconds (ticking). The bar is eased: the reported stage percent and time both push it, so it moves at once and keeps moving
+ *  while the one long step (MetFrag) runs. */
 function Progress({ job, startedAt }: { job: FragmentJob | null; startedAt: number }) {
   const [now, setNow] = useState(() => performance.now());
   useEffect(() => { const h = window.setInterval(() => setNow(performance.now()), 200); return () => window.clearInterval(h); }, []);
-  const percent = job?.percent ?? 0;
   const seconds = Math.max(job?.seconds ?? 0, (now - startedAt) / 1000);
+  const percent = Math.round(Math.max(easedPercent(job?.percent ?? 0), waitingPercent(seconds, { start: 6, cap: 90, tau: 3 })));
   const stage = !job ? "Starting" : job.stage;
   return (
     <div className="fv-progress" role="status" aria-live="polite">
-      <div className="fv-progress-head"><span>{stage}…</span><span>{percent}% · {seconds.toFixed(1)} s</span></div>
+      <div className="fv-progress-head"><span>{stage}…</span><span>{seconds.toFixed(1)} s</span></div>
       <div className="fv-bar" role="progressbar" aria-label="Fragment view progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}
-        aria-valuetext={`${percent}%, ${stage}`}><span style={{ width: `${Math.max(percent, 2)}%` }} /></div>
-      <p className="fv-progress-note">Stage-based: MetFrag is one step, so the bar waits there until it returns (usually 2–5 s).</p>
+        aria-valuetext={`${stage}`}><span style={{ width: `${percent}%` }} /></div>
     </div>);
 }
 
@@ -139,7 +140,7 @@ function Result({ view, extra }: { view: FragmentView; extra?: string }) {
   const colors = view.fragments.map(f => f.color);
   const lines = [...view.notes];
   if (extra) lines.push(extra);
-  lines.push(`${s.engine}: in-silico fragmentation, tree depth ${s.tree_depth}, fragment tolerance ${s.tol_da} Da. The fragments are predictions, not proof of identity; an unexplained peak is not evidence against the structure.`);
+  lines.push(`${s.engine}: in-silico fragmentation, tree depth ${s.tree_depth}, fragment tolerance ${s.tol_da} Da.`);
   return (
     <>
       <div className="fv-facts">
@@ -148,7 +149,7 @@ function Result({ view, extra }: { view: FragmentView; extra?: string }) {
         <Fact label="Atoms covered" value={`${(coverage.fraction * 100).toFixed(0)} %`} note={`${coverage.atoms} of ${coverage.heavy} non-hydrogen atoms, by the coloured fragments`} />
         <Fact label="Ion formula" value={<Formula text={view.ion_formula} positive={view.positive} />} note={view.formula} />
       </div>
-      {view.fragments.length === 0 && <div className="alert warn">MetFrag explained no peak with this structure, so there is nothing to mark. The spectrum is shown below.</div>}
+      {view.fragments.length === 0 && <div className="alert warn">MetFrag explained no peak with this structure.</div>}
       <div className="fv-main">
         {view.fragments.length > 0 && <figure className="fv-overview">
           <ThemedSvg svg={view.overview} keep={colors} className="fv-overview-img" alt="Structure with every explained fragment in its colour" />

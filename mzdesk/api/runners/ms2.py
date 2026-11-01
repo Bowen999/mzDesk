@@ -61,9 +61,7 @@ def run_clean(inputs):
     if normalize == "None":
         scale_help = "The axis and Intensity use input intensities; no normalization was requested."
     else:
-        scale_help = (f"The axis and Intensity use the cleanup output scale ({normalize}). When possible, "
-                      "normalization is based on kept peaks; removed peaks use the same scale and can exceed "
-                      "the largest kept peak.")
+        scale_help = f"The axis and Intensity use the cleanup scale ({normalize}), based on the kept peaks; removed peaks can exceed it."
     figure_help = [scale_help, "Rel. int. (input base) is the percentage of the input base peak before removal."]
     if normalize != "None" and not res["n_out"]:
         figure_help.append("No peaks were kept, so there is no kept-peak normalization reference.")

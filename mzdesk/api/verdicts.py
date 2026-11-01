@@ -338,7 +338,7 @@ def ms2_denovo(i, o):
     short = html.escape(smiles if len(smiles) <= 60 else smiles[:59] + "…")
     n = len(rows)
     return (f"Top generated candidate: {_b(short)}" + (f", similarity {score}" if score not in ("", "—") else "")
-            + f" · {n} formula-matched candidate{'s' if n != 1 else ''} (hypotheses).")
+            + f" · {n} formula-matched candidate{'s' if n != 1 else ''}.")
 
 
 def nca(i, o):
@@ -393,11 +393,8 @@ def ccs(i, o):
         closest = re.search(r"closest ([\d.]+)", delta_note)
         obs = closest.group(1) if closest else (_card(o, "summary", "Observed") or "")
         tol = re.search(r"tolerance (±[\d.]+)", delta_note)
-        text = (f"CCS {_b(obs + ' Å²')} is {_b(verdict.lower())} with the {what} {ref} Å² "
+        return (f"CCS {_b(obs + ' Å²')} is {_b(verdict.lower())} with the {what} {ref} Å² "
                 f"(Δ {delta.replace('-', MINUS)} %{', tolerance ' + tol.group(1) + ' %' if tol else ''}).")
-        if verdict == "Inconsistent":
-            text += " This does not exclude the compound."
-        return text if measured else text + " A prediction is weaker than a measured value."
     if verdict == "Not comparable":
         why = ((o.get("summary") or {}).get("values", {}).get("Verdict") or {}).get("help") or _note(o, "summary", "Verdict") or "different CCS scale"
         return f"{_b('Not comparable')}. {why}"

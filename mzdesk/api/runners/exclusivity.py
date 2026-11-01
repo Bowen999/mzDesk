@@ -63,7 +63,7 @@ def _rows(res, adduct):
                          _coverage_cell(c)])
             continue
         iso = by_id.get(c["id"], {"distinguished": None, "distinguishing_peaks": [], "isomer_only_peaks": []})
-        verdict = (badge("not scored", help="MetFrag did not score this structure, so it cannot be ruled out.") if iso["distinguished"] is None
+        verdict = (badge("not scored", help="MetFrag did not score this structure.") if iso["distinguished"] is None
                    else badge("yes", "good") if iso["distinguished"] else badge("no", "warn"))
         rows.append([name, _view_cell(c, adduct), c["source"], _smiles_cell(c["smiles"]), explained, verdict, _peaks_cell(iso["distinguishing_peaks"]),
                      _coverage_cell(c)])
@@ -99,7 +99,7 @@ def _verdict(res, compound):
     me = f"<b>{html.escape(compound)}</b>"
     n = len(res["isomers"])
     if res["verdict"] == "single":
-        text = f"MetFrag predicts {me} can be distinguished from {n} tested isomer{'s' if n != 1 else ''}; this is not a unique identification."
+        text = f"MetFrag predicts {me} can be distinguished from {n} tested isomer{'s' if n != 1 else ''}."
     elif res["verdict"] == "indistinguishable":
         others = [names[i] for i in res["group"][1:]]
         shown = ", ".join(others[:NAMES_IN_VERDICT]) + (f" and {len(others) - NAMES_IN_VERDICT} more" if len(others) > NAMES_IN_VERDICT else "")
@@ -234,18 +234,17 @@ def run_exclusivity(inputs):
     elif struct["kind"] == "formula":
         iso_note = "Formula input: the isomer check needs a structure."
     elif lipid:
-        iso_note = ("Isomer check skipped for this structure recognised as a lipid. Conventional MS/MS usually cannot reliably determine "
-                    "C=C double-bond or sn-positions; specific methods or additional evidence may distinguish them.")
+        iso_note = "Isomer check skipped for lipids: MS/MS cannot place C=C bonds or sn-positions."
     elif not peaks:
         iso_note = "No MS2 peaks: the isomer check needs an MS2 spectrum."
     else:
         try:
             candidates = em.formula_structures(formula)
         except em.ExactMassError as exc:
-            iso_note = f"PubChem isomer candidate search failed: {exc} Other isomers are not ruled out."
+            iso_note = f"PubChem isomer candidate search failed: {exc}"
             warnings.append(iso_note)
         except ValueError as exc:
-            iso_note = f"PubChem isomer candidate search could not run: {exc} Other isomers are not ruled out."
+            iso_note = f"PubChem isomer candidate search could not run: {exc}"
         else:
             used_adduct = adduct or ("[M+H]+" if positive else "[M-H]-")
             iso_res = pubchem_isomers.discriminate({"id": "compound", "smiles": struct["smiles"], "name": name}, candidates, peaks,

@@ -41,7 +41,7 @@ def run_identity(inputs):
 
     warnings = list(r.warnings)
     if r.stereo_fallback:
-        warnings.append("No exact stereoisomer match; the result is the flat (stereo-agnostic) structure.")
+        warnings.append("No exact stereoisomer match; showing the flat structure.")
     outputs = {
         "resolved": {"values": {"Name": {"value": r.name or MISSING, "note": f"read as {r.kind}"}, "Formula": formula,
                                 "PubChem CID": cid or MISSING}},

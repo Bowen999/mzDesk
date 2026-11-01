@@ -790,7 +790,7 @@ def deriv_hint(reagents):
 def _uv_row(strength, lam, name, cutoff):
     if strength == STRONG:
         if lam >= cutoff + TH.low_uv_margin_nm:
-            return ["good", f"Strong chromophore ({name}), λmax ~{lam:.0f} nm: detect there; PDA gives the spectrum for peak purity."]
+            return ["good", f"Strong chromophore ({name}), λmax ~{lam:.0f} nm: detect there; PDA also checks peak purity."]
         return ["possible", f"Strong chromophore but absorbing near the mobile phase cutoff (~{cutoff:.0f} nm): λmax ~{lam:.0f} nm; "
                 f"use a transparent mobile phase (acetonitrile, phosphate) and detect at 200–{lam + 10:.0f} nm."]
     if strength == WEAK:
@@ -843,19 +843,19 @@ def _detector_rows(a: Analysis, top: str, reagents: dict) -> List[list]:
     deriv_text = " " + deriv_hint(reagents) if reagents else ""
     fld_suit = {LIKELY: "good", POSSIBLE: "possible", UNLIKELY: "poor"}[a.fluor]
     fld = [fld_suit, {LIKELY: f"Native fluorescence likely: {a.fluor_reason} ({a.fluor_note}).",
-                      POSSIBLE: f"Native fluorescence possible: {a.fluor_reason} ({a.fluor_note}); verify with a standard.",
+                      POSSIBLE: f"Native fluorescence possible: {a.fluor_reason} ({a.fluor_note}).",
                       UNLIKELY: f"Native fluorescence unlikely: {a.fluor_reason}."}[a.fluor] + (deriv_text if a.fluor != LIKELY else "")]
     volatile = a.gc == "yes"
     if volatile:
-        cad = ["poor", f"GC verdict yes ({a.gc_volatility}): treated as volatile, so it largely evaporates in the CAD / ELSD drying step and the response is lost or very low."]
+        cad = ["poor", f"GC verdict yes ({a.gc_volatility}): it evaporates in the CAD / ELSD drying step, so the response is very low."]
     elif a.mw >= TH.mw_cad_min:
-        cad = ["good", f"Non-volatile (GC verdict {a.gc}), MW {a.mw:.0f} ≥ {TH.mw_cad_min:.0f}: response does not depend on a chromophore. Mobile phase must be volatile (formic / acetic acid, ammonium formate / acetate; no phosphate)."]
+        cad = ["good", f"Non-volatile (GC verdict {a.gc}), MW {a.mw:.0f} ≥ {TH.mw_cad_min:.0f}: no chromophore needed; use a volatile mobile phase."]
     else:
-        cad = ["possible", f"Non-volatile but small (MW {a.mw:.0f} < {TH.mw_cad_min:.0f}): response is low and the baseline noise from the mobile phase matters. Mobile phase must be volatile."]
-    elsd = [cad[0], cad[1].replace("response does not depend on a chromophore", "response does not depend on a chromophore (less sensitive than CAD, non-linear)")
+        cad = ["possible", f"Non-volatile but small (MW {a.mw:.0f} < {TH.mw_cad_min:.0f}): low response and baseline noise; use a volatile mobile phase."]
+    elsd = [cad[0], cad[1].replace("no chromophore needed", "no chromophore needed, less sensitive than CAD")
             if cad[0] == "good" else cad[1]]
-    ri_extra = " UV or FLD is far more sensitive here." if a.strength == STRONG else ""
-    ri = ["possible", "Universal but insensitive (µg level): needs an isocratic method (no gradient), a thermostatted detector and a high concentration." + ri_extra]
+    ri_extra = " UV or FLD is far more sensitive." if a.strength == STRONG else ""
+    ri = ["possible", "Universal but insensitive (µg level): needs isocratic elution and a high concentration." + ri_extra]
     return [["UV/PDA"] + uv, ["FLD"] + fld, ["CAD"] + cad, ["ELSD"] + elsd, ["RI"] + ri]
 
 
@@ -874,7 +874,7 @@ def _notes(a: Analysis, top: str, reagents: dict, sugar: bool) -> List[str]:
     else:
         notes.append("UV rule: no aromatic ring or multiple bond: no chromophore (end absorption below ~210 nm).")
     if a.lam is not None:
-        notes.append(f"λmax rule: {a.lam_method} gives ~{a.lam:.0f} nm for {top} (approximate, {LAMBDA_ERROR}).")
+        notes.append(f"λmax rule: {a.lam_method} gives ~{a.lam:.0f} nm for {top} ({LAMBDA_ERROR}).")
     elif a.chromophores:
         notes.append(f"λmax rule: no usable band above {TH.usable_uv_min_nm:.0f} nm ({top} absorbs below).")
     else:
@@ -890,17 +890,14 @@ def _notes(a: Analysis, top: str, reagents: dict, sugar: bool) -> List[str]:
     notes.append(f"Fluorescence rule: {a.fluor}" + (f" — {a.fluor_reason}" if a.fluor_reason else "") + (f" ({a.fluor_note})." if a.fluor_note else "."))
     verdict = "volatile as is, so poor" if a.gc == "yes" else ("non-volatile and MW ≥ " + format(TH.mw_cad_min, ".0f") + ", so good" if a.mw >= TH.mw_cad_min
                                                              else "non-volatile but MW < " + format(TH.mw_cad_min, ".0f") + ", so possible")
-    notes.append(f"CAD / ELSD rule: GC verdict “{a.gc}” ({a.gc_volatility}), MW {a.mw:.0f}: {verdict}. The mobile phase must be volatile.")
-    notes.append("RI rule: universal, but detection limits are in the µg range (100–1000× worse than UV for a strong chromophore); isocratic only, no gradient.")
+    notes.append(f"CAD / ELSD rule: GC verdict “{a.gc}” ({a.gc_volatility}), MW {a.mw:.0f}: {verdict}.")
+    notes.append("RI rule: universal but insensitive (µg range); isocratic only, no gradient.")
     if a.strength in (NONE, WEAK):
         if reagents:
             names = {"OPA": "OPA + 2-mercaptoethanol (primary amine, fluorescence)", "FMOC": "FMOC-Cl (amine / phenol, UV and fluorescence)", "DNPH": "DNPH (carbonyl, UV ~360 nm)"}
             notes.append("Derivatization option: " + "; ".join(names[k] for k in reagents) + ". See the Derivatization page.")
         else:
             notes.append("Derivatization option: no group for OPA / FMOC / DNPH (no amine or carbonyl): use CAD / ELSD, RI or MS instead.")
-    notes.append(f"Caveat: λmax values are class rules, not predictions ({LAMBDA_ERROR}); solvent and pH shift them (phenols, anilines, acids and pyridines move 20–50 nm with ionization). "
-                 "Concentration, path length and slit width decide the real sensitivity.")
-    notes.append("Caveat: fluorescence is a structural alert only; quantum yield depends on solvent, pH and quenchers.")
     return notes
 
 

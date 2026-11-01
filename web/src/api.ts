@@ -22,6 +22,8 @@ const post = <T,>(url: string, body: unknown) =>
 /** Where the app is served: "/" locally, "/mzdesk/" behind bowenyang.org (set at build time: MZDESK_BASE=/mzdesk/ npm run build). */
 export const BASE = import.meta.env.BASE_URL;
 export const getSpec = () => json<Spec>(`${BASE}api/spec`);
+/** The long notes of a page (Docs page): markdown text. */
+export const getDocs = (id: string) => json<{ id: string; markdown: string }>(`${BASE}api/docs/${id}`);
 export const runModule = (id: string, inputs: unknown) => post<RunResult>(`${BASE}api/modules/${id}/run`, inputs);
 /** A workflow runs as a background job: start it, then poll getJob until its status is not "running". */
 export const startPipeline = (id: string, inputs: unknown) => post<{ job_id: string; status: string }>(`${BASE}api/pipelines/${id}/run`, inputs);

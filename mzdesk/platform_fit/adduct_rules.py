@@ -225,7 +225,7 @@ def additive(name, r=RULES):
         "Acetic acid": (r.ph_acetic, False, "CH3COO", True, "0.1 % acetic acid in water"),
         "Ammonium formate": (r.ph_ammonium_formate, True, "HCOO", False, "5-10 mM ammonium formate, pH not adjusted"),
         "Ammonium acetate": (r.ph_ammonium_acetate, True, "CH3COO", False, "5-10 mM ammonium acetate, pH not adjusted"),
-        "None": (r.ph_none, False, "", False, "water / organic without additive; unbuffered, so the real pH is uncertain"),
+        "None": (r.ph_none, False, "", False, "water / organic without additive, unbuffered"),
     }
     if name not in table:
         raise ValueError(f"Unknown additive {name!r}; choose one of {', '.join(ADDITIVES)}.")
@@ -367,7 +367,7 @@ def find_sites(mol):
     except Exception as exc:  # noqa: BLE001 - odd structure for the network: use the functional groups
         why = f"MolGpKa failed on this structure ({exc})"
     return _fallback_sites(mol), "functional groups", [
-        f"pKa fallback: {why}; typical pKa values of the functional groups are used instead (polyol OH is not counted as acidic)."]
+        f"pKa fallback: {why}; typical functional-group pKa values are used (polyol OH is not counted as acidic)."]
 
 
 def protonated(pka, ph):
@@ -743,7 +743,7 @@ def neutral_m(prep, p_sites, r=RULES):
     atom.SetNoImplicit(False)
     inner = rw.GetMol()
     Chem.SanitizeMol(inner)
-    return _formula(inner), inner, "M is the inner salt (zwitterion): the permanent cation balanced by its deprotonated acid, as in PC / SM / carnitine."
+    return _formula(inner), inner, "M is the inner salt (zwitterion): the permanent cation balanced by its deprotonated acid."
 
 
 def _formula(mol):
@@ -806,15 +806,13 @@ def predict(smiles, polarity="Positive", additive_name="Formic acid", alkali=Tru
     mol = prep.mol
     # keep the fragment / size / element notes; the neutralization and logD notes are about the Separation page
     warnings = [n for n in prep.notes if not n.startswith(("Input neutralized", "Permanent charge"))]
-    notes = [f"Mobile phase: {add.name} → pH ≈ {add.ph:g} assumed ({add.assumption}). Solution ionization only fine-tunes the scores "
-             "(× 0.8–1): in ESI, acids still give [M-H]- from acidic eluents and bases [M+H]+ from neutral ones."]
+    notes = [f"Mobile phase: {add.name} → pH ≈ {add.ph:g} assumed ({add.assumption})."]
 
     lipid, category = lipid_subclass(mol)
     sites = None
     if lipid:
         c = lipid_candidates(lipid, add, r)
-        notes.append(f"Lipid class: {category} → {lipid.name} ({lipid.detail}). Class conventions (LIPID MAPS / MS-DIAL / LipidSearch practice) "
-                     "are used instead of the pKa rules.")
+        notes.append(f"Lipid class: {category} → {lipid.name} ({lipid.detail}); class conventions replace the pKa rules.")
         if lipid.code == "ST":
             notes.append("Free sterols ionize poorly by ESI; APCI (or derivatization) is the usual choice.")
         if lipid.code in ("TG", "CE"):
@@ -842,11 +840,10 @@ def predict(smiles, polarity="Positive", additive_name="Formic acid", alkali=Tru
     formula, m_mol, m_note = neutral_m(prep, sites if sites is not None else None, r)
     if m_note:
         notes.append(m_note)
-    notes.append(f"M = {formula} (monoisotopic {rdMolDescriptors.CalcExactMolWt(m_mol):.4f}); m/z and ion formulas use the Theoretical m/z page's code.")
+    notes.append(f"M = {formula} (monoisotopic {rdMolDescriptors.CalcExactMolWt(m_mol):.4f}).")
     drawn, _ = pe._largest_fragment(Chem.MolFromSmiles(smiles))
     if _formula(drawn) != formula:
-        warnings.append(f"The input is drawn as an ion ({_formula(drawn)}, charge {Chem.GetFormalCharge(drawn):+d}); M is taken as {formula}. "
-                        "The Theoretical m/z page uses the formula as drawn: enter the neutral structure there to get the same m/z.")
+        warnings.append(f"The input is drawn as an ion ({_formula(drawn)}, charge {Chem.GetFormalCharge(drawn):+d}); M is taken as {formula}.")
 
     # alkali switch
     if not alkali:
@@ -866,7 +863,7 @@ def predict(smiles, polarity="Positive", additive_name="Formic acid", alkali=Tru
             if mono and mono[0][0] >= r.high and mono[0][1] in _DIMER and not have:
                 c.put(pol, _DIMER[mono[0][1]], r.dimer, f"dimer of {mono[0][1]}; grows with concentration")
         if any(ion.startswith("[2M") for _, ion in c.d):
-            notes.append(f"Dimers ([2M+X]) are concentration dependent; only one per polarity is listed, for molecules up to {r.dimer_max_mw:g} Da.")
+            notes.append(f"Dimers ([2M+X]): one per polarity, for molecules up to {r.dimer_max_mw:g} Da.")
 
     all_ions = []
     mz_missing = False
@@ -881,8 +878,7 @@ def predict(smiles, polarity="Positive", additive_name="Formic acid", alkali=Tru
         warnings.append(f"m/z not computed for some ions of {formula} (supported elements: C H N O P S F Cl Br I Na K).")
     best = {pol: next((i for i in all_ions if i.polarity == pol), None) for pol in ("+", "-")}
     notes.append(_polarity_note(best))
-    notes.append(f"Scores are rule-based ranks (0–100), not measured intensities: high ≥ {r.high:g}, medium ≥ {r.medium:g}. "
-                 "Matrix suppression, source settings and concentration are not modelled.")
+    notes.append(f"Scores are rule-based ranks (0–100): high ≥ {r.high:g}, medium ≥ {r.medium:g}.")
     chosen = {"Positive": ("+",), "Negative": ("-",), "Both": ("+", "-")}[polarity]
     return Prediction(ions=[i for i in all_ions if i.polarity in chosen], best=best, formula=formula, lipid=lipid,
                       notes=notes, warnings=warnings, all_ions=all_ions)

@@ -539,8 +539,7 @@ def test_frigid_structures_are_hypotheses_with_the_schema_fields(frigid):
     assert top.evidence == {"frigid": {"score": 1.0, "rank": 1, "mode": "quick", "n_samples": 16, "n_formula_matched": 9, "n_unique_matched": 4, "device": "mps"}}
     assert [round(c.layer_score, 3) for c in layer.candidates] == [1.0, 0.515, 0.5, 0.333]
     assert [round(c.layer_score_norm, 3) for c in layer.candidates] == [1.0, 0.03, 0.0, 0.0]                         # linear, 0 at 0.5
-    assert layer.note == ("4 structures for C8H10N4O2 (Quick mode, 16 samples); best fingerprint similarity 1.00, normalised 1.00: "
-                          "hypotheses, not identifications.")
+    assert layer.note == "4 structures for C8H10N4O2 (Quick mode, 16 samples); best fingerprint similarity 1.00, normalised 1.00."
     json.dumps(layer.to_dict(), allow_nan=False)
 
 

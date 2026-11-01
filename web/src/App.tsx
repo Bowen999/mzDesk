@@ -6,6 +6,7 @@ import { Brand, Sidebar } from "./components/Sidebar";
 import { SidebarResizer, useSidebarWidth } from "./components/SidebarResizer";
 import { isLockedModule, useUnlocked } from "./lock";
 import { DevBlocks } from "./pages/DevBlocks";
+import { DocsPage } from "./pages/DocsPage";
 import { ModulePage } from "./pages/ModulePage";
 import { PipelinePage } from "./pages/PipelinePage";
 import { StatsPage } from "./pages/StatsPage";
@@ -23,6 +24,7 @@ export default function App() {
   const [spec, setSpec] = useState<Spec | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => { getSpec().then(setSpec).catch(e => setErr(String(e))); }, []);
+  useEffect(() => { if (spec || err) window.mzdeskReady?.(); }, [spec, err]);     // the opening splash (index.html) leaves once the page list is here
   if (err) return <p className="page">Cannot load /api/spec: {err}</p>;
   if (!spec) return <p className="page">Loading…</p>;
   return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><Shell spec={spec} /></BrowserRouter>;
@@ -89,6 +91,7 @@ function Shell({ spec }: { spec: Spec }) {
           <Route path="/" element={<Home spec={spec} />} />
           <Route path="/pipelines/:id" element={activePipeline ? null : <p className="page">Unknown pipeline.</p>} />
           <Route path="/modules/:id" element={activeModule ? null : <p className="page">Unknown module.</p>} />
+          <Route path="/docs/:id" element={<DocsPage spec={spec} />} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />
           {/* usage statistics: not in the sidebar; its own password check runs on the server */}

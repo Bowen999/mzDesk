@@ -154,6 +154,33 @@ export function RowsTable({ columns: allColumns, rows: allRows, rowHelp: withHel
   );
 }
 
+// ---------------------------------------------------------------- one short column: a flow of chips
+const cellsOfRow = (r: Row) => (Array.isArray(r) ? r : r.cells);
+/** A table with one column of short values (Synonyms) reads better as a flow of chips than as a thin column. */
+export function isChipList(columns: string[], rows: Row[]): boolean {
+  if (columns.length !== 1 || !rows.length) return false;
+  return rows.every(r => {
+    const c = cellsOfRow(r)[0];
+    if (typeof c === "string") return c.length <= 64 && !c.includes("\n");
+    return !!c && typeof c === "object" && "text" in c && typeof c.text === "string" && c.text.length <= 64 && !c.hover_svg;
+  });
+}
+
+/** The values as chips. A long list shows the first rows and "+N more"; the report shows all of them. */
+export function ChipList({ rows, limit = 18, column }: { rows: Row[]; limit?: number; column?: string }) {
+  const report = useReportMode();
+  const [all, setAll] = useState(false);
+  const folded = !report && !all && rows.length > limit + 2;           // a fold that hides one or two chips is not worth a button
+  const shown = folded ? rows.slice(0, limit) : rows;
+  return (
+    <div className={"chip-list" + (folded ? " is-folded" : "")}>
+      {shown.map((r, i) => <span className="chip-item" key={i}><CellView cell={cellsOfRow(r)[0]} column={column} /></span>)}
+      {!report && rows.length > limit + 2 && (
+        <button type="button" className="chip-more" aria-expanded={all} onClick={() => setAll(v => !v)}>{all ? "Show fewer" : `+${rows.length - limit} more`}</button>)}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- grouptable
 function GroupItem({ group, columns, rowHelp }: { group: RowGroup; columns: string[]; rowHelp: boolean }) {
   const [open, setOpen] = useState(false);

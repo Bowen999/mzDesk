@@ -161,11 +161,11 @@ def run_calculator(inputs):
 
     outputs["notes"] = {"items": [
         "ppm error = (observed − theoretical) / theoretical × 10⁶.",
-        "Isotope labelling assumes complete incorporation of the label; the table shows the natural isotope distribution of the remaining atoms, normalised to the most abundant labelled isotopologue.",
-        "Crosstalk is the unlabelled analyte's natural M+n abundance relative to its M peak, where n is the label's nominal mass shift.",
-        "Mass ↔ molar concentration conversion needs a molar mass; 1 µg/mL = 1 mg/L. Dilution uses the converted stock concentration and C1V1 = C2V2.",
-        "NCE ↔ eV uses CE = NCE × precursor m/z × charge / 500; instrument vendors define NCE differently, so treat this as a generic conversion.",
-        "Kovats RI is linearly interpolated between adjacent n-alkanes; values outside the measured range are extrapolated and flagged.",
+        "Isotope labelling: complete label incorporation; the other atoms at natural abundance.",
+        "Crosstalk: the unlabelled analyte's natural M+n peak relative to its M peak (n = the label's mass shift).",
+        "Mass ↔ molar conversion needs a molar mass; dilution uses C1V1 = C2V2.",
+        "NCE ↔ eV: CE = NCE × precursor m/z × charge / 500.",
+        "Kovats RI: linear interpolation between adjacent n-alkanes.",
     ]}
     return {"outputs": outputs, "warnings": warnings, "verdict": " ".join(verdicts) or "Enter at least one calculator section."}
 

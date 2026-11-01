@@ -193,8 +193,8 @@ test("report mode: all formats of every compound, a titled collapsed note, all r
   for (const t of ["Hydroxyl", "[OX2H]", "Primary amine", "[NX3H2]"]) assert.ok(gm.includes(t), `${t} is in the report`);
   assert.doesNotMatch(gm, /<button|gm-sites/, "no group or site buttons");
 
-  const blocks = [{ id: "dl", type: "downloads", title: "Files" }, { id: "t", type: "table", title: "T", columns: ["A"] }];
-  const outputs = { dl: { files: [{ name: "hits.csv", content: "a,b" }] }, t: { rows: [["1"]] } };
+  const blocks = [{ id: "dl", type: "downloads", title: "Files" }, { id: "t", type: "table", title: "T", columns: ["A", "B"] }];
+  const outputs = { dl: { files: [{ name: "hits.csv", content: "a,b" }] }, t: { rows: [["1", "2"]] } };
   assert.match(screen(OutputList, { blocks, outputs, live: true }), /Download hits\.csv/);
   const list = report(OutputList, { blocks, outputs, live: true });
   assert.doesNotMatch(list, /Download|hits\.csv/);
@@ -227,7 +227,7 @@ test("a module page in the report: title, results, groups and all rows of a long
   assert.match(html, /<h1>Mass search<\/h1>/);
   assert.match(html, /Found <b>2<\/b> hits\./);
   assert.match(html, /<div class="alert warn">One note\.<\/div>/);
-  assert.match(html, /<h2 class="panel-title">Results<\/h2><span class="msg">1\.5 s<\/span>/);
+  assert.doesNotMatch(html, /panel-title|results-head/, "no Results heading: the page says nothing the results do not");
   assert.ok(html.includes("CHEBI:28946") && html.includes("Paraxanthine"), "the folded groups' compounds");
   assert.ok(html.includes("Hit 40"), "the last of 40 rows");
   assert.doesNotMatch(html, /<input|<button|class="panel"|page-button|hp-btn/, "nothing to type into or click");
@@ -240,7 +240,7 @@ test("the ESI workflow page in the report: answer, open candidate details, steps
   assert.match(html, /<p class="one-liner">Name a <b>compound<\/b>\.<\/p>/);
   assert.match(html, /answer-headline/);
   for (const t of [SMILES, "C8H10N4O2", "[M+Na]+", "Formula detail"]) assert.ok(html.includes(t), `${t} is in the page`);
-  assert.match(html, /<details id="workflow-step-1" class="stage step-line" data-status="done">/);
+  assert.match(html, /<li id="workflow-step-1" class="tl-step" data-status="done"><details class="tl-details">/);
   assert.ok(html.indexOf("C8H10N4O2", html.indexOf("workflow-step-1")) > 0, "the step's table is inside its <details>");
   assert.doesNotMatch(html, /cand-toggle|fv-open|<input/);
   assert.match(html, /<span class="msg">2 structure\(s\)<\/span>/);
@@ -249,10 +249,21 @@ test("the ESI workflow page in the report: answer, open candidate details, steps
 test("a generic workflow page in the report keeps its answer and steps", () => {
   const generic = { pipeline: "targeted_method", answer: { statement: "Fits RP LC-MS.", level: "A", level_label: "A: strong", facts: [["Platform", "RP"]] }, blocks: [], warnings: [], steps: [] };
   const sp = { ...spec, pipelines: [{ ...spec.pipelines[0], id: "targeted_method", title: "Targeted Method" }] };
-  const html = ssr.render(ReportPage, { spec: sp, entry: entry("workflow", "targeted_method", generic, { steps: [] }), mode: mode() });
+  const steps = [{ id: 1, title: "Identity", status: "done", seconds: 0.5, note: "", blocks: [] }];
+  const html = ssr.render(ReportPage, { spec: sp, entry: entry("workflow", "targeted_method", generic, { steps }), mode: mode() });
   assert.match(html, /Fits RP LC-MS\./);
   assert.match(html, /<dt>Platform<\/dt><dd>RP<\/dd>/);
-  assert.match(html, /<h2 class="panel-title">Steps<\/h2>/);
+  assert.match(html, /<h2 class="tl-title">Steps<\/h2>/);
+  assert.match(html, /<li id="workflow-step-1" class="tl-step" data-status="done"><div class="tl-line is-static">/);
+});
+
+test("a page in the report ends with what it is based on, and no link (a file has no app to open)", () => {
+  const sp = { ...spec, modules: [{ ...spec.modules[0], based_on: ["PubChem", "IsoSpecPy"] }], pipelines: [{ ...spec.pipelines[0], based_on: ["BUDDY"] }] };
+  const page = ssr.render(ReportPage, { spec: sp, entry: entry("module", "mass_search", { status: "ok", warnings: [], outputs: {} }), mode: mode() });
+  assert.match(page, /<footer class="page-foot"><span>Based on PubChem, IsoSpecPy<\/span><\/footer>/);
+  const flow = ssr.render(ReportPage, { spec: sp, entry: entry("workflow", "esi_ms2_annotation", { pipeline: "x", answer: { statement: "Ok.", level: null, level_label: null, facts: [] }, blocks: [], warnings: [], steps: [] }, { steps: [] }), mode: mode() });
+  assert.match(flow, /Based on BUDDY/);
+  assert.doesNotMatch(page + flow, /href="[^"]*docs\//);
 });
 
 test("a page the spec no longer has draws nothing", () => {
@@ -264,5 +275,6 @@ test("outside report mode a module page still draws the screen version (inputs, 
   const html = ssr.render(ModulePage, { id: "mass_search", spec, active: true });
   assert.match(html, /<div class="page module-page" data-module="mass_search">/);
   assert.match(html, /<div class="panel">/, "the inputs panel is there");
-  assert.match(html, /Results appear here after you run this module\./);
+  assert.doesNotMatch(html, /Results appear here|panel-head|Inputs</, "no empty-state text and no Inputs heading");
+  assert.match(html, /<button class="btn" aria-busy="false">Run<\/button>/);
 });

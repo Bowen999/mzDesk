@@ -20,8 +20,8 @@ TIME_BUDGET_S = 120
 def discriminate(top, search, peaks, precursor_mz, adduct, *, tol_da=0.01, tol_ppm=5):
     """Compare a user structure to the bounded PubChem sample using local MetFrag."""
     summary = (f"PubChem same-formula search: {search['retrieved']} CIDs retrieved (limit {search['cap']}; "
-               f"{'truncated' if search['truncated'] else 'not truncated at this limit'}). "
-               f"At most {MAX_CANDIDATES - 1} other connectivities can be compared. Not exhaustive; untested structures are not ruled out.")
+               f"{'truncated' if search['truncated'] else 'not truncated'}). "
+               f"At most {MAX_CANDIDATES - 1} other connectivities can be compared.")
     result = {"verdict": "insufficient", "top_id": top["id"], "group": [], "isomers": [], "candidates": [],
               "peaks_considered": 0, "notes": [summary], "source_summary": summary}
 
@@ -70,18 +70,17 @@ def discriminate(top, search, peaks, precursor_mz, adduct, *, tol_da=0.01, tol_p
 
     result["source_summary"] = (
         f"PubChem same-formula search: {search['retrieved']} CIDs retrieved (limit {search['cap']}; "
-        f"{'truncated' if search['truncated'] else 'not truncated at this limit'}); "
+        f"{'truncated' if search['truncated'] else 'not truncated'}); "
         f"{len(cands) - 1} other connectivities selected (limit {MAX_CANDIDATES - 1}, "
-        f"{'truncated' if over_cap else 'not truncated'}). Not exhaustive; untested structures are not ruled out.")
+        f"{'truncated' if over_cap else 'not truncated'}).")
     result["notes"][0] = result["source_summary"]
     if search["missing"] or search["wrong_formula"] or invalid:
         result["notes"].append(f"Unavailable or unusable PubChem structures: {search['missing']} missing properties, "
-                               f"{search['wrong_formula']} different formula, {invalid} invalid or changed on preparation; not ruled out.")
+                               f"{search['wrong_formula']} different formula, {invalid} invalid or changed on preparation.")
     if duplicates:
-        result["notes"].append(f"{duplicates} records with an already-seen connectivity were not separately compared; "
-                               "stereoisomers are not assessed.")
+        result["notes"].append(f"{duplicates} records with an already-seen connectivity were not compared separately.")
     if len(cands) < 2:
-        return stop("No other usable same-formula connectivity was found to compare; other isomers are not ruled out.")
+        return stop("No other usable same-formula connectivity was found to compare.")
 
     from mzdesk.ms1 import msbuddy_engine
     theo, _ = msbuddy_engine.ion_mz_and_formula(prep["formula"], canonical)
@@ -124,7 +123,7 @@ def discriminate(top, search, peaks, precursor_mz, adduct, *, tol_da=0.01, tol_p
         explanations[c["id"]] = {i: row for i, row in enumerate(run["annotation"])
                                   if row.get("annotated") and row.get("kind") == "fragment"}
     if failures:
-        result["notes"].append("Not scored, not ruled out: " + "; ".join(failures) + ".")
+        result["notes"].append("Not scored: " + "; ".join(failures) + ".")
     if top["id"] not in explanations:
         return stop("MetFrag did not score your compound; no isomer verdict is possible.")
 
@@ -158,7 +157,6 @@ def discriminate(top, search, peaks, precursor_mz, adduct, *, tol_da=0.01, tol_p
             group.append(c["id"])
     result["group"] = group
     result["verdict"] = "single" if len(group) == 1 else "indistinguishable"
-    result["notes"].append(f"MetFrag depth {TREE_DEPTH}, fragment tolerance {tol_da:g} Da, relative tolerance 0 ppm. "
-                           "Predicted fragments are model-dependent, not proof of identity. "
-                           "Peaks ≥1% of the base peak are considered; distinguishing peaks must be ≥5%.")
+    result["notes"].append(f"MetFrag depth {TREE_DEPTH}, fragment tolerance {tol_da:g} Da. "
+                           "Peaks ≥ 1 % of the base peak are considered; distinguishing peaks must be ≥ 5 %.")
     return result

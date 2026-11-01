@@ -558,7 +558,7 @@ def _candidate_table(ctx, ranked):
     cols = ["Rank", "Compound", "Derivative", "Evidence", "Library score", "NEIMS score", "Level", "Flags"]
     return table_block("candidates", "Candidates", cols, rows, count=len(ranked), row_help=True,
                        help=["Compounds are named as the original, underivatized metabolites.",
-                             "A compound with an experimental library spectrum ranks above one with only a NEIMS-predicted spectrum; inside a group the score decides.",
+                             "A library spectrum ranks above a NEIMS prediction; inside a group the score decides.",
                              f"Scores are {ctx.get('rank_metric') or 'similarity'} at unit mass."])
 
 
@@ -581,8 +581,7 @@ def _kovats(q, ctx, steps):
         rows.append(["Extrapolated", "yes: the sample lies outside the alkane series"])
         ctx["warnings"].append("The Kovats RI is extrapolated: the sample RT lies outside the alkane series.")
     blocks = [table_block("kovats", "Kovats RI", ["Item", "Value"], rows,
-                          help="Linear (van den Dool-Kratz) index from the two alkanes around the sample. It is reported only: "
-                               "the libraries have no retention index, so it does not change the ranking.")]
+                          help="Linear (van den Dool-Kratz) index from the two alkanes around the sample; it does not change the ranking.")]
     return STATUS_DONE, f"RI {ri['ri']:.1f}" + (" (extrapolated)" if ri["extrapolated"] else ""), blocks, ri
 
 

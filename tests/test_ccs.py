@@ -129,7 +129,7 @@ def test_the_page_is_live_and_orthogonal_is_ccs_only():
     assert by_id["platform"]["options"] == list(ccs.PLATFORMS)
     assert tuple(by_id["gas"]["options"]) == ccs.GASES and tuple(by_id["tw_calibration"]["options"]) == ccs.TW_CALIBRATIONS
     assert by_id["adduct"]["options"] == spec.ADDUCTS_POS[1:] + spec.ADDUCTS_NEG[1:]
-    assert by_id["observed"]["type"] == "text" and "comma-separated" in by_id["observed"]["label"]
+    assert by_id["observed"]["type"] == "text" and by_id["observed"]["label"].startswith("Observed CCS") and "," in by_id["observed"]["placeholder"]       # several values: the placeholder shows how
     summary = next(b for b in mod["outputs"] if b.get("id") == "summary")
     assert (summary["style"], [i["label"] for i in summary["items"]]) == ("metric", ["Reference CCS", "Source", "Observed", "Δ", "Verdict"])
     assert all(i["help"] for i in summary["items"])
@@ -370,11 +370,11 @@ def test_prediction_is_labelled_as_a_prediction(fake_model):
     assert _card(body, "Source") == {"value": "Predicted", "note": "SVR"}
     assert _card(body, "Reference CCS") == {"value": "150.0", "note": "predicted, ±5.6 %"}
     verdict = _card(body, "Verdict")
-    assert verdict == {"value": "Consistent", "note": "vs prediction (weaker)"}
-    assert "predicted N₂ value" in body["verdict"] and "A prediction is weaker than a measured value." in body["verdict"]
+    assert verdict == {"value": "Consistent", "note": "vs prediction"}
+    assert "predicted N₂ value" in body["verdict"] and "weaker" not in body["verdict"]
     assert body["outputs"]["reference"]["rows"] == []                                              # 没有实测行
     row = body["outputs"]["prediction"]["rows"][0]
-    assert _cells(row)[4]["badge"] == "Inside" and any("Test error: 150 values of 80 compounds" in h for h in row["help"])
+    assert _cells(row)[4]["badge"] == "Inside" and any("Test error on 150 values of 80 unseen compounds" in h for h in row["help"])
     assert not body["warnings"]
 
 
@@ -414,17 +414,17 @@ def test_page_outputs_for_a_compound_with_references(fake_ccs):
     assert out["other_ions"] == {"rows": [["[M+Na]+", "142.9", "DTCCS N2", "fakeDT"]], "count": 1}
     assert out["prediction"] == {"rows": [], "count": None} or out["prediction"]["rows"] == []
     notes = " ".join(out["notes"]["items"])
-    for text in ("same adduct", "N₂ scale only", "TWCCS N₂→He", "compensation voltage", "not 1/K0", "same type 1.0 %", "DT and TW 2.0 %", "TIMS and TW 3.0 %",
-                 "Stow et al.", "Feuerstein et al.", "never used to exclude", "commit ffffffffff", "MIT licence", "doi.org/10.1021/acs.analchem.9b05772"):
+    for text in ("same adduct", "N₂ values only", "not 1/K0", "same type 1.0 %", "DT and TW 2.0 %", "TIMS and TW 3.0 %", "Ross et al.", "commit ffffffffff", "MIT licence"):
         assert text in notes, text
+    assert not any(text in notes for text in ("Stow et al.", "Feuerstein et al.", "never used to exclude", "weaker"))                  # the basis and caveats live in the Docs page
     assert body["verdict"] == "CCS <b>140.2 Å²</b> is <b>consistent</b> with the measured N₂ reference 140.5 Å² (Δ −0.21 %, tolerance ±1.0 %)."
 
 
-def test_inconsistent_never_excludes(fake_ccs):
+def test_inconsistent_is_only_a_verdict(fake_ccs):
     body = _run(observed="150").json()
-    assert _card(body, "Verdict")["value"] == "Inconsistent" and "does not exclude the compound" in _card(body, "Verdict")["help"]
+    assert _card(body, "Verdict")["value"] == "Inconsistent" and _card(body, "Verdict")["help"] == "Outside the tolerance."
     assert [_cells(r)[6] for r in body["outputs"]["reference"]["rows"]] == [{"badge": "Inconsistent", "tone": "warn"}] * 3
-    assert body["verdict"].endswith("This does not exclude the compound.") and "<b>inconsistent</b>" in body["verdict"]
+    assert body["verdict"].endswith(" %).") and "<b>inconsistent</b>" in body["verdict"] and "exclude" not in body["verdict"]
 
 
 def test_page_with_several_observed_values_shows_the_closest(fake_ccs):
@@ -444,7 +444,7 @@ def test_page_notes_the_mz_that_does_not_match(fake_ccs):
     ccs._cache.clear()
     rows = _run(observed="140.2").json()["outputs"]["reference"]["rows"]
     tw = next(r for r in rows if _cells(r)[1] == "TWCCS N2")
-    assert any(h.startswith("Check this row: the listed m/z (196.2000) differs from the m/z calculated") for h in tw["help"])
+    assert any(h.startswith("Check this row: the listed m/z (196.2000) differs from the calculated m/z") for h in tw["help"])
     assert not any(h.startswith("Check this row") for r in rows if r is not tw for h in r["help"])
 
 
@@ -457,7 +457,7 @@ def test_page_runs_without_the_index_and_says_how_to_install_it(tmp_path, monkey
     assert _card(body, "Observed")["value"] == "140.2"
     assert body["verdict"] == "CCS reference data is not installed: run <code>python -m mzdesk.orthogonal.ccs_setup</code>."
     assert any("python -m mzdesk.orthogonal.ccs_setup" in w for w in body["warnings"])
-    assert "ccs_setup" in body["outputs"]["notes"]["items"][0] and "Comparison rule" in " ".join(body["outputs"]["notes"]["items"])
+    assert "ccs_setup" in body["outputs"]["notes"]["items"][0] and "same adduct" in " ".join(body["outputs"]["notes"]["items"])
     assert all(body["outputs"][b]["rows"] == [] for b in ("reference", "other_ions", "prediction"))
 
 
@@ -502,7 +502,7 @@ def test_verdict_function_reads_the_cards():
     assert verdicts.build("ccs", {}, cards(**base, Verdict={"value": "Consistent"})) == \
         "CCS <b>152.3 Å²</b> is <b>consistent</b> with the measured N₂ reference 151.4 Å² (Δ +0.59 %, tolerance ±1.0 %)."
     out = verdicts.build("ccs", {}, cards(**{**base, "Δ": {"value": "-3.2", "note": "tolerance ±1.0 %"}}, Verdict={"value": "Inconsistent"}))
-    assert "<b>inconsistent</b>" in out and "Δ −3.2 %" in out and out.endswith("This does not exclude the compound.")
+    assert "<b>inconsistent</b>" in out and "Δ −3.2 %" in out and out.endswith("tolerance ±1.0 %).")
     out = verdicts.build("ccs", {"adduct": "[M-H]-"}, cards(**{**base, "Verdict": {"value": "No reference", "note": "No prediction for this adduct (fewer than 100 training rows)."},
                                                               "Reference CCS": "—", "Source": "—"}))
     assert out == "No reference CCS for [M-H]- of this compound in the data. No prediction for this adduct (fewer than 100 training rows)."

@@ -88,6 +88,15 @@ def test_restyled_pages_have_unique_icons_and_metric_cards():
         assert all(b.get("style") == "metric" for b in m["outputs"] if b["type"] == "cards"), m["id"]
 
 
+def test_every_workflow_has_its_own_icon():
+    root = Path(__file__).resolve().parents[1] / "web/src"
+    ids = {node.get("id") for node in ET.parse(root / "assets/icons.svg").getroot()}
+    source = (root / "components/Icon.tsx").read_text(encoding="utf-8")
+    for p in S.PIPELINES:
+        assert p["id"] in ids, f"no icons.svg symbol for the workflow {p['id']}"
+        assert f'"{p["id"]}"' in source, f"pipelineIcon() does not know the workflow {p['id']}"
+
+
 # ---------------------------------------------------------------- data builders
 def test_cells_and_rows():
     assert B.link("JP18", "https://x.org") == {"text": "JP18", "url": "https://x.org"}

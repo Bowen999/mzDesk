@@ -19,7 +19,6 @@ export function AnswerCard({ result, requestedAdduct }: { result: AnnotationResu
   return (
     <>
       <div className="verdict answer-card" aria-live="polite">
-        <div className="verdict-label">Answer</div>
         {s.headline !== null
           ? <p className="answer-headline">
               <span className="answer-name">{top?.smiles && (a.type === "single" || a.type === "group") ? <StructureHover smiles={top.smiles}>{s.headline}</StructureHover> : s.headline}</span>

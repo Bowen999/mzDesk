@@ -145,7 +145,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
     case "spectrum": return <SpectrumInput field={f} value={value} onChange={onChange} error={error} />;
     case "ms1": return (
       <label className="field wide" htmlFor={inputId}><span className="field-label-text">{f.label}{required && <Req />}</span>
-        <textarea {...common} rows={4} value={value} onChange={e => onChange(e.target.value)} />
+        <textarea {...common} rows={4} placeholder={f.placeholder ?? ""} value={value} onChange={e => onChange(e.target.value)} />
         <Note text={help} error={error} id={`${inputId}-help`} />
       </label>);
     case "number": return (
@@ -220,7 +220,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
     case "table": return (
       <label className="field wide" htmlFor={inputId}><span className="field-label-text">{f.label}{required && <Req />}</span>
         <div className="grid-head">{f.columns!.join("  |  ")}</div>
-        <textarea {...common} rows={5} placeholder="one row per line, columns separated by space, comma or tab" value={value} onChange={e => onChange(e.target.value)} />
+        <textarea {...common} rows={5} placeholder="One row per line: space, comma or tab between columns" value={value} onChange={e => onChange(e.target.value)} />
         {f.caption && <small>{f.caption}</small>}
         <Note text={help} error={error} id={`${inputId}-help`} />
       </label>);
@@ -279,8 +279,8 @@ function StructureInput({ field, value, onChange, error }: P) {
   const nameLabel = allowFormula ? "Name / ID / Formula" : "Name / ID";
   const modes: [string, string][] = [[NAME_MODE, nameLabel], ["Draw", "Draw"], ["SMILES / InChI", "SMILES / InChI"]];
   const namePlaceholder = allowFormula
-    ? "Name, CAS, formula, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank / CompTox / ChEMBL ID — e.g. caffeine"
-    : "Name, CAS, InChIKey, PubChem CID or HMDB / KEGG / ChEBI / LIPID MAPS / DrugBank / CompTox / ChEMBL ID — e.g. caffeine";
+    ? "Name, CAS, formula, InChIKey or database ID, e.g. caffeine"
+    : "Name, CAS, InChIKey or database ID, e.g. caffeine";
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
   // Keep one buffer per mode, so Name → Draw → Name does not erase the typed identifier.
   const switchMode = (m: string) => {
@@ -309,7 +309,7 @@ function StructureInput({ field, value, onChange, error }: P) {
       {field.label_field && (
         <label className="structure-label">
           <span>Label (optional)</span>
-          <input type="text" placeholder={`Shown on the cards and tabs instead of “${field.label ?? "Compound"}”`}
+          <input type="text" placeholder="Name shown on the results"
             value={value.label ?? ""} onChange={e => set({ label: e.target.value })} />
         </label>
       )}
@@ -374,7 +374,7 @@ function SpectrumInput({ field, value, onChange, error }: P) {
       {value.source === "Paste" && (
         <>
           <textarea rows={5} aria-required={field.required || undefined} aria-invalid={error ? true : undefined}
-            placeholder="m/z intensity per line (or mz:int, MSP, MGF, JSON, MassBank, HMDB XML …)" value={value.value}
+            placeholder="m/z intensity per line, or MGF, MSP, JSON …" value={value.value}
             onChange={e => set({ value: e.target.value })} />
           {peaks > 0 && <small>{peaks} peaks read</small>}
         </>
@@ -393,7 +393,6 @@ function SpectrumInput({ field, value, onChange, error }: P) {
           <input type="text" placeholder="mzspec:GNPS:GNPS-LIBRARY:accession:CCMSLIB…" value={value.value}
             aria-required={field.required || undefined} aria-invalid={error ? true : undefined}
             onChange={e => set({ value: e.target.value })} />
-          <small>Resolved through the public GNPS / MassIVE USI service (internet).</small>
         </>
       )}
       <Note text={help} error={error} />

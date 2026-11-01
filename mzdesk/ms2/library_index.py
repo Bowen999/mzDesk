@@ -293,17 +293,17 @@ def load(name):
     path = index_dir(name)
     meta_file = path / "meta.json"
     if not meta_file.is_file():
-        raise LibraryMissing(f"{name} is not installed. Run  {SETUP_COMMAND} {name}  once to download it and build the index.")
+        raise LibraryMissing(f"{name} is not installed. Run {SETUP_COMMAND} {name}")
     key = (str(path), meta_file.stat().st_mtime_ns)
     lib = _CACHE.get(key)
     if lib is None:
         meta = json.loads(meta_file.read_text())
         if meta.get("format") != FORMAT:
-            raise LibraryMissing(f"The {name} index has an old format. Run  {SETUP_COMMAND} {name} --rebuild  to rebuild it.")
+            raise LibraryMissing(f"The {name} index has an old format. Run {SETUP_COMMAND} {name} --rebuild")
         try:
             lib = Library(name, path, meta)
         except (OSError, ValueError, KeyError) as exc:
-            raise LibraryMissing(f"The {name} index is incomplete ({exc}). Run  {SETUP_COMMAND} {name} --force  to download and build it again.") from None
+            raise LibraryMissing(f"The {name} index is incomplete ({exc}). Run {SETUP_COMMAND} {name} --force") from None
         for k in [k for k in _CACHE if k[0] == key[0]]:
             del _CACHE[k]
         _CACHE[key] = lib

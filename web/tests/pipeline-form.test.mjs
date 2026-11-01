@@ -22,12 +22,13 @@ const inputs = [
 const spec = { groups: [], subgroups: [], modules: [], pipelines: [{ id: "esi_ms2_annotation", title: "ESI MS/MS Annotation", one_liner: "x", inputs, stages: [], examples: [] }] };
 const page = () => ssr.render(PipelinePage, { id: "esi_ms2_annotation", spec, active: true });
 
-test("Ion Mobility and Advanced start closed behind their headings; Search and Options stay open", () => {
+test("Ion Mobility and Advanced start closed behind their headings; Search and Options are plain groups without a heading", () => {
   const html = page();
   assert.match(html, /<details class="form-section"><summary>Ion Mobility<\/summary>/);
   assert.match(html, /<details class="form-section"><summary>Advanced<\/summary>/);
-  assert.match(html, /<fieldset class="form-section"><legend>Search<\/legend>/);
-  assert.match(html, /<fieldset class="form-section"><legend>Options<\/legend>/);
+  assert.equal((html.match(/<div class="form-section"/g) ?? []).length, 2, "Search and Options");
+  assert.doesNotMatch(html, /<legend|<fieldset/);
+  assert.doesNotMatch(html, />Search<|>Options<|>Inputs</, "no section captions");
   assert.equal((html.match(/<details class="form-section"/g) ?? []).length, 2);
   assert.doesNotMatch(html, /<details class="form-section" open/);
 });

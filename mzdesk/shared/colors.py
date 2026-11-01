@@ -18,6 +18,7 @@ DATA_TEAL = "#1F8A7E"
 DATA_CORAL = "#D0583A"
 DATA_VIOLET = "#7457C2"
 DATA_GREY = "#A6ADBA"
+DATA_SLATE = "#5C6B8A"          # a second line series in the theme family (a dashed line next to a blue one); the warm hues are for chemistry highlights, the alert colour is not a data colour
 SERIES = [DATA_BLUE, DATA_AMBER, DATA_TEAL, DATA_CORAL, DATA_VIOLET, DATA_GREY]
 
 BLUE = DATA_BLUE

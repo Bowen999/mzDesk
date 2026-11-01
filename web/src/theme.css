@@ -105,7 +105,6 @@ body.resizing iframe, body.resizing .main { pointer-events: none; }
 .module-heading-copy { min-width: 0; }
 .module-emblem { display: grid; place-items: center; width: 44px; height: 44px; flex: none; color: var(--accent); background: var(--accent-bg); border-radius: 10px; }
 .module-emblem svg { width: 23px; height: 23px; }
-.module-kicker { margin-bottom: 4px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 h1 { margin: 0; color: var(--ink); font-size: clamp(23px, 1.2vw + 16px, 30px); font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
 .meta { margin: 6px 0 0; color: var(--faint); font-size: 12px; line-height: 1.45; }
 .one-liner { max-width: 760px; margin: 16px 0 28px; color: var(--ink-2); font-size: 15px; line-height: 1.7; }
@@ -114,13 +113,8 @@ h1 { margin: 0; color: var(--ink); font-size: clamp(23px, 1.2vw + 16px, 30px); f
 /* ---------------------------------------------------------------- input panel */
 .panel { padding: 24px; margin-bottom: 28px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-sm); }
 .panel-title { color: var(--ink); font-size: 14px; font-weight: 600; }
-.panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.panel-head .panel-title { margin: 0; }
-.panel-note { color: var(--faint); font-size: 12px; }
-.panel-note .req { margin-right: 3px; }
 .form-section { margin: 0 0 20px; padding: 0; border: 0; }
 .form-section:last-of-type { margin-bottom: 4px; }
-.form-section > legend { width: 100%; margin-bottom: 10px; padding: 0 0 8px; color: var(--ink-2); border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11.5px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
 .field-slot { display: contents; }
 .field-note-wide { grid-column: 1 / -1; }
 .field-label-text { display: inline-flex; align-items: baseline; gap: 2px; }
@@ -384,11 +378,7 @@ code.ion {
 .btn .spinner { width: 13px; height: 13px; margin-right: 8px; border: 1.5px solid rgba(255, 255, 255, .45); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
 .btn:disabled[aria-busy="true"] { opacity: .85; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.run-progress { position: relative; height: 2px; margin: -16px 0 14px; overflow: hidden; background: var(--accent-bg); border-radius: 2px; }
-.run-progress > span { position: absolute; top: 0; bottom: 0; width: 30%; background: var(--accent); border-radius: 2px; animation: indeterminate 1.3s ease-in-out infinite; }
-@keyframes indeterminate { from { left: -30%; } to { left: 100%; } }
 .link-btn { padding: 0; color: var(--accent); background: none; border: 0; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-.empty-hint { margin: 4px 0 16px; color: var(--faint); font-size: 13px; }
 
 /* ---------------------------------------------------------------- folded inputs: one line after a run */
 .panel.input-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; padding: 12px 14px 12px 20px; }
@@ -401,7 +391,6 @@ code.ion {
 
 /* ---------------------------------------------------------------- verdict: the answer first */
 .verdict { margin: 4px 0 20px; padding: 2px 0 2px 18px; border-left: 3px solid var(--accent); }
-.verdict-label { margin-bottom: 4px; color: var(--accent); font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .verdict-text { max-width: 880px; margin: 0; color: var(--ink-2); font-size: clamp(17px, .5vw + 14px, 20px); line-height: 1.5; letter-spacing: -.005em; }
 .verdict-text b { color: var(--ink); font-weight: 600; }
 .verdict-text code.ion { font-size: .85em; }
@@ -440,7 +429,7 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 .outputs.is-skeleton > .tier-hero > .out.skeleton { padding: 0; background: none; border: 0; box-shadow: none; }
 @media (prefers-reduced-motion: reduce) {
-  .outputs.has-data > .block, .verdict, .run-progress > span, .outputs.is-busy .sk, .btn .spinner { animation: none; }
+  .outputs.has-data > .block, .verdict, .outputs.is-busy .sk, .btn .spinner { animation: none; }
 }
 /* figures already sit in a card: no second frame around the plot / drawing */
 .outputs .out .fig, .outputs .out .fig-img, .outputs .out .mol3d { padding: 0; border: 0; border-radius: 6px; background: transparent; }

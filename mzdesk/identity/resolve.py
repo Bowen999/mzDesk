@@ -505,8 +505,7 @@ def _fill_ids(res: Resolved, timeout: float) -> None:
                         sources = _unichem_by_key(flat, timeout)
                         if sources:
                             res.stereo_fallback = True
-                            res.warnings.append("Cross-database IDs matched by structure without stereochemistry "
-                                                "(InChIKey first block); they may refer to a stereoisomer.")
+                            res.warnings.append("The IDs were matched without stereochemistry and may belong to a stereoisomer.")
             cid = _merge_unichem(sources, res.ids)
             if res.cid is None and cid:
                 res.cid = cid

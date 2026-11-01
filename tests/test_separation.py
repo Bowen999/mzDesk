@@ -514,7 +514,7 @@ def test_page_lists_the_ignored_sites_with_mocked_predictions(monkeypatch):
     assert out["rule_hits"]["items"][0] == "N9 amide N: not basic, base site ignored (MolGpKa predicted pKa 5.2)"
     assert [r[0] + r[2] for r in out["sites"]["rows"]] == ["N3base", "N9acid"]
     assert out["ph_summary"]["values"]["Dominant charge state"]["value"] == "+1"
-    assert any("aniline N, for example" in n for n in out["rule_hits"]["items"])
+    assert not any(n.startswith("Assumptions") for n in out["rule_hits"]["items"])             # the general assumptions live in the Docs page
 
 
 def test_zwitterion_note_with_mocked_predictions(monkeypatch):
@@ -545,7 +545,7 @@ def test_spec_block_ids_match_the_runner():
     assert blocks["ph_summary"]["style"] == "metric" and blocks["rule_hits"]["collapsed"]
     items = blocks["ph_summary"]["items"]
     assert [i["label"] for i in items] == ["logD at pH", "Dominant charge state", "Fraction neutral"] and all(i["help"] for i in items)
-    assert "Ions are assumed not to partition" in items[0]["help"] and "log10(fraction" in items[0]["help"]          # the logD assumption lives in the card's ?
+    assert "logP" in items[0]["help"] and "neutral fraction" in items[0]["help"]                                     # what logD is lives in the card's ?
 
 
 # ---------------------------------------------------------------- errors

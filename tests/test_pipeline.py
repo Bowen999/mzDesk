@@ -298,7 +298,7 @@ def test_formula_table_rank_matches_result_order_and_preserves_buddy_rank_per_ad
     assert [r[cols.index("Formula")] for r in rows] == [c["formula"] for c in result["candidates"]]
     assert [r[cols.index("BUDDY rank (within adduct)")] for r in rows] == [1, 3, 1]
     assert [r[cols.index("BUDDY probability")] for r in rows] == ["0.900", "0.900", "0.990"]
-    assert "adduct" in table["caption"] and "not a joint probability" in table["caption"]
+    assert "adduct" in table["caption"] and "interleaved by BUDDY rank" in table["caption"]
     assert result["answer"]["ids"] == [c["id"] for c in result["candidates"]]
     assert rig.calls["frigid"][0][0][3] == "C10H20N2O5"  # no score-based pooling across adducts
 
@@ -576,7 +576,7 @@ def test_spec_form_matches_the_pipeline():
     assert fields["tol_da"]["value"] == 0.02 and fields["omics"]["options"][0] == "Either / unknown" and fields["omics"]["options"] == list(pipeline.OMICS_CHOICES)
     assert fields["additive"]["options"] == ["Unknown", *adduct_rules.ADDITIVES] and spec.PIPELINE_ADDITIVES == list(adduct_rules.ADDITIVES)
     assert fields["halogen"]["label"] == "Allow Cl/Br in formulas" and fields["halogen"]["value"] is False and fields["local_isomers"]["value"] is False
-    assert fields["local_isomers"]["label"] == "Also compare with database isomers (slower, stricter)"
+    assert fields["local_isomers"]["label"] == "Compare with database isomers"
     assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metrics", "lib_threshold")} == {"Advanced"}
     assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:5] == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold"]
     assert fields["lib_metrics"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and len(spec.PIPELINE_LIBRARY_METRICS) == 10

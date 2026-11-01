@@ -351,7 +351,7 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         warnings.append(
             f"Precursor m/z {precursor_mz:.4f} does not match the structure's {adduct} m/z "
             f"{theo_mz:.4f} (Δ {precursor_mz - theo_mz:+.3f} Da). "
-            "Check the SMILES, adduct, or precursor value — annotation may be poor.")
+            "Check the SMILES, adduct or precursor value.")
 
     tick = progress or (lambda fraction, text: None)
     if not JAR.exists():

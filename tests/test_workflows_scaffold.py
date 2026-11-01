@@ -53,7 +53,7 @@ def test_the_pipelines_are_registered_in_order():
     assert [p["id"] for p in spec.PIPELINES] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
     assert [p["id"] for p in spec.spec()["pipelines"]] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
     assert (EI["title"], TARGETED["title"]) == ("EI MS Annotation", "Targeted Method")
-    assert TARGETED["one_liner"].startswith("Enter one compound.") and EI["one_liner"].startswith("Enter one EI spectrum")
+    assert TARGETED["one_liner"].startswith("Compound →") and EI["one_liner"].startswith("EI spectrum")
     assert isinstance(TARGETED["examples"], list) and isinstance(EI["examples"], list)
 
 

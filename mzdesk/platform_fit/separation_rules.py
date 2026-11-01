@@ -37,7 +37,7 @@ class Thresholds:
 THRESHOLDS = Thresholds()
 PH_MIN, PH_MAX = 0.0, 14.0
 MINUS = "−"
-ZWITTERION_NOTE = "zwitterion: logD likely strongly underestimated (zwitterions partition more than this model assumes)"
+ZWITTERION_NOTE = "zwitterion: logD likely strongly underestimated"
 
 
 def charge_text(q):
@@ -63,7 +63,7 @@ def mode_rows(*, ph, logd, tpsa, mw, charge, f_neutral, permanent, fixed_charge,
 
     # ---- reversed phase
     if logd is None:
-        rows.append(["RP", "possible", "permanently charged: no neutral form, logD is not defined; retention rests on the lipophilic part (ion-pairing or a low pH may help)"])
+        rows.append(["RP", "possible", "permanently charged: no neutral form, logD is not defined; retention rests on the lipophilic part"])
     elif logd >= th.rp_good:
         rows.append(["RP", "good", f"logD {logd_text(logd)} {at} is at least {_num(th.rp_good)}: well retained"])
     elif logd >= th.rp_poor:
@@ -87,7 +87,7 @@ def mode_rows(*, ph, logd, tpsa, mw, charge, f_neutral, permanent, fixed_charge,
     charged = permanent or f_neutral < th.charged_below
     if charged and (logd is None or logd < th.ion_pair_logd):
         rows.append(["Ion-pair RP", "possible", "charged " + at + (" and logD is not defined" if logd is None else f" with logD {logd_text(logd)} below {th.ion_pair_logd:g}")
-                     + ": an ion-pair reagent adds retention, but ion-pair reagents are not MS-friendly"])
+                     + ": an ion-pair reagent adds retention but is not MS-friendly"])
     elif not charged:
         rows.append(["Ion-pair RP", "poor", f"{100 * f_neutral:.0f} % of the molecules are uncharged {at}: nothing to pair"])
     else:
@@ -185,17 +185,16 @@ def ph_notes(sites, ph, ph_grid, f_neutral, logp, permanent, th=THRESHOLDS):
     if ranges:
         items.append(f"Robust mobile-phase pH (every site >99 % one form, pKa ± {th.window:g}): pH {_range_text(ranges)}.")
     else:
-        items.append(f"No pH between {PH_MIN:g} and {PH_MAX:g} keeps every site >99 % one form: the pKa ± {th.window:g} windows cover the whole range; "
-                     "retention will depend on pH however it is set.")
+        items.append(f"No pH between {PH_MIN:g} and {PH_MAX:g} keeps every site >99 % one form: retention depends on pH however it is set.")
     near = [s for s in sites if abs(ph - s.pka) < th.window]
     if near:
         items.append(f"pH {ph:g} is within ± {th.window:g} of the pKa of " + ", ".join(f"{s.label} ({s.pka:.1f})" for s in near)
-                     + ": a small pH shift changes the charge and the retention, so buffer well (or move away from these pKa values).")
+                     + ": a small pH shift changes charge and retention, so buffer well.")
     if not permanent:
         neutral = neutral_ph_ranges(f_neutral, ph_grid, th)
         if neutral:
             top = logp + float(np.log10(f_neutral.max()))
             items.append(f"The uncharged form is at least {100 * th.neutral_fraction:.0f} % of the molecules at pH {_range_text(neutral)} (logD up to {logd_text(top)}).")
         else:
-            items.append(f"The fully uncharged form never reaches {100 * th.neutral_fraction:.0f} % at any pH (zwitterion or several sites close together): logD stays below logP.")
+            items.append(f"The uncharged form never reaches {100 * th.neutral_fraction:.0f} % at any pH (zwitterion or close sites): logD stays below logP.")
     return items

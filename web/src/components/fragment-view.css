@@ -33,13 +33,8 @@
 /* progress */
 .fv-progress { padding: 20px 0 10px; }
 .fv-progress-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; color: var(--ink); font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.fv-bar { height: 6px; overflow: hidden; background: var(--line); border-radius: 6px; }
-.fv-bar > span {
-  display: block; height: 100%; border-radius: inherit; transition: width .3s ease;
-  background: linear-gradient(90deg, var(--ink) 0 50%, var(--ink-2) 50% 100%) 0 0 / 14px 100%; animation: fv-stripes 1s linear infinite;
-}
-@keyframes fv-stripes { from { background-position: 0 0; } to { background-position: 14px 0; } }
-.fv-progress-note { margin: 9px 0 0; color: var(--muted); font-size: 12px; }
+.fv-bar { height: 5px; overflow: hidden; background: var(--accent-bg); border-radius: 5px; }
+.fv-bar > span { display: block; height: 100%; border-radius: inherit; transition: width .3s cubic-bezier(.2, .8, .2, 1); background: linear-gradient(90deg, var(--accent-line), var(--accent)); }
 
 /* summary strip: four facts in one bordered row */
 .fv-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -85,5 +80,5 @@
   .fv-head, .fv-body { padding-left: 16px; padding-right: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fv-card, .fv-bar > span { animation: none; }
+  .fv-card, .fv-bar > span { animation: none; transition: none; }
 }

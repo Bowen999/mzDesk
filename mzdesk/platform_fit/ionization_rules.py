@@ -368,7 +368,7 @@ EI_VERDICT = {"yes": "usable", "after derivatization": "usable after derivatizat
 def ion_caveat(gc):
     """When the M+• does not describe the molecule that reaches the detector ("" otherwise)."""
     if gc["gc"] == "after derivatization":
-        return "derivatization is needed and NEIMS predicts the underivatized molecule, so the derivative has another M+•"
+        return "NEIMS predicts the underivatized molecule; the derivative has another M+•"
     if gc["gc"] == "no":
         return "hypothetical: the molecule is not GC-amenable"
     return ""
@@ -430,38 +430,31 @@ def rule_rows(a):
 def rule_hits(prof, ph, pos, neg, gc, ion, th=THRESHOLDS):
     hits = []
     if prof.method == METHOD_MOLGPKA:
-        hits.append("pKa sites from MolGpKa (the same prediction as the Separation page); the pKa of a site carries an error of about one unit.")
+        hits.append("pKa sites from MolGpKa (same as the Separation page).")
     else:
-        hits.append(f"MolGpKa weights not available ({prof.fallback}): pKa values below are textbook values of the functional groups, "
-                    "not a prediction; the rules still run.")
+        hits.append(f"MolGpKa weights not available ({prof.fallback}): the pKa values are textbook values of the functional groups.")
     sites = sorted(prof.sites, key=lambda s: (s.pka, s.atom))
     shown = [s for s in sites if s.kind == "base" or s.pka <= th.acid_moderate_pka]
     if shown:
         hits.append("Ionizable sites used: " + ", ".join(f"{s.label} {s.kind} {s.pka:.1f}" for s in shown) + ".")
     if prof.textbook:
         hits.append("N-oxide site" + ("s" if len(prof.textbook) > 1 else "") + " " + ", ".join(s.label for s in prof.textbook)
-                    + ": the MolGpKa patterns do not cover N-oxides, so the pKa is a textbook value (not predicted).")
+                    + ": the pKa is a textbook value (not predicted).")
     if len(shown) < len(sites):
         n = len(sites) - len(shown)
-        hits.append(f"{_plural(n, 'acid site')} with pKa above {th.acid_moderate_pka:g} (alcohol OH, amide NH ...) {'is' if n == 1 else 'are'} too weak to deprotonate in ESI− and "
+        hits.append(f"{_plural(n, 'acid site')} with pKa above {th.acid_moderate_pka:g} (alcohol OH, amide NH ...) {'is' if n == 1 else 'are'} too weak for ESI− and "
                     f"{'is' if n == 1 else 'are'} not listed.")
     if not sites and not prof.permanent:
         hits.append("No ionizable site found.")
     hits += [f"{s.label} {why}: not basic, base site ignored (MolGpKa predicted pKa {s.pka:.1f})." for s, why in prof.ignored]
     if prof.fixed_charge > 0:
-        hits.append(f"Permanent positive charge ({prof.fixed_charge:+d}; quaternary N+, N-alkylpyridinium ...): an ion at any pH, so ESI+ is strong; "
-                    "an acid in the same molecule is its counterion.")
-    hits.append(f"ESI+ rests on the solution pKa of the basic site against pH {ph:g} (strong at pKa ≥ {ph + th.base_protonated:.1f}); ESI− on the acid pKa "
-                f"(strong at ≤ {th.acid_strong_pka:g}, moderate to {th.acid_moderate_pka:g}). Solution pKa is not gas-phase behaviour: gas-phase proton affinity "
-                "and the droplet chemistry can move a compound up or down, mostly for weak bases (pyridine-type N, carbonyls) and for acids at low pH.")
-    hits.append("Response strength is qualitative (strong / moderate / weak, relative to other small molecules); it says nothing about absolute sensitivity, "
-                "matrix effects or the ion source settings.")
+        hits.append(f"Permanent positive charge ({prof.fixed_charge:+d}): an ion at any pH, so ESI+ is strong.")
+    hits.append(f"ESI+ is strong at a basic pKa ≥ {ph + th.base_protonated:.1f} (pH {ph:g}); ESI− at an acidic pKa ≤ {th.acid_strong_pka:g}, moderate to {th.acid_moderate_pka:g}.")
     if gc["gc"] == "after derivatization":
-        hits.append("Derivatization is needed for GC: NEIMS predicts the underivatized molecule, so the M+• and the spectrum shown are not those of the "
-                    "TMS or MeOx-TMS derivative that is actually measured (masses: Derivatization page).")
+        hits.append("GC needs derivatization: NEIMS predicts the underivatized molecule, not the TMS or MeOx-TMS derivative.")
     if ion.rel is not None:
         hits.append(f"M+• rule: NEIMS relative intensity at the nominal mass ≥ {th.mol_ion_visible:g} % visible, {th.mol_ion_weak:g}-{th.mol_ion_visible:g} % weak, "
-                    f"< {th.mol_ion_weak:g} % not expected. A neural-network prediction: the intensity of a single peak is far less certain than the peak pattern.")
+                    f"< {th.mol_ion_weak:g} % not expected.")
     else:
-        hits.append("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup), or the structure is outside its range: the M+• line is a textbook rule of thumb.")
+        hits.append("NEIMS weights not installed (python -m mzdesk.ms2.neims_setup), or the structure is outside its range: M+• is a rule of thumb.")
     return hits

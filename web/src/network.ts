@@ -92,20 +92,20 @@ export function networkUses(fields: Field[], values: Record<string, any>, page?:
     if (f.type === "spectrum" && f.network_sources?.length) {
       const source = String(v?.source ?? "");
       if (f.network_sources.includes(source) && String(v?.value ?? "").trim())
-        uses.push("The spectrum is resolved through the public GNPS / MassIVE USI service.");
+        uses.push("The spectrum is fetched from GNPS / MassIVE (USI).");
     } else if (f.type === "structure" && f.network_modes?.length) {
       const text = String(v?.value ?? "").trim();
       // A page-level sentence already covers the page's own lookup; a formula / InChI is parsed locally.
       if (!page && text && f.network_modes.includes(String(v?.mode ?? "")) && !parsedLocally(text))
-        uses.push("The compound is looked up by name or database ID in PubChem and UniChem.");
+        uses.push("The compound is looked up in PubChem and UniChem.");
     } else if (f.type === "textarea" && f.network_names) {
       const names = candidateNames(String(v ?? ""));
       if (names.length) uses.push(`${names.length === 1 ? "A candidate name is" : "Candidate names are"} looked up in PubChem and UniChem.`);
     } else if (f.type === "checkbox" && f.network && v === true) {
-      uses.push(`“${f.label ?? "This option"}” downloads its model from Zenodo on first use.`);
+      uses.push(`“${f.label ?? "This option"}”: models from Zenodo.`);
     } else if (f.type === "multiselect" && f.network_options?.length && Array.isArray(v)) {
       const picked = v.filter((x: string) => f.network_options!.includes(x));
-      if (picked.length) uses.push(`${picked.join(" and ")} ${picked.length === 1 ? "downloads its model" : "download their models"} from Zenodo on first use.`);
+      if (picked.length) uses.push(`${picked.join(" and ")}: ${picked.length === 1 ? "model" : "models"} from Zenodo.`);
     }
   }
   return [...new Set(uses)];

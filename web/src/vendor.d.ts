@@ -6,3 +6,5 @@ declare module "*?url" { const url: string; export default url; }
 
 /** Vite build-time env (BASE_URL = the "base" in vite.config.ts). */
 interface ImportMeta { readonly env: { readonly BASE_URL: string; readonly [key: string]: string | boolean | undefined } }
+
+interface Window { mzdeskReady?: () => void }       // set by the splash script in index.html

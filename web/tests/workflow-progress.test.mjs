@@ -39,13 +39,22 @@ const nondecreasing = values => values.every((v, i) => i === 0 || v === null || 
 
 // ------------------------------------------------------------------ the model
 
-test("the bar is never at 0: submitting, waiting and queued creep from about 2% towards 6%", () => {
+test("the bar is never at 0: submitting, waiting and queued start at PRE_START at once and creep quickly towards PRE_CEIL", () => {
   const p = run([[0, "submitting"], [1, "submitting"], [5, "waiting"], [20, "waiting"], [60, "queued", n8(0)], [600, "queued", n8(0)]]);
-  assert.ok(p[0] >= 2 && p[0] < 2.5, `starts near 2%, got ${p[0]}`);
-  assert.ok(p.every(v => v >= 2 && v < 6), `stays in [2, 6): ${p}`);
+  assert.equal(p[0], M.PRE_START, `starts at ${M.PRE_START}%, got ${p[0]}`);
+  assert.ok(p.every(v => v >= M.PRE_START && v <= M.PRE_CEIL), `stays in [PRE_START, PRE_CEIL]: ${p}`);
   assert.ok(p.every((v, i) => i === 0 || v > p[i - 1]), "creeps while it waits");
-  assert.equal(M.creep(0), 2);
-  assert.ok(M.creep(1e6) <= 6);
+  assert.ok(p[1] - p[0] > 1.5, "moves visibly within the first second");
+  assert.equal(M.creep(0), M.PRE_START);
+  assert.ok(M.creep(1e6) <= M.PRE_CEIL);
+});
+
+test("the curve is not linear: fast at the start, slower at the end, 0 and 1 stay fixed", () => {
+  assert.equal(M.band(0), M.PRE_CEIL);
+  assert.equal(M.band(1), 100);
+  const first = M.band(0.1) - M.band(0), last = M.band(1) - M.band(0.9);
+  assert.ok(first > 3 * last, `the first tenth moves the bar ${first.toFixed(1)} points, the last ${last.toFixed(1)}`);
+  assert.ok(M.band(0.5) > (M.PRE_CEIL + 100) / 2 + 10, "half of the work is well past half of the bar");
 });
 
 test("progress is non-decreasing across any sequence of states and times", () => {
@@ -62,7 +71,7 @@ test("progress is non-decreasing across any sequence of states and times", () =>
     }
     const p = run(samples);
     assert.ok(nondecreasing(p), `trial ${trial} decreased: ${p.map(v => v?.toFixed(1))}`);
-    assert.ok(p.every(v => v >= 2 && v <= 99), "inside [2, 99] until the job is done");
+    assert.ok(p.every(v => v >= M.PRE_START && v <= 99), "inside [PRE_START, 99] until the job is done");
   }
   // a dedicated regression: a poll that reports fewer ended stages than the previous one
   const p = run([[0, "running", n8(4)], [1, "running", n8(1)], [2, "running", n8(0, 1)]]);
@@ -71,14 +80,14 @@ test("progress is non-decreasing across any sequence of states and times", () =>
 });
 
 test("within a running stage the value rises with time, stays under the next slice floor and never completes the slice", () => {
-  const slice = 94 / 8, floor = e => M.PRE_CEIL + slice * e;
+  const floor = e => M.band(e / 8);
   for (const e of [0, 3, 7]) {
     const times = [0, 1, 2, 4, 8, 16, 32, 120, 3600];
     const p = targets(times.map(t => [t, "running", n8(e, 1)]));
     assert.ok(Math.abs(p[0] - floor(e)) < 1e-9, "starts at its own slice floor");
-    assert.ok(p.every((v, i) => i === 0 || v > p[i - 1]), `strictly increasing for ${e} ended: ${p}`);
+    assert.ok(p.every((v, i) => i === 0 || v > p[i - 1] || v === M.ACTIVE_MAX), `strictly increasing (until the 99 cap) for ${e} ended: ${p}`);
     assert.ok(p.every(v => v < floor(e + 1)), `below the next floor for ${e} ended: ${p}`);
-    assert.ok(p.at(-1) > floor(e) + slice * 0.89, "approaches the cap (90% of the slice)");
+    assert.ok(Math.abs(p.at(-1) - Math.min(M.ACTIVE_MAX, M.band((e + M.RUN_CAP) / 8))) < 1e-6, "approaches the cap (RUN_CAP of the slice)");
   }
   assert.equal(M.stageFraction(0, 8), 0);
   assert.ok(M.stageFraction(1e9, 8) <= M.RUN_CAP);
@@ -87,7 +96,7 @@ test("within a running stage the value rises with time, stays under the next sli
 test("a stage that ends glides the bar to the next slice floor", () => {
   const p = targets([[0, "running", n8(0, 1)], [30, "running", n8(0, 1)], [31, "running", n8(1, 1)], [31.1, "running", n8(1, 0)], [32, "running", n8(1, 1)]]);
   assert.ok(p[2] > p[1], "next stage started: ahead of the slice floor");
-  assert.ok(p[3] >= M.PRE_CEIL + 94 / 8, "at least the new floor");
+  assert.ok(p[3] >= M.band(1 / 8), "at least the new floor");
   assert.ok(nondecreasing(p));
 });
 
@@ -127,8 +136,8 @@ test("job error and stopped tracking freeze the bar where it is", () => {
   assert.deepEqual(run([[0, "stopped"]]), [M.PRE_START]);
   // first drawn in a frozen state: the stages that ended
   const cold = (phase, statuses) => run([[0, phase, statuses]])[0];
-  assert.equal(cold("unknown", n8(1)), M.PRE_CEIL + 94 / 8);
-  assert.equal(cold("error", n8(3, 1)), M.PRE_CEIL + 94 * 3 / 8, "no time-based growth for the running stage");
+  assert.equal(cold("unknown", n8(1)), M.band(1 / 8));
+  assert.equal(cold("error", n8(3, 1)), M.band(3 / 8), "no time-based growth for the running stage");
   assert.equal(cold("error", []), M.PRE_START);
 });
 
@@ -136,14 +145,14 @@ test("several running stages add up", () => {
   const t = 8, f = M.stageFraction(t, M.TAU_DEFAULT);
   const one = targets([[0, "running", n8(2, 1)], [t, "running", n8(2, 1)]])[1];
   const two = targets([[0, "running", n8(2, 2)], [t, "running", n8(2, 2)]])[1];
-  assert.ok(Math.abs(one - (M.PRE_CEIL + 94 * (2 + f) / 8)) < 1e-9);
-  assert.ok(Math.abs(two - (M.PRE_CEIL + 94 * (2 + 2 * f) / 8)) < 1e-9);
-  assert.ok(two > one && two < M.PRE_CEIL + 94 * 4 / 8, "under the floor after both end");
+  assert.ok(Math.abs(one - M.band((2 + f) / 8)) < 1e-9);
+  assert.ok(Math.abs(two - M.band((2 + 2 * f) / 8)) < 1e-9);
+  assert.ok(two > one && two < M.band(4 / 8), "under the floor after both end");
 });
 
 test("each running stage is timed from when it was first seen", () => {
   const late = targets([[0, "running", n8(0, 1)], [20, "running", ["done", "running", ...Array(6).fill("queued")]], [20, "running", ["done", "running", ...Array(6).fill("queued")]]]);
-  const s2 = M.PRE_CEIL + 94 / 8;
+  const s2 = M.band(1 / 8);
   assert.ok(late[1] >= s2 && late[1] < s2 + 0.2, "stage 2 has just been seen: close to its floor, not credited for the 20 s before");
 });
 
@@ -151,8 +160,8 @@ test("a new run starts over; a resumed run does not", () => {
   const ended = n8(8);
   const p = run([[0, "running", n8(5, 1)], [3, "done", ended], [10, "submitting"], [11, "waiting"], [12, "queued", n8(0)]]);
   assert.equal(p[1], 100);
-  assert.ok(p[2] >= 2 && p[2] < 3, `restarted near 2%: ${p[2]}`);
-  assert.ok(p[4] < 6);
+  assert.ok(p[2] >= M.PRE_START && p[2] < M.PRE_START + 1, `restarted near ${M.PRE_START}%: ${p[2]}`);
+  assert.ok(p[4] <= M.PRE_CEIL);
   const failedRun = run([[0, "running", n8(1, 1)], [4, "error", [...n8(1), "failed", ...Array(6).fill("queued")]], [20, "running", n8(0, 1)]]);
   assert.ok(failedRun[2] < failedRun[1], "a job that replaces a failed one starts over");
   const stale = run([[0, "running", n8(4, 1)], [5, "stopped", n8(4, 1)], [10, "submitting"]]);
@@ -179,17 +188,17 @@ test("slices are proportional to expected_s; a stage without one gets the mean o
   const e = [2, 6, 2];
   const p = targets([[0, "running", n8(0, 1).slice(0, 3)], [1, "running", ["done", "running", "queued"]], [30, "running", ["done", "done", "running"]]], { expected: e });
   assert.equal(p[0], M.PRE_CEIL);
-  assert.ok(Math.abs(p[1] - (M.PRE_CEIL + 94 * 2 / 10)) < 1e-9, "stage 1 of weight 2 out of 10 is 20% of the band");
-  assert.ok(Math.abs(p[2] - (M.PRE_CEIL + 94 * 8 / 10)) < 1e-9, "the first two stages own 80% of the band; stage 3 has only just started");
+  assert.ok(Math.abs(p[1] - M.band(2 / 10)) < 1e-9, "stage 1 of weight 2 out of 10 is 20% of the work");
+  assert.ok(Math.abs(p[2] - M.band(8 / 10)) < 1e-9, "the first two stages own 80% of the work; stage 3 has only just started");
   // without expected_s the same run has equal thirds
   const eq = targets([[0, "running", ["running", "queued", "queued"]], [1, "running", ["done", "running", "queued"]]]);
-  assert.ok(Math.abs(eq[1] - (M.PRE_CEIL + 94 / 3)) < 1e-9);
+  assert.ok(Math.abs(eq[1] - M.band(1 / 3)) < 1e-9);
 });
 
 test("a stage that is skipped takes no share of the bar", () => {
   const e = [2, 40, 2];
   const p = targets([[0, "running", ["running", "queued", "queued"]], [1, "running", ["done", "skipped", "running"]]], { expected: e });
-  assert.ok(Math.abs(p[1] - (M.PRE_CEIL + 94 * 2 / 4)) < 1e-9, "the 40 s stage is gone from both sides of the fraction");
+  assert.ok(Math.abs(p[1] - M.band(2 / 4)) < 1e-9, "the 40 s stage is gone from both sides of the fraction");
   assert.equal(targets([[0, "running", ["skipped", "skipped"]]], { expected: [5, 5] })[0], M.ACTIVE_MAX, "nothing left to run");
   assert.ok(nondecreasing(run([[0, "running", ["running", "queued", "queued"]], [1, "running", ["done", "skipped", "running"]], [2, "running", ["done", "skipped", "running"]]], { expected: e })));
 });
@@ -204,7 +213,8 @@ test("tau of a running stage is its expected_s, scaled by how fast the finished 
   // at t = tau a stage has filled RUN_CAP * (1 - 1/e) of its slice
   const e = [10, 10];
   const [a, b] = targets([[0, "running", ["running", "queued"]], [10, "running", ["running", "queued"]]], { expected: e });
-  assert.ok(Math.abs((b - a) - 94 / 2 * M.RUN_CAP * (1 - Math.exp(-1))) < 1e-9);
+  assert.ok(Math.abs(b - M.band(M.RUN_CAP * (1 - Math.exp(-1)) / 2)) < 1e-9);
+  assert.equal(a, M.PRE_CEIL);
   // finished stages that ran 2x slower than expected slow the next one down; faster ones speed it up
   const slowSteps = [{ status: "done", seconds: 20, expected_s: 10 }, { status: "running", expected_s: 10 }];
   const fastSteps = [{ status: "done", seconds: 5, expected_s: 10 }, { status: "running", expected_s: 10 }];
@@ -223,10 +233,10 @@ test("the speed factor is 1 before anything finished, ignores milliseconds of no
 test("the bar follows a jump of its target at no more than MAX_RATE points per second", () => {
   const pct = run([[0, "running", n8(0, 1)], [0.5, "running", n8(6, 1)], [1.5, "running", n8(6, 1)], [2, "running", n8(6, 1)], [60, "running", n8(6, 1)]]);
   const tgt = targets([[0, "running", n8(0, 1)], [0.5, "running", n8(6, 1)], [1.5, "running", n8(6, 1)], [2, "running", n8(6, 1)], [60, "running", n8(6, 1)]]);
-  assert.equal(pct[0], 6);
-  assert.ok(Math.abs(pct[1] - (6 + M.MAX_RATE * 0.5)) < 1e-9);
-  assert.ok(Math.abs(pct[2] - (6 + M.MAX_RATE * 1.5)) < 1e-9);
-  assert.ok(Math.abs(pct[3] - (6 + M.MAX_RATE * 2)) < 1e-9);
+  assert.equal(pct[0], M.PRE_CEIL);
+  assert.ok(Math.abs(pct[1] - (M.PRE_CEIL + M.MAX_RATE * 0.5)) < 1e-9);
+  assert.ok(Math.abs(pct[2] - (M.PRE_CEIL + M.MAX_RATE * 1.5)) < 1e-9);
+  assert.ok(Math.abs(pct[3] - (M.PRE_CEIL + M.MAX_RATE * 2)) < 1e-9);
   assert.equal(pct[4], tgt[4], "it gets there");
   assert.ok(tgt[1] > pct[1]);
 });
@@ -251,6 +261,7 @@ function simulate(expected, trueDur, skipped = [], pollOffset = 0.3) {
   }
   return out;
 }
+const STEP_MAX = M.MAX_RATE * 0.5 + 1e-9;      // the redraw interval of the simulation is 0.5 s
 const maxJump = (rows, field = 2) => Math.max(...rows.map((r, i) => i && r[1] !== "done" && r[field] !== null ? r[field] - rows[i - 1][field] : 0));
 const GC_EXPECTED = [0.1, 7.0, 0.05, 0.2, 0.2, 0.5, 0.1, 0.05, 0.1];
 const ESI_EXPECTED = [6, 0.5, 4, 20, 40, 0.5, 8, 0.1];
@@ -259,11 +270,11 @@ test("a GC-MS run dominated by one long stage fills steadily and never jumps bef
   for (const offset of [0, 0.3, 0.7, 1.1, 1.4]) {
     for (const lib of [3, 7.5, 15]) {                                   // the library search: faster than, about, and twice as slow as expected
       const rows = simulate(GC_EXPECTED, [0.07, lib, 0, 0.01, 0.02, 0.13, 0.01, 0, 0.05], [7], offset);
-      assert.ok(maxJump(rows) <= 15, `offset ${offset}, library ${lib} s: jumped ${maxJump(rows)} points`);
+      assert.ok(maxJump(rows) <= STEP_MAX, `offset ${offset}, library ${lib} s: jumped ${maxJump(rows)} points`);
       assert.ok(nondecreasing(rows.map(r => r[2])));
       assert.equal(rows.at(-1)[2], 100);
       const first = rows.find(r => r[1] === "running");
-      assert.ok(first[2] >= 2, "never at 0");
+      assert.ok(first[2] >= M.PRE_START, "never at 0");
       // during the long stage the bar keeps rising: every second of it adds something
       const during = rows.filter(r => r[0] > 1.6 && r[0] < Math.min(lib, 7.5) - 0.5);
       assert.ok(during.every((r, i) => i === 0 || r[2] > during[i - 1][2]), `offset ${offset}, library ${lib} s: stalled while the library search ran`);
@@ -271,10 +282,10 @@ test("a GC-MS run dominated by one long stage fills steadily and never jumps bef
   }
   const rows = simulate(GC_EXPECTED, [0.07, 7.5, 0, 0.01, 0.02, 0.13, 0.01, 0, 0.05], [7], 0.3);
   const at = t => rows.find(r => r[0] === t)[2];
-  assert.ok(at(2) > 15 && at(4) > at(2) + 10 && at(6) > at(4) + 5, "close to linear while it runs, not stage steps");
+  assert.ok(at(2) > 25 && at(4) > at(2) + 10 && at(6) > at(4) + 5, "keeps rising while it runs, not stage steps");
   // a warm run (everything done within one poll) can only jump at completion
   const warm = simulate(GC_EXPECTED, [0.01, 0.28, 0, 0.01, 0.02, 0.08, 0.01, 0, 0.02], [7], 0.9);
-  assert.ok(maxJump(warm) <= 15);
+  assert.ok(maxJump(warm) <= STEP_MAX);
 });
 
 test("an ESI run whose long stages are skipped glides instead of jumping", () => {
@@ -285,15 +296,15 @@ test("an ESI run whose long stages are skipped glides instead of jumping", () =>
   for (const [name, [dur, skipped]] of Object.entries(cases)) {
     for (const offset of [0, 0.5, 1.1]) {
       const rows = simulate(ESI_EXPECTED, dur, skipped, offset);
-      assert.ok(maxJump(rows) <= 15, `${name}, offset ${offset}: jumped ${maxJump(rows)} points`);
+      assert.ok(maxJump(rows) <= STEP_MAX, `${name}, offset ${offset}: jumped ${maxJump(rows)} points`);
       assert.ok(nondecreasing(rows.map(r => r[2])));
-      assert.ok(rows.filter(r => r[1] === "running").every(r => r[2] >= 2 && r[2] <= 99));
+      assert.ok(rows.filter(r => r[1] === "running").every(r => r[2] >= M.PRE_START && r[2] <= 99));
       assert.equal(rows.at(-1)[2], 100);
     }
   }
   // without the glide the skipped stages would be a jump of tens of points (this is what the rate limit is for)
   const raw = simulate(ESI_EXPECTED, cases["library match (MS-FINDER and FRIGID skipped)"][0], [3, 4], 0.5);
-  assert.ok(maxJump(raw, 3) > 15 && maxJump(raw) <= 15);
+  assert.ok(maxJump(raw, 3) > STEP_MAX && maxJump(raw) <= STEP_MAX);
 });
 
 test("phaseOf maps job state and flags", () => {
@@ -321,13 +332,13 @@ test("submission and the first poll show a small head start, not 0 and not a mad
   const submitting = view(null);
   single(submitting);
   assert.match(submitting, /Submitting workflow/);
-  assert.equal(valuenow(submitting), 2);
-  assert.match(submitting, />2%</);
+  assert.equal(valuenow(submitting), M.PRE_START);
+  assert.match(submitting, new RegExp(`>${M.PRE_START}%<`));
   assert.match(submitting, /aria-valuemin="0"[^>]*aria-valuemax="100"/);
-  assert.match(submitting, /aria-valuetext="2%\. Submitting workflow/);
+  assert.match(submitting, new RegExp(`aria-valuetext="${M.PRE_START}%\\. Submitting workflow`));
   const waiting = view(null, { awaitingFirstUpdate: true });
   assert.match(waiting, /Waiting for workflow progress/);
-  assert.equal(valuenow(waiting), 2);
+  assert.equal(valuenow(waiting), M.PRE_START);
 });
 
 test("queued shows the queue note once and a head start", () => {
@@ -335,7 +346,7 @@ test("queued shows the queue note once and a head start", () => {
   single(html);
   assert.match(html, /Queued/);
   assert.equal((html.match(/position 2 in the queue/g) || []).length, 1);
-  assert.ok(valuenow(html) >= 2 && valuenow(html) < 6);
+  assert.ok(valuenow(html) >= M.PRE_START && valuenow(html) <= M.PRE_CEIL);
 });
 
 test("a running stage reads 'Step n of N · title' with the percentage on the right and its note below", () => {
@@ -344,10 +355,10 @@ test("a running stage reads 'Step n of N · title' with the percentage on the ri
   const html = view(j);
   single(html);
   assert.match(html, /Step 6 of 8 · Merge and re-rank/);
-  assert.match(html, /aria-valuenow="60"/);                       // 4 of the 7 stages that are not skipped have ended
-  assert.match(html, /width:59\.7%/);
-  assert.match(html, />60%</);
-  assert.match(html, /aria-valuetext="60%\. Step 6 of 8 · Merge and re-rank"/);
+  assert.match(html, /aria-valuenow="84"/);                       // 4 of the 7 stages that are not skipped have ended: 12 + 88 * (1 - (3/7)^2) = 83.8
+  assert.match(html, /width:83\.8%/);
+  assert.match(html, />84%</);
+  assert.match(html, /aria-valuetext="84%\. Step 6 of 8 · Merge and re-rank"/);
   assert.match(html, /<p class="wf-progress-note">scored 3\/9<\/p>/);
   assert.equal((html.match(/wf-progress-note/g) || []).length, 1);
   assert.match(html, /role="status"/);
@@ -370,10 +381,10 @@ test("expected_s decides how much of the bar a stage owns", () => {
   j.steps[1].expected_s = 9;
   const html = view(j);
   single(html);
-  assert.equal(valuenow(html), 15, "one tenth of the band after the short stage: 6 + 94 / 10");
+  assert.equal(valuenow(html), 29, "one tenth of the work after the short stage: 12 + 88 * (1 - 0.9^2) = 28.7");
   const equal = job("running", ["done", "running"]);
-  assert.equal(valuenow(view(equal)), 53, "without expected_s: half of the band");
-  assert.equal(valuenow(view(job("running", ["done", "skipped", "running"], { steps: [{ id: 1, title: "A", status: "done", expected_s: 1 }, { id: 2, title: "B", status: "skipped", expected_s: 50 }, { id: 3, title: "C", status: "running", expected_s: 1 }] }))), 53);
+  assert.equal(valuenow(view(equal)), 78, "without expected_s: half of the work: 12 + 88 * 0.75");
+  assert.equal(valuenow(view(job("running", ["done", "skipped", "running"], { steps: [{ id: 1, title: "A", status: "done", expected_s: 1 }, { id: 2, title: "B", status: "skipped", expected_s: 50 }, { id: 3, title: "C", status: "running", expected_s: 1 }] }))), 78);
 });
 
 test("all stages ended but the job still running reads Finalizing at 99%; done reads Completed at 100%", () => {
@@ -398,9 +409,9 @@ test("job failure and lost polling are stop-styled and say what happened", () =>
   single(failed);
   assert.match(failed, /Failed at Adduct/);
   assert.match(failed, /wf-progress is-error/);
-  assert.equal(valuenow(failed), 18);
+  assert.equal(valuenow(failed), 33, "one of eight stages ended: 12 + 88 * (1 - (7/8)^2) = 32.6");
   assert.doesNotMatch(failed, /Completed/);
-  assert.equal(valuenow(view(job("error", []))), 2);
+  assert.equal(valuenow(view(job("error", []))), M.PRE_START);
   const stopped = view(job("running", ["done", "running", ...Array(6).fill("queued")]), { trackingStopped: true });
   single(stopped);
   assert.match(stopped, /Tracking stopped/);
@@ -410,7 +421,7 @@ test("job failure and lost polling are stop-styled and say what happened", () =>
   assert.doesNotMatch(stopped, /Step 2 of 8/);
   const early = view(null, { trackingStopped: true });
   assert.match(early, /Tracking stopped/);
-  assert.equal(valuenow(early), 2);
+  assert.equal(valuenow(early), M.PRE_START);
 });
 
 test("unusable stage data is indeterminate and carries no aria-valuenow", () => {

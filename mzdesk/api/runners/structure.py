@@ -276,9 +276,6 @@ def run_separation(inputs):
     hits += sr.ph_notes(sites, ph, a.ph, a.f_neutral, a.logp, a.permanent)
     if zwitterion and st["logd"] is not None:
         hits.append(sr.ZWITTERION_NOTE)
-    hits.append("Assumptions: sites are independent (Henderson–Hasselbalch per site, so successive ionizations of one group, such as phosphate pKa1 / pKa2, "
-                "are not modelled); base sites on amide, sulfonamide and pyrrole-type aromatic N are dropped as not basic, but other weakly basic sites "
-                "(aniline N, for example) still count; predicted pKa values carry errors of about one unit, sometimes more (validation/molgpka).")
 
     outputs = {
         "ph_summary": {"values": {"logD at pH": logd_card, "Dominant charge state": {"value": sr.charge_text(q), "note": charge_note},

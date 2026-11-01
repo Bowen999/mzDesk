@@ -10,7 +10,7 @@ from mzdesk.platform_fit.separation_rules import MINUS, charge_text, logd_text
 from mzdesk.shared import colors as theme, depict
 
 LOGD_COLOR = theme.DATA_BLUE
-CHARGE_COLOR = theme.DATA_AMBER
+CHARGE_COLOR = theme.DATA_SLATE
 ACID = theme.HL_ACID                           # coral tint
 BASE = theme.HL_BASE                           # teal tint
 BOTH = theme.HL_BOTH                           # violet tint: the same atom is an acid and a base site

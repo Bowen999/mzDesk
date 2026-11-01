@@ -89,7 +89,7 @@ def test_page_uses_pubchem_even_when_only_hmdb_selected_and_reports_scope(monkey
     rows = body["outputs"]["isomers"]["rows"]
     assert len(rows) == 3 and rows[1][2] == "PubChem CID 2" and rows[2][2] == "PubChem CID 3"
     assert [r[5]["badge"] for r in rows] == ["your compound", "yes", "yes"]
-    assert "not a unique identification" in body["verdict"] and "Not exhaustive" in body["verdict"]
+    assert "can be distinguished from 2 tested isomers." in body["verdict"] and "Not exhaustive" not in body["verdict"]
     assert "3 CIDs retrieved (limit 100; not truncated" in body["verdict"]
     assert "2 other connectivities selected (limit 9, not truncated)" in body["verdict"]
     assert len(calls) == 3 and all(call[2:6] == ("[M+H]+", 2, 0.01, 0.0) for call in calls)
@@ -104,7 +104,7 @@ def test_candidate_and_comparison_truncation_are_reported(monkeypatch):
     assert "100 CIDs retrieved (limit 100; truncated)" in body["verdict"]
     assert "1 other connectivities selected (limit 1, truncated)" in body["verdict"]
     assert len(body["outputs"]["isomers"]["rows"]) == 2
-    assert "Not exhaustive" in body["verdict"]
+    assert "Not exhaustive" not in body["verdict"]
 
 
 @pytest.mark.parametrize("rows", [[], [(1, "same compound", TOP, [])], [(1, "missing", "", [])]])
@@ -112,7 +112,7 @@ def test_no_candidate_never_produces_a_unique_verdict(monkeypatch, rows):
     pubchem(monkeypatch, rows)
     calls = fake_metfrag(monkeypatch)
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
-    assert "No isomer verdict" in body["verdict"] and "other isomers are not ruled out" in body["verdict"]
+    assert "No isomer verdict" in body["verdict"] and "No other usable same-formula connectivity" in body["verdict"]
     assert body["outputs"]["isomers"]["rows"] == [] and calls == []
     if rows and not rows[0][2]:
         assert any("missing properties" in w for w in body["warnings"])
@@ -126,7 +126,7 @@ def test_network_failure_is_not_a_unique_answer(monkeypatch):
     calls = fake_metfrag(monkeypatch)
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
     assert "PubChem isomer candidate search failed" in body["verdict"]
-    assert "Other isomers are not ruled out" in body["verdict"] and calls == []
+    assert "offline" in body["verdict"] and "not ruled out" not in body["verdict"] and calls == []
     assert not body["outputs"]["isomers"]["rows"]
 
 
@@ -136,7 +136,7 @@ def test_partial_metfrag_failure_is_not_a_unique_answer(monkeypatch, failed):
     fake_metfrag(monkeypatch, fail=[failed])
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
     assert "Not distinguished or not scored" in body["verdict"]
-    assert any("not scored" in w.lower() and "not ruled out" in w.lower() for w in body["warnings"])
+    assert any(w.startswith("Not scored") and "not ruled out" not in w for w in body["warnings"])
     assert "not scored" in [r[5]["badge"] for r in body["outputs"]["isomers"]["rows"]]
 
 
@@ -148,7 +148,7 @@ def test_total_comparison_timeout_leaves_the_unscored_candidate_in_the_group(mon
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
     assert len(calls) == 2 and calls[0][-1]["timeout_s"] == 119 and calls[1][-1]["timeout_s"] == 118
     assert "Not distinguished or not scored" in body["verdict"]
-    assert any("time limit reached" in w and "not ruled out" in w for w in body["warnings"])
+    assert any("time limit reached" in w and w.startswith("Not scored") for w in body["warnings"])
 
 
 @pytest.mark.parametrize("adduct,mz,why", [
@@ -162,7 +162,7 @@ def test_mismatch_or_unsupported_adduct_cannot_give_a_verdict(monkeypatch, adduc
     form["precursor"].update(adduct=adduct, precursor_mz=mz)
     body = client.post("/api/modules/exclusivity/run", json=form).json()
     assert "No isomer verdict" in body["verdict"] and why in body["verdict"]
-    assert "Not exhaustive" in body["verdict"] and calls == []
+    assert "PubChem same-formula search" in body["verdict"] and "Not exhaustive" not in body["verdict"] and calls == []
 
 
 @pytest.mark.parametrize("fail,no_result", [([TOP_NAME], []), ([], [TOP_NAME]), ([], [OTHER_NAME])])
@@ -170,7 +170,7 @@ def test_no_engine_result_never_produces_a_unique_verdict(monkeypatch, fail, no_
     pubchem(monkeypatch, [(1, "other", OTHER, [])])
     fake_metfrag(monkeypatch, fail=fail, no_result=no_result)
     body = client.post("/api/modules/exclusivity/run", json=inputs()).json()
-    assert "No isomer verdict" in body["verdict"] and "not ruled out" in body["verdict"].lower()
+    assert "No isomer verdict" in body["verdict"] and "no isomer verdict is possible" in body["verdict"]
 
 
 def test_lipid_skips_isomers_even_with_spectrum(monkeypatch):
@@ -179,7 +179,7 @@ def test_lipid_skips_isomers_even_with_spectrum(monkeypatch):
     body = client.post("/api/modules/exclusivity/run", json=inputs(EXAMPLE_STRUCTURES["DOPG"])).json()
     assert body["outputs"]["isomers"]["rows"] == [] and calls == []
     assert "lipid" in body["verdict"] and "C=C" in body["verdict"] and "sn-positions" in body["verdict"]
-    assert "specific methods or additional evidence" in body["verdict"]
+    assert "specific methods or additional evidence" not in body["verdict"]                      # the hedge is in the Docs page, not on the result
     assert not any("CanonicalSMILES,IsomericSMILES" in url for url in fake.urls)
 
 
@@ -188,7 +188,7 @@ def test_network_confirmation_mentions_pubchem_isomer_search():
     assert "isomer candidate search query PubChem" in mod["network"]
     assert "MetFrag runs locally" in mod["network"]
     table = next(b for b in mod["outputs"] if b.get("id") == "isomers")
-    assert any("MetFragCommandLine-2.5.2.jar" in h and "120 seconds" in h for h in table["help"])
+    assert "Distinguishable by MS2" in table["column_help"] and "Atoms covered" in table["column_help"]
 
 
 @pytest.mark.skipif(not shutil.which("java") or not mf.JAR.exists(), reason="MetFrag Java runtime or JAR missing")
@@ -205,4 +205,4 @@ def test_real_metfrag_compares_two_pubchem_candidates_without_network():
                                 [(43.0542, 100.0), (45.0335, 30.0)], None, "[M+H]+")
     assert result["verdict"] in ("single", "indistinguishable")
     assert len(result["candidates"]) == 2 and all(c["evaluated"] for c in result["candidates"])
-    assert result["candidates"][1]["source"] == "PubChem CID 1" and "Not exhaustive" in result["source_summary"]
+    assert result["candidates"][1]["source"] == "PubChem CID 1" and "PubChem same-formula search" in result["source_summary"] and "Not exhaustive" not in result["source_summary"]

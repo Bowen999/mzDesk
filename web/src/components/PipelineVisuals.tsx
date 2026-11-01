@@ -9,7 +9,7 @@ import "./pipeline.css";
 /**
  * The measured spectrum against the best judged library hit. Only shown when a library search finished and there is a hit to compare:
  * without a search (skipped, not installed, no peaks) or without a hit there is nothing to put next to it, and the reason stays in the step's note.
- * The explanations live behind the "?" next to the title; the plot is lower than on the module pages.
+ * The one line of explanation lives behind the "?" next to the title; the plot is lower than on the module pages.
  */
 export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
   const report = useReportMode();       // the report has no tabs: the library comparison, then the experimental spectrum
@@ -20,13 +20,7 @@ export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
   const library = figures?.library;
   if (!library || (libraryStep && libraryStep.status !== "done")) return null;
   const showLibrary = !query || view === "library";
-  const help = [
-    `Measured m/z ${result.context.precursor_mz.toFixed(4)} · ${result.context.polarity}.`,
-    "Top: experimental. Bottom: library. Dark peaks are paired by greedy matching; the library similarity uses its own metric.",
-    "The best judged library hit may not be the top-ranked final candidate.",
-    "Only the main peaks (at least 5 % of the base peak) and the precursor are labelled; hover any peak for its details.",
-    ...(libraryStep ? [`Library search: ${libraryStep.status}.${libraryStep.note ? " " + libraryStep.note : ""}`] : []),
-  ];
+  const help = [`Top: experimental. Bottom: library. Dark peaks are matched. Precursor m/z ${result.context.precursor_mz.toFixed(4)} · ${result.context.polarity}.`];
   return <section className="workflow-evidence spectrum-evidence" aria-labelledby="workflow-spectrum-title">
     <div className="workflow-heading"><h2 id="workflow-spectrum-title">Spectrum evidence</h2><HelpButton lines={help} label="Help: Spectrum evidence" />
       {query && !report && <div className="workflow-tabs" role="group" aria-label="Spectrum view">
@@ -55,8 +49,8 @@ export function IsomerEvidence({ result }: { result: AnnotationResult }) {
   const challengers = new Set(iso.challengers.map(c => c.id));
   const others = new Map((iso.isomers ?? []).map(c => [c.id, c]));
   return <section className="workflow-evidence" aria-labelledby="workflow-isomer-title">
-    <div className="workflow-heading"><div><h2 id="workflow-isomer-title">Isomer comparison</h2>
-      <p>MS-FINDER fragment explanations for the candidates considered</p></div><span className="badge">{iso.verdict}</span></div>
+    <div className="workflow-heading"><h2 id="workflow-isomer-title">Isomer comparison<HelpButton lines={["Share of the fragment intensity that MS-FINDER explains for each candidate."]} label="Help: Isomer comparison" /></h2>
+      <span className="badge">{iso.verdict}</span></div>
     <div className="isomer-bars">
       {candidates.map(c => {
         const fraction = c.explained_fraction;
@@ -71,6 +65,5 @@ export function IsomerEvidence({ result }: { result: AnnotationResult }) {
         </div>;
       })}
     </div>
-    <p className="workflow-caption">Bars show the share of considered fragment intensity explained by the model, not identification confidence. Unlisted isomers are not ruled out.</p>
   </section>;
 }

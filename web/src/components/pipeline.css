@@ -71,20 +71,4 @@
 .cand-flag { display: inline-block; margin-left: 8px; padding: 0 7px; color: var(--ov-amber-ink); background: var(--ov-amber-bg); border: 1px solid var(--ov-amber-line); border-radius: 999px; font-size: 11px; font-weight: 500; line-height: 18px; white-space: nowrap; vertical-align: 1px; }
 .cand-ccs { color: var(--muted); }
 
-/* ---- Steps (StepList.tsx): one folded line each: number, title, status, seconds, short note ---- */
-details.stage.step-line, .stage.step-line.is-static { margin: 0 0 8px; padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
-details.stage.step-line > summary, .stage.step-line.is-static { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-width: 0; margin: 0; padding: 9px 14px 9px 34px; font-weight: 400; list-style: none; }
-details.stage.step-line > summary { cursor: pointer; }
-details.stage.step-line > summary::-webkit-details-marker { display: none; }
-details.stage.step-line > summary::before { content: ""; position: absolute; left: 16px; top: 17px; width: 6px; height: 6px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; }
-details.stage.step-line[open] > summary::before { top: 15px; transform: rotate(45deg); }
-details.stage.step-line > summary:hover .step-title { color: var(--accent); }
-details.stage.step-line > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 10px; }
-.step-title { flex: none; color: var(--ink); font-size: 13.5px; font-weight: 600; line-height: 22px; }
-.step-seconds { flex: none; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-.step-note { flex: 1 1 200px; min-width: 0; overflow: hidden; color: var(--muted); font-size: 12.5px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
-.step-note.is-failed { color: var(--ov-red-ink); }
-.step-note.is-failed, .step-line.is-static .step-note { overflow: visible; white-space: normal; }
-.step-body { padding: 2px 18px 16px; }
-.step-full-note { margin: 0 0 12px; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
-@media (max-width: 700px) { details.stage.step-line > summary, .stage.step-line.is-static { padding-right: 10px; } .step-note { flex-basis: 100%; } .step-body { padding: 2px 10px 12px; } }
+/* ---- Steps (StepList.tsx): the timeline is styled in ../design.css ---- */

@@ -318,9 +318,10 @@ def test_derivatization_pointers_only_without_a_strong_chromophore():
     assert "OPA" in _rows(_a("NCC(=O)O"))["FLD"][2]
 
 
-def test_notes_carry_the_caveats():
+def test_notes_carry_the_rules_and_no_general_caveats():
     notes = " ".join(_a(CAFFEINE).notes)
-    assert "±10–20 nm" in notes and "solvent and pH" in notes and "UV rule" in notes and "λmax rule" in notes and "CAD / ELSD rule" in notes
+    assert "±10–20 nm" in notes and "UV rule" in notes and "λmax rule" in notes and "CAD / ELSD rule" in notes
+    assert "Caveat" not in notes and "solvent and pH" not in notes
 
 
 # ---------------------------------------------------------------- structures and errors
@@ -383,8 +384,8 @@ def test_api_fills_every_block():
     assert [t["label"] for t in tiles] == ["UV/PDA", "FLD", "CAD", "ELSD", "RI"]
     assert [t["status"] for t in tiles] == ["yes", "yes", "yes", "yes", "partial"]        # quinine: UV and native fluorescence; non-volatile for CAD / ELSD; RI possible
     assert tiles[0]["value"] == "strong · ~315 nm" and tiles[1]["value"] == "likely" and all(t["help"] for t in tiles)
-    assert "Quinoline" in tiles[0]["help"][0] and tiles[0]["help"][1].startswith("λmax by class table: approximate (±10–20 nm)")      # class, method and caveat in the UV help
-    assert tiles[1]["help"][-1].startswith("a structural alert only") and "quinoline-type" in tiles[1]["help"][0]                      # reason + quantum-yield caveat in the FLD help
+    assert "Quinoline" in tiles[0]["help"][0] and tiles[0]["help"][1] == "λmax by class table: ±10–20 nm"      # class and method in the UV help
+    assert len(tiles[1]["help"]) == 1 and "quinoline-type" in tiles[1]["help"][0]                                                        # the FLD help is the reason only
     fig = out["chromophore_structure"]
     assert fig["svg"] and fig["help"][0].startswith("Quinoline") and "atoms 3–12" in fig["help"][0] and "~315 nm" in fig["help"][0]
     assert out["rule_hits"]["items"]

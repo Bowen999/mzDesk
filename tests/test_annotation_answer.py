@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from mzdesk.annotation.answer import ISOMER_CAVEAT, attach_isomer, build_answer
+from mzdesk.annotation.answer import attach_isomer, build_answer
 from mzdesk.annotation.levels import assign_level
 from mzdesk.annotation.merge import formula_only_candidates, merge_candidates
 from mzdesk.annotation.schema import Candidate, LayerResult
@@ -42,8 +42,7 @@ def test_single_when_the_isomer_check_separates_the_top_candidate(ranked):
     assert (a["layer"], a["layer_label"], a["level"]) == ("library", "library", "2a")
     assert a["level_label"] == "Level 2a: probable structure (library spectrum match)"
     assert a["statement"].startswith("alpha-glucose is the top-ranked structure (library, Level 2a).")
-    assert "tell it apart from every other isomer" in a["statement"] and ISOMER_CAVEAT in a["statement"]
-    assert "only holds for the candidates that were considered" in a["statement"]
+    assert a["statement"].endswith("Fragment peaks tell it apart from every other isomer that was considered.")             # no caveat sentence after it
 
 
 def test_the_isomer_verdict_does_not_change_the_level(ranked):
@@ -54,12 +53,12 @@ def test_the_isomer_verdict_does_not_change_the_level(ranked):
 
 @pytest.mark.parametrize("result, expected", [
     (isomer("insufficient", notes=["No MS2 peaks above 1 % of the base peak."]),
-     "The isomer check could not be done (No MS2 peaks above 1 % of the base peak), so other isomers of C6H12O6 are not ruled out."),
-    (isomer("insufficient", notes="the engine failed."), "The isomer check could not be done (the engine failed), so other isomers of C6H12O6 are not ruled out."),
-    (isomer("insufficient"), "The isomer check could not be done (no isomer comparison was possible), so other isomers of C6H12O6 are not ruled out."),
-    (None, "The isomer check was not run, so other isomers of C6H12O6 are not ruled out."),
+     "The isomer check could not be done (No MS2 peaks above 1 % of the base peak)."),
+    (isomer("insufficient", notes="the engine failed."), "The isomer check could not be done (the engine failed)."),
+    (isomer("insufficient"), "The isomer check could not be done (no isomer comparison was possible)."),
+    (None, "The isomer check was not run."),
 ])
-def test_an_isomer_check_that_could_not_be_done_still_gives_the_top_candidate_and_says_isomers_are_not_ruled_out(ranked, result, expected):
+def test_an_isomer_check_that_could_not_be_done_still_gives_the_top_candidate_and_says_so(ranked, result, expected):
     a = build_answer(ranked, result)
     assert a["type"] == "single" and a["ids"] == ["c1"] and a["isomer_verdict"] == ("not run" if result is None else "insufficient")
     assert a["statement"] == f"alpha-glucose is the top-ranked structure (library, Level 2a). {expected}"
@@ -90,7 +89,7 @@ def test_group_when_the_top_candidate_cannot_be_separated_from_an_isomer(ranked)
     assert (a["type"], a["ids"], a["top_id"], a["isomer_verdict"]) == ("group", ["c1", "c3"], "c1", "indistinguishable")
     assert a["layer"] == "library" and a["level"] == "2a"
     assert a["statement"].startswith("The spectrum cannot separate 2 isomers: alpha-glucose and fructose.")
-    assert "The top-ranked one is alpha-glucose (library, Level 2a)." in a["statement"] and a["statement"].endswith(ISOMER_CAVEAT)
+    assert a["statement"].endswith("The top-ranked one is alpha-glucose (library, Level 2a).")
     three = build_answer(ranked, isomer("indistinguishable", group=["c1", "c2", "c3"]))
     assert three["ids"] == ["c1", "c2", "c3"] and "alpha-glucose, beta-glucose and fructose" in three["statement"]
 
@@ -113,8 +112,7 @@ def test_challengers_are_named_for_information_only_whatever_their_form(ranked):
 def test_formula_only_when_there_is_no_structure_but_a_formula_list():
     a = build_answer([], None, formula_list=[{"formula": "C8H10N4O2", "adduct": "[M+H]+", "prob": 0.8}, "C7H6N6O2"], precursor_mz=195.0877)
     assert (a["type"], a["ids"], a["layer"], a["layer_label"], a["level"], a["top_id"]) == ("formula_only", ["f1", "f2"], "formula_only", "formula-only", "4", None)
-    assert a["statement"] == ("No structure could be proposed. The data support 2 molecular formulas: C8H10N4O2 ([M+H]+) and C7H6N6O2. "
-                              "This is formula-level evidence only.")
+    assert a["statement"] == "No structure could be proposed. The data support 2 molecular formulas: C8H10N4O2 ([M+H]+) and C7H6N6O2."
     assert a["ids"] == [r.id for r in formula_only_candidates(["C8H10N4O2", "C7H6N6O2"])]
     one = build_answer([], None, formula_list=["C8H10N4O2"])
     assert "1 molecular formula: C8H10N4O2." in one["statement"]
@@ -184,7 +182,7 @@ def test_the_real_isomer_check_without_peaks_gives_a_result_the_answer_can_use(r
     attach_isomer(ranked, result)
     a = build_answer(ranked, result)
     assert a["type"] == "single" and a["ids"] == ["c1"] and a["isomer_verdict"] == "insufficient"
-    assert "The isomer check could not be done (No MS2 peaks), so other isomers of C6H12O6 are not ruled out." in a["statement"]
+    assert a["statement"].endswith("The isomer check could not be done (No MS2 peaks).")
     assert all(c.isomer == {"verdict": "insufficient", "role": None, "challenger": False, "explained_fraction": None} for c in ranked)
 
 

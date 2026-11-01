@@ -606,7 +606,7 @@ def run_query(q, progress=None):
     name = (ident or {}).get("name") or q.name or "The compound"
     facts = [["Name", name]] + ([["Formula", ident["formula"]], ["Monoisotopic mass", f"{ident['mass']:.4f}"], ["InChIKey", ident["inchikey"] or NA]] if ident else [])
     sheet = table_block("method_sheet", "Method sheet", ["Item", "Recommendation", "Basis"], rows, span="full",
-                        help="Rule-based starting point built from the nine steps, not a validated method.")
+                        help="Rule-based starting point built from the nine steps.")
     return make_result(PIPELINE_ID, steps, make_answer(statement(name, decision, parts), facts=facts), [sheet], _warnings(q, steps, got, decision))
 
 
@@ -640,8 +640,8 @@ def _structure_warnings(q, got, lc_route):
     out = []
     analysed = Chem.MolFromSmiles(((got.get(2) or {}).get("main_smiles")) or q.smiles)
     if analysed is not None and not any(a.GetSymbol() == "C" for a in analysed.GetAtoms()):
-        out.append(f"The analysed part ({rdMolDescriptors.CalcMolFormula(analysed)}) contains no carbon. The rules are written for organic compounds, so this "
-                   "sheet is not reliable for it; inorganic ions are usually measured by ion chromatography or ICP-MS.")
+        out.append(f"The analysed part ({rdMolDescriptors.CalcMolFormula(analysed)}) contains no carbon. The rules are written for organic compounds; "
+                   "inorganic ions are usually measured by ion chromatography or ICP-MS.")
     given = Chem.MolFromSmiles(q.smiles)
     if lc_route and given is not None and any(a.GetIsotope() for a in given.GetAtoms()):
         out.append("The structure has isotope labels. The ESI m/z is calculated for the unlabelled compound; add the label mass to it.")

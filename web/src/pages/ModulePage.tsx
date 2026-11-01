@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, runModule } from "../api";
-import { FieldInput, initialValues, isRequired, missingRequired, summarizeInputs, visibleFields } from "../components/Fields";
+import { FieldInput, initialValues, missingRequired, summarizeInputs, visibleFields } from "../components/Fields";
 import { RichText } from "../components/Help";
-import { Icon, moduleIcon } from "../components/Icon";
+import { moduleIcon } from "../components/Icon";
 import { useNetworkGuard } from "../components/NetworkDialog";
-import { OutputList } from "../components/Outputs";
+import { OutputList, coveredCards } from "../components/Outputs";
+import { PageFoot, PageHead } from "../components/PageHead";
+import { RunBar } from "../components/RunBar";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
 import type { Field, Module, RunResult, Spec } from "../types";
@@ -44,50 +46,29 @@ function groupFields(fields: Field[]): Group[] {
 
 export const modulePageClass = (mod: Module) => "page module-page" + (mod.subgroup === "detectability" ? " detectability-page" : "");
 
-/** The title of a module page and its one-line description. The Session report draws the same. */
-export function ModuleHead({ mod, spec }: { mod: Module; spec: Spec }) {
-  const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
-  const styledHeading = mod.subgroup === "detectability" || !mod.subgroup || ["molecular", "ms1", "ms2", "gnps"].includes(mod.subgroup);   // no subgroup = a standalone page (Calculator)
-  return (
-    <>
-      <div className="module-heading">
-        {styledHeading && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
-        <div className="module-heading-copy">
-          {styledHeading && subgroup && <div className="module-kicker">{subgroup}</div>}
-          <h1>{!styledHeading && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
-          {!mod.live && <div className="meta">Placeholder: shows the page format, nothing computes yet</div>}
-        </div>
-      </div>
-      <p className="one-liner"><RichText text={mod.one_liner} /></p>
-    </>
-  );
+/** The title of a module page and its "have → get" line. The Session report draws the same. */
+export function ModuleHead({ mod }: { mod: Module; spec?: Spec }) {
+  return <PageHead icon={moduleIcon(mod)} title={mod.title} flow={mod.one_liner} preview={!mod.live} />;
 }
 
-/** Everything under the inputs once a run has a result (or is running): the "Results" head, the verdict, the warnings and the output blocks.
+/** Everything under the inputs once a run has a result (or is running): the verdict, the warnings and the output blocks.
  *  The Session report draws it with ok = true. */
-export function ModuleResults({ mod, result, ok, busy, seconds, stale }:
-  { mod: Module; result: RunResult | null; ok: boolean; busy: boolean; seconds: number | null; stale: boolean }) {
+export function ModuleResults({ mod, result, ok, busy, stale }:
+  { mod: Module; result: RunResult | null; ok: boolean; busy: boolean; seconds?: number | null; stale: boolean }) {
   const gnps = mod.subgroup === "gnps";
   return (
     <>
-      {ok && (
-        <div className="results-head">
-          <h2 className="panel-title">Results</h2>
-          {seconds !== null && <span className="msg">{seconds.toFixed(1)} s</span>}
-          {stale && <span className="msg warn-text">Inputs changed since this run.</span>}
-        </div>)}
+      {ok && stale && <div className="alert warn">Inputs changed. Run again to update the results.</div>}
       {ok && result?.verdict && (
         <div className="verdict" aria-live="polite">
-          <div className="verdict-label">Result</div>
           <p className="verdict-text"><RichText text={result.verdict} /></p>
         </div>
       )}
-      {ok && stale && <div className="alert warn">Inputs changed since this run. The results below belong to the previous inputs; run again to update them.</div>}
       {ok && gnps && !!result!.warnings?.length && <div className="alert warn gnps-notices" role="note">
-        <strong>Notes</strong><ul>{result!.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+        <ul>{result!.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
       </div>}
       {ok && !gnps && result!.warnings?.map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
-      <OutputList blocks={mod.outputs} outputs={ok ? result!.outputs : null} live={mod.live} busy={busy} />
+      <OutputList blocks={mod.outputs} outputs={ok ? result!.outputs : null} hide={ok ? coveredCards(mod.outputs, result!.outputs, result!.verdict) : []} live={mod.live} busy={busy} />
     </>
   );
 }
@@ -123,8 +104,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   const summary = summarizeInputs(mod.inputs, values);
   const shown = visibleFields(mod.inputs, values);
   const groups = groupFields(shown);
-  const hasRequired = shown.some(f => isRequired(f, values));
-  const runLabel = run.busy ? <><span className="spinner" aria-hidden="true" />Running{elapsed !== null && elapsed >= 1 ? ` · ${Math.floor(elapsed)} s` : "…"}</> : `Run ${mod.title}`;
+  const runLabel = run.busy ? <><span className="spinner" aria-hidden="true" />Running{elapsed !== null && elapsed >= 1 ? ` · ${Math.floor(elapsed)} s` : "…"}</> : "Run";
 
   const update = (fid: string, v: any) => {
     setValues(prev => ({ ...prev, [fid]: v }));
@@ -208,7 +188,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
 
   return (
     <div ref={pageRef} className={modulePageClass(mod)} data-module={mod.id}>
-      <ModuleHead mod={mod} spec={spec} />
+      <ModuleHead mod={mod} />
 
       {folded ? (
         <div className="panel input-summary">
@@ -226,10 +206,6 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
         </div>
       ) : (
         <div key={formVersion} className={"panel" + (run.busy ? " is-running" : "")}>
-          <div className="panel-head">
-            <h2 className="panel-title">Inputs</h2>
-            <span className="panel-note">{hasRequired ? <><span className="req" aria-hidden="true">*</span> required</> : "all inputs optional"}</span>
-          </div>
           {formError && <div className="alert error" role="alert">{formError}</div>}
           {groups.map((g, gi) => {
             // A run of checkboxes at the end of a section reads better as one row; a checkbox
@@ -242,12 +218,10 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
             </> : <div className="fields">{g.fields.map(field)}</div>;
             if (gnps && g.title === "Optional verification") return (
               <details className="gnps-advanced" key={g.title}>
-                <summary><span>{g.title}</span><small>Diagnostic ions and verification settings</small></summary>
+                <summary>{g.title}</summary>
                 <fieldset className="form-section"><legend className="sr-only">{g.title}</legend>{body}</fieldset>
               </details>);
-            return g.title
-              ? <fieldset className="form-section" key={g.title}><legend>{g.title}</legend>{body}</fieldset>
-              : <div className="form-plain" key={gi}>{body}</div>;
+            return <div className="form-section" key={g.title || gi}>{body}</div>;
           })}
           <div className="actions">
             <button className="btn" onClick={go} disabled={run.busy} aria-busy={run.busy}>{runLabel}</button>
@@ -255,23 +229,20 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
             {mod.example && <button className="btn secondary" type="button" disabled={run.busy} onClick={loadExample}>Load example</button>}
             {ok && !stale && <button className="btn ghost" type="button" onClick={() => setEditing(false)}>Hide inputs</button>}
             <span className="msg" aria-live="polite">
-              {netNote || (run.result?.status === "placeholder" && "Not connected yet: nothing computes on this page.")
-                || (stale && "Inputs changed since this result. Run again to update it.")}
+              {netNote || (run.result?.status === "placeholder" && "Not connected yet: nothing computes on this page.")}
             </span>
           </div>
         </div>
       )}
 
-      {run.busy && <div className="run-progress" role="progressbar" aria-label="Running"><span /></div>}
+      <RunBar busy={run.busy} />
       {run.error && (
         <div className="alert error" role="alert" tabIndex={-1} ref={errorRef}>{run.error}
           {run.log && <details><summary>Tool log</summary><pre className="code">{run.log}</pre></details>}
         </div>)}
 
-      {mod.live && !ok && !run.busy && !run.error && (
-        <p className="empty-hint">Results appear here after you run this module.{mod.example ? <> Or <button type="button" className="link-btn" onClick={loadExample}>load the example</button>.</> : null}</p>
-      )}
-      <ModuleResults mod={mod} result={run.result} ok={ok} busy={run.busy} seconds={run.seconds} stale={stale} />
+      <ModuleResults mod={mod} result={run.result} ok={ok} busy={run.busy} stale={stale} />
+      <PageFoot id={mod.id} basedOn={mod.based_on} />
       {guard.dialog}
     </div>
   );

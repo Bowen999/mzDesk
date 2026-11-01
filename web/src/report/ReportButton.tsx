@@ -27,8 +27,8 @@ export function ReportButton({ spec, rail = false }: { spec: Spec; rail?: boolea
   }, [note]);
   const n = runs.length;
   const title = n
-    ? `Download a report folder (JSON + HTML, zipped) with the ${n} page${n === 1 ? "" : "s"} that have results`
-    : "Session report: run a module or workflow first, then download its results here";
+    ? `Download the results of ${n} page${n === 1 ? "" : "s"} (HTML + JSON, zipped)`
+    : "Run a module or workflow first";
   const go = async () => {
     if (busy || !n) return;
     setBusy(true); setNote(null);

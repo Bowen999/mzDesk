@@ -17,7 +17,7 @@ const result = {
 
 test("the generic result keeps its answer, level, facts, warnings and blocks", () => {
   const html = ssr.render(WorkflowResultView, { result });
-  assert.match(html, /<div class="verdict" aria-live="polite"><div class="verdict-label">Answer<\/div><p class="verdict-text">Caffeine fits a reversed-phase LC-MS method\.<\/p><\/div>/);
+  assert.match(html, /<div class="verdict" aria-live="polite"><p class="verdict-text">Caffeine fits a reversed-phase LC-MS method\.<\/p><\/div>/);
   assert.match(html, /<div class="pill-row"><span class="badge" title="A: strong">A<\/span><\/div>/);
   assert.match(html, /<dl class="answer-facts"><div><dt>Platform<\/dt><dd>RP LC-MS<\/dd><\/div><div><dt>Ion mode<\/dt><dd>ESI\+<\/dd><\/div><\/dl>/);
   assert.match(html, /<div class="alert warn">One input was assumed\.<\/div>/);

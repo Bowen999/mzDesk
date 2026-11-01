@@ -161,7 +161,7 @@ def _pubchem_annotations(res, timeout):
     if "Chemical Vendors" in sections:
         cas = "; ".join(res.ids.get("CAS", [])) or "—"
         standards.append([_link("PubChem vendor listings", compound_url + "#section=Chemical-Vendors"),
-                          cas, "Not standardised; verify with each vendor"])
+                          cas, "Varies by vendor"])
 
     reports = {}
     for entry in entries:
@@ -480,7 +480,7 @@ def enrich(res, *, timeout=12.0):
         hmdb_id = res.ids["HMDB"][0]
         url = res.links.get("HMDB")
         _add(outputs["origin"]["rows"], [
-            "Human-associated", "HMDB metabolite record; association alone does not prove endogenous biosynthesis",
+            "Human-associated", "HMDB metabolite record",
             _link(hmdb_id, url) if url else hmdb_id])
 
     if res.ids.get("KEGG"):

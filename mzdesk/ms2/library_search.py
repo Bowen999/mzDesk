@@ -246,7 +246,7 @@ def _ms2deepscore_batch(dest, q_mz, q_int, q_prec, ionmode, cands, notes):
 def _spec2vec_batch(dest, q_mz, q_int, q_prec, ionmode, cands, notes):
     name = mn.SPEC2VEC
     if ionmode == "negative":
-        notes[name] = "N/A: the pretrained model is GNPS AllPositive, i.e. positive-mode spectra only"
+        notes[name] = "N/A: the pretrained model covers positive-mode spectra only"
         return
     try:
         import gensim  # noqa: F401
@@ -410,8 +410,7 @@ def search(peaks, spectrum_type, libraries, metrics, threshold, *, precursor_mz=
         prefilter = {"total": int(total), "kept": int(len(keep)), "dropped": total > len(keep)}
         if prefilter["dropped"]:
             warnings.append(f"EI: all {total:,} library EI spectra were ranked by weighted entropy similarity; "
-                            f"the top {EI_PREFILTER_N:,} were scored with the selected metrics. "
-                            "A spectrum with low entropy but high other scores can be missed.")
+                            f"the top {EI_PREFILTER_N:,} were scored with the selected metrics.")
         for li in range(len(parts)):
             sel = np.sort(keep[lib_idx[keep] == li])
             if sel.size:

@@ -107,6 +107,8 @@ def test_redu_streamed_search_matches_original(small_redu):
     output = response.json()["outputs"]
     assert output["summary"]["values"]["Passed datasets"] == "1"
     assert output["summary"]["values"]["Undetermined"] == "1"
+    assert output["datasets"]["help"] == "Undetermined: some matched files report no polarity."        # a short note, no longer a warning on every run
+    assert response.json()["warnings"] == []
     assert len(output["downloads"]["files"]) == 2
 
 
@@ -182,7 +184,7 @@ def test_massql_large_result_count_and_full_download(tmp_path, monkeypatch):
     body = r.json()
     matches = body["outputs"]["matches"]
     assert matches["count"] == 205 and len(matches["rows"]) == 200
-    assert "200 of 205" in " ".join(body["warnings"])
+    assert body["warnings"] == ["Only the first 200 of 205 matches are shown."]               # the "migrated subset" remark is no longer a warning
     files = {f["name"]: f["content"] for f in body["outputs"]["downloads"]["files"]}
     assert len(list(csv.DictReader(io.StringIO(files["massql-matches.tsv"]), delimiter="\t"))) == 205
 
@@ -303,6 +305,7 @@ def test_fastmasst_fake_search_diagnostics_and_redu(small_redu, monkeypatch):
     assert len(out["hits"]["rows"]) == 1
     assert out["verification"]["rows"][0][2:4] == ["1", "1"]
     assert out["redu"]["rows"]
+    assert not any("statistical" in w or "establish" in w for w in r.json()["warnings"])          # no general disclaimers, only what is specific to the run
     files = {f["name"]: f["content"] for f in out["downloads"]["files"]}
     assert "fastmasst.hits.tsv" in files and len(list(csv.DictReader(io.StringIO(files["fastmasst.hits.tsv"]), delimiter="\t"))) == 2
     assert "usi_cache" not in json.loads(files["fastmasst.json"])["verification"]

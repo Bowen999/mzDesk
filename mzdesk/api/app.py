@@ -30,6 +30,7 @@ from mzdesk.workflows import ei_ms_annotation, targeted_method
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
+DOCS = ROOT / "docs"                                   # one markdown file per page, written from the long help texts
 LIB_FILES = {"3Dmol-min.js": ROOT / "lib" / "3Dmol-min.js"}   # 前端按需加载的第三方脚本
 log = logging.getLogger("mzdesk.api")
 app = FastAPI(title="mzDesk API", version=__version__)
@@ -48,6 +49,17 @@ def health():
 @app.get("/api/spec")
 def get_spec():
     return {**spec(), "version": __version__}
+
+
+@app.get("/api/docs/{page_id}")
+def get_docs(page_id: str):
+    """The long notes of one page (module or workflow): mzdesk/docs/<id>.md, drawn by the frontend's /docs/<id> page."""
+    if page_id not in _modules and page_id not in _pipelines:
+        raise HTTPException(404, "unknown page")
+    path = DOCS / f"{page_id}.md"
+    if not path.is_file():
+        raise HTTPException(404, "no notes for this page")
+    return {"id": page_id, "markdown": path.read_text(encoding="utf-8")}
 
 
 @app.post("/api/modules/{module_id}/run")

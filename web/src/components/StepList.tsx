@@ -2,45 +2,69 @@ import type { JobStep } from "../types";
 import { OutputList } from "./Outputs";
 import "./pipeline.css";
 
-const STATUS_TONE: Record<string, string> = { done: "good", running: "jp", failed: "bad", skipped: "neutral", queued: "neutral" };
-/** A note longer than this is cut to one line in the collapsed step; the whole note is the first line of the opened step. */
+/** A note longer than this is cut to one line in the folded step; the whole note is the first line of the opened step. */
 const SHORT_NOTE = 70;
+/** Statuses that get a word next to the title; done and queued are told by the node alone. */
+const WORD: Record<string, string> = { running: "running", skipped: "skipped", failed: "failed" };
 
-export function StatusChip({ status }: { status: string }) {
-  return <span className={"badge tone-" + (STATUS_TONE[status] ?? "neutral")}>{status}</span>;
-}
+const secondsOf = (s: JobStep) => (typeof s?.seconds === "number" && Number.isFinite(s.seconds) && s.seconds >= 0 ? s.seconds : null);
 
 /**
- * One step, folded: a single line (number, title, status, seconds, note) that opens on click to the blocks the step has produced (tables with ids,
- * filled as soon as the step ends). A failed step shows its whole note in the folded line. A step with nothing to open (no blocks) is the line alone.
+ * One step of the timeline: a node (number, check, spinner, dash or "!" by status), the title with its short note under it, and the time with
+ * a thin bar scaled to the longest step. A step with blocks opens on click to the tables it produced; a failed step shows its whole note.
  */
-export function StepView({ step, index }: { step: JobStep; index: number }) {
+export function StepView({ step, index, longest = 0 }: { step: JobStep; index: number; longest?: number }) {
   const blocks = step.blocks ?? [];
   const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
-  const hasSeconds = typeof step.seconds === "number" && Number.isFinite(step.seconds) && step.seconds >= 0;
+  const seconds = secondsOf(step);
   const status = step.status || "unknown";
   const note = step.note || "";
+  const showTime = seconds !== null && status !== "queued" && status !== "skipped";
   const line = (
     <>
-      <span className="step-title">{index + 1}. {step.title || "Unnamed stage"}</span>
-      <StatusChip status={status} />
-      {status !== "queued" && status !== "skipped" && hasSeconds && <span className="step-seconds">{step.seconds.toFixed(1)} s</span>}
-      {note && <span className={"step-note" + (status === "failed" ? " is-failed" : "")} title={note}>{note}</span>}
+      <span className="tl-node" aria-hidden="true">{index + 1}</span>
+      <span className="tl-main">
+        <span className="tl-top">
+          <span className="step-title">{step.title || "Unnamed stage"}</span>
+          {WORD[status] ? <span className="tl-word">{WORD[status]}</span> : <span className="sr-only">{status}</span>}
+        </span>
+        {note && <span className={"step-note" + (status === "failed" ? " is-failed" : "")} title={note}>{note}</span>}
+      </span>
+      {showTime && (
+        <span className="tl-time">
+          <span className="step-seconds">{seconds!.toFixed(1)} s</span>
+          {longest > 0 && <i className="tl-bar" style={{ width: `${Math.max(4, Math.min(100, (seconds! / longest) * 100)).toFixed(0)}%` }} />}
+        </span>)}
     </>);
   const id = `workflow-step-${step.id}`;
-  if (!blocks.length) return <div id={id} className="stage step-line is-static" data-status={status}>{line}</div>;
+  if (!blocks.length) return <li id={id} className="tl-step" data-status={status}><div className="tl-line is-static">{line}</div></li>;
   return (
-    <details id={id} className="stage step-line" data-status={status}>
-      <summary>{line}</summary>
-      <div className="step-body">
-        {note.length > SHORT_NOTE && <p className="step-full-note">{note}</p>}
-        <OutputList blocks={blocks} outputs={outputs} live />
-      </div>
-    </details>
+    <li id={id} className="tl-step" data-status={status}>
+      <details className="tl-details">
+        <summary className="tl-line">{line}</summary>
+        <div className="step-body">
+          {note.length > SHORT_NOTE && <p className="step-full-note">{note}</p>}
+          <OutputList blocks={blocks} outputs={outputs} live />
+        </div>
+      </details>
+    </li>
   );
 }
 
-/** The steps of a job, all folded. */
+/** The steps of a job as one timeline: a rail with a node per step. All folded. */
 export function StepList({ steps }: { steps: JobStep[] }) {
-  return <>{(Array.isArray(steps) ? steps : []).map((s, i) => <StepView step={s} index={i} key={s.id} />)}</>;
+  const list = Array.isArray(steps) ? steps : [];
+  if (!list.length) return null;
+  const timed = list.filter(s => s.status !== "queued" && s.status !== "skipped").map(secondsOf).filter((v): v is number => v !== null);
+  const total = timed.reduce((a, b) => a + b, 0), longest = Math.max(0, ...timed);
+  const skipped = list.filter(s => s.status === "skipped").length;
+  return (
+    <section className="timeline" aria-label="Steps">
+      <div className="tl-head">
+        <h2 className="tl-title">Steps</h2>
+        <span className="tl-sum">{list.length} step{list.length === 1 ? "" : "s"}{skipped ? ` · ${skipped} skipped` : ""}{total > 0 ? ` · ${total.toFixed(1)} s` : ""}</span>
+      </div>
+      <ol className="tl-list">{list.map((s, i) => <StepView step={s} index={i} longest={longest} key={s.id} />)}</ol>
+    </section>
+  );
 }

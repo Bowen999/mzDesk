@@ -58,7 +58,7 @@ def _element_hint(halogen, silicon, extended=False):
     if not silicon:
         parts.append("Include Si")
     if not extended:
-        parts.append("Extended element range (for PFAS / unusual compositions)")
+        parts.append("Extended element range")
     return "Off: " + ", ".join(parts) + "; tick a box if the compound may contain those elements."
 
 
@@ -101,8 +101,8 @@ def run_structure(inputs):
         warnings.append(f"MS-FINDER found no molecular formula for m/z {precursor_mz:.4f} as {res['adduct']} within 1 mDa (elements {elements}). "
                         "Check the precursor m/z and the adduct." + (" " + hint if hint else ""))
     elif not structures:
-        warnings.append(f"MS-FINDER's local structure databases have no candidate for {formulas[0]['formula']} and the other top formulas. "
-                        "PubChem is not used, so the compound may simply not be in them." + (" " + hint if hint else ""))
+        warnings.append(f"MS-FINDER's local structure databases have no candidate for {formulas[0]['formula']} and the other top formulas."
+                        + (" " + hint if hint else ""))
     if len(structures) > STRUCTURE_ROWS:
         warnings.append(f"MS-FINDER returned {len(structures)} structures; the table shows the best {STRUCTURE_ROWS}.")
 

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import type React from "react";
 import { useReportMode } from "../report/mode";
-import type { Block, BlockData, CardValue, Cell, Row } from "../types";
+import type { Block, BlockData, CardValue, Cell, Help, Row } from "../types";
 import "../outputs-v2.css";
-import { Chips, GroupTable, Portal, Reaction, RowsTable } from "./Blocks";
+import { ChipList, Chips, GroupTable, Portal, Reaction, RowsTable, isChipList } from "./Blocks";
 import { CompoundCompare } from "./CompoundCompare";
 import { FigureView } from "./Figure";
 import { FragmentProvider } from "./FragmentDialog";
@@ -85,6 +85,21 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
     </div>);
 }
 
+const FOLD_AT = 14;                 // a table longer than this shows its first FOLD_SHOW rows and a button for the rest
+const FOLD_SHOW = 8;
+
+/** A long table without its own pages: the first rows, then "Show all N rows". Short tables are never folded. */
+function FoldedTable({ rows, ...rest }: { columns: string[]; rows: Row[]; rowHelp?: boolean; columnHelp?: Record<string, Help>; empty: string; compact?: boolean }) {
+  const [all, setAll] = useState(false);
+  useEffect(() => setAll(false), [rows]);
+  return (
+    <>
+      <RowsTable {...rest} rows={all ? rows : rows.slice(0, FOLD_SHOW)} />
+      <button type="button" className="fold-more" aria-expanded={all} onClick={() => setAll(v => !v)}>{all ? "Show fewer rows" : `Show all ${rows.length} rows`}</button>
+    </>
+  );
+}
+
 /** Pagination and search operate only on the rows returned for the preview, never on the full download. */
 function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
   const report = useReportMode();
@@ -94,7 +109,10 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState("");
   useEffect(() => { setPage(0); setFilter(""); }, [data]);
-  if (!size) return <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} columnHelp={block.column_help} empty={empty} compact={block.compact} />;
+  if (!size) {
+    const props = { columns, rows, rowHelp: block.row_help, columnHelp: block.column_help, empty, compact: block.compact };
+    return !report && rows.length > FOLD_AT ? <FoldedTable {...props} /> : <RowsTable {...props} />;
+  }
   if (report) {         // no pages, no filter: every row (RowsTable caps a very long table and says so)
     const count = typeof data?.count === "number" ? data.count : rows.length;
     return <div className="result-table">
@@ -144,12 +162,16 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
   const shown = data ? undefined : status;
   switch (block.type) {
     case "heading": return <h4 className="out-title">{block.title}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${block.title}`} /></h4>;
-    case "table": return (
-      <div className="out">
-        <Title block={block} data={data} status={shown} />
-        <FragmentProvider query={data?.fragments}><ResultTable block={block} data={data} empty={empty} /></FragmentProvider>
-        {block.caption && <small>{block.caption}</small>}
-      </div>);
+    case "table": {
+      const list = !!data?.rows && !block.page_size && isChipList(data.columns ?? block.columns ?? [], data.rows);
+      return (
+        <div className="out">
+          <Title block={block} data={data} status={shown} />
+          {list ? <ChipList rows={data!.rows!} column={(data!.columns ?? block.columns ?? [])[0]} />
+            : <FragmentProvider query={data?.fragments}><ResultTable block={block} data={data} empty={empty} /></FragmentProvider>}
+          {block.caption && <small>{block.caption}</small>}
+        </div>);
+    }
     case "grouptable": return (
       <div className="out">
         <Title block={block} data={data} status={shown} />
@@ -259,11 +281,14 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
 /** Where a block sits in the results grid and how loud it is.
  *  span: "full" = whole width; "half" = shares a row with another half block on wide screens (spec `span` wins).
  *  tier: "hero" = metric cards, no frame (they sit right under the verdict); "card" = framed (figures, wide tables, tiles);
- *        "quiet" = no frame, just a title and a hairline (chips, notes, short tables). */
-export function blockLayout(b: Block): { span: "half" | "full"; tier: "hero" | "card" | "quiet" } {
-  const narrowTable = (b.type === "table") && (b.columns?.length ?? 0) <= 3;
+ *        "quiet" = no frame, just a title and a hairline (chips, notes, short tables, lists of short values).
+ *  `data` (after a run) lets a list adapt to its length: a short list of chips shares a row, a long one takes the whole width. */
+export function blockLayout(b: Block, d?: BlockData): { span: "half" | "full"; tier: "hero" | "card" | "quiet" } {
+  const columns = d?.columns ?? b.columns ?? [];
+  const list = b.type === "table" && !b.page_size && !!d?.rows && isChipList(columns, d.rows);
+  const narrowTable = (b.type === "table") && columns.length <= 3;
   const tier = b.type === "cards" ? "hero" : narrowTable || b.type === "chips" || b.type === "notes" || b.type === "downloads" ? "quiet" : "card";
-  const span = b.span ?? (narrowTable || b.type === "chips" || b.type === "notes" ? "half" : "full");
+  const span = b.span ?? (list ? (d!.rows!.length > 24 ? "full" : "half") : narrowTable || b.type === "chips" || b.type === "notes" ? "half" : "full");
   return { span, tier };
 }
 
@@ -298,23 +323,24 @@ function Skeleton({ block }: { block: Block }) {
 /** 一组输出块。outputs 为 null = 还没运行。live = 模块已接引擎（没 id 的块标成 not connected yet）。
  *  Live module: before the run every block is a skeleton (busy = shimmering); after it, blocks without results are hidden.
  *  Placeholder module (live = false): the blocks show their format, as before. */
-export function OutputList({ blocks, exclude = [], outputs = null, live = false, busy = false }:
-  { blocks: Block[]; exclude?: string[]; outputs?: Record<string, BlockData> | null; live?: boolean; busy?: boolean }) {
+export function OutputList({ blocks, exclude = [], hide = [], outputs = null, live = false, busy = false }:
+  { blocks: Block[]; exclude?: string[]; hide?: string[]; outputs?: Record<string, BlockData> | null; live?: boolean; busy?: boolean }) {
   const report = useReportMode();
   // the report is a file: "Download" and placeholder buttons would do nothing (the files are in report.json)
-  const shown = blocks.filter(b => (!b.key || !exclude.includes(b.key)) && !(report && (b.type === "downloads" || b.type === "button")));
+  // hide: block ids that say nothing the page does not already say (see coveredCards)
+  const shown = blocks.filter(b => (!b.key || !exclude.includes(b.key)) && !(b.id && hide.includes(b.id)) && !(report && (b.type === "downloads" || b.type === "button")));
   const skeleton = live && (busy || !outputs);
   let n = 0;
   return (
     <div className={"outputs" + (skeleton ? " is-skeleton" : "") + (busy ? " is-busy" : "") + (outputs && !busy ? " has-data" : "")}>
       {shown.map((b, i) => {
-        const { span, tier } = blockLayout(b);
+        const data = b.id && outputs ? outputs[b.id] : undefined;
+        const { span, tier } = blockLayout(b, data);
         const cls = `block span-${span} tier-${tier}`;
         if (skeleton) {
           if (b.type === "heading" || b.type === "button" || (b.type === "notes" && b.collapsed)) return null;
           return <div key={b.id ?? i} className={cls}><Skeleton block={b} /></div>;
         }
-        const data = b.id && outputs ? outputs[b.id] : undefined;
         const status: Status = live && !b.id ? "off" : outputs ? "none" : "pending";
         if (live && outputs && (status === "none" && !data || data && isEmpty(b, data))) return null;
         const el = <OutputBlock block={b} data={data} status={status} />;
@@ -322,4 +348,15 @@ export function OutputList({ blocks, exclude = [], outputs = null, live = false,
       })}
     </div>
   );
+}
+
+/** Ids of the cards blocks whose every value is already written in the verdict: the page says it once (the verdict, which is the one that is stressed). */
+export function coveredCards(blocks: Block[], outputs: Record<string, BlockData> | null | undefined, verdict: string | null | undefined): string[] {
+  if (!verdict || !outputs) return [];
+  const plain = verdict.replace(/<[^>]+>/g, "");
+  return blocks.filter(b => {
+    if (b.type !== "cards" || !b.id) return false;
+    const values = Object.values(outputs[b.id]?.values ?? {}).map(v => (typeof v === "string" ? v : v.value)).filter(v => v && v !== "—");
+    return values.length > 0 && values.every(v => plain.includes(v));
+  }).map(b => b.id as string);
 }

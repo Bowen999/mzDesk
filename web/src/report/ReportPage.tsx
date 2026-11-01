@@ -1,3 +1,4 @@
+import { PageFoot } from "../components/PageHead";
 import { ModuleHead, ModuleResults, modulePageClass } from "../pages/ModulePage";
 import { PipelineHead, PipelineResults, requestedAdductOf } from "../pages/PipelinePage";
 import type { AnnotationResult, JobStep, RunResult, Spec, WorkflowResult } from "../types";
@@ -17,6 +18,7 @@ export function ReportPage({ spec, entry, mode }: { spec: Spec; entry: ReportEnt
       <div className={modulePageClass(mod)} data-module={mod.id}>
         <ModuleHead mod={mod} spec={spec} />
         <ModuleResults mod={mod} result={entry.result as RunResult} ok busy={false} seconds={entry.seconds} stale={false} />
+        <PageFoot id={mod.id} basedOn={mod.based_on} link={false} />
       </div>);
   } else {
     const pipe = spec.pipelines.find(p => p.id === entry.id);
@@ -25,6 +27,7 @@ export function ReportPage({ spec, entry, mode }: { spec: Spec; entry: ReportEnt
         <PipelineHead pipe={pipe} />
         <PipelineResults pipeId={pipe.id} jobResult={entry.result as AnnotationResult | WorkflowResult} requestedAdduct={requestedAdductOf(pipe.id, entry.inputs)}
           job={Array.isArray(entry.steps) ? { steps: entry.steps as JobStep[] } : null} />
+        <PageFoot id={pipe.id} basedOn={pipe.based_on} link={false} />
       </div>);
   }
   return <ReportModeContext.Provider value={mode}>{page}</ReportModeContext.Provider>;

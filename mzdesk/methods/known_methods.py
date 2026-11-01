@@ -179,8 +179,7 @@ def search(smiles, sources=SOURCES, cfg=ci.CONFIG, report_path=None, jp_dir=None
         raise QueryError(str(exc)) from None
     warnings = [f"Structure: {n}." for n in q.norm.notes]
     if q.method != ci.METHOD_MOLGPKA:
-        warnings.append("MolGpKa weights are not installed (python -m mzdesk.platform_fit.pka_setup): the charge class of the query comes from "
-                        "functional groups (carboxylic / sulfonic / phosphoric acid: negative, aliphatic amine / amidine / guanidine / quaternary N: positive).")
+        warnings.append("MolGpKa weights are not installed (python -m mzdesk.platform_fit.pka_setup): the charge class comes from functional groups.")
     sources = [s for s in SOURCES if s in set(sources)]
     res = Result(query=q, exact=[], similar=[], searched=[], status={}, warnings=warnings, cfg=cfg)
     jp = rep = None
@@ -195,7 +194,7 @@ def search(smiles, sources=SOURCES, cfg=ci.CONFIG, report_path=None, jp_dir=None
         res.report_installed = rep is not None
         if rep is None:
             res.status[SOURCE_REPORT] = f"not installed: run {report.SETUP_COMMAND}"
-            warnings.append(f"RepoRT is not installed, so it was not searched: run {report.SETUP_COMMAND} (one-time download of about 100 MB).")
+            warnings.append(f"RepoRT is not installed, so it was not searched: run {report.SETUP_COMMAND}.")
         else:
             _check(rep.index, cfg, "RepoRT")
             res.searched.append(SOURCE_REPORT)
@@ -399,13 +398,9 @@ def _score_help(res):
     """How the similarity score is made, the query's own properties and the cut-offs (the "?" of the Similar compounds block)."""
     q, cfg = res.query, res.cfg
     items = [
-        f"Score = {cfg.w_structure:g} × Tanimoto (Morgan radius {cfg.fp_radius}, {cfg.fp_bits} bits) + {cfg.w_properties:g} × mean of five property terms: "
-        f"exp(−|ΔlogP| / {cfg.scale_logp:g}), exp(−|ΔTPSA| / {cfg.scale_tpsa:g}), exp(−|ΔMW| / {cfg.scale_mw:g}), and 1 / 0 for the same / a different charge class "
-        f"(sign of the dominant net charge) at pH {cfg.ph_acidic:g} and pH {cfg.ph_neutral:g}. Δ = library compound − query. "
-        f"Listed: score ≥ {cfg.min_score:g} and Tanimoto ≥ {cfg.min_structure:g} (whatever the property score), at most {cfg.max_similar} compounds, {cfg.max_methods_per_similar} methods per compound, "
-        f"{cfg.max_similar_per_dataset} per RepoRT dataset.",
-        f"Query: logP {q.logp:.2f} (Crippen), TPSA {q.tpsa:.1f} Å², MW {q.mw:.1f}; charge class {_q(q.q_low)} at pH {cfg.ph_acidic:g}, {_q(q.q_neutral)} at pH {cfg.ph_neutral:g} "
-        f"({q.method}; molecules are reduced to the largest fragment and neutralised first).",
+        f"Score = {cfg.w_structure:g} × Tanimoto + {cfg.w_properties:g} × property similarity (logP, TPSA, MW, charge class). Δ = library compound − query.",
+        f"Query: logP {q.logp:.2f}, TPSA {q.tpsa:.1f} Å², MW {q.mw:.1f}; charge class {_q(q.q_low)} at pH {cfg.ph_acidic:g}, {_q(q.q_neutral)} at pH {cfg.ph_neutral:g}.",
+        f"Listed: score ≥ {cfg.min_score:g} and Tanimoto ≥ {cfg.min_structure:g}.",
     ]
     if not res.similar:
         items.append(f"No compound reached the score cut-off of {cfg.min_score:g} (with Tanimoto ≥ {cfg.min_structure:g}) in the sources searched.")
@@ -425,11 +420,9 @@ def _sources_help(res):
     """What was searched (counts, commit) and the licence / citation of each source (the "?" of the Sources card)."""
     items = [f"{'JP18' if s == SOURCE_JP else s}: {t}" for s, t in res.status.items()]
     if SOURCE_JP in res.searched:
-        items.append(f"{jp18.LICENCE_NOTE} Page links open the MHLW PDFs.")
+        items.append(jp18.LICENCE_NOTE)
     if res.report_installed:
-        items.append(f"RepoRT: {report.CITATION} Data {report.LICENCE} ({report.REPO_URL}, commit {res.report_commit[:10]}, {res.n_datasets} datasets); "
-                     "each dataset keeps its own origin (the link of its row). Column, eluent and gradient texts are summaries of the dataset "
-                     "metadata; RepoRT is LC-MS, retention times are in minutes. Reuse of RepoRT-derived values requires attribution and the same licence.")
+        items.append(f"Data: RepoRT (Kretschmer et al., Nat. Methods 2024), {report.LICENCE}; commit {res.report_commit[:10]}, {res.n_datasets} datasets.")
     elif res.report_installed is False:
-        items.append(f"RepoRT ({report.CITATION}; data {report.LICENCE}) is not installed: run {report.SETUP_COMMAND} (one-time download of about 100 MB).")
+        items.append(f"RepoRT is not installed: run {report.SETUP_COMMAND}.")
     return items

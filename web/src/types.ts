@@ -35,10 +35,11 @@ export type Module = {
   id: string; title: string; cls: string; group: string; subgroup: string | null; live: boolean;
   one_liner: string; inputs: Field[]; outputs: Block[]; example: Record<string, any> | null;
   network?: string;          // what the page sends online; present only on pages that use the internet
+  based_on?: string[];       // what the page is built on ("MetFrag", "mzDesk"): the line at its foot
 };
 export type Stage = { id: number; title: string; modules: string[] };
 export type PipelineExample = { label: string; values: Record<string, any> };
-export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[] };
+export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[]; based_on?: string[] };
 export type Group = { id: string; title: string };
 export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string };
 

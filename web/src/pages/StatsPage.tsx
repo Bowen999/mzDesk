@@ -31,7 +31,7 @@ export function StatsPage({ spec }: { spec: Spec }) {
 
   if (!data) return (
     <div className="page stats-page">
-      <div className="module-heading"><div className="module-heading-copy"><div className="module-kicker">mzDesk</div><h1>Usage statistics</h1></div></div>
+      <div className="module-heading"><div className="module-heading-copy"><h1>Usage statistics</h1></div></div>
       <form className="panel stats-login" onSubmit={submit}>
         <label className="field">Password<input type="password" autoComplete="current-password" value={pw} onChange={e => setPw(e.target.value)} autoFocus /></label>
         <div className="actions"><button className="btn" disabled={busy || !pw}>{busy ? "Checking…" : "Show statistics"}</button>{err && <span className="msg stats-err">{err}</span>}</div>
@@ -45,7 +45,7 @@ export function StatsPage({ spec }: { spec: Spec }) {
       <div className="card-value">{v.visitors}</div><div className="card-unit">visitors · {v.views} views · {v.runs} runs</div></div>);
   return (
     <div className="page stats-page">
-      <div className="module-heading"><div className="module-heading-copy"><div className="module-kicker">mzDesk</div><h1>Usage statistics</h1></div></div>
+      <div className="module-heading"><div className="module-heading-copy"><h1>Usage statistics</h1></div></div>
       <div className="stats-bar">
         <div className="chip-row">{[7, 30, 90, 365].map(d => <button key={d} type="button" className={"chip" + (d === days ? " on" : "")} onClick={() => void load(d)}>{d} days</button>)}</div>
         <span className={"msg" + (err ? " stats-err" : "")}>{err || (busy ? "Loading…" : `Updated ${new Date(data.generated).toLocaleString()}`)}</span>

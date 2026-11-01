@@ -48,7 +48,7 @@ def weights_path():
 @lru_cache(maxsize=2)
 def _load(path):
     if not os.path.isfile(path):
-        raise NEIMSError(f"NEIMS weights not found at {path}. Run once: {neims_setup.SETUP_COMMAND}")
+        raise NEIMSError(f"NEIMS weights not found at {path}. Run: {neims_setup.SETUP_COMMAND}")
     try:
         with np.load(path) as z:
             w = {k: z[k] for k in z.files}
