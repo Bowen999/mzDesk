@@ -1,5 +1,6 @@
 import type { AnnotationResult } from "../types";
 import { answerSummary } from "./annotationModel";
+import { StructText, StructureHover } from "./StructureHover";
 import "./pipeline.css";
 
 /**
@@ -21,25 +22,25 @@ export function AnswerCard({ result, requestedAdduct }: { result: AnnotationResu
         <div className="verdict-label">Answer</div>
         {s.headline !== null
           ? <p className="answer-headline">
-              <span className="answer-name">{s.headline}</span>
+              <span className="answer-name">{top?.smiles && (a.type === "single" || a.type === "group") ? <StructureHover smiles={top.smiles}>{s.headline}</StructureHover> : s.headline}</span>
               {badge && <><span className="answer-sep" aria-hidden="true">·</span>{badge}</>}
               {s.score !== null && <><span className="answer-sep" aria-hidden="true">·</span>
                 <span className="answer-score" title={`Final score ${s.score.toFixed(3)}`}><span className="sr-only">Final score </span>{s.score.toFixed(2)}</span></>}
             </p>
-          : <><p className="verdict-text">{a.statement}</p>{badge && <div className="pill-row">{badge}</div>}</>}
-        {s.secondary && <p className={"answer-sub" + (s.warn ? " warn" : "")}>{s.secondary}</p>}
+          : <><p className="verdict-text"><StructText text={a.statement} /></p>{badge && <div className="pill-row">{badge}</div>}</>}
+        {s.secondary && <p className={"answer-sub" + (s.warn ? " warn" : "")}><StructText text={s.secondary} /></p>}
         {s.headline !== null && (
           <details className="answer-details">
             <summary>Details</summary>
-            <p>{a.statement}</p>
-            {s.challengers.map((t, i) => <p key={i}>{t}.</p>)}
+            <p><StructText text={a.statement} /></p>
+            {s.challengers.map((t, i) => <p key={i}><StructText text={t} />.</p>)}
             {s.facts.length > 0 && <dl className="answer-facts">{s.facts.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
           </details>)}
       </div>
       {otherAdducts.length > 0 && <div className="alert warn" role="status">Input adduct: {requestedAdduct}. A library hit passed with {otherAdducts.join(", ")}; review the library checks.</div>}
       {requestedAdduct && top?.adduct && top.adduct !== requestedAdduct && !otherAdducts.includes(top.adduct) &&
         <div className="alert warn" role="status">Input adduct: {requestedAdduct}. The top candidate uses {top.adduct}; review the adduct evidence.</div>}
-      {(result.warnings ?? []).map((w, i) => <div className="alert warn" key={i}>{w}</div>)}
+      {(result.warnings ?? []).map((w, i) => <div className="alert warn" key={i}><StructText text={w} /></div>)}
     </>
   );
 }

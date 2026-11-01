@@ -6,6 +6,7 @@ import { Icon, moduleIcon } from "../components/Icon";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList } from "../components/Outputs";
 import { networkUses } from "../network";
+import { dropRun, recordRun } from "../report/log";
 import type { Field, RunResult, Spec } from "../types";
 
 type Run = { busy: boolean; result: RunResult | null; error: string; log: string; seconds: number | null; signature: string };
@@ -58,14 +59,14 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   const errorRef = useRef<HTMLDivElement | null>(null);
   const pageRef = useRef<HTMLDivElement | null>(null);
   const elapsed = useElapsed(run.busy);
-  useEffect(() => { ticket.current++; if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); setEditing(true); setErrors({}); setFormError(""); } }, [id]);
+  useEffect(() => { ticket.current++; dropRun("module", id); if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); setEditing(true); setErrors({}); setFormError(""); } }, [id]);
   useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
   useEffect(() => { if (run.error) errorRef.current?.focus(); }, [run.error]);
   if (!mod) return <p className="page">Unknown module.</p>;
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
   const detectability = mod.subgroup === "detectability";
-  const styledHeading = detectability || ["molecular", "ms1", "ms2", "gnps", "tools"].includes(mod.subgroup ?? "");
+  const styledHeading = detectability || !mod.subgroup || ["molecular", "ms1", "ms2", "gnps"].includes(mod.subgroup);   // no subgroup = a standalone page (Calculator)
   const gnps = mod.subgroup === "gnps";
   const signature = JSON.stringify(values);
   const ok = run.result?.status === "ok" && !run.busy;
@@ -89,7 +90,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   };
   const loadExample = () => {
     if (!mod.example) return;
-    ticket.current++; confirming.current = false; guard.cancel();
+    ticket.current++; confirming.current = false; guard.cancel(); dropRun("module", mod.id);
     setValues({ ...initialValues(mod.inputs), ...mod.example });
     setRun(IDLE);
     setEditing(true);
@@ -101,6 +102,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     ticket.current++;
     confirming.current = false;
     guard.cancel();
+    dropRun("module", mod.id);
     setValues(initialValues(mod.inputs));
     setRun(IDLE); setEditing(true); setErrors({}); setFormError("");
     setNetNote(run.busy ? "Cleared. The previous run may still finish on the server." : "");
@@ -137,11 +139,15 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     try {
       const result = await runModule(mod.id, payload);
       if (ticket.current !== mine) return;
-      setRun({ ...IDLE, result, seconds: (performance.now() - t0) / 1000, signature: started });
+      const seconds = (performance.now() - t0) / 1000;
+      setRun({ ...IDLE, result, seconds, signature: started });
+      // The session report lists the pages that show a result right now.
+      if (result.status === "ok") recordRun({ kind: "module", id: mod.id, title: mod.title, section: subgroup ?? "Modules", inputs: payload, result, seconds });
+      else dropRun("module", mod.id);
       // Only fold when the inputs did not change while the run was in flight.
       if (result.status === "ok" && JSON.stringify(valuesRef.current) === started) setEditing(false);
     } catch (e: any) {
-      if (ticket.current === mine) { setRun({ ...IDLE, error: e.message ?? String(e), log: e instanceof ApiError ? e.log : "", signature: started }); setEditing(true); }
+      if (ticket.current === mine) { dropRun("module", mod.id); setRun({ ...IDLE, error: e.message ?? String(e), log: e instanceof ApiError ? e.log : "", signature: started }); setEditing(true); }
     }
   };
 
@@ -157,7 +163,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
       <div className="module-heading">
         {styledHeading && <span className="module-emblem"><Icon name={moduleIcon(mod)} /></span>}
         <div className="module-heading-copy">
-          {styledHeading && <div className="module-kicker">{subgroup}</div>}
+          {styledHeading && subgroup && <div className="module-kicker">{subgroup}</div>}
           <h1>{!styledHeading && subgroup ? `${subgroup} · ${mod.title}` : mod.title}</h1>
           {!mod.live && <div className="meta">Placeholder: shows the page format, nothing computes yet</div>}
         </div>

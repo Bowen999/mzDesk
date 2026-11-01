@@ -78,7 +78,7 @@ def test_every_module_block_is_well_formed():
 
 
 def test_restyled_pages_have_unique_icons_and_metric_cards():
-    groups = {"molecular", "ms1", "ms2", "gnps", "tools"}
+    groups = {"molecular", "ms1", "ms2", "gnps"}
     modules = [m for m in S.MODULES if m["subgroup"] in groups]
     path = Path(__file__).resolve().parents[1] / "web/src/assets/icons.svg"
     ids = [node.get("id") for node in ET.parse(path).getroot()]

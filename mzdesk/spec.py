@@ -8,8 +8,8 @@ checkbox, slider, file, table, heading。
   formats：同一份内容的多种格式，数据 {"formats": {格式名: 文本}}，前端画成一排标签 + 一个代码框。
   id：后端结果按 id 填进这个块；没有 id 的块只画格式。
   key：块的标签，前端 Outputs 可按 key 排除块；pipeline 的 stage 不再按 key 过滤，步骤的块由后端运行时按 id 给出。
-模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / dmpk / inorganic / tools；ms2 的显示名是 Spectrum），
-  None = 直接列在 Modules 下。live=True 表示已接引擎（后端 mzdesk/api/runners/ 包里有对应 runner）。
+模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / gnps，以及 2.0 才开放的 dmpk / inorganic；ms2 的显示名是 Spectrum），
+  None = 直接列在 Modules 下（Calculator）。DEFERRED_* 里的模块已做好但本版不显示。live=True 表示已接引擎（后端 mzdesk/api/runners/ 包里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
 """
 import base64
@@ -701,7 +701,7 @@ MODULES = [
                      "Fragments: View opens that structure with the peaks MetFrag explains for it, each fragment in its own colour on the structure and in the "
                      "spectrum. It is computed when you click (a few seconds, with a progress bar), with the same peaks and tolerance as this table. "
                      "Where a fragment fits several places on the structure, one is drawn and the card says how many others fit equally well."])],
-        subgroup="tools", live=True,
+        subgroup="ms2", live=True,
         example={"structure": _name("caffeine"), "precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
         network="Name / ID inputs are resolved online. The same-formula and isobaric tables and isomer candidate search query PubChem with the formula or mass; MetFrag runs locally."),
 
@@ -739,7 +739,7 @@ MODULES = [
                caption="Role: quantifier / qualifier. Source: library spectrum or predicted", id="transitions"),
          button("Export method table (CSV)"),
          formats("Method table (CSV)", id="method_table"),
-         notes("Assumptions", id="notes")], subgroup="tools", live=True,
+         notes("Assumptions", id="notes")], subgroup=None, live=True,
         example={"start_from": "My spectrum", "ion_mode": "Positive", "n_transitions": 3, "ce_unit": "eV",
                  "ms2": _paste("BEGIN IONS\nPEPMASS=195.0877\n" + CAFFEINE_MASSBANK_MS2 + "\nEND IONS")}),
 
@@ -755,20 +755,10 @@ MODULES = [
          table(["Isotopologue", "m/z", "Abundance"], "Isotope labelling", id="isotope_labels"), table(["Internal standard", "Analyte M+n", "Crosstalk %"], id="crosstalk"),
          cards([("Converted", "")], "Concentration", id="concentration", style="metric"), table(["Target conc.", "Stock conc.", "Final volume", "Stock volume", "Diluent volume"], id="dilution", caption="Dilution and stock preparation"),
          cards([("NCE ↔ eV", "")], "Collision energy", id="collision_energy", style="metric"), cards([("Kovats RI", "")], "GC retention index", id="kovats", style="metric"),
-         notes("Assumptions", id="notes")], subgroup="tools", live=True,
+         notes("Assumptions", id="notes")], subgroup=None, live=True,
         example={"ppm_theoretical": 260.1645, "ppm_observed": 260.1651, "lab_smiles": PROPRANOLOL, "lab_label": "13C3", "lab_adduct": "[M+H]+",
                  "conc_value": 25.935, "conc_from": "mg/L", "conc_to": "µM", "conc_mw": 259.35, "target_conc": 10, "final_volume": 10,
                  "ce_nce": 30, "ce_mz": 260.1645, "ce_z": 1, "alkanes": "C8 8.00\nC9 9.00\nC10 10.00\nC11 11.00", "ri_rt": 9.50}),
-
-    module("report", "Report", "A/B", "Collect the evidence, give a <b>confidence level</b>, export. Plus name normalization, figures, MassBank record.",
-        [select("source", "Evidence from", ["Last pipeline run", "Upload report JSON"]), file("report_json", "Report JSON (optional)", ".json")],
-        [cards([("Schymanski level", "1–5"), ("Evidence items", "n"), ("Conflicts", "n")], "Annotation report (A)", style="metric"),
-         table(["Module", "Evidence", "Result", "Supports", "Weight"], caption="One row per piece of evidence, in pipeline order"),
-         table(["Parameter", "Value", "Module"], caption="Provenance"), table(["Tool", "Version", "Citation"], caption="What to cite"),
-         button("Export JSON"), button("Export CSV"), button("Export PDF"),
-         table(["Convention", "Name"], "Name normalization (B)", "Goslin lipid shorthand, LIPID MAPS, RefMet"),
-         button("Spectrum with structures (SVG)"), button("Mirror plot (SVG)"),
-         code("MassBank record", "MassBank record generator (B)")], subgroup="tools"),
 
     # ---- DMPK（非核心）----
     module("met_shift", "Mass-Shift Search", "B", "Search a peak or feature list for <b>phase I / II metabolites</b> of the parent.",
@@ -1076,7 +1066,7 @@ _PIPELINE_ADVANCED = [
      "help": "Scores the library hits and decides the Level-2 gate. Falls back to CosineGreedy if it cannot be computed."},
     {**number("lib_threshold", "Level-2 gate similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
      "help": "A library hit needs this similarity to pass the gate. Hits join the candidate pool from this value minus 0.10."}]
-# ESI MS/MS Annotation, optional Ion Mobility section: one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
+# MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
     {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0,
      "help": "Optional. One value measured in N₂. Each candidate is compared with its CCS in the local reference data (same compound and adduct), or with a "
@@ -1106,7 +1096,7 @@ def _caffeine_example(libraries, ms2):
 
 
 PIPELINES = [
-    {"id": "esi_ms2_annotation", "title": "ESI MS/MS Annotation",
+    {"id": "esi_ms2_annotation", "title": "MS/MS Annotation",
      "one_liner": "I have an <b>ESI MS/MS spectrum</b> and a precursor m/z. Find the adduct and formula, search the libraries and, if no library spectrum "
                   "matches, propose structures; then let detectability order the near-ties (candidates within 10% of the best score) and check which isomers the spectrum can tell apart. "
                   "If you also have an <b>observed CCS</b>, each candidate is checked against its reference or predicted CCS.",
@@ -1116,8 +1106,7 @@ PIPELINES = [
                            select("omics", "Omics", ["Either / unknown", "Metabolomics", "Lipidomics"]))
                 + _section("Options", checkbox("halogen", "Allow Cl/Br in formulas"),
                            checkbox("local_isomers", "Also compare with database isomers (slower, stricter)"))
-                + _section("Ion Mobility", *_PIPELINE_CCS, collapsed=True)
-                + _section("Advanced", *_PIPELINE_ADVANCED)),
+                + _section("Advanced", *_PIPELINE_ADVANCED, *_PIPELINE_CCS)),       # closed by default; the observed CCS (Ion Mobility) is its last four fields
      # expected_s: Adduct includes the formula search (step 2 only reads it back): CASMI 2022 500 challenges median 5.0 s, caffeine cold 9.6-10.3 s;
      # Merge and re-rank: 0.03-0.2 s on the examples; an observed CCS adds about 0.01 s per structure, plus 1.0 s once per server process for loading the CCS prediction model
      # (not worth a larger share of the bar). Library search: first query of a server loads the index (7.5 s cold, 0.03 s warm); MS-FINDER / FRIGID run only when the library does not decide
@@ -1167,8 +1156,20 @@ GROUPS = [{"id": "modules", "title": "Modules"}, {"id": "pipelines", "title": "W
 # Modules 下的小类，侧栏按这里的顺序列出（组内已接引擎的模块排前面）；Workflows 排在 Modules 之后
 SUBGROUPS = [{"id": "molecular", "title": "Compound"}, {"id": "detectability", "title": "Detectability"},
              {"id": "ms1", "title": "MS1"}, {"id": "ms2", "title": "Spectrum"}, {"id": "orthogonal", "title": "Orthogonal"}, {"id": "dmpk", "title": "DMPK"},
-             {"id": "inorganic", "title": "ICP-MS"}, {"id": "gnps", "title": "Dataset Search"}, {"id": "tools", "title": "Utilities & Reporting"}]
+             {"id": "inorganic", "title": "ICP-MS"}, {"id": "gnps", "title": "Dataset Search"}]
+
+
+# Built but not offered in this release (left for 2.0): DMPK, ICP-MS and MRM Transitions. They stay defined here (with their engines and tests) so
+# they can be switched on again by emptying these two sets; the page list (spec()) and the run endpoint (api/app.py) skip them.
+DEFERRED_SUBGROUPS = frozenset({"dmpk", "inorganic"})
+DEFERRED_MODULES = frozenset({"mrm"})
+
+
+def is_deferred(module):
+    return module["subgroup"] in DEFERRED_SUBGROUPS or module["id"] in DEFERRED_MODULES
 
 
 def spec():
-    return {"groups": GROUPS, "subgroups": SUBGROUPS, "pipelines": PIPELINES, "modules": MODULES}
+    return {"groups": GROUPS, "pipelines": PIPELINES,
+            "subgroups": [g for g in SUBGROUPS if g["id"] not in DEFERRED_SUBGROUPS],
+            "modules": [m for m in MODULES if not is_deferred(m)]}

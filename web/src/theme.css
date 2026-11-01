@@ -821,3 +821,19 @@ body.resizing .sidebar-shell { transition: none; }
 /* Checkboxes: the control line on top, help / error underneath. Kept at the end so it wins
    over the older .field.check rules above. */
 .field.check { flex-direction: column; align-items: flex-start; align-self: start; min-height: 0; padding: 2px 0; }
+
+/* ---------------------------------------------------------------- Session report button (report/ReportButton.tsx); layout comes from .internet-switch */
+.report-btn:disabled, .rail-btn.report-rail:disabled { opacity: .45; cursor: not-allowed; }
+.report-btn:disabled:hover { color: var(--muted); background: none; }
+.report-count { flex: none; min-width: 18px; padding: 0 6px; color: var(--accent-ink); background: var(--accent-bg); border-radius: 99px; font-size: 11px; font-weight: 600; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.report-note { padding: 0 8px 2px 31px; color: var(--muted); font-size: 11.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.report-note.bad { color: var(--ov-red-ink); }
+.sidebar-blue .report-btn:disabled:hover { color: var(--on-side-2); background: none; }
+.sidebar-blue .report-count { color: var(--side-bg); background: var(--on-side); }
+.sidebar-blue .report-note { color: var(--on-side-2); }
+.sidebar-blue .report-note.bad { color: #ffd0d0; }
+.sidebar-blue .sidebar .rail-btn.report-rail:disabled:hover { color: var(--on-side-2); background: none; }
+
+/* ---- structure hover (components/StructureHover.tsx): space is reserved so the popover does not jump when the drawing arrives ---- */
+.struct-preview { display: grid; place-items: center; width: 240px; max-width: calc(100vw - 60px); min-height: 172px; }
+.struct-msg { color: var(--muted); font-size: 12.5px; }

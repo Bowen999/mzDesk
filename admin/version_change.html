@@ -255,7 +255,7 @@ const SECTIONS = [
   {id:'lipid', name:'Lipid Short Name', d:'脂质简写名 · LIPID MAPS 名 · 示意结构', w:'mzdesk/lipid/ · mzdesk/lipid_name_map/ · mzdesk/api/runners/lipid.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/dmpk/ · mzdesk/api/runners/nca.py · mzdesk/api/runners/stability.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
-  {id:'pipe',  name:'Workflow',   d:'3 条流程：ESI MS/MS 注释 · EI MS 注释 · 靶向方法开发', w:'mzdesk/spec.py · mzdesk/workflows/'},
+  {id:'pipe',  name:'Workflow',   d:'3 条流程：MS/MS 注释 · EI MS 注释 · 靶向方法开发', w:'mzdesk/spec.py · mzdesk/workflows/'},
   {id:'other', name:'Other',      d:'身份 · 排他性 · 正交 · MRM · 报告等', w:'mzdesk/ms2/mrm.py · mzdesk/api/runners/mrm.py · mzdesk/spec.py · mzdesk/shared/'},
   {id:'docs',  name:'Docs',       d:'计划 · 本页',                     w:'admin/README.md · admin/version_change.html'},
   {id:'app',   name:'App',        d:'网页 · API',                      w:'web/ · mzdesk/api/'}
@@ -264,6 +264,18 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.3.3', date:'2026-10-31', git:'',
+  title:'页面整理：Alternative Explanations 并入 Spectrum；DMPK、ICP-MS、MRM 留给 2.0；Calculator 单列；ESI MS/MS Annotation 改名 MS/MS Annotation；新增 Session report 和结构悬停',
+  note:'DMPK、ICP-MS、MRM Transitions 只是不显示（接口返回 404），引擎和测试都在；把 spec.py 里的 DEFERRED_SUBGROUPS / DEFERRED_MODULES 清空即可恢复。流程 id 仍是 esi_ms2_annotation（网址和统计不变），只改显示名。Session report 在浏览器里生成，不经服务器；HTML 是页面当时的样子，悬停和“?”在文件里不可用。',
+  state:[['侧栏','Compound · Detectability · MS1 · Spectrum · Orthogonal · Dataset Search · Calculator（单列）'], ['留给 2.0','DMPK · ICP-MS · MRM Transitions'], ['Session report','zip：report.json + report.html · 编号 mzdesk-时间戳-MDT-随机串 · Edmonton 时间'], ['版本','0.3.3']],
+  c:{
+   other:['chg','Alternative Explanations 从 Utilities & Reporting 移到 Spectrum 组末尾（页面和结果不变）；MRM Transitions 不再显示（留给 2.0）；删除 Report 占位页（原本只有格式、不能算）。',false,{w:'mzdesk/spec.py · tests/test_release_pages.py · tests/test_api.py'}],
+   dmpk:['chg','DMPK 组本版不显示（页面列表和接口都跳过，留给 2.0）；代码和测试保留，测试里用 conftest 打开。',false,{w:'mzdesk/spec.py · mzdesk/api/app.py · tests/conftest.py'}],
+   icp:['chg','ICP-MS 组本版不显示（页面列表和接口都跳过，留给 2.0）；代码和测试保留。',false,{w:'mzdesk/spec.py · mzdesk/api/app.py · tests/conftest.py'}],
+   pipe:['chg','流程显示名 ESI MS/MS Annotation 改为 MS/MS Annotation（id 不变）。表单：Ion Mobility 并入 Advanced（Advanced 默认折叠；顺序为加合物添加剂、Na/K、pH、库相似度算法、Level-2 阈值，最后是观测 CCS、平台、漂移气、TWIMS 校准），不再有单独的 Ion Mobility 折叠区；字段和计算不变。该页所有出现化合物名或 SMILES 的地方，悬停显示 2D 结构：答案标题和文字、排名表的名称和 SMILES、同分异构体比较、库命中名、各步骤表的 SMILES 列和同行名称；点击固定。结构由新接口 /api/depict 第一次悬停时画（RDKit，带缓存），结果 JSON 不变大；库命中现在带 SMILES（只多一个字段，结果内容不变）。',false,{w:'mzdesk/spec.py · tests/test_annotation_ccs.py · tests/test_pipeline.py · mzdesk/api/app.py · mzdesk/annotation/library_step.py · mzdesk/annotation/visualization.py · web/src/components/StructureHover.tsx · web/src/components/AnswerCard.tsx · web/src/components/CandidateTable.tsx · web/src/components/PipelineVisuals.tsx · web/src/components/Blocks.tsx · web/src/pages/PipelinePage.tsx'}],
+   app:['feat','侧栏：去掉 Utilities & Reporting 组，Calculator 单列在 Dataset Search 之后。侧栏底部新增 Session report 按钮（带页数）：点击下载 <运行编号>.zip，里面一个同名文件夹，含 report.json（每个有结果页面的输入、原始结果、工作流步骤）和 report.html（页面当时的样子，样式、字体、图标都内联，离线可开，带目录和输入摘要）。运行编号 = mzdesk-YYYYMMDD-HHMMSS-时区缩写-5 位随机串，时间固定 America/Edmonton（夏令时 MDT / MST）。zip 在前端生成，不经服务器。没有结果时按钮灰色。',false,{w:'web/src/report/ · web/src/components/Sidebar.tsx · web/src/pages/ModulePage.tsx · web/src/pages/PipelinePage.tsx · web/src/components/Icon.tsx · web/src/theme.css'}],
+   docs:['doc','版本号 0.3.3，本页加 v0.3.3。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.3.2', date:'2026-10-31', git:'',
   title:'新模块 Lipid Short Name：脂质简写名 → LIPID+ 各级名 + LIPID MAPS 名 + 示意结构',
   note:'主要未决问题：名字里写的双键/羟基位置和 sn 顺序不用于画图（图上会注明）；ST 大类、糖链类、N-/O-酰基类不画结构；俗名不支持。',

@@ -307,7 +307,8 @@ def _reference_spectrum(hit):
         if not peaks:
             return None
         return {"peaks": peaks, "library": hit["library"], "accession": hit["accession"],
-                "name": hit.get("name") or "", "precursor_mz": hit.get("precursor_mz")}
+                "name": hit.get("name") or "", "precursor_mz": hit.get("precursor_mz"),
+                "smiles": hit["smiles"] if has_structure(hit.get("smiles")) else None}
     except Exception:  # noqa: BLE001 - a missing display spectrum must not change the annotation
         return None
 

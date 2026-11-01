@@ -86,7 +86,7 @@ def test_module_ids_unique_and_subgroups_known():
 
 def test_ms2_is_split_into_its_own_subgroup():
     ms2 = [m["id"] for m in MODULES if m["subgroup"] == "ms2"]
-    assert ms2 == ["ms2_clean", "ms2_similarity", "ms2_library", "ms1_formula", "ms2_structure", "ms2_denovo", "ms2_ei", "ms2_esi", "ms2_fragments"]
+    assert ms2 == ["ms2_clean", "ms2_similarity", "ms2_library", "ms1_formula", "ms2_structure", "ms2_denovo", "ms2_ei", "ms2_esi", "ms2_fragments", "exclusivity"]
     assert "ms2" not in {m["id"] for m in MODULES}
     assert next(s["title"] for s in SUBGROUPS if s["id"] == "ms2") == "Spectrum"
 
@@ -100,7 +100,7 @@ def test_predicted_spectrum_page_is_gone():
 def test_the_workflows():
     assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
     esi, ei_ms, targeted = PIPELINES
-    assert [p["title"] for p in PIPELINES] == ["ESI MS/MS Annotation", "EI MS Annotation", "Targeted Method"]
+    assert [p["title"] for p in PIPELINES] == ["MS/MS Annotation", "EI MS Annotation", "Targeted Method"]
     assert [(s["id"], s["title"]) for s in esi["stages"]] == [
         (1, "Adduct"), (2, "Formula"), (3, "Library search"), (4, "MS-FINDER structures"), (5, "FRIGID structures"),
         (6, "Merge and re-rank"), (7, "Isomer check"), (8, "Answer")]
@@ -591,3 +591,4 @@ def test_similarity_reads_headers_and_says_so():
     r = "BEGIN IONS\nPEPMASS=251\n100 2\n151 3\nEND IONS"
     body = _run("ms2_similarity", {"query": _paste(q), "reference": _paste(r)}).json()
     assert any("Query precursor m/z 250.0000 is read" in w for w in body["warnings"])
+

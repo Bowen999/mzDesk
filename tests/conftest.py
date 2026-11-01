@@ -29,3 +29,17 @@ def offline_pubchem(request, monkeypatch):
         monkeypatch.setattr(exact_mass, "_http", FakePubChem())
     yield
     exact_mass._get_json.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def held_back_pages_on(request, monkeypatch):
+    """DMPK, ICP-MS and MRM Transitions wait for 2.0 and are not offered (spec.DEFERRED_*), but their engines stay tested: switch them on here.
+    tests/test_release_pages.py runs without this, to check what the release really offers."""
+    if request.module.__name__.endswith("test_release_pages"):
+        yield
+        return
+    from mzdesk.api import app as app_module
+    monkeypatch.setattr(spec, "DEFERRED_SUBGROUPS", frozenset())
+    monkeypatch.setattr(spec, "DEFERRED_MODULES", frozenset())
+    monkeypatch.setattr(app_module, "_modules", {m["id"]: m for m in spec.MODULES})
+    yield

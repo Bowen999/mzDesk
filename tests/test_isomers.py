@@ -331,7 +331,7 @@ def test_page_is_live_open_and_has_three_tables():
     mod = next(m for m in MODULES if m["id"] == "exclusivity")
     lock_ts = (Path(__file__).parents[1] / "web" / "src" / "lock.ts").read_text()
     locked_subgroups = re.search(r"LOCKED_SUBGROUPS = new Set\(\[([^\]]*)\]\)", lock_ts).group(1)
-    assert mod["live"] and mod["subgroup"] == "tools" and '"tools"' not in locked_subgroups              # open: only DMPK and ICP-MS are locked
+    assert mod["live"] and mod["subgroup"] == "ms2" and '"ms2"' not in locked_subgroups                # open: only DMPK and ICP-MS are locked
     assert [b.get("id") for b in mod["outputs"]] == ["same_formula", "isobaric", "isomers"]
 
 

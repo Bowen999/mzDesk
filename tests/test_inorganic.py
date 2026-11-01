@@ -30,7 +30,7 @@ def _module(module_id):
 # ---------------------------------------------------------------- page definitions and API shapes
 def test_inorganic_subgroup_and_live_modules():
     ids = [s["id"] for s in SUBGROUPS]
-    assert ids[ids.index("dmpk") + 1:ids.index("tools")] == ["inorganic", "gnps"]
+    assert ids[ids.index("dmpk") + 1:] == ["inorganic", "gnps"]
     assert [m["id"] for m in INORGANIC] == IDS
     assert next(s["title"] for s in SUBGROUPS if s["id"] == "inorganic") == "ICP-MS"
     for module in INORGANIC:

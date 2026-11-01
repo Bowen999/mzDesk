@@ -3,6 +3,7 @@ import type { Cell, Help, Row, RowGroup, RxOption, StatusChip, Tile } from "../t
 import { FragmentButton } from "./FragmentDialog";
 import { ThemedSvg } from "./Figure";
 import { HelpButton, RichText, helpLines, useHelpPopover } from "./Help";
+import { StructureHover, structureForCell, useStructures } from "./StructureHover";
 
 /**
  * Renderers for the generic output blocks. Data contracts (the spec helpers in mzdesk/spec.py and the builders in
@@ -44,9 +45,14 @@ function Depicted({ svg, children }: { svg: string; children: ReactNode }) {
   return <><button type="button" className="cell-depict" {...triggerProps}>{children}</button>{popover}</>;
 }
 
-export function CellView({ cell }: { cell: Cell }) {
+export function CellView({ cell, column, rowSmiles }: { cell: Cell; column?: string; rowSmiles?: string }) {
+  const structures = useStructures();      // ESI MS/MS Annotation: a name or SMILES shows its structure on hover (components/StructureHover.tsx)
   if (cell === null || cell === undefined) return null;
-  if (typeof cell !== "object") return typeof cell === "string" ? <TextLines text={cell} /> : <>{String(cell)}</>;
+  if (typeof cell !== "object") {
+    if (typeof cell !== "string") return <>{String(cell)}</>;
+    const smiles = structureForCell(structures, cell, column, rowSmiles);
+    return smiles ? <StructureHover smiles={smiles}><TextLines text={cell} /></StructureHover> : <TextLines text={cell} />;
+  }
   if ("img" in cell) return <img className="cell-img" src={cell.img} alt="" />;
   if ("fragment" in cell) return <><FragmentButton target={cell.fragment} />{helpLines(cell.help).length > 0 && <HelpButton lines={helpLines(cell.help)} className="inline" label="Help" />}</>;
   const tone = String(cell.tone ?? "neutral").replace(/[^a-z0-9-]/gi, "").toLowerCase() || "neutral";
@@ -54,6 +60,10 @@ export function CellView({ cell }: { cell: Cell }) {
   let node: ReactNode = cell.badge !== undefined ? <span className={"badge tone-" + tone}>{cell.badge}</span> : <TextLines text={cell.text ?? ""} />;
   if (url) node = <a href={url} target="_blank" rel="noopener noreferrer">{node}</a>;
   if (cell.hover_svg) node = <Depicted svg={cell.hover_svg}>{node}</Depicted>;
+  else if (!url && cell.badge === undefined && typeof cell.text === "string") {
+    const smiles = structureForCell(structures, cell.text, column, rowSmiles);
+    if (smiles) node = <StructureHover smiles={smiles}>{node}</StructureHover>;
+  }
   const lines = helpLines(cell.help);
   return <>{node}{lines.length > 0 && <HelpButton lines={lines} className="inline" label="Help" />}</>;
 }
@@ -81,6 +91,7 @@ export function RowsTable({ columns, rows, rowHelp = false, empty, compact = fal
   const wrap = useRef<HTMLDivElement>(null);
   const wide = columns.length > 6;
   const frozen2 = wide && columns[1] === "Fragments";
+  const smilesCol = columns.findIndex(c => /smiles/i.test(c));      // a name in the same row shows this structure (inside ESI MS/MS Annotation)
   // the second frozen column sticks right after the first, so it needs the first one's width
   useLayoutEffect(() => {
     const el = wrap.current, first = el?.querySelector("th:first-child");
@@ -106,10 +117,11 @@ export function RowsTable({ columns, rows, rowHelp = false, empty, compact = fal
             ? rows.map((r, i) => {
               const { cells, help } = Array.isArray(r) ? { cells: r, help: undefined } : r;
               const lines = helpLines(help);
+              const rowSmiles = smilesCol >= 0 ? cellText(cells[smilesCol]) : "";
               return (
                 <tr key={i}>
                   {cells.map((c, j) => <td key={j} className={(isMultiline(c) ? "long lines" : isLong(c) ? "long" : "") + fix(j) || undefined}>
-                    {compact && typeof c === "string" && c.length > 80 ? <CompactText text={c} column={columns[j] ?? "text"} /> : <CellView cell={c} />}
+                    {compact && typeof c === "string" && c.length > 80 ? <CompactText text={c} column={columns[j] ?? "text"} /> : <CellView cell={c} column={columns[j]} rowSmiles={rowSmiles} />}
                   </td>)}
                   {rowHelp && <td className="help-col">{lines.length > 0 && <HelpButton lines={lines} label="Row help" />}</td>}
                 </tr>);

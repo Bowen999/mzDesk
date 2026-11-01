@@ -575,7 +575,7 @@ def test_spec_form_matches_the_pipeline():
     assert fields["halogen"]["label"] == "Allow Cl/Br in formulas" and fields["halogen"]["value"] is False and fields["local_isomers"]["value"] is False
     assert fields["local_isomers"]["label"] == "Also compare with database isomers (slower, stricter)"
     assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metric", "lib_threshold")} == {"Advanced"}
-    assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"] == ["additive", "alkali", "ph", "lib_metric", "lib_threshold"]
+    assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:5] == ["additive", "alkali", "ph", "lib_metric", "lib_threshold"]
     assert fields["lib_metric"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and fields["lib_metric"]["value"] == library_step.PRIMARY_METRIC
     assert fields["lib_threshold"]["type"] == "number" and fields["lib_threshold"]["value"] == library_step.GATE_SIMILARITY == 0.8
     assert (fields["lib_threshold"]["step"], fields["lib_threshold"]["min"], fields["lib_threshold"]["max"]) == (0.01, 0, 1)

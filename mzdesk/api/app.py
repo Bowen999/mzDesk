@@ -5,6 +5,7 @@ Pipeline（ESI MS/MS Annotation、EI MS Annotation、Targeted Method）跑得久
 引擎共用一台机器和一把重任务锁，所以 pipeline 任务一次只跑一个，后到的排队（status "queued"）。
 """
 import copy
+import functools
 import logging
 import threading
 import time
@@ -13,7 +14,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from mzdesk import __version__
@@ -24,7 +25,7 @@ from mzdesk.api.request_limits import MassQLRequestLimit
 from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
-from mzdesk.spec import MODULES, PIPELINES, spec
+from mzdesk.spec import MODULES, PIPELINES, is_deferred, spec
 from mzdesk.workflows import ei_ms_annotation, targeted_method
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,7 +36,7 @@ app = FastAPI(title="mzDesk API", version=__version__)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
 app.add_middleware(MassQLRequestLimit)
 app.include_router(fragments_api.router)
-_modules = {m["id"]: m for m in MODULES}
+_modules = {m["id"]: m for m in MODULES if not is_deferred(m)}     # deferred modules (DMPK, ICP-MS, MRM) answer 404
 _pipelines = {p["id"]: p for p in PIPELINES}
 
 
@@ -271,6 +272,31 @@ def get_pipeline_job(job_id: str):
             if step["status"] == "running":
                 step["seconds"] = round(now - job["started"].get(step["id"], now), 1)
         return {"status": job["status"], "note": job["note"], "steps": steps, "result": copy.deepcopy(job["result"]), "error": job["error"]}
+
+
+MAX_DEPICT_SMILES = 1500
+
+
+@functools.lru_cache(maxsize=1024)
+def _depict(smiles: str) -> str | None:
+    from mzdesk.api.common import depiction_svg
+    try:
+        return depiction_svg(smiles, size=(260, 182))
+    except Exception:  # noqa: BLE001 - display only
+        log.exception("depiction failed")
+        return None
+
+
+@app.get("/api/depict")
+def depict(smiles: str = ""):
+    """2D structure of a SMILES as SVG, for the hover previews of the result pages (404 when there is nothing to draw)."""
+    smiles = smiles.strip()
+    if not smiles or len(smiles) > MAX_DEPICT_SMILES:
+        raise HTTPException(404, "no structure")
+    svg = _depict(smiles)
+    if not svg:
+        raise HTTPException(404, "no structure")
+    return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/lib/{name}")

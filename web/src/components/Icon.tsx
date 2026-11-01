@@ -15,8 +15,8 @@ const MODULE_ICONS = new Set([
   "identity", "structure_formats", "properties", "lipid_short_name",
   // GNPS2
   "gnps_fastmasst", "gnps_redu", "gnps_massql",
-  // Utilities
-  "exclusivity", "mrm", "calculator", "report",
+  // Spectrum / standalone
+  "exclusivity", "calculator",
 ]);
 
 export function moduleIcon(m: Pick<Module, "id" | "subgroup">) {

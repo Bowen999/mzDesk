@@ -27,7 +27,8 @@ def spectrum_figures(peaks, precursor_mz, tolerance, reference=None):
             figure, cards = build_mirror_figure(peaks, reference["peaks"], precursor_mz, reference.get("precursor_mz"),
                                          tolerance=tolerance, labels=("Experimental", "Library"), height=MIRROR_HEIGHT)
             result["library"] = {"figure": plotly(figure, peaks=cards), "library": reference["library"],
-                                 "accession": reference["accession"], "name": reference["name"]}
+                                 "accession": reference["accession"], "name": reference["name"],
+                                 "smiles": reference.get("smiles")}
         except Exception:  # noqa: BLE001
             log.exception("library mirror figure failed")
     return result

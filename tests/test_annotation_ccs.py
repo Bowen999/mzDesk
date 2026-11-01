@@ -203,13 +203,13 @@ def test_the_api_answers_400_for_a_bad_ion_mobility_section():
     assert r.status_code == 400 and "1/K0" in r.json()["detail"]
 
 
-def test_the_spec_has_a_collapsed_ion_mobility_section_with_the_ccs_pages_options():
+def test_the_spec_has_the_ion_mobility_fields_at_the_end_of_advanced_with_the_ccs_pages_options():
     fields = {f["id"]: f for f in ESI["inputs"]}
-    ion = [f for f in ESI["inputs"] if f.get("section") == "Ion Mobility"]
-    assert [f["id"] for f in ion] == ["ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"] and all(f["section_collapsed"] for f in ion)
+    advanced = [f["id"] for f in ESI["inputs"] if f.get("section") == "Advanced"]
+    assert advanced == ["additive", "alkali", "ph", "lib_metric", "lib_threshold", "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"]
     sections = list(dict.fromkeys(f["section"] for f in ESI["inputs"]))
-    assert sections == ["Spectrum", "Search", "Options", "Ion Mobility", "Advanced"]
-    assert not any(f.get("section_collapsed") for f in ESI["inputs"] if f["section"] != "Ion Mobility")
+    assert sections == ["Spectrum", "Search", "Options", "Advanced"] and "Ion Mobility" not in sections      # Advanced is closed by the page itself
+    assert not any(f.get("section_collapsed") for f in ESI["inputs"])
     assert fields["ccs_observed"]["type"] == "number" and fields["ccs_observed"]["value"] is None and not fields["ccs_observed"].get("required")
     assert fields["ccs_platform"]["options"] == ["", *ccs.PLATFORMS] and fields["ccs_platform"]["value"] == "" and fields["ccs_platform"]["placeholder"]
     assert tuple(fields["ccs_gas"]["options"]) == ccs.GASES and fields["ccs_gas"]["value"] == "N₂"
@@ -220,7 +220,7 @@ def test_the_spec_has_a_collapsed_ion_mobility_section_with_the_ccs_pages_option
     assert page["platform"]["options"] == list(ccs.PLATFORMS) == spec.CCS_PLATFORMS and tuple(spec.CCS_GASES) == ccs.GASES
     assert tuple(spec.CCS_TW_CALIBRATIONS) == ccs.TW_CALIBRATIONS
     assert page["gas"]["options"] == spec.CCS_GASES and page["tw_calibration"]["options"] == spec.CCS_TW_CALIBRATIONS
-    assert ccs_step.FORM_KEYS == tuple(f["id"] for f in ion)
+    assert ccs_step.FORM_KEYS == tuple(advanced[-4:])
 
 
 def test_the_examples_do_not_carry_a_ccs():

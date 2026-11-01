@@ -10,8 +10,10 @@ import { HelpButton } from "../components/Help";
 import { OutputList } from "../components/Outputs";
 import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
 import { StepList } from "../components/StepList";
+import { StructureProvider } from "../components/StructureHover";
 import { WorkflowProgress } from "../components/WorkflowProgress";
 import { networkUses } from "../network";
+import { dropRun, recordRun } from "../report/log";
 import type { AnnotationResult, Field, Job, Spec, WorkflowResult } from "../types";
 
 const POLL_MS = 1500;
@@ -73,7 +75,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   const ticket = useRef(0);                      // Clear, a newer run or unmount ends polling of an older job
   const confirming = useRef(false);
   useEffect(() => {
-    ticket.current++;
+    ticket.current++; dropRun("workflow", id);
     setValues(initialValues(pipe ? pipe.inputs : [])); setJob(null); setBusy(false); setHasStartedJob(false); setError(""); setErrors({}); setRequestedAdduct(null);
     return () => { ticket.current++; };
   }, [id]);
@@ -87,13 +89,14 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     if (netNote) setNetNote("");
   };
   const loadExample = (example: Record<string, any>) => {
-    ticket.current++; confirming.current = false; guard.cancel();
+    ticket.current++; confirming.current = false; guard.cancel(); dropRun("workflow", pipe.id);
     setValues({ ...initialValues(pipe.inputs), ...example }); setJob(null); setBusy(false); setHasStartedJob(false); setError(""); setErrors({}); setRequestedAdduct(null); setNetNote("");
   };
   const clear = () => {
     ticket.current++;
     confirming.current = false;
     guard.cancel();
+    dropRun("workflow", pipe.id);
     setValues(initialValues(pipe.inputs)); setJob(null); setBusy(false); setHasStartedJob(false); setError("");
     setErrors({}); setRequestedAdduct(null);
     setNetNote(busy ? "Cleared. The previous workflow may still finish on the server." : "");
@@ -119,7 +122,8 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     }
     if (ticket.current !== mine) return;
     setNetNote("");
-    setBusy(true); setHasStartedJob(false); setError(""); setErrors({}); setJob(null);
+    setBusy(true); setHasStartedJob(false); setError(""); setErrors({}); setJob(null); dropRun("workflow", pipe.id);
+    const t0 = performance.now();
     try {
       const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
       const adduct = payload.precursor?.adduct;
@@ -139,7 +143,11 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
         }
         if (ticket.current !== mine) return;
         setJob(j);
-        if (j.status !== "running" && j.status !== "queued") { if (j.error) setError(j.error); break; }
+        if (j.status !== "running" && j.status !== "queued") {
+          if (j.error) setError(j.error);
+          else if (j.result) recordRun({ kind: "workflow", id: pipe.id, title: pipe.title, section: "Workflows", inputs: payload, result: j.result, steps: j.steps, seconds: (performance.now() - t0) / 1000 });
+          break;
+        }
         await sleep(POLL_MS);
         if (ticket.current !== mine) return;
       }
@@ -157,6 +165,27 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   const jobResult = job?.result ?? null;
   const result = pipe.id === ESI_PIPELINE && jobResult && !isWorkflowResult(jobResult) ? jobResult : null;          // ESI MS/MS Annotation's own result
   const workflowResult = pipe.id !== ESI_PIPELINE && jobResult && isWorkflowResult(jobResult) ? jobResult : null;   // every other workflow
+  const content = (
+    <>
+      {result && (
+        <>
+          <AnswerCard result={result} requestedAdduct={requestedAdduct} />
+          <SpectrumEvidence result={result} />
+          <IsomerEvidence result={result} />
+          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
+            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
+          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
+            <CandidateTable candidates={result.candidates} />
+          </FragmentProvider>
+        </>)}
+      {workflowResult && <WorkflowResultView result={workflowResult} />}
+      {job && (
+        <>
+          <div className="results-head"><h2 className="panel-title">Steps</h2></div>
+          <StepList steps={job.steps} />
+        </>)}
+    </>
+  );
   return (
     <div className="page module-page" data-pipeline={pipe.id}>
       <div className="module-heading">
@@ -185,23 +214,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
       {error && <div className="alert error" role="alert">{error}</div>}
       {(busy || job || (hasStartedJob && error)) && <WorkflowProgress job={job} awaitingFirstUpdate={hasStartedJob}
         trackingStopped={!!error && !busy && hasStartedJob && (!job || job.status === "running" || job.status === "queued")} />}
-      {result && (
-        <>
-          <AnswerCard result={result} requestedAdduct={requestedAdduct} />
-          <SpectrumEvidence result={result} />
-          <IsomerEvidence result={result} />
-          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
-            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
-          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
-            <CandidateTable candidates={result.candidates} />
-          </FragmentProvider>
-        </>)}
-      {workflowResult && <WorkflowResultView result={workflowResult} />}
-      {job && (
-        <>
-          <div className="results-head"><h2 className="panel-title">Steps</h2></div>
-          <StepList steps={job.steps} />
-        </>)}
+      {pipe.id === ESI_PIPELINE ? <StructureProvider result={result}>{content}</StructureProvider> : content}
       {guard.dialog}
     </div>
   );

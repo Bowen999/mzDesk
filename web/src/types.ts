@@ -131,7 +131,7 @@ export type AnnotationResult = {
   isomer: { verdict: string; top_id?: string; group: string[]; challengers: { id: string; name: string; peaks: { mz: number; rel?: number }[] }[];
     candidates?: { id: string; name: string; smiles: string; source: string; evaluated: boolean; explained_fraction: number | null }[];
     isomers?: { id: string; distinguished: boolean | null; distinguishing_peaks: { mz: number }[] }[]; notes: string[] } | null;
-  visualization?: { query: BlockData | null; library: { figure: BlockData; library: string; accession: string; name: string } | null } | null;
+  visualization?: { query: BlockData | null; library: { figure: BlockData; library: string; accession: string; name: string; smiles?: string | null } | null } | null;
   fragment_query?: FragmentQuery | null;
 };
 /** EI MS Annotation / Targeted Method (mzdesk/workflows/common.py): the generic result of every workflow except ESI MS/MS Annotation

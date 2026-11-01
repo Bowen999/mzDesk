@@ -8,6 +8,7 @@ import { FeedbackButton } from "./Feedback";
 import { Icon, moduleIcon, pipelineIcon } from "./Icon";
 import { Logo } from "./Logo";
 import { LockIcon } from "./LockGate";
+import { ReportButton } from "../report/ReportButton";
 
 type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
 
@@ -142,7 +143,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
             <Icon name={pipelineIcon(p.id)} className="nav-icon" />
           </NavLink>))}
       </nav>
-      <div className="sidebar-foot"><InternetSwitch compact /><ThemeSwitch compact /><FeedbackButton rail /></div>
+      <div className="sidebar-foot"><InternetSwitch compact /><ReportButton spec={spec} rail /><ThemeSwitch compact /><FeedbackButton rail /></div>
     </aside>
   );
 
@@ -186,6 +187,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
       </div>
       <div className="sidebar-foot">
         <InternetSwitch />
+        <ReportButton spec={spec} />
         <div className="sidebar-foot-row"><ThemeSwitch compact={false} /><FeedbackButton /></div>
       </div>
     </aside>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { AnnotationResult } from "../types";
 import { FigureView } from "./Figure";
 import { HelpButton } from "./Help";
+import { StructText, StructureHover } from "./StructureHover";
 import "./pipeline.css";
 
 /**
@@ -33,7 +34,7 @@ export function SpectrumEvidence({ result }: { result: AnnotationResult }) {
     </div>
     {showLibrary
       ? <>
-        <p className="workflow-caption spectrum-hit">Best library hit: <b>{library.name || library.accession}</b> · {library.library} · {library.accession}</p>
+        <p className="workflow-caption spectrum-hit">Best library hit: <b>{library.smiles ? <StructureHover smiles={library.smiles}>{library.name || library.accession}</StructureHover> : <StructText text={library.name || library.accession} />}</b> · {library.library} · {library.accession}</p>
         <FigureView data={library.figure} />
       </>
       : query && <FigureView data={query} />}
@@ -56,7 +57,7 @@ export function IsomerEvidence({ result }: { result: AnnotationResult }) {
         const other = others.get(c.id);
         const role = c.id === iso.top_id ? "top-ranked" : !c.evaluated ? "not scored" : group.has(c.id) ? "not separated" : other?.distinguished ? "separated" : "not compared";
         return <div className="isomer-bar-row" key={c.id}>
-          <div className="isomer-bar-label"><span title={c.smiles}>{c.name || c.smiles || c.id}</span>
+          <div className="isomer-bar-label"><span>{c.smiles ? <StructureHover smiles={c.smiles}>{c.name || c.smiles || c.id}</StructureHover> : (c.name || c.id)}</span>
             <small>{role}{challengers.has(c.id) ? " · challenger" : ""}{c.source !== "input" ? ` · ${c.source}` : ""}</small></div>
           <div className="isomer-bar-track" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(100, (fraction ?? 0) * 100))}%` }} /></div>
           <span className="isomer-bar-value">{fraction === null ? "Not scored" : `${(fraction * 100).toFixed(1)}%`}</span>

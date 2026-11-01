@@ -2,6 +2,7 @@ import { Fragment, useId, useState, type MouseEvent } from "react";
 import type { AnnotationCandidate, Cell } from "../types";
 import { candidateDetails, CCS_TONE, ccsNumbers, ccsText, LEVEL_TONE, levelName } from "./annotationModel";
 import { CellView } from "./Blocks";
+import { StructureHover } from "./StructureHover";
 import "./pipeline.css";
 
 /** "View": the fragment view of this candidate (computed when clicked); a dash when it has no structure or MetFrag cannot use its adduct. */
@@ -43,7 +44,7 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                       aria-label={`${isOpen ? "Hide" : "Show"} details of ${name}`} onClick={() => toggle(c.id)}><span className="cand-caret" aria-hidden="true" /></button>
                   </td>
                   <td>{c.rank ?? "—"}</td>
-                  <td className="cand-name">{c.name || "—"}{c.ccs?.flag && <span className="cand-flag" title={ccsText(c.ccs)}>{c.ccs.flag}</span>}</td>
+                  <td className="cand-name">{c.name ? (c.smiles ? <StructureHover smiles={c.smiles}>{c.name}</StructureHover> : c.name) : "—"}{c.ccs?.flag && <span className="cand-flag" title={ccsText(c.ccs)}>{c.ccs.flag}</span>}</td>
                   <td><CellView cell={levelCell(c)} /></td>
                   <td className="num">{typeof c.final_score === "number" ? c.final_score.toFixed(3) : "—"}</td>
                   <td><CellView cell={fragmentCell(c)} /></td>
@@ -52,7 +53,7 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                   <tr className="cand-detail" id={detail}>
                     <td colSpan={6}>
                       <dl className="cand-facts">
-                        {candidateDetails(c).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
+                        {candidateDetails(c).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{k === "SMILES" && c.smiles ? <StructureHover smiles={c.smiles}>{v}</StructureHover> : v}</dd></div>)}
                         {c.ccs && <div key="CCS"><dt>CCS</dt>
                           <dd><span className={"badge tone-" + (CCS_TONE[c.ccs.verdict] ?? "neutral")}>{c.ccs.verdict}</span>
                             {ccsNumbers(c.ccs) && <span className="cand-ccs"> {ccsNumbers(c.ccs)}</span>}
