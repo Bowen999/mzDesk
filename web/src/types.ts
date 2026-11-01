@@ -7,6 +7,8 @@ export type Field = {
   // form metadata (Spectrum pages; optional everywhere)
   section?: string; section_collapsed?: boolean; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
   header_fallback?: boolean; auto_label?: string; ion_modes?: string[]; allow_formula?: boolean; help?: Help;
+  checkboxes?: boolean;             // multiselect: a column of tick boxes instead of chips (several algorithms, with a long name each)
+  new_row?: boolean;                // starts a new row of the form grid
   label_field?: boolean;           // structure: an optional label input inside the field names the compound on the result cards
   // internet use (spec.py): the frontend asks before running online while the sidebar switch is off
   network?: boolean;               // checkbox: ticking it uses the internet

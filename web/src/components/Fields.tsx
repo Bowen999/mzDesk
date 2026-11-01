@@ -180,6 +180,16 @@ export function FieldInput({ field, value, onChange, error }: P) {
     case "multiselect": return (
       <div className="field wide" role="group" aria-labelledby={`${inputId}-label`}>
         <span id={`${inputId}-label`}><span className="field-label-text">{f.label}{required && <Req />}</span></span>
+        {f.checkboxes ? (
+          <div className="check-grid">
+            {f.options!.map(o => {
+              const on = (value as string[]).includes(o);
+              // keep the options' order whatever order they are ticked in
+              return <label className="check-line" key={o}><input type="checkbox" checked={on}
+                onChange={() => onChange(f.options!.filter(x => x === o ? !on : (value as string[]).includes(x)))} /> {o}</label>;
+            })}
+          </div>
+        ) : (
         <div className="chip-row">
           {f.options!.map(o => {
             const on = (value as string[]).includes(o);
@@ -191,7 +201,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
               <button type="button" className="link-btn" onClick={() => onChange([...f.options!])}>All</button>
               <button type="button" className="link-btn" onClick={() => onChange([])}>None</button>
             </span>)}
-        </div>
+        </div>)}
         <Note text={help} error={error} id={`${inputId}-help`} />
       </div>);
     case "checkbox": return (

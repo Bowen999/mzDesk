@@ -1057,18 +1057,21 @@ def _section(title, *fields, collapsed=False):
 # adduct_rules.ADDITIVES (tests/test_pipeline.py checks they agree; spec does not import the rule engine)
 PIPELINE_ADDITIVES = ["Formic acid", "Ammonium formate", "Ammonium acetate", "Acetic acid", "None"]
 # library_step.METRIC_CHOICES (tests/test_pipeline.py checks they agree)
-PIPELINE_LIBRARY_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.ENTROPY_UNWEIGHTED, METRIC_NAMES.COSINE_GREEDY, METRIC_NAMES.MOD_COSINE_GREEDY]
+PIPELINE_LIBRARY_METRICS = [METRIC_NAMES.ENTROPY_WEIGHTED, METRIC_NAMES.ENTROPY_UNWEIGHTED, METRIC_NAMES.COSINE_GREEDY, METRIC_NAMES.COSINE_HUNGARIAN,
+                            METRIC_NAMES.MOD_COSINE_GREEDY, METRIC_NAMES.MOD_COSINE_HUNGARIAN, METRIC_NAMES.NEUTRAL_LOSSES, METRIC_NAMES.NIST_DOT,
+                            METRIC_NAMES.REVERSE_DOT, METRIC_NAMES.BINNED_COSINE]
 _PIPELINE_ADVANCED = [
     {**select("additive", "Mobile phase additive", ["Unknown"] + PIPELINE_ADDITIVES), "help": "Unknown = the best additive counts for each candidate's adduct."},
     {**select("alkali", "Sodium / potassium present", ["Unknown", "Present", "Absent"]), "help": "Glassware, salts, biological matrix. Unknown counts as present."},
     {**number("ph", "Mobile phase pH", 2.7, 0.1), "help": "For the ionization check of each candidate (default: 0.1 % formic acid)."},
-    {**select("lib_metric", "Library similarity algorithm", PIPELINE_LIBRARY_METRICS),
-     "help": "Scores the library hits and decides the Level-2 gate. Falls back to CosineGreedy if it cannot be computed."},
-    {**number("lib_threshold", "Level-2 gate similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
-     "help": "A library hit needs this similarity to pass the gate. Hits join the candidate pool from this value minus 0.10."}]
+    {**multiselect("lib_metrics", "Library similarity algorithms", PIPELINE_LIBRARY_METRICS, [METRIC_NAMES.ENTROPY_WEIGHTED]), "checkboxes": True, "required": True,
+     "help": "Tick one or more. Each library hit is scored with every ticked algorithm and passes the Level-2 gate when at least one reaches the similarity threshold; "
+             "the first ticked algorithm orders the hits. One that cannot be computed is left out (CosineGreedy replaces all of them if none can be)."},
+    {**number("lib_threshold", "Similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
+     "help": "A library hit needs this similarity, on at least one ticked algorithm, to pass the Level-2 gate. Hits join the candidate pool from this value minus 0.10."}]
 # MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
-    {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0,
+    {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0, "new_row": True,
      "help": "Optional. One value measured in N₂. Each candidate is compared with its CCS in the local reference data (same compound and adduct), or with a "
              "predicted value if there is none. A candidate that disagrees with a measured value goes behind the others; a predicted value only reorders near-ties. "
              "For TIMS enter the CCS your vendor software reports, not 1/K0."},
@@ -1092,7 +1095,7 @@ EI_DIPENTYL_PHTHALATE = "104.0257 8\n105.03365 10\n121.02855 21\n122.03618 5\n12
 def _caffeine_example(libraries, ms2):
     return {"precursor": _prec("195.0877"), "ms2": _paste(ms2), "ms1": CAFFEINE_MS1, "libraries": libraries, "tol_ppm": 10.0, "tol_da": 0.02,
             "omics": "Either / unknown", "halogen": False, "local_isomers": False, "additive": "Unknown", "alkali": "Unknown", "ph": 2.7,
-            "lib_metric": METRIC_NAMES.ENTROPY_WEIGHTED, "lib_threshold": 0.80}
+            "lib_metrics": [METRIC_NAMES.ENTROPY_WEIGHTED], "lib_threshold": 0.80}
 
 
 PIPELINES = [

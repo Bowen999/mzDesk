@@ -78,7 +78,7 @@ class Query:
     ph: float
     halogen: bool
     local_isomers: bool
-    lib_metric: str = library_step.PRIMARY_METRIC
+    lib_metrics: tuple = (library_step.PRIMARY_METRIC,)      # the library similarity algorithms: a hit passes the gate when at least one reaches lib_threshold
     lib_threshold: float = library_step.GATE_SIMILARITY
     ccs: ccs_step.CcsQuery | None = None
     warnings: list = field(default_factory=list)
@@ -86,6 +86,11 @@ class Query:
     @property
     def polarity(self):
         return "Positive" if self.positive else "Negative"
+
+    @property
+    def lib_metric(self):
+        """The first chosen library similarity algorithm."""
+        return self.lib_metrics[0]
 
 
 def parse_inputs(inputs):
@@ -117,9 +122,16 @@ def parse_inputs(inputs):
     alkali = text(inputs, "alkali").lower() or "unknown"
     if alkali not in ALKALI_CHOICES:
         raise InputError("Sodium / potassium must be Unknown, Present or Absent.")
-    lib_metric = text(inputs, "lib_metric") or library_step.PRIMARY_METRIC
-    if lib_metric not in library_step.METRIC_CHOICES:
+    lib_metrics = inputs.get("lib_metrics")
+    if lib_metrics is None:                                      # older callers send one name as lib_metric
+        lib_metrics = [text(inputs, "lib_metric") or library_step.PRIMARY_METRIC]
+    if isinstance(lib_metrics, str):
+        lib_metrics = [lib_metrics]
+    if not isinstance(lib_metrics, list) or not lib_metrics:
+        raise InputError("Choose at least one library similarity algorithm.")
+    if any(m not in library_step.METRIC_CHOICES for m in lib_metrics):
         raise InputError(f"Similarity algorithm must be one of: {', '.join(library_step.METRIC_CHOICES)}.")
+    lib_metrics = library_step.as_metrics(lib_metrics)
     ccs = ccs_step.parse_form(inputs, warnings)
     return Query(
         precursor_mz=mz, positive=positive, adduct=adduct, ms2=ms2, ms1=parse_spectrum(text(inputs, "ms1")), libraries=list(dict.fromkeys(libraries)),
@@ -128,8 +140,8 @@ def parse_inputs(inputs):
         omics=omics, additive=additive, alkali=ALKALI_CHOICES[alkali],
         ph=number(inputs, "ph", "Mobile phase pH", default=DEFAULT_PH, minimum=0, maximum=14),
         halogen=flag(inputs, "halogen", "Allow Cl/Br in formulas"),
-        local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metric=lib_metric,
-        lib_threshold=number(inputs, "lib_threshold", "Level-2 gate similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
+        local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metrics=lib_metrics,
+        lib_threshold=number(inputs, "lib_threshold", "Similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
         ccs=ccs, warnings=warnings)
 
 
@@ -191,13 +203,16 @@ def _formula_blocks(res):
 
 def _library_blocks(layer, gate):
     out, rows = [], []
+    metrics = list(gate.thresholds.get("metrics") or []) if gate is not None else []
+    many = len(metrics) > 1                      # several algorithms: one score column each (the gate passes on the best)
     for c in layer.candidates:
         ev = c.evidence["library"]
-        rows.append([c.name or "—", c.smiles or "—", c.adduct or "—", fmt(ev["similarity"], 3), ev["matched_peaks"], fmt(ev.get("precursor_error_ppm"), 2),
+        scores = [fmt((ev.get("scores") or {}).get(m), 3) for m in metrics] if many else [fmt(ev["similarity"], 3)]
+        rows.append([c.name or "—", c.smiles or "—", c.adduct or "—", *scores, ev["matched_peaks"], fmt(ev.get("precursor_error_ppm"), 2),
                      blk.badge("passed", "good") if ev["gate_passed"] else blk.badge("failed", "neutral"), "; ".join(ev["failed_checks"]) or "—"])
     if rows:
         out.append(_table("library_table", "Library hits",
-                          ["Name", "SMILES", "Adduct", "Similarity", "Matched peaks", "Precursor error (ppm)", "Gate", "Failed checks"], rows))
+                          ["Name", "SMILES", "Adduct", *(metrics if many else ["Similarity"]), "Matched peaks", "Precursor error (ppm)", "Gate", "Failed checks"], rows))
     if gate is not None and gate.checks:
         out.append(_table("library_gate", "Level-2 gate (best hit)", ["Check", "Result", "Detail"], [[c["label"], c["status"], c["detail"]] for c in gate.checks]))
     return out
@@ -405,7 +420,7 @@ def run_query(q, progress=None):
         def library():
             layer, summary = library_step.run_library(q.ms2, q.precursor_mz, q.positive, q.libraries, adducts=retained, formulas=formulas,
                                                       ms1_peaks=q.ms1 or None, tol_ppm=q.tol_ppm, tol_da=q.tol_da, halogen=q.halogen,
-                                                      metric=q.lib_metric, gate_similarity=q.lib_threshold)
+                                                      metric=q.lib_metrics, gate_similarity=q.lib_threshold)
             return layer.status, layer.note, _library_blocks(layer, summary), (layer, summary)
         got = steps.guarded(3, library)
         if got:

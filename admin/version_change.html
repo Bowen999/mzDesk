@@ -264,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.3.4', date:'2026-10-31', git:'',
+  title:'MS/MS Annotation：库检索相似度算法可多选（checkbox，10 个），阈值改名 Similarity threshold',
+  note:'多个算法时“任意一个达标”即通过 Level-2 gate，所以勾选 Reverse dot product 这类宽松算法会让 Level 2a 更容易出现（owner 定的规则，未用数据校准）。排序和候选分数只看第一个勾选的算法；默认只勾 SpectralEntropy (weighted)，结果与 v0.3.3 相同。',
+  state:[['算法','10 个可选：谱熵 ×2 · Cosine ×4 · NeutralLosses · NIST dot · Reverse dot · Binned cosine'], ['Gate','任一勾选算法 ≥ Similarity threshold 即通过'], ['排序','第一个勾选的算法'], ['版本','0.3.4']],
+  c:{
+   pipe:['chg','Advanced：Library similarity algorithm（单选）改为 Library similarity algorithms（checkbox 多选，独占一行，必选至少一个），算法从 4 个增加到 10 个（新增 CosineHungarian、ModifiedCosineHungarian、NeutralLossesCosine、NIST weighted dot product、Reverse dot product、Binned cosine）；Level-2 gate similarity threshold 改名 Similarity threshold；Observed CCS 另起一行。库命中进入候选池的门槛（阈值 − 0.10）同样是任一算法达到即可。某个算法算不出来（如缺 ms_entropy 时的谱熵）只去掉它，全部算不出来才改用 CosineGreedy。勾选多个算法时，Library hits 表每个算法一列，gate 的 Similarity 检查列出每个算法的得分；证据里新增 scores。旧字段 lib_metric（一个名字）仍可传，等于只勾一个。',true,{w:'mzdesk/spec.py · mzdesk/annotation/library_step.py · mzdesk/annotation/pipeline.py · web/src/components/Fields.tsx · web/src/pages/PipelinePage.tsx · web/src/theme.css · web/src/types.ts · tests/test_library_gate.py · tests/test_pipeline.py · tests/test_annotation_steps123.py · tests/test_annotation_ccs.py'}],
+   docs:['doc','版本号 0.3.4，本页加 v0.3.4。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.3.3', date:'2026-10-31', git:'',
   title:'页面整理：Alternative Explanations 并入 Spectrum；DMPK、ICP-MS、MRM 留给 2.0；Calculator 单列；ESI MS/MS Annotation 改名 MS/MS Annotation；新增 Session report 和结构悬停',
   note:'DMPK、ICP-MS、MRM Transitions 只是不显示（接口返回 404），引擎和测试都在；把 spec.py 里的 DEFERRED_SUBGROUPS / DEFERRED_MODULES 清空即可恢复。流程 id 仍是 esi_ms2_annotation（网址和统计不变），只改显示名。Session report 在浏览器里生成，不经服务器；HTML 是页面当时的样子，悬停和“?”在文件里不可用。',

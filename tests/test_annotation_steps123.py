@@ -697,7 +697,7 @@ def test_a_library_spectrum_of_the_compound_passes_the_gate_and_is_level_2a(tiny
     assert (ev["library"], ev["accession"], ev["library_adduct"], ev["n_spectra"]) == ("MassBank", "FIX-CAF1", "[M+H]+", 3)
     assert "Gate passed by Caffeine" in layer.note
     assert [c["status"] for c in summary.checks] == ["pass"] * 5 + ["not evaluated"]
-    assert summary.thresholds == {"metric": "SpectralEntropy (weighted)", "similarity": 0.8, "min_matched_peaks": 4, "precursor_ppm": 10.0,
+    assert summary.thresholds == {"metric": "SpectralEntropy (weighted)", "metrics": ["SpectralEntropy (weighted)"], "similarity": 0.8, "min_matched_peaks": 4, "precursor_ppm": 10.0,
                                   "isotope": 0.8, "list": 0.7}
     merged = merge_candidates([layer])
     assert merged[0].level == "2a" and merged[0].name == "Caffeine"

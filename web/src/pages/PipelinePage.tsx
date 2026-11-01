@@ -159,7 +159,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
   };
 
   const field = (f: Field, i: number) => (
-    <div className="field-slot" data-field={f.id} key={f.id ?? i}>
+    <div className={"field-slot" + (f.new_row ? " new-row" : "")} data-field={f.id} key={f.id ?? i}>
       <FieldInput field={f} value={f.id ? values[f.id] : undefined} error={f.id ? errors[f.id] : undefined} onChange={v => f.id && update(f.id, v)} />
     </div>);
   const jobResult = job?.result ?? null;

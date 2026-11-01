@@ -837,3 +837,8 @@ body.resizing .sidebar-shell { transition: none; }
 /* ---- structure hover (components/StructureHover.tsx): space is reserved so the popover does not jump when the drawing arrives ---- */
 .struct-preview { display: grid; place-items: center; width: 240px; max-width: calc(100vw - 60px); min-height: 172px; }
 .struct-msg { color: var(--muted); font-size: 12.5px; }
+
+/* a multiselect drawn as tick boxes (spec: checkboxes) takes its own row; new_row starts a new row of the form grid */
+.check-grid { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 6px; }
+.check-grid .check-line { gap: 7px; font-size: 13px; cursor: pointer; }
+.field-slot.new-row > .field { grid-column-start: 1; }

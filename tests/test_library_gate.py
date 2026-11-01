@@ -124,7 +124,7 @@ def test_run_library_hands_the_metric_and_the_list_threshold_to_the_search(monke
     monkeypatch.setattr(L, "_reference_spectrum", lambda h: None)
     layer, summary = L.run_library([(100.0, 10.0)], bd.ion_mz("C8H10N4O2", "[M+H]+"), True, ["MassBank"], adducts=["[M+H]+"], formulas=[],
                                    metric=modified, gate_similarity=0.85)
-    assert seen["args"][-2:] == (modified, 0.75)
+    assert seen["args"][-2:] == ((modified,), 0.75)                      # the algorithms go to the search as a tuple
     assert summary.passed and summary.thresholds["metric"] == modified and summary.thresholds["similarity"] == 0.85 and summary.thresholds["list"] == 0.75
     assert "scored 0.75 or higher on ModifiedCosineGreedy" in layer.note and "the gate needs 0.85" in layer.note
     assert layer.candidates[0].evidence["library"]["metric"] == modified and not summary.warnings
@@ -144,3 +144,72 @@ def test_a_metric_that_could_not_be_computed_is_reported_as_the_fallback(monkeyp
 def test_run_library_rejects_an_unknown_metric_and_a_threshold_outside_0_to_1(kw):
     with pytest.raises(ValueError, match="similarity"):
         L.run_library([(100.0, 10.0)], 195.0877, True, ["MassBank"], adducts=["[M+H]+"], formulas=[], **kw)
+
+
+# ---------------------------------------------------------------- several algorithms: a hit passes when at least one reaches the threshold
+def test_algorithms_are_taken_in_the_choices_order_and_checked():
+    assert L.as_metrics("CosineGreedy") == ("CosineGreedy",)
+    assert L.as_metrics(["Binned cosine", "CosineGreedy", "SpectralEntropy (weighted)", "CosineGreedy"]) == (
+        "SpectralEntropy (weighted)", "CosineGreedy", "Binned cosine")
+    with pytest.raises(ValueError, match="at least one"):
+        L.as_metrics([])
+    with pytest.raises(ValueError, match="must be one of"):
+        L.as_metrics(["CosineGreedy", "Spec2Vec"])
+    with pytest.raises(ValueError, match="similarity threshold must be a number"):
+        L.check_settings("CosineGreedy", 1.5)
+
+
+def test_one_algorithm_reaching_the_threshold_is_enough():
+    g = gate(metric=["CosineGreedy", "SpectralEntropy (weighted)"], gate_similarity=0.80)
+    assert g.metrics == ("SpectralEntropy (weighted)", "CosineGreedy") and g.metric == "SpectralEntropy (weighted)"
+    assert g.thresholds()["metric"] == "SpectralEntropy (weighted)" and g.thresholds()["metrics"] == ["SpectralEntropy (weighted)", "CosineGreedy"]
+    v = g.judge(hit(scores={"SpectralEntropy (weighted)": 0.62, "CosineGreedy": 0.88}))
+    similarity = next(c for c in v["checks"] if c["id"] == "similarity")
+    assert similarity["status"] == "pass" and v["similarity"] == 0.88 and v["metric"] == "CosineGreedy"          # the best score counts
+    assert v["scores"] == {"SpectralEntropy (weighted)": 0.62, "CosineGreedy": 0.88}
+    assert v["rank_score"] == 0.62                                       # the first chosen algorithm orders the hits and is the candidate's score
+    assert similarity["detail"] == "SpectralEntropy (weighted) 0.62, CosineGreedy 0.88; at least one >= 0.80"
+
+
+def test_no_algorithm_reaching_the_threshold_fails_the_similarity_check_and_a_missing_score_is_n_a():
+    g = gate(metric=["SpectralEntropy (weighted)", "CosineGreedy"], gate_similarity=0.80)
+    v = g.judge(hit(scores={"SpectralEntropy (weighted)": 0.62, "CosineGreedy": 0.71}))
+    similarity = next(c for c in v["checks"] if c["id"] == "similarity")
+    assert similarity["status"] == "fail" and similarity["detail"] == "SpectralEntropy (weighted) 0.62, CosineGreedy 0.71; none reaches 0.80"
+    partly = g.judge(hit(scores={"SpectralEntropy (weighted)": None, "CosineGreedy": 0.9}))
+    assert partly["metric"] == "CosineGreedy" and "SpectralEntropy (weighted) n/a" in next(c for c in partly["checks"] if c["id"] == "similarity")["detail"]
+
+
+def test_a_tie_goes_to_the_earlier_algorithm():
+    v = gate(metric=["SpectralEntropy (weighted)", "CosineGreedy"]).judge(hit(scores={"SpectralEntropy (weighted)": 0.9, "CosineGreedy": 0.9}))
+    assert v["metric"] == "SpectralEntropy (weighted)"
+
+
+def test_missing_entropy_keeps_the_other_chosen_algorithms(monkeypatch):
+    seen = []
+
+    def search(peaks, kind, libraries, metrics, *a, **kw):
+        seen.append(list(metrics))
+        if "SpectralEntropy (weighted)" in metrics:
+            raise ImportError("No module named 'ms_entropy'")
+        return {"n_candidates": 3, "n_metrics_scored": len(metrics), "hits": [], "n_kept": 0, "warnings": [], "notes": {}}
+    monkeypatch.setattr(L.ls, "search", search)
+    res, used = L._search([(100.0, 1.0)], ["MassBank"], 195.0877, True, 10.0, 0.02, ("SpectralEntropy (weighted)", "CosineGreedy", "Binned cosine"))
+    assert used == ("CosineGreedy", "Binned cosine") and seen == [["SpectralEntropy (weighted)", "CosineGreedy", "Binned cosine"], ["CosineGreedy", "Binned cosine"]]
+    seen.clear()
+    res, used = L._search([(100.0, 1.0)], ["MassBank"], 195.0877, True, 10.0, 0.02, "SpectralEntropy (weighted)")         # one name in, one name out
+    assert used == "CosineGreedy" and seen == [["SpectralEntropy (weighted)"], ["CosineGreedy"]]
+
+
+def test_hits_are_ordered_by_the_first_chosen_algorithm_not_by_the_best_score(monkeypatch):
+    lenient = hit(name="Lenient", accession="L", inchikey="AAAAAAAAAAAAAA-UHFFFAOYSA-N", smiles=THEOPHYLLINE,
+                  scores={"SpectralEntropy (weighted)": 0.82, "Reverse dot product": 1.0})
+    exact = hit(name="Caffeine", accession="C", scores={"SpectralEntropy (weighted)": 0.97, "Reverse dot product": 0.97})
+    res = {"hits": [lenient, exact], "n_candidates": 2, "n_kept": 2, "warnings": [], "notes": {}, "n_metrics_scored": 2}
+    monkeypatch.setattr(L, "_search", lambda *a, **k: (res, ("SpectralEntropy (weighted)", "Reverse dot product")))
+    monkeypatch.setattr(L, "_reference_spectrum", lambda h: None)
+    layer, summary = L.run_library([(100.0, 10.0)], bd.ion_mz("C8H10N4O2", "[M+H]+"), True, ["MassBank"], adducts=["[M+H]+"], formulas=[],
+                                   metric=["Reverse dot product", "SpectralEntropy (weighted)"], gate_similarity=0.80)
+    assert [c.name for c in layer.candidates][0] == "Caffeine"
+    caffeine = layer.candidates[0]
+    assert caffeine.layer_score == 0.97 and caffeine.evidence["library"]["scores"]["Reverse dot product"] == 0.97

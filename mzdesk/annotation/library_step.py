@@ -3,9 +3,11 @@
 run_library() searches the selected local libraries (MassBank, GNPS; mzdesk.ms2.library_search) with the query spectrum and judges every
 hit that scores at least LIST_THRESHOLD against the gate. A hit passes only if ALL six checks hold:
 
-  similarity  >= the gate threshold (default GATE_SIMILARITY) on the chosen metric (default: weighted spectral entropy, the Similarity
-              page's primary score; METRIC_CHOICES), CosineGreedy if it cannot be computed. evidence["library"]["metric"] says which
-              one was used. Hits join the pool from the gate threshold - LIST_MARGIN (default LIST_THRESHOLD).
+  similarity  >= the similarity threshold (default GATE_SIMILARITY) on AT LEAST ONE of the chosen algorithms (default: weighted spectral
+              entropy, the Similarity page's primary score; METRIC_CHOICES lists the ones offered). An algorithm that cannot be computed is
+              left out (all of them: CosineGreedy replaces them). The best of the chosen scores is the hit's similarity (evidence["library"]
+              ["metric"] names that algorithm, ["scores"] holds every chosen one); the first chosen algorithm orders the hits. Hits join the pool from the threshold - LIST_MARGIN
+              (default LIST_THRESHOLD), again when any chosen algorithm reaches it.
   peaks       >= GATE_MIN_MATCHED matched peaks (greedy 1:1 pairing at the fragment tolerance); all of them if the query has fewer
   precursor   |observed - theoretical m/z of the hit's formula + adduct| <= tol_ppm; for a hit without a structure the library's own
               recorded precursor m/z stands in
@@ -26,7 +28,8 @@ index has no formula column, so a hit's formula is computed from its SMILES (lar
 kept with smiles=None and no formula, and then cannot pass the formula check when BUDDY gave formulas for its adduct.
 
 Candidates are one per compound (its best spectrum), gate-passing ones first, then by similarity, matched peaks, a known structure.
-layer_score = layer_score_norm = the similarity of the primary metric (already 0-1 and absolute).
+layer_score = layer_score_norm = the hit's rank score: its score on the first chosen algorithm (already 0-1 and absolute); the hits are ordered by it
+too. The best of the chosen scores (evidence["library"]["similarity"]) only decides the gate.
 Peak lists are [(mz, intensity), ...] (parse_spectrum output).
 """
 from __future__ import annotations
@@ -56,7 +59,21 @@ FALLBACK_METRIC = mn.COSINE_GREEDY          # used when entropy cannot be comput
 LIST_MARGIN = 0.10                          # hits scoring at least (gate similarity - this) join the pool, gate passed or not
 GATE_SIMILARITY = 0.80
 LIST_THRESHOLD = round(GATE_SIMILARITY - LIST_MARGIN, 4)      # the default list threshold, 0.70
-METRIC_CHOICES = (mn.ENTROPY_WEIGHTED, mn.ENTROPY_UNWEIGHTED, mn.COSINE_GREEDY, mn.MOD_COSINE_GREEDY)     # spec.py _PIPELINE_ADVANCED offers these
+# the algorithms the form offers (spec.py _PIPELINE_ADVANCED), in the Library search page's order; the deep-learning scores are left out (slow, model downloads)
+METRIC_CHOICES = (mn.ENTROPY_WEIGHTED, mn.ENTROPY_UNWEIGHTED, mn.COSINE_GREEDY, mn.COSINE_HUNGARIAN, mn.MOD_COSINE_GREEDY, mn.MOD_COSINE_HUNGARIAN,
+                  mn.NEUTRAL_LOSSES, mn.NIST_DOT, mn.REVERSE_DOT, mn.BINNED_COSINE)
+assert all(m in mn.LIBRARY_ORDER for m in METRIC_CHOICES) and list(METRIC_CHOICES) == [m for m in mn.LIBRARY_ORDER if m in METRIC_CHOICES]
+
+
+def as_metrics(metric):
+    """One algorithm name or several -> a tuple in the choices' order, without repeats. Raises ValueError for an empty or unknown choice."""
+    names = (metric,) if isinstance(metric, str) else tuple(metric or ())
+    if not names:
+        raise ValueError("Choose at least one library similarity algorithm.")
+    bad = [m for m in names if m not in METRIC_CHOICES]
+    if bad:
+        raise ValueError(f"The library similarity algorithm must be one of: {', '.join(METRIC_CHOICES)} (got {bad[0]!r}).")
+    return tuple(m for m in METRIC_CHOICES if m in names)
 GATE_MIN_MATCHED = 4
 GATE_ISOTOPE = 0.80
 MAX_CANDIDATES = 20                         # compounds returned; a crowded precursor window can hold dozens of look-alike spectra
@@ -75,7 +92,7 @@ class GateSummary:
     passed       at least one hit passed all checks (the orchestrator then skips steps 4-5)
     best_id      id of the best passing candidate (the first candidate), None if none passed
     top_id       id of the first candidate: the best passing one, else the highest similarity; `checks` describe this hit
-    thresholds   the numbers used: {"metric", "similarity", "min_matched_peaks" (after the "all of them" rule), "precursor_ppm",
+    thresholds   the numbers used: {"metric" (the first chosen algorithm), "metrics" (all chosen), "similarity", "min_matched_peaks" (after the "all of them" rule), "precursor_ppm",
                  "isotope", "list"}
     checks       [{"id", "label", "status": pass | fail | not evaluated, "detail"}] of the top hit, in CHECKS order
     warnings     warnings of the library search (a library that is not installed, capped candidates, ...)
@@ -191,11 +208,10 @@ def list_threshold(gate_similarity):
 
 
 def check_settings(metric, gate_similarity):
-    """Raise ValueError (a clear message) for a metric outside METRIC_CHOICES or a gate threshold outside 0-1."""
-    if metric not in METRIC_CHOICES:
-        raise ValueError(f"The library similarity algorithm must be one of: {', '.join(METRIC_CHOICES)} (got {metric!r}).")
+    """Raise ValueError (a clear message) for an algorithm outside METRIC_CHOICES (none, or an unknown one) or a threshold outside 0-1."""
+    as_metrics(metric)
     if isinstance(gate_similarity, bool) or not isinstance(gate_similarity, (int, float)) or not 0 <= gate_similarity <= 1:
-        raise ValueError(f"The Level-2 gate similarity threshold must be a number from 0 to 1 (got {gate_similarity!r}).")
+        raise ValueError(f"The similarity threshold must be a number from 0 to 1 (got {gate_similarity!r}).")
 
 
 # ---------------------------------------------------------------- the gate
@@ -204,8 +220,9 @@ class _Gate:
 
     def __init__(self, *, precursor_mz, tol_ppm, n_query, adducts, formulas, ms1, positive=True, halogen=False, metric=PRIMARY_METRIC,
                  gate_similarity=GATE_SIMILARITY):
-        self.precursor_mz, self.tol_ppm, self.metric, self.halogen = precursor_mz, tol_ppm, metric, halogen
-        self.requested_metric, self.gate_similarity = metric, gate_similarity          # self.metric becomes the fallback if the search had to use it
+        self.precursor_mz, self.tol_ppm, self.halogen = precursor_mz, tol_ppm, halogen
+        self.metrics = self.requested_metrics = as_metrics(metric)      # the chosen algorithms; self.metrics becomes what the search really used
+        self.gate_similarity = gate_similarity
         self.list_threshold = list_threshold(gate_similarity)
         self.polarity = "Positive" if positive else "Negative"
         self.min_matched = min(GATE_MIN_MATCHED, n_query)                      # "all of them" when the query has fewer peaks
@@ -214,12 +231,30 @@ class _Gate:
         self.ms1 = ms1                                                          # usable MS1 peaks, or None
         self.resolution = "Orbitrap 60k" if tol_ppm <= ISOTOPE_RESOLUTION_PPM else "Q-TOF 30k"
 
+    @property
+    def metric(self):
+        """The first chosen algorithm (the one the list is ordered by)."""
+        return self.metrics[0]
+
+    @property
+    def requested_metric(self):
+        return self.requested_metrics[0]
+
+    @property
+    def metric_text(self):
+        """"A", or "A or B or C" when several algorithms count."""
+        return " or ".join(self.metrics)
+
     def thresholds(self):
-        return {"metric": self.metric, "similarity": self.gate_similarity, "min_matched_peaks": self.min_matched,
+        return {"metric": self.metric, "metrics": list(self.metrics), "similarity": self.gate_similarity, "min_matched_peaks": self.min_matched,
                 "precursor_ppm": self.tol_ppm, "isotope": GATE_ISOTOPE, "list": self.list_threshold}
 
     def judge(self, hit):
-        similarity = hit["scores"].get(self.metric)
+        scores = {m: hit["scores"].get(m) for m in self.metrics}
+        got = {m: v for m, v in scores.items() if v is not None}
+        best = max(got, key=lambda m: (got[m], -self.metrics.index(m))) if got else None       # the best score; a tie goes to the earlier algorithm
+        similarity = got[best] if best else None
+        rank_score = next((scores[m] for m in self.metrics if scores[m] is not None), None)       # the first chosen algorithm that scored it: orders the hits
         formula = hit_formula(hit.get("smiles"))
         adduct = canonical(hit.get("adduct"))
         theoretical = _ion_mz(formula, adduct)
@@ -231,8 +266,12 @@ class _Gate:
 
         res = {}
         ok = similarity is not None and similarity >= self.gate_similarity
-        res["similarity"] = (PASS if ok else FAIL, f"{self.metric} {'n/a' if similarity is None else format(similarity, '.2f')} "
-                                                   f"{'>=' if ok else '<'} {self.gate_similarity:.2f}")
+        if len(self.metrics) == 1:
+            res["similarity"] = (PASS if ok else FAIL, f"{self.metric} {'n/a' if similarity is None else format(similarity, '.2f')} "
+                                                       f"{'>=' if ok else '<'} {self.gate_similarity:.2f}")
+        else:
+            listed = ", ".join(f"{m} {'n/a' if v is None else format(v, '.2f')}" for m, v in scores.items())
+            res["similarity"] = (PASS if ok else FAIL, f"{listed}; {'at least one' if ok else 'none'} {'>=' if ok else 'reaches'} {self.gate_similarity:.2f}")
         ok = hit["matches"] >= self.min_matched
         res["peaks"] = (PASS if ok else FAIL, f"{hit['matches']} matched, {self.min_matched} needed")
         ok = abs(error) <= self.tol_ppm
@@ -276,27 +315,38 @@ class _Gate:
 
         checks = [{"id": key, "label": label, "status": res[key][0], "detail": res[key][1]} for key, label in CHECKS]
         return {"checks": checks, "passed": all(c["status"] != FAIL for c in checks), "formula": formula, "adduct": adduct,
-                "similarity": similarity, "error": error, "error_basis": basis, "error_from_formula": bool(theoretical),
+                "similarity": similarity, "rank_score": rank_score, "metric": best, "scores": scores, "error": error, "error_basis": basis, "error_from_formula": bool(theoretical),
                 "isotope": res["isotope"][0], "isotope_similarity": iso, "adduct_source": source}
 
 
 # ---------------------------------------------------------------- the step
 def _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da, metric=PRIMARY_METRIC, threshold=LIST_THRESHOLD):
-    """library_search.search with `metric` (it gets the precursor m/z, which ModifiedCosineGreedy needs); with the fallback metric when
-    that one cannot be computed. -> (result, metric used)"""
-    def run(name):
-        return ls.search(peaks, "MS/MS", libraries, [name], threshold, precursor_mz=precursor_mz, positive=positive, adduct=None,
+    """library_search.search with the algorithm(s) `metric` (a name or several; it gets the precursor m/z, which ModifiedCosine needs).
+    An algorithm that cannot be computed is left out: the entropy ones when ms_entropy is missing, then everything when nothing could be
+    scored, and CosineGreedy replaces the lot. -> (result, the algorithm(s) used: a name when one was given, else a tuple)"""
+    one = isinstance(metric, str)
+    names = as_metrics(metric)
+
+    def run(chosen):
+        return ls.search(peaks, "MS/MS", libraries, list(chosen), threshold, precursor_mz=precursor_mz, positive=positive, adduct=None,
                          precursor_tol_ppm=tol_ppm, tolerance=tol_da, top_n=SEARCH_TOP_N)
 
-    if metric == FALLBACK_METRIC:
-        return run(metric), metric
+    def used(chosen):
+        return chosen[0] if one else tuple(chosen)
+
+    if names == (FALLBACK_METRIC,):
+        return run(names), used(names)
     try:
-        res = run(metric)
+        res = run(names)
         if not res["n_candidates"] or res["n_metrics_scored"]:
-            return res, metric
-    except ImportError:                          # ms_entropy is not installed
-        pass
-    return run(FALLBACK_METRIC), FALLBACK_METRIC
+            return res, used(names)
+    except ImportError:                          # ms_entropy is not installed: keep the other chosen algorithms
+        rest = tuple(m for m in names if m not in mn.ENTROPY)
+        if rest:
+            res = run(rest)
+            if not res["n_candidates"] or res["n_metrics_scored"]:
+                return res, used(rest)
+    return run((FALLBACK_METRIC,)), used((FALLBACK_METRIC,))
 
 
 def _reference_spectrum(hit):
@@ -329,9 +379,10 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     tol_ppm       precursor tolerance (ppm): the library window and the gate's precursor check
     tol_da        fragment tolerance (Da) for the spectrum comparison
     halogen       the halogen setting step 2 used (run_adduct_and_formula(halogen=...)): without it BUDDY cannot list a Cl / Br / F / I formula
-    metric        the similarity algorithm of the gate and the search, one of METRIC_CHOICES (CosineGreedy replaces it if it cannot be computed)
-    gate_similarity  the gate's similarity threshold, 0-1; hits from this minus LIST_MARGIN (not below 0) on join the pool
-    Raises ValueError for a metric outside METRIC_CHOICES or a threshold outside 0-1.
+    metric        the similarity algorithm of the gate and the search: one name or several (a hit passes when at least one reaches the threshold),
+                  all from METRIC_CHOICES; one that cannot be computed is left out and CosineGreedy replaces all of them if none can
+    gate_similarity  the similarity threshold, 0-1; hits from this minus LIST_MARGIN (not below 0) on join the pool
+    Raises ValueError for no algorithm, one outside METRIC_CHOICES, or a threshold outside 0-1.
 
     LayerResult: layer "library"; candidates best first, each with evidence["library"] = {gate_passed, failed_checks, similarity, metric,
     matched_peaks, has_structure (False caps the level at 3), precursor_error_ppm, isotope ("pass" | "fail" | "not evaluated"), isotope_similarity, adduct_source ("step1" | "library"),
@@ -356,7 +407,8 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
     if not peaks:
         return finish(STATUS_SKIPPED, "The MS2 spectrum has no peaks, so no library spectrum was searched.")
     try:
-        res, gate.metric = _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da, gate.metric, gate.list_threshold)
+        res, used = _search(peaks, libraries, precursor_mz, positive, tol_ppm, tol_da, gate.metrics, gate.list_threshold)
+        gate.metrics = as_metrics(used)                  # what the search really used (a stand-in in tests may answer with one name)
     except lx.LibraryMissing as exc:
         return finish(STATUS_SKIPPED, str(exc))
     except Exception as exc:                                                    # a broken library must not stop the workflow
@@ -367,7 +419,7 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
         verdict = gate.judge(hit)
         key = (structure_keys(hit.get("smiles"))[1] or (_inchikey(hit) or "")[:14] or (hit.get("name") or "").strip().lower()
                or (hit["library"], hit["accession"]))
-        order = (not verdict["passed"], verdict["passed"] and not _has_structure(hit), -round(verdict["similarity"], 4), -hit["matches"], verdict["formula"] is None, abs(verdict["error"]))
+        order = (not verdict["passed"], verdict["passed"] and not _has_structure(hit), -round(verdict.get("rank_score", verdict["similarity"]), 4), -hit["matches"], verdict["formula"] is None, abs(verdict["error"]))
         if key not in best:
             best[key] = [order, hit, verdict, 1]
             continue
@@ -375,12 +427,14 @@ def run_library(ms2_peaks, precursor_mz, positive, libraries, *, adducts, formul
         if order < best[key][0]:
             best[key][:3] = order, hit, verdict
     chosen = sorted(best.values(), key=lambda b: b[0])[:MAX_CANDIDATES]
-    candidates = [_candidate(f"lib{n}", hit, verdict, count, gate.metric) for n, (_, hit, verdict, count) in enumerate(chosen, start=1)]
+    candidates = [_candidate(f"lib{n}", hit, verdict, count, verdict.get("metric") or gate.metric) for n, (_, hit, verdict, count) in enumerate(chosen, start=1)]
 
     passing = [c for c in candidates if c.evidence["library"]["gate_passed"]]
     warnings = list(res["warnings"]) + [f"{name}: {text}" for name, text in res["notes"].items()]
-    if gate.metric != gate.requested_metric:
-        warnings.append(f"{gate.requested_metric} could not be computed, so {gate.metric} was used for the library search and the gate.")
+    if gate.metrics != gate.requested_metrics:
+        left_out = [m for m in gate.requested_metrics if m not in gate.metrics]
+        warnings.append(f"{', '.join(left_out)} could not be computed, so {', '.join(gate.metrics)} {'was' if len(gate.metrics) == 1 else 'were'} "
+                        f"used for the library search and the gate.")
     if res["n_kept"] > SEARCH_TOP_N:
         warnings.append(f"{res['n_kept']:,} library spectra scored {gate.list_threshold:.2f} or higher; only the best {SEARCH_TOP_N} were judged by the gate.")
     summary = GateSummary(passed=bool(passing), best_id=passing[0].id if passing else None, top_id=candidates[0].id if candidates else None,
@@ -394,7 +448,7 @@ def _candidate(cid, hit, verdict, n_spectra, metric):
     inchikey = _inchikey(hit)
     smiles = hit["smiles"] if has_structure(hit.get("smiles")) else None                  # the libraries also store "N/A" and the like
     failed = [f"{c['label']}: {c['detail']}" for c in verdict["checks"] if c["status"] == FAIL]
-    evidence = {"gate_passed": verdict["passed"], "failed_checks": failed, "similarity": verdict["similarity"], "metric": metric,
+    evidence = {"gate_passed": verdict["passed"], "failed_checks": failed, "similarity": verdict["similarity"], "metric": metric, "scores": verdict.get("scores"),
                 "matched_peaks": hit["matches"], "precursor_error_ppm": verdict["error"], "precursor_error_basis": verdict["error_basis"],
                 "isotope": verdict["isotope"], "isotope_similarity": verdict["isotope_similarity"], "adduct_source": verdict["adduct_source"],
                 "checks": verdict["checks"], "has_structure": _has_structure(hit),
@@ -403,16 +457,16 @@ def _candidate(cid, hit, verdict, n_spectra, metric):
                 "library_precursor_mz": hit["precursor_mz"], "n_spectra": n_spectra}
     return Candidate(id=cid, layer="library", smiles=smiles, inchikey=inchikey, ik14=inchikey[:14] if inchikey else None, name=hit.get("name") or "",
                      formula=verdict["formula"], adduct=verdict["adduct"],
-                     mz_error_ppm=verdict["error"] if verdict["error_from_formula"] else None, layer_score=verdict["similarity"],
-                     layer_score_norm=min(1.0, max(0.0, verdict["similarity"])), evidence={"library": evidence})
+                     mz_error_ppm=verdict["error"] if verdict["error_from_formula"] else None, layer_score=verdict.get("rank_score", verdict["similarity"]),
+                     layer_score_norm=min(1.0, max(0.0, verdict.get("rank_score", verdict["similarity"]))), evidence={"library": evidence})
 
 
 def _note(res, candidates, passing, tol_ppm, precursor_mz, gate):
     if not res["n_candidates"]:
         return f"No library spectrum within {tol_ppm:g} ppm of m/z {precursor_mz:.4f}."
     if not candidates:
-        return f"{res['n_candidates']:,} library spectra compared; none scored {gate.list_threshold:.2f} or higher on {gate.metric}."
-    text = (f"{res['n_kept']:,} library spectra scored {gate.list_threshold:.2f} or higher on {gate.metric} ({len(candidates)} compounds listed); "
+        return f"{res['n_candidates']:,} library spectra compared; none scored {gate.list_threshold:.2f} or higher on {gate.metric_text}."
+    text = (f"{res['n_kept']:,} library spectra scored {gate.list_threshold:.2f} or higher on {gate.metric_text} ({len(candidates)} compounds listed); "
             f"the gate needs {gate.gate_similarity:.2f}.")
     if passing:
         ev = passing[0].evidence["library"]
