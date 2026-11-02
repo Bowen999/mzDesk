@@ -1,3 +1,4 @@
+import { useT } from "../i18n";
 import type { CompareCompound } from "../types";
 import { Mol3D, ThemedSvg } from "./Figure";
 import { MiddleEllipsis } from "./MiddleEllipsis";
@@ -10,10 +11,11 @@ import { MiddleEllipsis } from "./MiddleEllipsis";
  * the middle of a name that does not fit, so the formula stays on the same line.
  */
 export function CompoundCompare({ items }: { items: CompareCompound[] }) {
+  const t = useT();
   return (
     <div className={"compare-grid" + (items.length === 1 ? " single" : "")}>
       {items.map((c, i) => {
-        const name = c.label || `Compound ${i + 1}`;
+        const name = c.label || t("Compound {n}", { n: i + 1 });
         return (
           <div className="compare-col" key={`${name}-${i}`}>
             <div className="compare-head">
@@ -22,17 +24,17 @@ export function CompoundCompare({ items }: { items: CompareCompound[] }) {
             </div>
             <div className="compare-views">
               <div className="compare-cell">
-                <div className="compare-label">2D depiction</div>
+                <div className="compare-label">{t("2D depiction")}</div>
                 <div className="compare-box">
                   {c.svg
-                    ? <ThemedSvg svg={c.svg} className="compare-svg" alt={`${name} 2D depiction`} />
-                    : <span className="compare-empty">No 2D depiction</span>}
+                    ? <ThemedSvg svg={c.svg} className="compare-svg" alt={t("{name} 2D depiction", { name })} />
+                    : <span className="compare-empty">{t("No 2D depiction")}</span>}
                 </div>
               </div>
               <div className="compare-cell">
-                <div className="compare-label">3D viewer</div>
+                <div className="compare-label">{t("3D viewer")}</div>
                 <div className="compare-box">
-                  {c.mol3d ? <Mol3D molblock={c.mol3d} /> : <span className="compare-empty">3D viewer unavailable</span>}
+                  {c.mol3d ? <Mol3D molblock={c.mol3d} /> : <span className="compare-empty">{t("3D viewer unavailable")}</span>}
                 </div>
               </div>
             </div>

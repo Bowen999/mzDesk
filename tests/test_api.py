@@ -508,6 +508,13 @@ def test_spec_carries_the_version():
     assert client.get("/api/spec").json()["version"] == __version__
 
 
+def test_spec_says_whether_this_is_the_public_website(monkeypatch):
+    from mzdesk.api import app as app_module
+    assert client.get("/api/spec").json()["hosted"] is (os.environ.get("MZDESK_HOSTED") == "1")
+    monkeypatch.setattr(app_module, "HOSTED", True)
+    assert client.get("/api/spec").json()["hosted"] is True                               # the frontend then hides "Internet search"
+
+
 def test_stats_record_runs_and_views_and_need_the_password(monkeypatch):
     from mzdesk.api import stats
     monkeypatch.setattr(stats, "check_password", lambda pw: pw == "right")

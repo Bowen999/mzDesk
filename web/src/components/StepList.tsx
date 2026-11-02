@@ -1,3 +1,4 @@
+import { localizeRunBlocks, t, useT } from "../i18n";
 import type { JobStep } from "../types";
 import { OutputList } from "./Outputs";
 import "./pipeline.css";
@@ -5,7 +6,16 @@ import "./pipeline.css";
 /** A note longer than this is cut to one line in the folded step; the whole note is the first line of the opened step. */
 const SHORT_NOTE = 70;
 /** Statuses that get a word next to the title; done and queued are told by the node alone. */
-const WORD: Record<string, string> = { running: "running", skipped: "skipped", failed: "failed" };
+const wordOf = (status: string): string | null => (status === "running" ? t("running") : status === "skipped" ? t("skipped") : status === "failed" ? t("failed") : null);
+/** The status as text for screen readers (the node tells it by shape only). Other words are shown as received. */
+const statusText = (status: string): string => {
+  switch (status) {
+    case "done": return t("done");
+    case "queued": return t("queued");
+    case "unknown": return t("unknown");
+    default: return status;
+  }
+};
 
 const secondsOf = (s: JobStep) => (typeof s?.seconds === "number" && Number.isFinite(s.seconds) && s.seconds >= 0 ? s.seconds : null);
 
@@ -14,7 +24,8 @@ const secondsOf = (s: JobStep) => (typeof s?.seconds === "number" && Number.isFi
  * a thin bar scaled to the longest step. A step with blocks opens on click to the tables it produced; a failed step shows its whole note.
  */
 export function StepView({ step, index, longest = 0 }: { step: JobStep; index: number; longest?: number }) {
-  const blocks = step.blocks ?? [];
+  useT();           // redraw when the language changes
+  const blocks = localizeRunBlocks(step.blocks ?? []);          // the titles of the tables and notes; what the run wrote in them stays
   const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
   const seconds = secondsOf(step);
   const status = step.status || "unknown";
@@ -25,8 +36,8 @@ export function StepView({ step, index, longest = 0 }: { step: JobStep; index: n
       <span className="tl-node" aria-hidden="true">{index + 1}</span>
       <span className="tl-main">
         <span className="tl-top">
-          <span className="step-title">{step.title || "Unnamed stage"}</span>
-          {WORD[status] ? <span className="tl-word">{WORD[status]}</span> : <span className="sr-only">{status}</span>}
+          <span className="step-title">{step.title || t("Unnamed stage")}</span>
+          {wordOf(status) ? <span className="tl-word">{wordOf(status)}</span> : <span className="sr-only">{statusText(status)}</span>}
         </span>
         {note && <span className={"step-note" + (status === "failed" ? " is-failed" : "")} title={note}>{note}</span>}
       </span>
@@ -53,16 +64,17 @@ export function StepView({ step, index, longest = 0 }: { step: JobStep; index: n
 
 /** The steps of a job as one timeline: a rail with a node per step. All folded. */
 export function StepList({ steps }: { steps: JobStep[] }) {
+  const t = useT();
   const list = Array.isArray(steps) ? steps : [];
   if (!list.length) return null;
   const timed = list.filter(s => s.status !== "queued" && s.status !== "skipped").map(secondsOf).filter((v): v is number => v !== null);
   const total = timed.reduce((a, b) => a + b, 0), longest = Math.max(0, ...timed);
   const skipped = list.filter(s => s.status === "skipped").length;
   return (
-    <section className="timeline" aria-label="Steps">
+    <section className="timeline" aria-label={t("Steps")}>
       <div className="tl-head">
-        <h2 className="tl-title">Steps</h2>
-        <span className="tl-sum">{list.length} step{list.length === 1 ? "" : "s"}{skipped ? ` · ${skipped} skipped` : ""}{total > 0 ? ` · ${total.toFixed(1)} s` : ""}</span>
+        <h2 className="tl-title">{t("Steps")}</h2>
+        <span className="tl-sum">{list.length === 1 ? t("1 step") : t("{n} steps", { n: list.length })}{skipped ? " · " + t("{n} skipped", { n: skipped }) : ""}{total > 0 ? ` · ${total.toFixed(1)} s` : ""}</span>
       </div>
       <ol className="tl-list">{list.map((s, i) => <StepView step={s} index={i} longest={longest} key={s.id} />)}</ol>
     </section>

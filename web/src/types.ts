@@ -41,7 +41,8 @@ export type Stage = { id: number; title: string; modules: string[] };
 export type PipelineExample = { label: string; values: Record<string, any> };
 export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[]; based_on?: string[] };
 export type Group = { id: string; title: string };
-export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string };
+/** hosted: the public website (MZDESK_HOSTED on the server), which has no "Internet search" switch. */
+export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string; hosted?: boolean };
 
 /** 后端结果：按输出块 id 填数据（形状见 mzdesk/api/common.py）。 */
 /** Table cell: plain text, an image, or an object with text / badge, optional link (url, or href), optional structure

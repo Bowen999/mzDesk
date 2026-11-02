@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import { useT } from "../i18n";
 
 /** Sidebar width limits (px). The width is remembered per browser; double-click the handle to go back to the default. */
 export const SIDEBAR_WIDTH = { min: 200, max: 380, initial: 248 };
@@ -15,6 +16,7 @@ export function useSidebarWidth() {
 
 /** Drag handle on the sidebar's right edge. Keyboard: ←/→ (Shift = bigger steps), Home / End = min / max. */
 export function SidebarResizer({ width, onChange, onReset }: { width: number; onChange: (w: number) => void; onReset: () => void }) {
+  const t = useT();
   const drag = useRef<{ x: number; w: number } | null>(null);
   const [active, setActive] = useState(false);
   const stop = () => { drag.current = null; setActive(false); document.body.classList.remove("resizing"); };
@@ -36,9 +38,9 @@ export function SidebarResizer({ width, onChange, onReset }: { width: number; on
   };
 
   return (
-    <div role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabIndex={0}
+    <div role="separator" aria-orientation="vertical" aria-label={t("Resize sidebar")} tabIndex={0}
       aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width}
-      className={"sidebar-resizer" + (active ? " active" : "")} title="Drag to resize · double-click to reset"
+      className={"sidebar-resizer" + (active ? " active" : "")} title={t("Drag to resize · double-click to reset")}
       onPointerDown={down} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onDoubleClick={onReset} onKeyDown={key} />
   );
 }

@@ -22,6 +22,17 @@ const post = <T,>(url: string, body: unknown) =>
 /** Where the app is served: "/" (mzdesk.com and the local version); a sub-path only when built with MZDESK_BASE=/sub/ npm run build. */
 export const BASE = import.meta.env.BASE_URL;
 export const getSpec = () => json<Spec>(`${BASE}api/spec`);
+
+/** What the results depend on (GET /api/versions): mzDesk, Python, engines, models, data, online services. Names, versions, dates and counts only.
+ *  An online service has no version (kind "online"); a version of null with a detail means "not installed here" or "unknown". */
+export type VersionEntry = {
+  version: string | null;
+  kind: "python-package" | "engine" | "model" | "data" | "online" | "mzdesk";
+  detail: string | null;
+};
+export type Versions = { mzdesk: string; python: string; checked_at: string; components: Record<string, VersionEntry> };
+export const getVersions = (signal?: AbortSignal) => json<Versions>(`${BASE}api/versions`, { signal });
+
 /** The long notes of a page (Docs page): markdown text. */
 export const getDocs = (id: string) => json<{ id: string; markdown: string }>(`${BASE}api/docs/${id}`);
 export const runModule = (id: string, inputs: unknown) => post<RunResult>(`${BASE}api/modules/${id}/run`, inputs);

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { waitingPercent } from "../progressCurve";
 
 type State = { pct: number; phase: "idle" | "run" | "done" };
@@ -6,6 +7,7 @@ type State = { pct: number; phase: "idle" | "run" | "done" };
 /** The bar under a module's inputs while it runs. The server reports no progress for one module, so the bar is eased on time alone:
  *  it starts at once, slows down, and never reaches 100 by itself. 100 means the result is in; the bar then fades out. */
 export function RunBar({ busy }: { busy: boolean }) {
+  const t = useT();
   const [state, setState] = useState<State>({ pct: 0, phase: "idle" });
   const t0 = useRef(0);
   useEffect(() => {
@@ -22,7 +24,7 @@ export function RunBar({ busy }: { busy: boolean }) {
   }, [busy]);
   if (state.phase === "idle") return null;
   return (
-    <div className={"run-bar" + (state.phase === "done" ? " is-done" : "")} role="progressbar" aria-label="Running"
+    <div className={"run-bar" + (state.phase === "done" ? " is-done" : "")} role="progressbar" aria-label={t("Running")}
       aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(state.pct)}>
       <span style={{ width: `${state.pct}%` }} />
     </div>

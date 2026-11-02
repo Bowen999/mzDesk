@@ -1,8 +1,10 @@
 import { createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
+import { getVersions, type VersionEntry, type Versions } from "../api";
 import iconsUrl from "../assets/icons.svg?url";
 import { initialValues, summarizeInputs } from "../components/Fields";
+import { htmlLang, t } from "../i18n";
 import { resolvedTheme } from "../themeMode";
 import type { Field, Spec } from "../types";
 import { listRuns, type ReportEntry } from "./log";
@@ -12,7 +14,7 @@ import { edmonton, newRunId, REPORT_TZ } from "./time";
 import { makeZip } from "./zip";
 
 /**
- * Session report: one folder (<run id>/) with report.json (inputs + raw results of every page that has a result) and
+ * Session report: one folder (<run id>/) with report.json (inputs + raw results of every page that has a result, and the versions of what produced them) and
  * report.html (the same pages, one self-contained file: styles, fonts, icons and images inlined).
  * Each page is drawn once more, off screen, from the result it logged, with the same components in report mode (report/mode.ts): folded
  * blocks are native <details>, tables list their rows instead of paging, long text is whole, and controls that need the app are left out.
@@ -152,7 +154,7 @@ async function renderPage(spec: Spec, e: ReportEntry, n: number): Promise<string
 
 /** Long strings (spectra, files) are shortened in the HTML view; report.json keeps them whole. */
 const shorten = (_k: string, v: unknown) =>
-  typeof v === "string" && v.length > 1500 ? `${v.slice(0, 1500)}… (+${v.length - 1500} characters, full text in report.json)` : v;
+  typeof v === "string" && v.length > 1500 ? v.slice(0, 1500) + t("… (+{n} characters, full text in report.json)", { n: v.length - 1500 }) : v;
 
 function fieldsOf(spec: Spec, e: ReportEntry): Field[] {
   return (e.kind === "module" ? spec.modules.find(m => m.id === e.id)?.inputs : spec.pipelines.find(p => p.id === e.id)?.inputs) ?? [];
@@ -163,9 +165,9 @@ function inputsHtml(spec: Spec, e: ReportEntry) {
   let chips = "";
   try {
     const s = summarizeInputs(fields, { ...initialValues(fields), ...e.inputs });
-    chips = [s.lead, ...s.items].filter(Boolean).map(t => `<span class="rp-chip">${esc(t)}</span>`).join("");
+    chips = [s.lead, ...s.items].filter(Boolean).map(chip => `<span class="rp-chip">${esc(chip)}</span>`).join("");
   } catch { /* the raw JSON below still shows the inputs */ }
-  return `<div class="rp-inputs">${chips}<details><summary>Inputs as sent (JSON)</summary><pre>${esc(JSON.stringify(e.inputs, shorten, 2))}</pre></details></div>`;
+  return `<div class="rp-inputs">${chips}<details><summary>${esc(t("Inputs as sent (JSON)"))}</summary><pre>${esc(JSON.stringify(e.inputs, shorten, 2))}</pre></details></div>`;
 }
 
 const REPORT_CSS = `
@@ -193,20 +195,20 @@ const REPORT_CSS = `
 @media print{.rp-entry{break-before:page}.rp-entry:first-of-type{break-before:auto}}
 `;
 
-function buildHtml(spec: Spec, runId: string, when: ReturnType<typeof edmonton>, entries: ReportEntry[], pages: (string | null)[], css: string, sprite: string, theme: string) {
+export function buildHtml(spec: Spec, runId: string, when: ReturnType<typeof edmonton>, entries: ReportEntry[], pages: (string | null)[], css: string, sprite: string, theme: string) {
   const toc = entries.map((e, i) => `<li><a href="#rp-${i + 1}">${esc(e.title)}</a><span class="rp-when">${esc(e.section)} · ${esc(e.finishedAt.replace("T", " "))}</span></li>`).join("");
   const body = entries.map((e, i) => `
 <section class="rp-entry" id="rp-${i + 1}">
-  <div class="rp-entry-head"><span class="rp-no">${i + 1} / ${entries.length}</span><span>${esc(e.section)}</span><span>finished ${esc(e.finishedAt.replace("T", " "))}</span>${e.seconds != null ? `<span>${e.seconds.toFixed(1)} s</span>` : ""}</div>
+  <div class="rp-entry-head"><span class="rp-no">${i + 1} / ${entries.length}</span><span>${esc(e.section)}</span><span>${esc(t("finished {when}", { when: e.finishedAt.replace("T", " ") }))}</span>${e.seconds != null ? `<span>${e.seconds.toFixed(1)} s</span>` : ""}</div>
   ${inputsHtml(spec, e)}
-  ${pages[i] ?? `<p class="empty-hint">This page could not be drawn for the report; its result is in report.json.</p>`}
+  ${pages[i] ?? `<p class="empty-hint">${esc(t("This page could not be drawn for the report; its result is in report.json."))}</p>`}
 </section>`).join("\n");
   return `<!doctype html>
-<html lang="en" data-theme="${theme}">
+<html lang="${htmlLang()}" data-theme="${theme}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>mzDesk report ${esc(runId)}</title>
+<title>${esc(t("mzDesk report"))} ${esc(runId)}</title>
 <style>${css}</style>
 <style>${REPORT_CSS}</style>
 </head>
@@ -214,22 +216,75 @@ function buildHtml(spec: Spec, runId: string, when: ReturnType<typeof edmonton>,
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">${sprite}</svg>
 <div class="rp-wrap">
   <header class="rp-head">
-    <h1>mzDesk report</h1>
+    <h1>${esc(t("mzDesk report"))}</h1>
     <div class="rp-meta">
-      <span>Run ID</span><b>${esc(runId)}</b>
-      <span>Generated</span><b>${esc(when.human)}</b>
-      <span>Time zone</span><b>${REPORT_TZ} (Edmonton time)</b>
+      <span>${esc(t("Run ID"))}</span><b>${esc(runId)}</b>
+      <span>${esc(t("Generated"))}</span><b>${esc(when.human)}</b>
+      <span>${esc(t("Time zone"))}</span><b>${esc(t("{zone} (Edmonton time)", { zone: REPORT_TZ }))}</b>
       <span>mzDesk</span><b>V${esc(spec.version)}</b>
-      <span>Pages</span><b>${entries.length}</b>
+      <span>${esc(t("Pages"))}</span><b>${entries.length}</b>
     </div>
-    <nav class="rp-toc" aria-label="Pages in this report"><b>Pages</b><ol>${toc}</ol></nav>
+    <nav class="rp-toc" aria-label="${esc(t("Pages in this report"))}"><b>${esc(t("Pages"))}</b><ol>${toc}</ol></nav>
   </header>
   <main class="main">${body}</main>
-  <p class="rp-foot">Made by mzDesk in the browser from the results on screen. report.json in the same folder has the inputs and the raw results.</p>
+  <p class="rp-foot">${esc(t("Made by mzDesk in the browser from the results on screen. report.json in the same folder has the inputs and the raw results."))}</p>
 </div>
 </body>
 </html>
 `;
+}
+
+/** What report.json says about the environment: the server's answer (GET /api/versions), or null and the reason it could not be had. */
+export type Environment = { environment: Versions | null; error?: string };
+const ENVIRONMENT_WAIT_MS = 20000;      // the server looks at Docker, Mono and Java (a few seconds at most): the report does not wait longer
+
+/** The versions of the server's engines, models and data. Never rejects: a failure leaves environment null and says why, and the report is still made. */
+export async function loadEnvironment(): Promise<Environment> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ENVIRONMENT_WAIT_MS);
+  try {
+    const environment = await getVersions(ctl.signal);
+    if (!environment || typeof environment.components !== "object" || environment.components === null) throw new Error("unexpected answer from /api/versions");
+    return { environment };
+  } catch (err: any) {
+    return { environment: null, error: ctl.signal.aborted ? "the server did not answer in time" : String(err?.message ?? err) };
+  } finally { clearTimeout(timer); }
+}
+
+/**
+ * The page's `based_on` names, each with what the server knows about it (its entry of /api/versions).
+ * The names come from the spec of the page list: they are engine and database names, which localizeSpec never translates, so they match in every language.
+ * An online service has no version; the time it was asked is the page's finished_at.
+ */
+export function basedOnEntries(spec: Spec, e: ReportEntry, environment: Versions | null) {
+  const names = (e.kind === "module" ? spec.modules.find(m => m.id === e.id) : spec.pipelines.find(p => p.id === e.id))?.based_on ?? [];
+  return names.map(name => {
+    // "GNPS" is the local spectral library on a page that lists MassBank beside it (Library search, MS/MS Annotation), and the online GNPS2 services on the others
+    const key = name === "GNPS" && !names.includes("MassBank") ? "GNPS (online)" : name;
+    const found: VersionEntry | undefined = environment?.components?.[key];
+    const entry: { version: string | null; kind: VersionEntry["kind"] | null; detail: string | null } = found ?? { version: null, kind: null, detail: "unknown" };
+    return { name, ...entry, ...(entry.kind === "online" ? { accessed_at: e.finishedAt } : {}) };
+  });
+}
+
+/** report.json: the inputs and raw results of every page (as the person saw them) and, from format 2, the versions of everything they depend on. */
+export function buildJson(spec: Spec, runId: string, when: ReturnType<typeof edmonton>, entries: ReportEntry[], env: Environment) {
+  return {
+    report_format: 2,
+    run_id: runId,
+    generated_at: when.iso,
+    timezone: REPORT_TZ,
+    timezone_abbreviation: when.abbr,
+    utc_offset: when.offset,
+    app: { name: "mzDesk", version: spec.version },
+    environment: env.environment,
+    ...(env.error ? { environment_error: env.error } : {}),
+    pages: entries.map(e => ({
+      kind: e.kind, id: e.id, title: e.title, section: e.section, finished_at: e.finishedAt, seconds: e.seconds,
+      based_on: basedOnEntries(spec, e, env.environment),
+      inputs: e.inputs, result: e.result, ...(e.steps !== undefined ? { steps: e.steps } : {}),
+    })),
+  };
 }
 
 export async function buildReport(spec: Spec): Promise<BuiltReport | null> {
@@ -237,25 +292,14 @@ export async function buildReport(spec: Spec): Promise<BuiltReport | null> {
   if (!entries.length) return null;
   const when = edmonton(), runId = newRunId(when);
   const theme = resolvedTheme();
+  const environment = loadEnvironment();      // asked while the pages are drawn; it never rejects
   const [css, sprite] = await Promise.all([collectCss(), spriteSymbols()]);
   const pages: (string | null)[] = [];
   for (const [i, e] of entries.entries()) {
     try { pages.push(await renderPage(spec, e, i + 1)); }
     catch (err) { console.error("Session report: page not drawn", e.key, err); pages.push(null); }      // one page that fails does not stop the others
   }
-  const json = {
-    report_format: 1,
-    run_id: runId,
-    generated_at: when.iso,
-    timezone: REPORT_TZ,
-    timezone_abbreviation: when.abbr,
-    utc_offset: when.offset,
-    app: { name: "mzDesk", version: spec.version },
-    pages: entries.map(e => ({
-      kind: e.kind, id: e.id, title: e.title, section: e.section, finished_at: e.finishedAt, seconds: e.seconds,
-      inputs: e.inputs, result: e.result, ...(e.steps !== undefined ? { steps: e.steps } : {}),
-    })),
-  };
+  const json = buildJson(spec, runId, when, entries, await environment);
   const html = buildHtml(spec, runId, when, entries, pages, css, sprite, theme);
   const blob = makeZip([
     { path: `${runId}/report.json`, data: JSON.stringify(json, null, 2) },

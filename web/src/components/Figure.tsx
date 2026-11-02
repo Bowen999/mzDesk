@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { darkColors } from "../darkColors";
+import { useT } from "../i18n";
 import { useReportMode } from "../report/mode";
 import { useTheme } from "../themeMode";
 import type { BlockData, PeakCard } from "../types";
@@ -155,6 +156,7 @@ function peakLabels(gd: any, peaks: PeakCard[], staticAnn: any[], precursors: Pr
 }
 
 function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; peaks?: PeakCard[] }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const { dark } = useTheme();
   // the backend draws for a white page; in the dark theme every colour of the figure (and of the peak labels) is remapped
@@ -232,10 +234,10 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
     report?.track(drawn.then(() => labelled));                // the Session report waits until the plot and its labels are drawn
     return () => { alive = false; removeHover(); ro?.disconnect(); if (Plotly) Plotly.purge(el); };
   }, [fig, peaks, keep]);   // fig changes with the theme too
-  if (err) return <div className="out placeholder-box">Figure failed: {err}</div>;
+  if (err) return <div className="out placeholder-box">{t("Figure failed: {error}", { error: err })}</div>;
   return (
     <div className="fig" onMouseLeave={() => setHover(null)}>
-      {!ready && <div className="fig-loading">Loading figure…</div>}
+      {!ready && <div className="fig-loading">{t("Loading figure…")}</div>}
       <div className="fig-plot">
         <div ref={ref} />
         {hover && <svg className="fig-peak-highlight" aria-hidden="true">
@@ -250,6 +252,7 @@ function PlotlyFigure({ fig: raw, peaks }: { fig: { data: any[]; layout: any }; 
 }
 
 function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: number }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const card = ref.current;
@@ -270,7 +273,7 @@ function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: n
       <div className={"hc-kind" + (p.on ? "" : " off")}>{p.kind}</div>
       <div className="hc-mz">m/z {p.mz.toFixed(dec)}</div>
       <table><tbody>{p.rows.map(([l, v]) => <tr key={l}><td className="l">{l}</td><td className="v">{v}</td></tr>)}</tbody></table>
-      {p.img && <img src={p.img} alt="fragment structure" />}
+      {p.img && <img src={p.img} alt={t("fragment structure")} />}
     </div>, document.body
   );
 }
@@ -281,6 +284,7 @@ function HoverCard({ p, x, y, dec }: { p: PeakCard; x: number; y: number; dec: n
  * the compare block make the canvas fill a square box.
  */
 export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; className?: string }) {
+  const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
   const homeRef = useRef<number[] | null>(null);
@@ -321,11 +325,11 @@ export function Mol3D({ molblock, className = "mol3d" }: { molblock: string; cla
     else { viewer.zoomTo(); viewer.zoom(0.85); viewer.render(); }
   };
 
-  if (err) return <div className="out placeholder-box">3D viewer failed: {err}</div>;
+  if (err) return <div className="out placeholder-box">{t("3D viewer failed: {error}", { error: err })}</div>;
   return (
     <div className="mol3d-holder">
       <div ref={ref} className={className} />
-      {ready && !report && <button type="button" className="mol3d-reset" onClick={reset} title="Reset the view to the fitted scale" aria-label="Reset the 3D view">
+      {ready && !report && <button type="button" className="mol3d-reset" onClick={reset} title={t("Reset the view to the fitted scale")} aria-label={t("Reset the 3D view")}>
         <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" focusable="false">
           <path d="M13.2 8a5.2 5.2 0 1 1-1.5-3.7" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           <path d="M13.2 2.6v3h-3" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useT } from "../i18n";
 import type { Spec } from "../types";
 import { buildReport } from "./build";
 import { useRuns } from "./log";
@@ -17,6 +18,7 @@ function ReportIcon({ size = 16 }: { size?: number }) {
 /** "Session report" in the sidebar footer: downloads <run id>.zip with report.json + report.html for every page that has
  *  a result in this tab. Disabled until a page has a result. In the collapsed rail: an icon button. */
 export function ReportButton({ spec, rail = false }: { spec: Spec; rail?: boolean }) {
+  const t = useT();
   const runs = useRuns();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ text: string; bad: boolean } | null>(null);
@@ -27,8 +29,8 @@ export function ReportButton({ spec, rail = false }: { spec: Spec; rail?: boolea
   }, [note]);
   const n = runs.length;
   const title = n
-    ? `Download the results of ${n} page${n === 1 ? "" : "s"} (HTML + JSON, zipped)`
-    : "Run a module or workflow first";
+    ? (n === 1 ? t("Download the results of 1 page (HTML + JSON, zipped)") : t("Download the results of {n} pages (HTML + JSON, zipped)", { n }))
+    : t("Run a module or workflow first");
   const go = async () => {
     if (busy || !n) return;
     setBusy(true); setNote(null);
@@ -36,13 +38,13 @@ export function ReportButton({ spec, rail = false }: { spec: Spec; rail?: boolea
       const r = await buildReport(spec);
       if (!r) return;
       download(r.blob, r.filename);
-      setNote({ text: `Saved ${r.filename}`, bad: false });
+      setNote({ text: t("Saved {filename}", { filename: r.filename }), bad: false });
     } catch (e: any) {
-      setNote({ text: `Report failed: ${e?.message ?? e}`, bad: true });
+      setNote({ text: t("Report failed: {error}", { error: String(e?.message ?? e) }), bad: true });
     } finally { setBusy(false); }
   };
   if (rail) return (
-    <button type="button" className="rail-btn report-rail" disabled={!n || busy} onClick={go} title={note?.text ?? title} aria-label="Session report">
+    <button type="button" className="rail-btn report-rail" disabled={!n || busy} onClick={go} title={note?.text ?? title} aria-label={t("Session report")}>
       <ReportIcon size={18} />
     </button>
   );
@@ -50,8 +52,8 @@ export function ReportButton({ spec, rail = false }: { spec: Spec; rail?: boolea
     <>
       <button type="button" className="internet-switch report-btn" disabled={!n || busy} onClick={go} title={title} aria-busy={busy}>
         <ReportIcon />
-        <span className="internet-label">{busy ? "Building report…" : "Session report"}</span>
-        {n > 0 && <span className="report-count" aria-label={`${n} pages with results`}>{n}</span>}
+        <span className="internet-label">{busy ? t("Building report…") : t("Session report")}</span>
+        {n > 0 && <span className="report-count" aria-label={t("{n} pages with results", { n })}>{n}</span>}
       </button>
       {note && <div className={"report-note" + (note.bad ? " bad" : "")} role="status">{note.text}</div>}
     </>

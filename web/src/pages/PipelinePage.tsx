@@ -9,6 +9,7 @@ import { useNetworkGuard } from "../components/NetworkDialog";
 import { HelpButton } from "../components/Help";
 import { OutputList } from "../components/Outputs";
 import { PageFoot, PageHead } from "../components/PageHead";
+import { localizeRunBlocks, useT } from "../i18n";
 import { IsomerEvidence, SpectrumEvidence } from "../components/PipelineVisuals";
 import { StepList } from "../components/StepList";
 import { StructureProvider } from "../components/StructureHover";
@@ -37,14 +38,11 @@ function groupFields(fields: Field[]): { title: string; fields: Field[]; collaps
   return groups;
 }
 
-const FRAGMENT_NOTE = "Isomer comparison uses MS-FINDER, this view uses MetFrag: explained peaks can differ.";
-const RANK_NOTE = "Candidates within 10% of the best score are ordered by score × detectability.";
-const CCS_RANK_NOTE = "A CCS that disagrees with a measured value moves a candidate to the end; with a predicted value, behind its near-ties.";
-
 /** The generic result (mzdesk/workflows/common.py): the answer (statement, level badge, facts), the warnings, then the headline blocks. */
 export function WorkflowResultView({ result }: { result: WorkflowResult }) {
+  useT();           // redraw when the language changes
   const a = result.answer;
-  const blocks = result.blocks ?? [];
+  const blocks = localizeRunBlocks(result.blocks ?? []);
   const facts = a.facts ?? [];
   const outputs = Object.fromEntries(blocks.filter(b => b.id).map(b => [b.id as string, b.data]));
   return (
@@ -75,6 +73,9 @@ export function PipelineHead({ pipe }: { pipe: Pipeline }) {
  *  The Session report draws the same from the logged result and steps. */
 export function PipelineResults({ pipeId, jobResult, job, requestedAdduct }:
   { pipeId: string; jobResult: AnnotationResult | WorkflowResult | null; job: { steps: JobStep[] } | null; requestedAdduct: string | null }) {
+  const t = useT();
+  const rankNote = t("Candidates within 10% of the best score are ordered by score × detectability.");
+  const ccsRankNote = t("A CCS that disagrees with a measured value moves a candidate to the end; with a predicted value, behind its near-ties.");
   const result = pipeId === ESI_PIPELINE && jobResult && !isWorkflowResult(jobResult) ? jobResult : null;          // ESI MS/MS Annotation's own result
   const workflowResult = pipeId !== ESI_PIPELINE && jobResult && isWorkflowResult(jobResult) ? jobResult : null;   // every other workflow
   const content = (
@@ -84,9 +85,9 @@ export function PipelineResults({ pipeId, jobResult, job, requestedAdduct }:
           <AnswerCard result={result} requestedAdduct={requestedAdduct} />
           <SpectrumEvidence result={result} />
           <IsomerEvidence result={result} />
-          <div className="results-head"><h2 className="panel-title">Ranked candidates<HelpButton lines={result.candidates.some(c => c.ccs) ? [RANK_NOTE, CCS_RANK_NOTE] : [RANK_NOTE]} label="Help: Ranked candidates" /></h2>
-            <span className="msg">{result.candidates.length} {result.candidates[0]?.layer === "formula_only" ? "formula(s)" : "structure(s)"}</span></div>
-          <FragmentProvider query={result.fragment_query} note={FRAGMENT_NOTE}>
+          <div className="results-head"><h2 className="panel-title">{t("Ranked candidates")}<HelpButton lines={result.candidates.some(c => c.ccs) ? [rankNote, ccsRankNote] : [rankNote]} label={t("Help: Ranked candidates")} /></h2>
+            <span className="msg">{result.candidates[0]?.layer === "formula_only" ? t("{n} formula(s)", { n: result.candidates.length }) : t("{n} structure(s)", { n: result.candidates.length })}</span></div>
+          <FragmentProvider query={result.fragment_query} note={t("Isomer comparison uses MS-FINDER, this view uses MetFrag: explained peaks can differ.")}>
             <CandidateTable candidates={result.candidates} />
           </FragmentProvider>
         </>)}
@@ -98,6 +99,7 @@ export function PipelineResults({ pipeId, jobResult, job, requestedAdduct }:
 }
 
 export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
+  const t = useT();
   const pipe = spec.pipelines.find(p => p.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(pipe ? pipe.inputs : []));
   const [job, setJob] = useState<Job | null>(null);
@@ -117,7 +119,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     return () => { ticket.current++; };
   }, [id]);
   useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
-  if (!pipe) return <p className="page">Unknown pipeline.</p>;
+  if (!pipe) return <p className="page">{t("Unknown pipeline.")}</p>;
 
   const shown = visibleFields(pipe.inputs, values);
   const update = (fid: string, v: any) => {
@@ -136,7 +138,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     dropRun("workflow", pipe.id);
     setValues(initialValues(pipe.inputs)); setJob(null); setBusy(false); setHasStartedJob(false); setError("");
     setErrors({}); setRequestedAdduct(null);
-    setNetNote(busy ? "Cleared. The previous workflow may still finish on the server." : "");
+    setNetNote(busy ? t("Cleared. The previous workflow may still finish on the server.") : "");
     setFormVersion(n => n + 1);
   };
 
@@ -144,8 +146,9 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     if (busy || confirming.current) return;
     const missing = missingRequired(pipe.inputs, values);
     if (missing.length) {
-      setErrors(Object.fromEntries(missing.map(f => [f.id!, "Required."])));
-      setError(`Complete ${missing.length === 1 ? "this required input" : "these required inputs"}: ${missing.map(f => f.label).join(", ")}.`);
+      setErrors(Object.fromEntries(missing.map(f => [f.id!, t("Required.")])));
+      const labels = missing.map(f => f.label).join(", ");
+      setError(missing.length === 1 ? t("Complete this required input: {labels}.", { labels }) : t("Complete these required inputs: {labels}.", { labels }));
       return;
     }
     const mine = ++ticket.current;
@@ -154,7 +157,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
     const allowed = await guard.confirm(networkUses(shown, values));
     if (ticket.current === mine) confirming.current = false;
     if (!allowed) {
-      if (ticket.current === mine) setNetNote("Cancelled: internet search is off.");
+      if (ticket.current === mine) setNetNote(t("Cancelled: internet search is off."));
       return;
     }
     if (ticket.current !== mine) return;
@@ -188,7 +191,7 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
         if (ticket.current !== mine) return;
       }
     } catch (e: any) {
-      if (ticket.current === mine) setError(e?.message || String(e) || "An unknown error occurred.");
+      if (ticket.current === mine) setError(e?.message || String(e) || t("An unknown error occurred."));
     } finally {
       if (ticket.current === mine) setBusy(false);
     }
@@ -207,12 +210,12 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
             ? <div className="check-row">{g.fields.map(field)}</div>
             : <div className="fields">{g.fields.map(field)}</div>;
           return g.collapsed
-            ? <details className="form-section" key={g.title}><summary>{g.title}</summary>{body}</details>
+            ? <details className="form-section" key={g.title}><summary>{t(g.title)}</summary>{body}</details>
             : <div className="form-section" key={g.title || "plain"}>{body}</div>;
         })}
         <div className="actions">
-          <button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />Running…</> : "Run"}</button>
-          <button className="btn ghost" type="button" onClick={clear}>Clear</button>
+          <button className="btn" onClick={run} disabled={busy} aria-busy={busy}>{busy ? <><span className="spinner" aria-hidden="true" />{t("Running…")}</> : t("Run")}</button>
+          <button className="btn ghost" type="button" onClick={clear}>{t("Clear")}</button>
           {(pipe.examples ?? []).map(ex => (
             <button className="btn secondary" type="button" key={ex.label} disabled={busy} onClick={() => loadExample(ex.values)}>{ex.label}</button>))}
           <span className="msg" aria-live="polite">{netNote}</span>

@@ -1,7 +1,8 @@
 import { Fragment, useId, useState, type MouseEvent } from "react";
+import { useT } from "../i18n";
 import { useReportMode } from "../report/mode";
 import type { AnnotationCandidate, Cell } from "../types";
-import { candidateDetails, CCS_TONE, ccsNumbers, ccsText, LEVEL_TONE, levelName } from "./annotationModel";
+import { candidateDetails, CCS_TONE, ccsNumbers, ccsText, ccsVerdict, LEVEL_TONE, levelName } from "./annotationModel";
 import { CellView } from "./Blocks";
 import { StructureHover } from "./StructureHover";
 import "./pipeline.css";
@@ -23,6 +24,7 @@ const levelCell = (c: AnnotationCandidate): Cell =>
  * In the Session report (report mode) there is nothing to click: every candidate's detail line is open and the toggle and View columns are left out.
  */
 export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: AnnotationCandidate[]; defaultOpen?: string[] }) {
+  const t = useT();
   const report = !!useReportMode();
   const base = useId();
   const [open, setOpen] = useState<Set<string>>(() => new Set(defaultOpen));
@@ -34,8 +36,8 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
     <div className="table-wrap cand-wrap">
       <table className="out-table cand-table">
         <thead><tr>
-          {!report && <th className="cand-toggle-col"><span className="sr-only">Details</span></th>}
-          <th>Rank</th><th>Name</th><th>Level</th><th className="num">Final score</th>{!report && <th>Fragments</th>}
+          {!report && <th className="cand-toggle-col"><span className="sr-only">{t("Details")}</span></th>}
+          <th>{t("Rank")}</th><th>{t("Name")}</th><th>{t("Level")}</th><th className="num">{t("Final score")}</th>{!report && <th>{t("Fragments")}</th>}
         </tr></thead>
         <tbody>
           {candidates.length ? candidates.map((c, i) => {
@@ -45,7 +47,7 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                 <tr className={"cand-row" + (isOpen ? " is-open" : "")} onClick={rowClick(c.id)}>
                   {!report && <td className="cand-toggle-col">
                     <button type="button" className="cand-toggle" aria-expanded={isOpen} aria-controls={isOpen ? detail : undefined}
-                      aria-label={`${isOpen ? "Hide" : "Show"} details of ${name}`} onClick={() => toggle(c.id)}><span className="cand-caret" aria-hidden="true" /></button>
+                      aria-label={isOpen ? t("Hide details of {name}", { name }) : t("Show details of {name}", { name })} onClick={() => toggle(c.id)}><span className="cand-caret" aria-hidden="true" /></button>
                   </td>}
                   <td>{c.rank ?? "—"}</td>
                   <td className="cand-name">{c.name ? (c.smiles ? <StructureHover smiles={c.smiles}>{c.name}</StructureHover> : c.name) : "—"}{c.ccs?.flag && <span className="cand-flag" title={ccsText(c.ccs)}>{c.ccs.flag}</span>}</td>
@@ -59,14 +61,14 @@ export function CandidateTable({ candidates, defaultOpen = [] }: { candidates: A
                       <dl className="cand-facts">
                         {candidateDetails(c).map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{k === "SMILES" && c.smiles ? <StructureHover smiles={c.smiles}>{v}</StructureHover> : v}</dd></div>)}
                         {c.ccs && <div key="CCS"><dt>CCS</dt>
-                          <dd><span className={"badge tone-" + (CCS_TONE[c.ccs.verdict] ?? "neutral")}>{c.ccs.verdict}</span>
+                          <dd><span className={"badge tone-" + (CCS_TONE[c.ccs.verdict] ?? "neutral")}>{ccsVerdict(c.ccs.verdict)}</span>
                             {ccsNumbers(c.ccs) && <span className="cand-ccs"> {ccsNumbers(c.ccs)}</span>}
-                            {c.ccs.moved_from ? <span className="cand-ccs"> · moved from rank {c.ccs.moved_from}</span> : null}</dd></div>}
+                            {c.ccs.moved_from ? <span className="cand-ccs"> · {t("moved from rank {n}", { n: c.ccs.moved_from })}</span> : null}</dd></div>}
                       </dl>
                     </td>
                   </tr>)}
               </Fragment>);
-          }) : <tr><td colSpan={cols} className="empty">no candidates</td></tr>}
+          }) : <tr><td colSpan={cols} className="empty">{t("no candidates")}</td></tr>}
         </tbody>
       </table>
     </div>

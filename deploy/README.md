@@ -20,6 +20,8 @@ Python packages of `requirements-server.txt` that are missing, installs the serv
 The service runs a single uvicorn worker (`--workers 1`): workflow tasks, the queue and the heavy-task lock are kept in process memory, so more
 workers would make task polls return 404 until the task store is shared.
 Logs: `journalctl -u mzdesk -f`. Restart: `systemctl restart mzdesk`.
+The unit sets `MZDESK_HOSTED=1` (this is the public website): `/api/spec` then says `hosted`, the sidebar drops the "Internet search" switch and online lookups
+run without asking, since what people type reaches this server anyway. The local version leaves it unset. Read at start, so restart after changing it.
 
 ## The address (done once)
 

@@ -27,6 +27,8 @@ Environment=MZDESK_FRIGID_DIR=/var/lib/mzdesk/tools/frigid
 Environment=MZDESK_FRIGID_DEVICE=cpu
 # MS/MS Annotation: "Run FRIGID" (Advanced) starts unticked here; people can tick it. The local version starts ticked.
 Environment=MZDESK_ANNOTATION_FRIGID=off
+# the public website: no "Internet search" switch in the sidebar; online lookups just run (the input reaches this server anyway)
+Environment=MZDESK_HOSTED=1
 # CFM-ID runs in Docker: the daemon must see the run's folder (the unit's /tmp is private), and the container is capped (see ms2/cfmid_engine.py)
 Environment=MZDESK_CFMID_WORKDIR=/var/lib/mzdesk/cache/cfmid-work
 Environment=MZDESK_CFMID_MEMORY=1g

@@ -7,6 +7,7 @@ Pipeline（ESI MS/MS Annotation、EI MS Annotation、Targeted Method）跑得久
 import copy
 import functools
 import logging
+import os
 import threading
 import time
 import uuid
@@ -26,6 +27,7 @@ from mzdesk.api.request_limits import RequestLimit
 from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
+from mzdesk.shared import versions
 from mzdesk.spec import MODULES, PIPELINES, is_deferred, spec
 from mzdesk.workflows import ei_ms_annotation, targeted_method
 
@@ -34,7 +36,10 @@ STATIC = ROOT / "static"
 DOCS = ROOT / "docs"                                   # one markdown file per page, written from the long help texts
 LIB_FILES = {"3Dmol-min.js": ROOT / "lib" / "3Dmol-min.js"}   # 前端按需加载的第三方脚本
 log = logging.getLogger("mzdesk.api")
-_docs = security.api_docs_enabled()                       # the API browser (/docs, /redoc, /openapi.json) is for local development only
+# the public website (MZDESK_HOSTED=1 in deploy/mzdesk.service): the frontend drops the "Internet search" switch there,
+# since what people type reaches this server anyway. The local version leaves it unset. Read when the server starts.
+HOSTED = os.environ.get("MZDESK_HOSTED") == "1"
+_docs = security.api_docs_enabled()                      # the API browser (/docs, /redoc, /openapi.json) is for local development only
 app = FastAPI(title="mzDesk API", version=__version__, docs_url="/docs" if _docs else None, redoc_url="/redoc" if _docs else None,
               openapi_url="/openapi.json" if _docs else None)
 # the last one added is the outermost: compression wraps the headers, which wrap the size limit (so a 413 carries them too)
@@ -54,7 +59,14 @@ def health():
 
 @app.get("/api/spec")
 def get_spec():
-    return {**spec(), "version": __version__}
+    return {**spec(), "version": __version__, "hosted": HOSTED}
+
+
+@app.get("/api/versions")
+def get_versions():
+    """What the results depend on: mzDesk, Python, the engines, models, data and online services (names, versions, dates, counts; no paths).
+    Cached for ten minutes; the Session report writes it into report.json (shared/versions.py)."""
+    return versions.environment()
 
 
 @app.get("/api/docs/{page_id}")

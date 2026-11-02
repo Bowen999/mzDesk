@@ -1,11 +1,13 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { BrowserRouter, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getSpec, trackView } from "./api";
 import { CrashBoundary } from "./components/CrashBoundary";
 import { LockGate } from "./components/LockGate";
 import { Brand, Sidebar } from "./components/Sidebar";
 import { SidebarResizer, useSidebarWidth } from "./components/SidebarResizer";
+import { localizeSpec, useT } from "./i18n";
 import { isLockedModule, useUnlocked } from "./lock";
+import { setHostedSite } from "./network";
 import { DevBlocks } from "./pages/DevBlocks";
 import { DocsPage } from "./pages/DocsPage";
 import { ModulePage } from "./pages/ModulePage";
@@ -23,13 +25,16 @@ function Home({ spec }: { spec: Spec }) {
 }
 
 export default function App() {
+  const t = useT();
   const [spec, setSpec] = useState<Spec | null>(null);
   const [err, setErr] = useState("");
-  useEffect(() => { getSpec().then(setSpec).catch(e => setErr(String(e))); }, []);
+  // the page list in the chosen language; `t` is a new function whenever the language or its dictionary changes, so this follows them
+  const shown = useMemo(() => (spec ? localizeSpec(spec) : null), [spec, t]);
+  useEffect(() => { getSpec().then(s => { setHostedSite(!!s.hosted); setSpec(s); }).catch(e => setErr(String(e))); }, []);
   useEffect(() => { if (spec || err) window.mzdeskReady?.(); }, [spec, err]);     // the opening splash (index.html) leaves once the page list is here
-  if (err) return <p className="page">Cannot load /api/spec: {err}</p>;
-  if (!spec) return <p className="page">Loading…</p>;
-  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><CrashBoundary><Shell spec={spec} /></CrashBoundary></BrowserRouter>;
+  if (err) return <p className="page">{t("Cannot load /api/spec: {err}", { err })}</p>;
+  if (!shown) return <p className="page">{t("Loading…")}</p>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><CrashBoundary><Shell spec={shown} /></CrashBoundary></BrowserRouter>;
 }
 
 /** True while the media query matches (re-renders on change). */
@@ -45,6 +50,7 @@ function useMedia(query: string) {
 
 /** Sidebar (resizable on wide screens; a slide-in drawer under 960 px, opened from the top bar) + the page. */
 function Shell({ spec }: { spec: Spec }) {
+  const t = useT();
   const { pathname } = useLocation();
   const moduleId = matchPath("/modules/:id", pathname)?.params.id;
   const pipelineId = matchPath("/pipelines/:id", pathname)?.params.id;
@@ -78,7 +84,7 @@ function Shell({ spec }: { spec: Spec }) {
   return (
     <div className={"layout sidebar-blue" + (drawer ? " drawer-open" : "") + (rail ? " sidebar-collapsed" : "")} style={{ "--sidebar-w": `${rail ? 64 : width}px` } as CSSProperties}>
       <header className="topbar">
-        <button type="button" className="menu-btn" aria-label="Open navigation" aria-expanded={drawer} aria-controls="app-nav" onClick={() => setDrawer(true)}>
+        <button type="button" className="menu-btn" aria-label={t("Open navigation")} aria-expanded={drawer} aria-controls="app-nav" onClick={() => setDrawer(true)}>
           <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
         </button>
         <Brand version={spec.version} />
@@ -91,8 +97,8 @@ function Shell({ spec }: { spec: Spec }) {
       <main className="main">
         <Routes>
           <Route path="/" element={<Home spec={spec} />} />
-          <Route path="/pipelines/:id" element={activePipeline ? null : <p className="page">Unknown pipeline.</p>} />
-          <Route path="/modules/:id" element={activeModule ? null : <p className="page">Unknown module.</p>} />
+          <Route path="/pipelines/:id" element={activePipeline ? null : <p className="page">{t("Unknown pipeline.")}</p>} />
+          <Route path="/modules/:id" element={activeModule ? null : <p className="page">{t("Unknown module.")}</p>} />
           <Route path="/docs/:id" element={<DocsPage spec={spec} />} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />
@@ -100,7 +106,7 @@ function Shell({ spec }: { spec: Spec }) {
           <Route path="/stats" element={<StatsPage spec={spec} />} />
           {/* feedback and crash reports: not in the sidebar; the same server-side password */}
           <Route path="/reports" element={<ReportsPage />} />
-          <Route path="*" element={<p className="page">Not found.</p>} />
+          <Route path="*" element={<p className="page">{t("Not found.")}</p>} />
         </Routes>
         {spec.modules.filter(m => visitedModules.includes(m.id) || m.id === activeModule?.id).map(m => (
           <div key={m.id} hidden={m.id !== activeModule?.id}>

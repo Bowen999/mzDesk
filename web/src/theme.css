@@ -478,6 +478,16 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 /* ---------------------------------------------------------------- sidebar footer: Internet search, report, Docs; theme + language + feedback */
 .sidebar-foot { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: auto; padding: 16px 4px 2px; }
 .sidebar-foot-row { display: flex; align-items: center; gap: 6px; }
+/* small screens (the drawer): the theme switch gets a row of its own; language and feedback go under it, at the right */
+@media (max-width: 959px) {
+  .sidebar-foot-row { flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
+  .sidebar-foot-row .theme-switch { flex-basis: 100%; }
+}
+/* the drawer: the footer stays at the bottom while the navigation scrolls above it (not on a short, landscape phone, where it would eat the list) */
+@media (max-width: 959px) and (min-height: 560px) {
+  .sidebar:not(.rail) .sidebar-foot { position: sticky; bottom: -14px; z-index: 1; margin-bottom: -14px; padding-bottom: 16px; background: var(--canvas); box-shadow: 0 -1px 0 var(--line); }
+  .sidebar-blue .sidebar:not(.rail) .sidebar-foot { background: var(--side-bg); box-shadow: 0 -1px 0 rgba(255, 255, 255, .12); }
+}
 /* Internet search: label + a small track; "On" runs online lookups, "Off" asks first (components/NetworkDialog.tsx) */
 .internet-switch {
   display: flex; align-items: center; gap: 7px; width: 100%; min-height: 30px; padding: 4px 8px; color: var(--muted);
@@ -490,7 +500,7 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .internet-knob { position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(16, 24, 40, .25); transition: transform .15s; }
 .internet-switch.on .internet-track { background: var(--accent); }
 .internet-switch.on .internet-knob { transform: translateX(12px); }
-.internet-state { flex: none; width: 22px; color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
+.internet-state { flex: none; min-width: 22px; color: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; text-align: right; }
 .internet-switch.on .internet-state { color: var(--ink); }
 .rail-btn.internet-rail.off { color: var(--faint); }
 /* the switch takes the whole row; the bug keeps a fixed square at its right */
@@ -505,9 +515,10 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 /* language: the current language as two letters, between the theme switch and the bug */
 .lang-btn { display: inline-grid; place-items: center; min-width: 32px; height: 32px; flex: none; padding: 0 6px; color: var(--muted); background: none; border: 0; border-radius: 8px; font: inherit; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; cursor: pointer; }
 .lang-btn:hover { color: var(--ink); background: var(--hover); }
-/* placeholders (Docs, language): drawn as they will look, but nothing happens on hover or click yet */
-.internet-switch.soon, .lang-btn.soon, .rail-btn.soon { cursor: default; }
-.internet-switch.soon:hover, .lang-btn.soon:hover, .rail-btn.soon:hover { color: var(--muted); background: none; }
+.lang-btn[aria-expanded="true"] { color: var(--accent-ink); background: var(--accent-bg); }
+/* placeholder (Docs): drawn as it will look, but nothing happens on hover or click yet */
+.internet-switch.soon, .rail-btn.soon { cursor: default; }
+.internet-switch.soon:hover, .rail-btn.soon:hover { color: var(--muted); background: none; }
 .soon-tag { flex: none; padding: 0 6px; color: var(--faint); border: 1px solid var(--line-strong); border-radius: 99px; font-size: 10.5px; line-height: 15px; }
 /* hover labels: the buttons are icon-only, so name them above the footer */
 .theme-switch button[data-label], .feedback-btn[data-label], .lang-btn[data-label] { position: relative; }
@@ -527,6 +538,23 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .feedback-btn[data-label]::after, .lang-btn[data-label]::after { left: auto; right: 0; transform: translateY(3px); }
 .feedback-btn[data-label]:hover::after, .feedback-btn[data-label]:focus-visible::after,
 .lang-btn[data-label]:hover::after, .lang-btn[data-label]:focus-visible::after { transform: translateY(0); }
+/* the language list opens where the hover label would be */
+.lang-btn[aria-expanded="true"][data-label]::after { display: none; }
+/* language list (components/Sidebar.tsx LanguageMenu): portalled to <body>, so it wears the page theme, not the blue of the sidebar */
+.lang-menu {
+  position: fixed; z-index: 1000; min-width: 164px; padding: 4px; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: 13px;
+}
+.lang-menu button {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 32px; padding: 5px 10px; color: var(--ink-2);
+  background: none; border: 0; border-radius: 7px; font: inherit; text-align: left; cursor: pointer;
+}
+.lang-menu button:hover { color: var(--ink); background: var(--hover); }
+.lang-menu button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.lang-menu button[aria-checked="true"] { color: var(--accent-ink); background: var(--accent-bg); font-weight: 600; }
+.lang-menu .lang-check { margin-left: auto; font-size: 12px; visibility: hidden; }
+.lang-menu button[aria-checked="true"] .lang-check { visibility: visible; }
 
 /* ---------------------------------------------------------------- collapse: icon rail */
 .rail-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; color: var(--muted); background: none; border: 0; border-radius: 8px; cursor: pointer; }
@@ -588,8 +616,8 @@ body.resizing .sidebar-shell { transition: none; }
 .sidebar-blue .sidebar .feedback-btn { color: var(--on-side-2); }
 .sidebar-blue .sidebar .feedback-btn:hover, .sidebar-blue .sidebar .feedback-btn[aria-expanded="true"] { color: var(--on-side); background: var(--on-side-hover); }
 .sidebar-blue .sidebar .lang-btn { color: var(--on-side-2); }
-.sidebar-blue .sidebar .lang-btn:hover { color: var(--on-side); background: var(--on-side-hover); }
-.sidebar-blue .sidebar .internet-switch.soon:hover, .sidebar-blue .sidebar .lang-btn.soon:hover, .sidebar-blue .sidebar .rail-btn.soon:hover { color: var(--on-side-2); background: none; }
+.sidebar-blue .sidebar .lang-btn:hover, .sidebar-blue .sidebar .lang-btn[aria-expanded="true"] { color: var(--on-side); background: var(--on-side-hover); }
+.sidebar-blue .sidebar .internet-switch.soon:hover, .sidebar-blue .sidebar .rail-btn.soon:hover { color: var(--on-side-2); background: none; }
 .sidebar-blue .soon-tag { color: var(--on-side-3); border-color: rgba(255, 255, 255, .3); }
 .sidebar-blue .sidebar-resizer:hover::after, .sidebar-blue .sidebar-resizer.active::after, .sidebar-blue .sidebar-resizer:focus-visible::after { background: rgba(47, 75, 134, .4); }
 .sidebar-blue .sidebar :focus-visible { outline-color: var(--on-side); }
@@ -845,3 +873,14 @@ body.resizing .sidebar-shell { transition: none; }
 .check-grid { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: 6px; }
 .check-grid .check-line { gap: 7px; font-size: 13px; cursor: pointer; }
 .field-slot.new-row > .field { grid-column-start: 1; }
+
+/* ---------------------------------------------------------------- interface languages (<html lang> follows the language switch; English is not touched here)
+   Chinese and Japanese each start with their own system fonts: one shared stack would draw Japanese kanji in the Chinese forms.
+   Japanese lines break between phrases (auto-phrase), not inside a katakana word; a browser without it breaks anywhere. */
+:root:lang(zh) { --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Micro Hei", sans-serif; }
+:root:lang(ja) { word-break: auto-phrase; --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans CJK JP", "Source Han Sans JP", sans-serif; }
+/* a long word in a narrow sidebar (German compounds at the 200px minimum) is hyphenated, else broken, instead of running into the caret or the switch */
+.nav-link-label, .nav-sub-label, .internet-label { overflow-wrap: anywhere; }
+:is(:lang(de), :lang(fr), :lang(es)) :is(.nav-link-label, .nav-sub-label, .internet-label) { hyphens: auto; }
+/* Chinese and Japanese labels: no single character left alone on the second line */
+:is(:lang(zh), :lang(ja)) :is(.nav-link-label, .nav-sub-label, .internet-label) { text-wrap: balance; }

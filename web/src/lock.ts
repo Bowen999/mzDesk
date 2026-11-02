@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { t } from "./i18n";
 
 /**
  * Frontend-only password lock. Only the locked subgroups (DMPK, ICP-MS) sit behind it; every other module and every workflow is open.
@@ -40,7 +41,7 @@ export class LockUnavailable extends Error {}
 
 async function derive(password: string): Promise<Uint8Array> {
   const subtle = globalThis.crypto?.subtle;
-  if (!subtle) throw new LockUnavailable("Password check needs a secure context. Open mzDesk via http://localhost or http://127.0.0.1.");
+  if (!subtle) throw new LockUnavailable(t("Password check needs a secure context. Open mzDesk via http://localhost or http://127.0.0.1."));
   const key = await subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveBits"]);
   const bits = await subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: fromHex(SALT_HEX), iterations: ITERATIONS }, key, 256);
   return new Uint8Array(bits);

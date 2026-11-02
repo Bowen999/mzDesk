@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
+import { useT } from "../i18n";
 import { LockUnavailable, unlock, useUnlocked } from "../lock";
 import "../lock.css";
 
@@ -15,6 +16,7 @@ export function LockIcon({ size = 12, open = false, className = "lock-icon" }: {
 }
 
 function UnlockCard() {
+  const t = useT();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,21 +28,21 @@ function UnlockCard() {
     if (busy) return;
     setBusy(true); setErr("");
     try {
-      if (!(await unlock(pw))) { setErr("Wrong password"); setPw(""); input.current?.focus(); }
+      if (!(await unlock(pw))) { setErr(t("Wrong password")); setPw(""); input.current?.focus(); }
     } catch (x) {
-      setErr(x instanceof LockUnavailable ? x.message : "Could not check the password in this browser");
+      setErr(x instanceof LockUnavailable ? x.message : t("Could not check the password in this browser"));
     } finally { setBusy(false); }
   };
 
   return (
     <form className="lock-card" role="dialog" aria-modal="true" aria-labelledby="lock-title" onSubmit={submit}>
       <LockIcon size={28} className="lock-card-icon" />
-      <h2 id="lock-title">This page is locked</h2>
-      <input ref={input} type="password" autoComplete="off" aria-label="Password" aria-invalid={!!err} placeholder="Password"
+      <h2 id="lock-title">{t("This page is locked")}</h2>
+      <input ref={input} type="password" autoComplete="off" aria-label={t("Password")} aria-invalid={!!err} placeholder={t("Password")}
         value={pw} onChange={e => { setPw(e.target.value); if (err) setErr(""); }} />
       <div className="lock-error" role="alert">{err}</div>
-      <button type="submit" className="btn" disabled={busy}>{busy ? "Checking…" : "Unlock"}</button>
-      <p className="lock-note">Password needed only for: DMPK, ICP-MS.</p>
+      <button type="submit" className="btn" disabled={busy}>{busy ? t("Checking…") : t("Unlock")}</button>
+      <p className="lock-note">{t("Password needed only for: DMPK, ICP-MS.")}</p>
     </form>
   );
 }

@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react";
 import { ApiError, sendFeedback } from "../api";
+import { t, useT } from "../i18n";
 
 /** Simple beetle: body, head, antennae and six legs. Kept to one stroke width so it reads at 16 px. */
 export function BugIcon({ size = 17, className = "" }: { size?: number; className?: string }) {
@@ -33,13 +34,13 @@ function dataUrlBytes(dataUrl: string) {
 
 /** Scale to at most 1600 px and re-encode (PNG for screenshots, JPEG for photos) so the email stays small. */
 async function prepareImage(file: File): Promise<Shot> {
-  if (!file.type.startsWith("image/")) throw new Error("Only image files can be attached.");
-  if (file.size > MAX_SOURCE_BYTES) throw new Error(`${file.name} is larger than 20 MB.`);
+  if (!file.type.startsWith("image/")) throw new Error(t("Only image files can be attached."));
+  if (file.size > MAX_SOURCE_BYTES) throw new Error(t("{name} is larger than 20 MB.", { name: file.name }));
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    throw new Error(`Could not read ${file.name}. Please use a PNG, JPG, WebP or GIF image.`);
+    throw new Error(t("Could not read {name}. Please use a PNG, JPG, WebP or GIF image.", { name: file.name }));
   }
   try {
     const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
@@ -49,7 +50,7 @@ async function prepareImage(file: File): Promise<Shot> {
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Could not prepare that image.");
+    if (!ctx) throw new Error(t("Could not prepare that image."));
     const png = file.type !== "image/jpeg";      // GIF / WebP screenshots keep transparency as PNG
     if (!png) {                                  // JPEG has no alpha: use white, not black
       ctx.fillStyle = "#ffffff";
@@ -58,7 +59,7 @@ async function prepareImage(file: File): Promise<Shot> {
     ctx.drawImage(bitmap, 0, 0, width, height);
     const dataUrl = canvas.toDataURL(png ? "image/png" : "image/jpeg", 0.86);
     const bytes = dataUrlBytes(dataUrl);
-    if (bytes > MAX_IMAGE_BYTES) throw new Error(`${file.name} is still too large after resizing. Try a smaller screenshot.`);
+    if (bytes > MAX_IMAGE_BYTES) throw new Error(t("{name} is still too large after resizing. Try a smaller screenshot.", { name: file.name }));
     return { id: Math.random().toString(36).slice(2), name: file.name, dataUrl, bytes };
   } finally {
     bitmap.close();
@@ -71,13 +72,14 @@ async function prepareImage(file: File): Promise<Shot> {
  * cannot clip it; Esc, the X and the backdrop close it.
  */
 export function FeedbackButton({ rail = false }: { rail?: boolean }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
   return (
     <>
-      <button ref={trigger} type="button" className="feedback-btn" aria-label="Send feedback"
-        data-label={rail ? undefined : "Send feedback"} title={rail ? "Send feedback" : undefined}
+      <button ref={trigger} type="button" className="feedback-btn" aria-label={t("Send feedback")}
+        data-label={rail ? undefined : t("Send feedback")} title={rail ? t("Send feedback") : undefined}
         aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
         <BugIcon />
       </button>
@@ -87,6 +89,7 @@ export function FeedbackButton({ rail = false }: { rail?: boolean }) {
 }
 
 function FeedbackDialog({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const [message, setMessage] = useState("");
   const [shots, setShots] = useState<Shot[]>([]);
   const [website, setWebsite] = useState("");          // honeypot; people never see it
@@ -136,8 +139,8 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
     setError("");
     if (!files.length) return;
     const room = MAX_IMAGES - shots.length;
-    if (room <= 0) { setError(`You can attach up to ${MAX_IMAGES} images.`); return; }
-    if (files.length > room) setError(`Up to ${MAX_IMAGES} images can be attached; only the first ${room} were added.`);
+    if (room <= 0) { setError(t("You can attach up to {max} images.", { max: MAX_IMAGES })); return; }
+    if (files.length > room) setError(t("Up to {max} images can be attached; only the first {room} were added.", { max: MAX_IMAGES, room }));
     setAdding(true);
     const added: Shot[] = [];
     let total = shots.reduce((n, s) => n + s.bytes, 0);
@@ -146,11 +149,11 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
       for (const file of files.slice(0, room)) {
         try {
           const shot = await prepareImage(file);
-          if (total + shot.bytes > MAX_TOTAL_BYTES) { problem = "The images are too large together (5 MB total). Remove one and try again."; break; }
+          if (total + shot.bytes > MAX_TOTAL_BYTES) { problem = t("The images are too large together (5 MB total). Remove one and try again."); break; }
           added.push(shot);
           total += shot.bytes;
         } catch (e) {
-          problem = e instanceof Error ? e.message : "Could not add that image.";
+          problem = e instanceof Error ? e.message : t("Could not add that image.");
         }
       }
     } finally {
@@ -188,7 +191,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
       });
       setDone({ ref: result.ref ?? "" });
     } catch (x) {
-      setError(x instanceof ApiError ? x.message : "Could not reach the server. Please try again.");
+      setError(x instanceof ApiError ? x.message : t("Could not reach the server. Please try again."));
     } finally {
       setSending(false);
     }
@@ -201,7 +204,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
     <div className="feedback-overlay" onMouseDown={e => { if (e.target === e.currentTarget && !sendingRef.current) onClose(); }}>
       <div ref={card} className="feedback-card" role="dialog" aria-modal="true" aria-labelledby="feedback-title"
         aria-describedby={done ? undefined : "feedback-desc"}>
-        <button type="button" className="feedback-close" aria-label="Close feedback" title="Close" onClick={onClose} disabled={sending}>
+        <button type="button" className="feedback-close" aria-label={t("Close feedback")} title={t("Close")} onClick={onClose} disabled={sending}>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
         </button>
 
@@ -210,20 +213,20 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
             <span className="feedback-done-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5L20 7" /></svg>
             </span>
-            <h2 id="feedback-title">Thanks for the feedback</h2>
-            <p>Your message reached the mzDesk team.{done.ref && <> <code>{done.ref}</code></>}</p>
-            <button ref={closeButton} type="button" className="btn" onClick={onClose}>Close</button>
+            <h2 id="feedback-title">{t("Thanks for the feedback")}</h2>
+            <p>{t("Your message reached the mzDesk team.")}{done.ref && <> <code>{done.ref}</code></>}</p>
+            <button ref={closeButton} type="button" className="btn" onClick={onClose}>{t("Close")}</button>
           </div>
         ) : (
           <>
             <span className="feedback-badge" aria-hidden="true"><BugIcon size={20} /></span>
-            <h2 id="feedback-title">Send feedback</h2>
-            <p className="feedback-desc" id="feedback-desc">Report a bug, suggest an idea, or share what’s working well.</p>
+            <h2 id="feedback-title">{t("Send feedback")}</h2>
+            <p className="feedback-desc" id="feedback-desc">{t("Report a bug, suggest an idea, or share what’s working well.")}</p>
 
             <form onSubmit={submit}>
               <div className="feedback-field">
                 <textarea ref={textarea} value={message} maxLength={MAX_MESSAGE} onChange={e => { setMessage(e.target.value); if (error) setError(""); }}
-                  onPaste={onPaste} placeholder="What happened? What were you trying to do?" aria-label="Your message"
+                  onPaste={onPaste} placeholder={t("What happened? What were you trying to do?")} aria-label={t("Your message")}
                   rows={5} disabled={sending} />
                 <span className="feedback-count" aria-hidden="true">{message.length}/{MAX_MESSAGE}</span>
               </div>
@@ -236,19 +239,19 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     <rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /><path d="M16 5h6M19 2v6" />
                   </svg>
-                  {adding ? "Adding…" : full ? "3 images attached" : shots.length ? "Add another image" : "Add images"}
+                  {adding ? t("Adding…") : full ? t("3 images attached") : shots.length ? t("Add another image") : t("Add images")}
                 </button>
-                <span className="feedback-attach-hint">or paste a screenshot · PNG, JPG, WebP · up to 3</span>
+                <span className="feedback-attach-hint">{t("or paste a screenshot · PNG, JPG, WebP · up to 3")}</span>
                 <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden
                   onChange={e => { const picked = Array.from(e.target.files ?? []); e.target.value = ""; void addFiles(picked); }} />
               </div>
 
               {shots.length > 0 && (
-                <ul className="feedback-shots" aria-label="Attached images">
+                <ul className="feedback-shots" aria-label={t("Attached images")}>
                   {shots.map(s => (
                     <li key={s.id}>
                       <img src={s.dataUrl} alt={s.name} title={s.name} />
-                      <button type="button" className="feedback-shot-x" aria-label={`Remove ${s.name}`} title="Remove"
+                      <button type="button" className="feedback-shot-x" aria-label={t("Remove {name}", { name: s.name })} title={t("Remove")}
                         onClick={() => setShots(prev => prev.filter(p => p.id !== s.id))} disabled={sending}>×</button>
                     </li>
                   ))}
@@ -261,10 +264,10 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               {error && <p className="feedback-error" role="alert">{error}</p>}
 
               <div className="feedback-actions">
-                <span className="feedback-note">Your message and images go to the mzDesk maintainer.</span>
-                <button type="button" className="btn ghost" onClick={onClose} disabled={sending}>Cancel</button>
+                <span className="feedback-note">{t("Your message and images go to the mzDesk maintainer.")}</span>
+                <button type="button" className="btn ghost" onClick={onClose} disabled={sending}>{t("Cancel")}</button>
                 <button type="submit" className="btn" disabled={!canSend} aria-busy={sending}>
-                  {sending ? "Sending…" : "Send"}
+                  {sending ? t("Sending…") : t("Send")}
                 </button>
               </div>
             </form>

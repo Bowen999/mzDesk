@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type SyntheticEvent } from "react";
+import { useT } from "../i18n";
 import type { Help } from "../types";
 
 /**
@@ -20,16 +21,25 @@ export function helpLines(...parts: (Help | null | undefined)[]): string[] {
   return out;
 }
 
+/** The colon that ends a lead-in. An ASCII ":" must be followed by a space (so "12:30" and "http://..." are not lead-ins); the full-width "：" of
+ *  Chinese and Japanese needs no space after it; a space before either is fine (French: "Mode : texte"). */
+const LEAD_IN = /^([^:：<>]{1,70}?)(\s*)(:(?=\s)|：)(\s?)/;
+/** The same for a later sentence: after ". " or "; " an English-style capitalised phrase of up to three words, after "。" or "；" a short phrase. */
+const LATER_LEAD_IN = /([.;]\s+)(\p{Lu}[\p{L}\p{N}_/+\-]*(?: [\p{L}\p{N}_/+\-]+){0,2})(\s*:(?=\s))/gu;
+const LATER_LEAD_IN_CJK = /([。；]\s*)([^。；：:<>()（），、,]{1,12}?)(：)/g;
+
 /** Mark the key words of a help / notes line: the lead-in before a colon at the start of the line or of a later sentence
  *  ("Yes: expected …. Partial: only …") is bolded, and ion notations ([M+H]+, [M-2H]2-, [2M+Na]+) become small tags.
+ *  The colon may be the full-width "：" (zh, ja: "是：…。部分：…") and may have a space before it (fr: "Mode : texte").
  *  Text that already has its own <b> keeps it and only gets the ion tags. */
 export function emphasize(text: string): string {
   let t = text;
   if (!/<b>/.test(t)) {
-    const lead = /^([^:<>]{2,70}?):(\s)/.exec(t);
-    // a lead-in is one phrase: no sentence break outside brackets ("e.g. phenol" inside them is fine)
-    if (lead && !/[.!?]\s/.test(lead[1].replace(/\([^)]*\)/g, ""))) t = `<b>${lead[1]}</b>:${lead[2]}` + t.slice(lead[0].length);
-    t = t.replace(/([.;]\s+)([A-Z][\w/+\-]*(?: [\w/+\-]+){0,2}):(?=\s)/g, "$1<b>$2</b>:");
+    const lead = LEAD_IN.exec(t);
+    // a lead-in is one phrase: no sentence break outside brackets ("e.g. phenol" inside them is fine). An ASCII colon needs two characters before it.
+    if (lead && (lead[3] === "：" || lead[1].length + lead[2].length >= 2) && !/[.!?]\s|[。！？]/.test(lead[1].replace(/[(（][^)）]*[)）]/g, "")))
+      t = `<b>${lead[1]}</b>${lead[2]}${lead[3]}${lead[4]}` + t.slice(lead[0].length);
+    t = t.replace(LATER_LEAD_IN, "$1<b>$2</b>$3").replace(LATER_LEAD_IN_CJK, "$1<b>$2</b>$3");
   }
   return t.replace(/(^|[\s(,/])(\[\d*M[^\]\s<>]*\]\d*[+\-]+(?:•)?)/g, "$1<code>$2</code>");
 }
@@ -142,12 +152,13 @@ export function useHelpPopover<T extends HTMLElement = HTMLButtonElement>(lines:
 }
 
 /** The small "?" icon button. Renders nothing when there is no help text. */
-export function HelpButton({ lines, label = "More information", className = "" }: { lines: string[]; label?: string; className?: string }) {
+export function HelpButton({ lines, label, className = "" }: { lines: string[]; label?: string; className?: string }) {
+  const t = useT();
   const { triggerProps, popover } = useHelpPopover(lines);
   if (!lines.length) return null;
   return (
     <>
-      <button type="button" className={"hp-btn" + (className ? " " + className : "")} aria-label={label} {...triggerProps}>?</button>
+      <button type="button" className={"hp-btn" + (className ? " " + className : "")} aria-label={label ?? t("More information")} {...triggerProps}>?</button>
       {popover}
     </>
   );

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { t } from "./i18n";
 import type { Field } from "./types";
 
 /**
@@ -7,12 +8,21 @@ import type { Field } from "./types";
  *   Off = a run that needs the internet first shows a confirmation dialog; the run continues only if the user agrees.
  * The choice is remembered in localStorage. Both switch shapes (sidebar and rail) and the pages read it through
  * useInternet(), so they always agree. The switch is a preference, not access control: the API stays open.
+ * The public website (spec.hosted) has no switch: what people type reaches the server anyway, so online lookups always run there.
  */
 const KEY = "mzdesk.internetSearch";
 let memory: boolean | null = null;
+let hosted = false;
 const listeners = new Set<() => void>();
 
+/** Set once the spec arrives (App.tsx). On the public website the switch is gone and a "No" saved earlier is ignored. */
+export function setHostedSite(on: boolean) {
+  hosted = on;
+  listeners.forEach(l => l());
+}
+
 function read(): boolean {
+  if (hosted) return true;
   if (memory === null) {
     try { memory = localStorage.getItem(KEY) !== "0"; } catch { memory = true; }
   }
@@ -92,20 +102,23 @@ export function networkUses(fields: Field[], values: Record<string, any>, page?:
     if (f.type === "spectrum" && f.network_sources?.length) {
       const source = String(v?.source ?? "");
       if (f.network_sources.includes(source) && String(v?.value ?? "").trim())
-        uses.push("The spectrum is fetched from GNPS / MassIVE (USI).");
+        uses.push(t("The spectrum is fetched from GNPS / MassIVE (USI)."));
     } else if (f.type === "structure" && f.network_modes?.length) {
       const text = String(v?.value ?? "").trim();
       // A page-level sentence already covers the page's own lookup; a formula / InChI is parsed locally.
       if (!page && text && f.network_modes.includes(String(v?.mode ?? "")) && !parsedLocally(text))
-        uses.push("The compound is looked up in PubChem and UniChem.");
+        uses.push(t("The compound is looked up in PubChem and UniChem."));
     } else if (f.type === "textarea" && f.network_names) {
       const names = candidateNames(String(v ?? ""));
-      if (names.length) uses.push(`${names.length === 1 ? "A candidate name is" : "Candidate names are"} looked up in PubChem and UniChem.`);
+      if (names.length) uses.push(names.length === 1 ? t("A candidate name is looked up in PubChem and UniChem.") : t("Candidate names are looked up in PubChem and UniChem."));
     } else if (f.type === "checkbox" && f.network && v === true) {
-      uses.push(`“${f.label ?? "This option"}”: models from Zenodo.`);
+      uses.push(t("“{label}”: models from Zenodo.", { label: f.label ?? t("This option") }));
     } else if (f.type === "multiselect" && f.network_options?.length && Array.isArray(v)) {
-      const picked = v.filter((x: string) => f.network_options!.includes(x));
-      if (picked.length) uses.push(`${picked.join(" and ")}: ${picked.length === 1 ? "model" : "models"} from Zenodo.`);
+      const picked = v.filter((x: string) => f.network_options!.includes(x)).map((x: string) => t(x));     // the names of the options as the page shows them
+      if (picked.length) {
+        const names = picked.length === 2 ? t("{a} and {b}", { a: picked[0], b: picked[1] }) : picked.join(", ");
+        uses.push(picked.length === 1 ? t("{names}: model from Zenodo.", { names }) : t("{names}: models from Zenodo.", { names }));
+      }
     }
   }
   return [...new Set(uses)];

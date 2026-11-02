@@ -264,6 +264,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.3', date:'2026-11-02', git:'',
+  title:'界面可切换 6 种语言（英 / 中 / 日 / 德 / 法 / 西）；Session report 记录各组件版本；网页端不再显示 Internet search 开关',
+  note:'界面上新加文字时：代码里 t("英文原文")，跑 node web/scripts/extract-i18n.mjs 更新 web/src/i18n/source/ui.json，再补各语言词典；没补的显示英文。MZDESK_HOSTED 在服务启动时读取，deploy.sh 装上新的服务单元并重启后生效。',
+  state:[['语言','英文 · 简体中文 · 日语 · 德语 · 法语 · 西班牙语；默认跟随浏览器，侧栏底部按钮切换，记在本浏览器'], ['翻译范围','界面和各页面文字（每种语言约 1100 条）；运行结果和 docs 文档不翻译'], ['网页端','mzdesk.com 不再显示 Internet search 开关，联网查询直接运行；本地版不变'], ['报告','report.json 升到 report_format 2：environment 和每页 based_on 记各组件版本'], ['版本','0.5.3']],
+  c:{
+   other:['feat','Session report 记录版本：report.json 升到 report_format 2。顶部新增 environment，记 mzDesk、Python、各引擎 / Python 包 / 模型 / 谱库数据的版本（如 BUDDY（msbuddy）、RDKit、MS-FINDER、CFM-ID、FRIGID、MassBank、GNPS 谱库）；每个页面另有 based_on，列出它所依赖组件的版本。PubChem、fastMASST 这类在线服务没有版本号，记为 online 并带访问时间。取不到版本时 environment 为 null 并写明原因，报告照常生成。新接口 GET /api/versions，结果缓存 10 分钟，只返回名称、版本、日期、条数，不含服务器目录。',true,{w:'mzdesk/shared/versions.py · mzdesk/api/app.py · web/src/report/build.ts · web/src/api.ts · web/src/types.ts · tests/test_versions.py · web/tests/report-environment.test.mjs'}],
+   app:['feat','界面语言：英文、简体中文、日语、德语、法语、西班牙语。侧栏底部语言按钮（EN / 中 / 日 / DE / FR / ES）弹出菜单；默认跟随浏览器语言，不在这六种里就用英文；选择记在本浏览器（localStorage mzdesk.lang）。翻译范围是界面文字和各页面文字（模块和流程的标题、一句话说明、输入项名称、帮助、占位、下拉选项的显示文字、输出块标题、列名等）；运行结果和 docs 文档不翻译；下拉选项只换显示文字，发给后端的值不变；工作流程步骤里的表格标题也跟随界面语言（结果内容仍是英文）；Session report 的页面文字和 <html lang> 也跟随。词典在 web/src/i18n/locales/*.json（每种约 1100 条），选了哪种才加载哪种；同一个英文词有多种意思的（Column、Species、System、gives）按上下文分别翻译。版式：德语、法语的长词可换行，日文按词组断行，中文和日文各用自己的系统字体；小屏幕上主题切换单独一行，语言和反馈在下一行；手机侧栏抽屉的底栏固定在底部。侧栏底部新增 Docs 占位行（还没接通，悬停显示 coming soon）。网页端（mzdesk.com）不再显示 Internet search 开关：服务单元设 MZDESK_HOSTED=1，/api/spec 多返回 hosted，网页端联网查询直接运行；本地版不变。',false,{w:'web/src/i18n/ · web/scripts/extract-i18n.mjs · mzdesk/spec_i18n.py · web/src/components/ · web/src/pages/ · web/src/report/ReportButton.tsx · web/src/report/build.ts · web/src/App.tsx · web/src/api.ts · web/src/types.ts · web/src/lock.ts · web/src/network.ts · web/src/theme.css · mzdesk/api/app.py · deploy/mzdesk.service · tests/test_i18n.py · tests/test_api.py · web/tests/i18n.test.mjs · web/tests/network.test.mjs'}],
+   docs:['doc','版本号 0.5.3，本页加 v0.5.3；deploy/README.md 写明 MZDESK_HOSTED=1。',false,{w:'mzdesk/__init__.py · admin/version_change.html · deploy/README.md'}]
+  }},
  {id:'v0.5.2', date:'2026-11-02', git:'',
   title:'MS/MS Annotation：Advanced 里可选"Run FRIGID"；本地版默认跑，服务器默认不跑',
   state:[['选项','Advanced 里的 Run FRIGID：库和 MS-FINDER 没解决时才跑 FRIGID（只正离子）'], ['默认','本地版勾选；mzdesk.com 不勾（服务器上一次约 2 分钟、占 3 GB 内存）。服务单元里 MZDESK_ANNOTATION_FRIGID=off 决定'], ['不勾时','第 5 步显示"FRIGID is off (Advanced)."，其余步骤照旧'], ['版本','0.5.2']],

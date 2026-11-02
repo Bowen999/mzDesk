@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type React from "react";
+import { specContext, useT } from "../i18n";
 import { useReportMode } from "../report/mode";
 import type { Block, BlockData, CardValue, Cell, Help, Row } from "../types";
 import "../outputs-v2.css";
@@ -22,6 +23,7 @@ type Status = "pending" | "none" | "off";
 /** Block title row: title, optional count pill, "?" (help from spec + runtime + `extra`), optional "not connected yet" tag.
  *  A block with help but no title still gets a bare "?" row. */
 function Title({ block, data, status, extra }: { block: Block; data?: BlockData; status?: Status; extra?: string[] }) {
+  const t = useT();
   const lines = helpLines(block.help, data?.help, extra);
   if (!block.title && !lines.length) return null;
   const count = data?.count;
@@ -29,8 +31,8 @@ function Title({ block, data, status, extra }: { block: Block; data?: BlockData;
     <h4 className="out-title">
       {block.title}
       {count !== undefined && count !== null && <span className="count-pill">{count}</span>}
-      <HelpButton lines={lines} label={block.title ? `Help: ${block.title}` : "Help"} />
-      {status === "off" && <span className="tag">not connected yet</span>}
+      <HelpButton lines={lines} label={block.title ? t("Help: {name}", { name: block.title }) : t("Help")} />
+      {status === "off" && <span className="tag">{t("not connected yet")}</span>}
     </h4>);
 }
 
@@ -40,13 +42,15 @@ function cardParts(v: CardValue | undefined): [string, string | undefined, strin
 }
 
 function CopyButton({ text }: { text: string }) {
+  const t = useT();
   const [done, setDone] = useState(false);
-  return <button type="button" className="copy" onClick={() => navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1200); })}>{done ? "Copied" : "Copy"}</button>;
+  return <button type="button" className="copy" onClick={() => navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 1200); })}>{done ? t("Copied") : t("Copy")}</button>;
 }
 
 /** 同一内容的多种格式：一排小标签 + 一个代码框；记住上次选的标签。
  *  Several compounds (Structure & formats) add a compound tab row; the format tab stays selected when switching. */
 function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const t = useT();
   const report = useReportMode();
   const [tab, setTab] = useState("");
   const [setIndex, setSetIndex] = useState(0);
@@ -70,9 +74,9 @@ function FormatsBlock({ block, data, empty }: { block: Block; data?: BlockData; 
     </div>);
   return (
     <div className="out">
-      <h4 className="out-title">{title}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${title}`} />{text !== undefined && <CopyButton text={text} />}</h4>
+      <h4 className="out-title">{title}<HelpButton lines={helpLines(block.help, data?.help)} label={t("Help: {name}", { name: title ?? "" })} />{text !== undefined && <CopyButton text={text} />}</h4>
       {sets.length > 1 && (
-        <div className="tabs compound-tabs" role="tablist" aria-label="Compound">
+        <div className="tabs compound-tabs" role="tablist" aria-label={t("Compound")}>
           {sets.map((s, i) => <button key={`${s.label}-${i}`} type="button" role="tab" aria-selected={i === Math.min(setIndex, sets.length - 1)}
             className={"tab" + (i === Math.min(setIndex, sets.length - 1) ? " on" : "")} onClick={() => setSetIndex(i)}>
             <MiddleEllipsis text={s.label} maxWidth={216} /></button>)}
@@ -90,18 +94,20 @@ const FOLD_SHOW = 8;
 
 /** A long table without its own pages: the first rows, then "Show all N rows". Short tables are never folded. */
 function FoldedTable({ rows, ...rest }: { columns: string[]; rows: Row[]; rowHelp?: boolean; columnHelp?: Record<string, Help>; empty: string; compact?: boolean }) {
+  const t = useT();
   const [all, setAll] = useState(false);
   useEffect(() => setAll(false), [rows]);
   return (
     <>
       <RowsTable {...rest} rows={all ? rows : rows.slice(0, FOLD_SHOW)} />
-      <button type="button" className="fold-more" aria-expanded={all} onClick={() => setAll(v => !v)}>{all ? "Show fewer rows" : `Show all ${rows.length} rows`}</button>
+      <button type="button" className="fold-more" aria-expanded={all} onClick={() => setAll(v => !v)}>{all ? t("Show fewer rows") : t("Show all {n} rows", { n: rows.length })}</button>
     </>
   );
 }
 
 /** Pagination and search operate only on the rows returned for the preview, never on the full download. */
 function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; empty: string }) {
+  const t = useT();
   const report = useReportMode();
   const rows = data?.rows ?? [];
   const columns = data?.columns ?? block.columns ?? [];
@@ -116,7 +122,7 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   if (report) {         // no pages, no filter: every row (RowsTable caps a very long table and says so)
     const count = typeof data?.count === "number" ? data.count : rows.length;
     return <div className="result-table">
-      {count > rows.length && <p className="result-table-note">Preview: first {rows.length} of {count.toLocaleString("en-US")} results.</p>}
+      {count > rows.length && <p className="result-table-note">{t("Preview: first {shown} of {total} results.", { shown: rows.length, total: count.toLocaleString("en-US") })}</p>}
       <RowsTable columns={columns} rows={rows} rowHelp={block.row_help} columnHelp={block.column_help} empty={empty} compact={block.compact} />
     </div>;
   }
@@ -134,34 +140,36 @@ function ResultTable({ block, data, empty }: { block: Block; data?: BlockData; e
   const total = typeof data?.count === "number" ? data.count : rows.length;
   const limited = total > rows.length;
   const controls = rows.length > size;
+  const range = { from: start + 1, to: Math.min(start + size, filtered.length), total: filtered.length };
   return <div className="result-table">
     {controls && <div className="result-table-tools">
-      <label className="result-table-filter"><span>Filter preview</span>
-        <input type="search" value={filter} placeholder="Search these rows" aria-label={`Filter ${block.title ?? "table"} preview`}
+      <label className="result-table-filter"><span>{t("Filter preview")}</span>
+        <input type="search" value={filter} placeholder={t("Search these rows")} aria-label={block.title ? t("Filter {name} preview", { name: block.title }) : t("Filter table preview")}
           onChange={e => { setFilter(e.target.value); setPage(0); }} />
       </label>
       <span className="result-table-count" aria-live="polite">
-        {filtered.length ? `${start + 1}–${Math.min(start + size, filtered.length)} of ${filtered.length}${needle ? " matching" : ""} preview rows`
-          : needle ? "No matching preview rows" : "No preview rows"}
+        {filtered.length ? (needle ? t("{from}–{to} of {total} matching preview rows", range) : t("{from}–{to} of {total} preview rows", range))
+          : needle ? t("No matching preview rows") : t("No preview rows")}
       </span>
     </div>}
-    {limited && <p className="result-table-note">Preview: first {rows.length} of {total.toLocaleString()} results. Filtering only searches this preview.</p>}
+    {limited && <p className="result-table-note">{t("Preview: first {shown} of {total} results. Filtering only searches this preview.", { shown: rows.length, total: total.toLocaleString() })}</p>}
     <RowsTable key={`${current}:${needle}`} columns={columns} rows={filtered.slice(start, start + size)} rowHelp={block.row_help} columnHelp={block.column_help}
-      empty={needle ? "No preview rows match this filter." : empty} compact={block.compact} />
-    {controls && <nav className="result-table-pages" aria-label={`${block.title ?? "Table"} pages`}>
-      <span aria-live="polite">Page {current + 1} of {pages}</span>
-      <div><button type="button" className="page-button" disabled={current === 0} onClick={() => setPage(current - 1)}>Previous</button>
-        <button type="button" className="page-button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>Next</button></div>
+      empty={needle ? t("No preview rows match this filter.") : empty} compact={block.compact} />
+    {controls && <nav className="result-table-pages" aria-label={block.title ? t("{name} pages", { name: block.title }) : t("Table pages")}>
+      <span aria-live="polite">{t("Page {current} of {pages}", { current: current + 1, pages })}</span>
+      <div><button type="button" className="page-button" disabled={current === 0} onClick={() => setPage(current - 1)}>{t("Previous")}</button>
+        <button type="button" className="page-button" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>{t("Next")}</button></div>
     </nav>}
   </div>;
 }
 
 export function OutputBlock({ block, data, status }: { block: Block; data?: BlockData; status: Status }) {
+  const t = useT();
   const report = useReportMode();
-  const empty = status === "none" ? "no result" : status === "off" ? "not connected yet" : "empty";
+  const empty = status === "none" ? t("no result") : status === "off" ? t("not connected yet") : t("empty");
   const shown = data ? undefined : status;
   switch (block.type) {
-    case "heading": return <h4 className="out-title">{block.title}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${block.title}`} /></h4>;
+    case "heading": return <h4 className="out-title">{block.title}<HelpButton lines={helpLines(block.help, data?.help)} label={t("Help: {name}", { name: block.title ?? "" })} /></h4>;
     case "table": {
       const list = !!data?.rows && !block.page_size && isChipList(data.columns ?? block.columns ?? [], data.rows);
       return (
@@ -184,9 +192,10 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         <div className={"cards" + (block.style === "metric" ? " metric" : "")}>{block.items!.map(it => {
           const [value, note, vhelp] = cardParts(data?.values?.[it.label]);
           const lines = helpLines(it.help, vhelp);
+          const label = t(it.label, specContext(block.id, it.label));          // a cards label stays English in the spec (it is the key into the run's values): the dictionary translates it here
           return (
             <div className={"card" + (data ? "" : " blank")} key={it.label}>
-              <div className="card-label">{it.label}<HelpButton lines={lines} label={`Help: ${it.label}`} /></div>
+              <div className="card-label">{label}<HelpButton lines={lines} label={t("Help: {name}", { name: label })} /></div>
               <div className="card-value">{value}</div>
               {(note ?? it.unit) && <div className="card-unit">{note ?? it.unit}</div>}
             </div>);
@@ -225,7 +234,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
     case "figure":
       if (data) return (
         <div className="out">
-          <div className="fig-label">{block.label}<HelpButton lines={helpLines(block.help, data.help)} label={`Help: ${block.label}`} /></div>
+          <div className="fig-label">{block.label}<HelpButton lines={helpLines(block.help, data.help)} label={t("Help: {name}", { name: block.label ?? "" })} /></div>
           <FigureView data={data} />
         </div>);
       return <div className="out placeholder-box">[{empty}] {block.label}</div>;
@@ -236,7 +245,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
       </div>);
     case "code": return (
       <div className="out">
-        <h4 className="out-title">{block.title ?? block.label}<HelpButton lines={helpLines(block.help, data?.help)} label={`Help: ${block.title ?? block.label}`} />{data?.text && <CopyButton text={data.text} />}</h4>
+        <h4 className="out-title">{block.title ?? block.label}<HelpButton lines={helpLines(block.help, data?.help)} label={t("Help: {name}", { name: block.title ?? block.label ?? "" })} />{data?.text && <CopyButton text={data.text} />}</h4>
         <pre className="code">{data?.text ?? `— ${block.label} (${empty}) —`}</pre>
       </div>);
     case "formats": return <FormatsBlock block={block} data={data} empty={empty} />;
@@ -247,7 +256,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
           const url = URL.createObjectURL(new Blob([file.content], { type: file.mime ?? "text/plain;charset=utf-8" }));
           const a = document.createElement("a"); a.href = url; a.download = file.name; a.click();
           setTimeout(() => URL.revokeObjectURL(url), 1000);
-        }}>Download {file.name}</button>)}</div>
+        }}>{t("Download {name}", { name: file.name })}</button>)}</div>
       </div>);
     case "notes": {
       const items = data?.items ?? [];
@@ -262,7 +271,7 @@ export function OutputBlock({ block, data, status }: { block: Block; data?: Bloc
         return (
           <div className="out">
             <details className="out-details">
-              <summary>{block.title || "Details"}</summary>
+              <summary>{block.title || t("Details")}</summary>
               <ul className="notes">{[...lines, ...items].map((t, i) => <li key={i}><RichText text={emphasize(t)} /></li>)}</ul>
             </details>
           </div>);

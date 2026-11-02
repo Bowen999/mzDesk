@@ -9,9 +9,19 @@ import { createServer } from "vite";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const cache = mkdtempSync(join(tmpdir(), "mzdesk-network-test-"));
 const server = await createServer({ configFile: false, root, cacheDir: cache, server: { middlewareMode: true, hmr: false }, appType: "custom" });
-const { candidateNames, networkUses } = await server.ssrLoadModule("/src/network.ts");
+const { candidateNames, networkUses, isInternetOn, setInternet, setHostedSite } = await server.ssrLoadModule("/src/network.ts");
 
 after(async () => { await server.close(); rmSync(cache, { recursive: true, force: true }); });
+
+test("the public website has no switch: online lookups always run there, even after a 'No' saved by the local version", () => {
+  setInternet(false);
+  assert.equal(isInternetOn(), false);
+  setHostedSite(true);
+  assert.equal(isInternetOn(), true);
+  setHostedSite(false);
+  assert.equal(isInternetOn(), false, "the local version keeps the person's choice");
+  setInternet(true);
+});
 
 test("a candidate list asks for the internet only for lines that are names", () => {
   assert.deepEqual(candidateNames("CCO\nc1ccccc1\nC(C(=O)O)N\n[NH3+]CC(=O)[O-]\nCl[Na]\nInChI=1S/CH4/h1H4"), []);

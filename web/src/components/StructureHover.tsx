@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { BASE } from "../api";
+import { useT } from "../i18n";
 import type { AnnotationResult } from "../types";
 import { ThemedSvg } from "./Figure";
 import { useHelpPopover } from "./Help";
@@ -27,11 +28,12 @@ export function fetchDepiction(smiles: string): Promise<string | null> {
 
 /** The popover content: reserved space first, so the popover is placed once and does not jump when the drawing arrives. */
 function StructurePreview({ smiles }: { smiles: string }) {
+  const t = useT();
   const [svg, setSvg] = useState<string | null | undefined>(undefined);
   useEffect(() => { let on = true; setSvg(undefined); fetchDepiction(smiles).then(s => { if (on) setSvg(s); }); return () => { on = false; }; }, [smiles]);
   return (
     <div className="struct-preview">
-      {svg ? <ThemedSvg svg={svg} className="pop-struct" alt="2D structure" /> : <span className="struct-msg">{svg === undefined ? "Drawing…" : "No structure to draw"}</span>}
+      {svg ? <ThemedSvg svg={svg} className="pop-struct" alt={t("2D structure")} /> : <span className="struct-msg">{svg === undefined ? t("Drawing…") : t("No structure to draw")}</span>}
     </div>);
 }
 

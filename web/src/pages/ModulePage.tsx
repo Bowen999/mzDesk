@@ -6,6 +6,7 @@ import { moduleIcon } from "../components/Icon";
 import { useNetworkGuard } from "../components/NetworkDialog";
 import { OutputList, coveredCards } from "../components/Outputs";
 import { PageFoot, PageHead } from "../components/PageHead";
+import { useT } from "../i18n";
 import { RunBar } from "../components/RunBar";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
@@ -55,10 +56,11 @@ export function ModuleHead({ mod }: { mod: Module; spec?: Spec }) {
  *  The Session report draws it with ok = true. */
 export function ModuleResults({ mod, result, ok, busy, stale }:
   { mod: Module; result: RunResult | null; ok: boolean; busy: boolean; seconds?: number | null; stale: boolean }) {
+  const t = useT();
   const gnps = mod.subgroup === "gnps";
   return (
     <>
-      {ok && stale && <div className="alert warn">Inputs changed. Run again to update the results.</div>}
+      {ok && stale && <div className="alert warn">{t("Inputs changed. Run again to update the results.")}</div>}
       {ok && result?.verdict && (
         <div className="verdict" aria-live="polite">
           <p className="verdict-text"><RichText text={result.verdict} /></p>
@@ -74,6 +76,7 @@ export function ModuleResults({ mod, result, ok, busy, stale }:
 }
 
 export function ModulePage({ id, spec, active }: { id: string; spec: Spec; active: boolean }) {
+  const t = useT();
   const mod = spec.modules.find(m => m.id === id);
   const [values, setValues] = useState<Record<string, any>>(() => initialValues(mod ? mod.inputs : []));
   const [run, setRun] = useState<Run>(IDLE);
@@ -93,7 +96,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   useEffect(() => { ticket.current++; dropRun("module", id); if (mod) { setValues(initialValues(mod.inputs)); setRun(IDLE); setEditing(true); setErrors({}); setFormError(""); } }, [id]);
   useEffect(() => { if (!active) guard.cancel(); }, [active, guard.cancel]);
   useEffect(() => { if (run.error) errorRef.current?.focus(); }, [run.error]);
-  if (!mod) return <p className="page">Unknown module.</p>;
+  if (!mod) return <p className="page">{t("Unknown module.")}</p>;
 
   const subgroup = spec.subgroups.find(s => s.id === mod.subgroup)?.title;
   const gnps = mod.subgroup === "gnps";
@@ -104,7 +107,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
   const summary = summarizeInputs(mod.inputs, values);
   const shown = visibleFields(mod.inputs, values);
   const groups = groupFields(shown);
-  const runLabel = run.busy ? <><span className="spinner" aria-hidden="true" />Running{elapsed !== null && elapsed >= 1 ? ` · ${Math.floor(elapsed)} s` : "…"}</> : "Run";
+  const runLabel = run.busy ? <><span className="spinner" aria-hidden="true" />{elapsed !== null && elapsed >= 1 ? t("Running · {n} s", { n: Math.floor(elapsed) }) : t("Running…")}</> : t("Run");
 
   const update = (fid: string, v: any) => {
     setValues(prev => ({ ...prev, [fid]: v }));
@@ -133,7 +136,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     dropRun("module", mod.id);
     setValues(initialValues(mod.inputs));
     setRun(IDLE); setEditing(true); setErrors({}); setFormError("");
-    setNetNote(run.busy ? "Cleared. The previous run may still finish on the server." : "");
+    setNetNote(run.busy ? t("Cleared. The previous run may still finish on the server.") : "");
     setFormVersion(n => n + 1);
   };
   const go = async () => {
@@ -141,9 +144,10 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     const missing = missingRequired(mod.inputs, values);
     if (missing.length) {
       const next: Record<string, string> = {};
-      for (const f of missing) next[f.id!] = f.type === "structure" ? "Enter or draw a structure." : "Required.";
+      for (const f of missing) next[f.id!] = f.type === "structure" ? t("Enter or draw a structure.") : t("Required.");
       setErrors(next);
-      setFormError(`Complete ${missing.length === 1 ? "this required input" : "these required inputs"}: ${missing.map(f => f.label).join(", ")}.`);
+      const labels = missing.map(f => f.label).join(", ");
+      setFormError(missing.length === 1 ? t("Complete this required input: {labels}.", { labels }) : t("Complete these required inputs: {labels}.", { labels }));
       focusField(missing[0].id!);
       return;
     }
@@ -155,7 +159,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     const allowed = await guard.confirm(networkUses(shown, values, mod.network));
     if (ticket.current === mine) confirming.current = false;
     if (!allowed) {
-      if (ticket.current === mine) setNetNote("Cancelled: internet search is off.");
+      if (ticket.current === mine) setNetNote(t("Cancelled: internet search is off."));
       return;
     }
     if (ticket.current !== mine) return;
@@ -199,9 +203,9 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
           <div className="input-summary-actions">
             {netNote && <span className="msg">{netNote}</span>}
             {run.seconds !== null && <span className="msg">{run.seconds.toFixed(1)} s</span>}
-            <button type="button" className="btn secondary" onClick={() => setEditing(true)}>Edit inputs</button>
-            <button type="button" className="btn ghost" onClick={go} disabled={run.busy}>Run again</button>
-            <button type="button" className="btn ghost" onClick={clear}>Clear</button>
+            <button type="button" className="btn secondary" onClick={() => setEditing(true)}>{t("Edit inputs")}</button>
+            <button type="button" className="btn ghost" onClick={go} disabled={run.busy}>{t("Run again")}</button>
+            <button type="button" className="btn ghost" onClick={clear}>{t("Clear")}</button>
           </div>
         </div>
       ) : (
@@ -216,20 +220,21 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
               {firstCheck > 0 && <div className="fields">{g.fields.slice(0, firstCheck).map(field)}</div>}
               <div className="check-row">{g.fields.slice(firstCheck).map(field)}</div>
             </> : <div className="fields">{g.fields.map(field)}</div>;
+            // a section title stays English in the spec (localizeSpec "lookup"): the dictionary translates it where it is drawn, t(g.title)
             if (gnps && g.title === "Optional verification") return (
               <details className="gnps-advanced" key={g.title}>
-                <summary>{g.title}</summary>
-                <fieldset className="form-section"><legend className="sr-only">{g.title}</legend>{body}</fieldset>
+                <summary>{t(g.title)}</summary>
+                <fieldset className="form-section"><legend className="sr-only">{t(g.title)}</legend>{body}</fieldset>
               </details>);
             return <div className="form-section" key={g.title || gi}>{body}</div>;
           })}
           <div className="actions">
             <button className="btn" onClick={go} disabled={run.busy} aria-busy={run.busy}>{runLabel}</button>
-            <button className="btn ghost" type="button" onClick={clear}>Clear</button>
-            {mod.example && <button className="btn secondary" type="button" disabled={run.busy} onClick={loadExample}>Load example</button>}
-            {ok && !stale && <button className="btn ghost" type="button" onClick={() => setEditing(false)}>Hide inputs</button>}
+            <button className="btn ghost" type="button" onClick={clear}>{t("Clear")}</button>
+            {mod.example && <button className="btn secondary" type="button" disabled={run.busy} onClick={loadExample}>{t("Load example")}</button>}
+            {ok && !stale && <button className="btn ghost" type="button" onClick={() => setEditing(false)}>{t("Hide inputs")}</button>}
             <span className="msg" aria-live="polite">
-              {netNote || (run.result?.status === "placeholder" && "Not connected yet: nothing computes on this page.")}
+              {netNote || (run.result?.status === "placeholder" && t("Not connected yet: nothing computes on this page."))}
             </span>
           </div>
         </div>
@@ -238,7 +243,7 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
       <RunBar busy={run.busy} />
       {run.error && (
         <div className="alert error" role="alert" tabIndex={-1} ref={errorRef}>{run.error}
-          {run.log && <details><summary>Tool log</summary><pre className="code">{run.log}</pre></details>}
+          {run.log && <details><summary>{t("Tool log")}</summary><pre className="code">{run.log}</pre></details>}
         </div>)}
 
       <ModuleResults mod={mod} result={run.result} ok={ok} busy={run.busy} stale={stale} />

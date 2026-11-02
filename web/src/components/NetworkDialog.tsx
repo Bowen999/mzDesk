@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useT } from "../i18n";
 import { isInternetOn } from "../network";
 
 /**
@@ -21,6 +22,7 @@ function GlobeSlash() {
 }
 
 function NetworkDialog({ uses, onCancel, onContinue }: { uses: string[]; onCancel: () => void; onContinue: () => void }) {
+  const t = useT();
   const card = useRef<HTMLDivElement>(null);
   const continueButton = useRef<HTMLButtonElement>(null);
 
@@ -52,13 +54,13 @@ function NetworkDialog({ uses, onCancel, onContinue }: { uses: string[]; onCance
     <div className="dialog-overlay" onMouseDown={e => { if (e.target === e.currentTarget) onCancel(); }}>
       <div className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="net-dialog-title" aria-describedby="net-dialog-desc" ref={card}>
         <div className="dialog-badge"><GlobeSlash /></div>
-        <h2 id="net-dialog-title">Internet search is off</h2>
-        <p id="net-dialog-desc">This run needs the internet:</p>
+        <h2 id="net-dialog-title">{t("Internet search is off")}</h2>
+        <p id="net-dialog-desc">{t("This run needs the internet:")}</p>
         <ul className="dialog-list">{uses.map((u, i) => <li key={i}>{u}</li>)}</ul>
-        <p className="dialog-note">This run only. The switch stays off.</p>
+        <p className="dialog-note">{t("This run only. The switch stays off.")}</p>
         <div className="dialog-actions">
-          <button type="button" className="btn secondary" onClick={onCancel}>Cancel</button>
-          <button type="button" className="btn" ref={continueButton} onClick={onContinue}>Continue</button>
+          <button type="button" className="btn secondary" onClick={onCancel}>{t("Cancel")}</button>
+          <button type="button" className="btn" ref={continueButton} onClick={onContinue}>{t("Continue")}</button>
         </div>
       </div>
     </div>,

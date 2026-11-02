@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { AnnotationCandidate, AnnotationResult, CandidateCcs } from "../types";
 
 /** Pure helpers of the ESI MS/MS Annotation result view (answer card, candidate table): everything is derived from the result's own fields,
@@ -19,14 +20,43 @@ export type AnswerSummary = {
 
 const candidateLabel = (c: AnnotationCandidate) => c.name || c.smiles || c.id;
 const scoreOf = (c: AnnotationCandidate) => (typeof c.final_score === "number" && Number.isFinite(c.final_score) ? c.final_score : null);
-const listOf = (items: string[], shown = 2) => (items.length <= shown ? items.join(" and ") : `${items.slice(0, shown).join(", ")} and ${items.length - shown} more`);
+/** "A", "A and B", "A, B and 3 more". */
+const listOf = (items: string[]) => (items.length <= 1 ? items.join("") : items.length === 2 ? t("{a} and {b}", { a: items[0], b: items[1] })
+  : t("{a}, {b} and {n} more", { a: items[0], b: items[1], n: items.length - 2 }));
+
+/** The words the backend uses for the isomer check (answer.py: verdict single | indistinguishable | insufficient | not run; role top | separated | not separated).
+ *  Shown through the dictionary; any other word is shown as received. */
+export function isomerWord(word: string): string {
+  switch (word) {
+    case "single": return t("single");
+    case "indistinguishable": return t("indistinguishable");
+    case "insufficient": return t("insufficient");
+    case "not run": return t("not run");
+    case "top": return t("top");
+    case "separated": return t("separated");
+    case "not separated": return t("not separated");
+    default: return word;
+  }
+}
+
+/** The CCS verdicts of the backend (ccs_step.py); any other word is shown as received. */
+export function ccsVerdict(word: string): string {
+  switch (word) {
+    case "Consistent": return t("Consistent");
+    case "Inconsistent": return t("Inconsistent");
+    case "No reference": return t("No reference");
+    case "No structure": return t("No structure");
+    case "Not checked": return t("Not checked");
+    default: return word;
+  }
+}
 
 /** Where the top-ranked structure comes from, in a few words. */
 function sourceText(level: string, top: AnnotationCandidate | undefined, layer: string): string {
-  if (level === "2a") return "Library match, gate passed";
-  if (layer === "library") return top?.evidence?.library?.gate_passed ? "Library hit without a structure" : "Library hit, gate not passed";
-  if (layer === "msfinder") return "MS-FINDER candidate";
-  if (layer === "frigid") return "FRIGID hypothesis";
+  if (level === "2a") return t("Library match, gate passed");
+  if (layer === "library") return top?.evidence?.library?.gate_passed ? t("Library hit without a structure") : t("Library hit, gate not passed");
+  if (layer === "msfinder") return t("MS-FINDER candidate");
+  if (layer === "frigid") return t("FRIGID hypothesis");
   return "";
 }
 
@@ -49,37 +79,39 @@ export function answerSummary(result: AnnotationResult): AnswerSummary {
     headline = candidateLabel(top); score = scoreOf(top); source = sourceText(a.level, top, a.layer);
   } else if (a.type === "formula_only" && rows.length) {
     const first = rows[0];
-    headline = [first.formula || first.name, first.adduct].filter(Boolean).join(" ") + (rows.length > 1 ? ` +${rows.length - 1} more` : "");
-    score = scoreOf(first); source = "Formula only, no structure proposed";
+    headline = [first.formula || first.name, first.adduct].filter(Boolean).join(" ") + (rows.length > 1 ? " " + t("+{n} more", { n: rows.length - 1 }) : "");
+    score = scoreOf(first); source = t("Formula only, no structure proposed");
   } else if (a.type === "mass_only" && Number.isFinite(result.context?.precursor_mz)) {
-    headline = `m/z ${result.context.precursor_mz.toFixed(4)}`; source = "Exact mass only";
+    headline = `m/z ${result.context.precursor_mz.toFixed(4)}`; source = t("Exact mass only");
   }
 
   // the isomer part: what the spectrum can and cannot separate
   const others = (a.ids ?? []).filter(id => id !== a.top_id).map(label);
-  const sentence = challengers.map(ch => `${ch.name || label(ch.id)} explains peaks the top-ranked structure cannot (m/z ${(ch.peaks ?? []).map(p => p.mz.toFixed(4)).join(", ")})`);
-  const challenger = challengers.length ? `${listOf(challengers.map(ch => ch.name || label(ch.id)))} ${challengers.length === 1 ? "explains" : "explain"} peaks it cannot` : "";
+  const sentence = challengers.map(ch => t("{name} explains peaks the top-ranked structure cannot (m/z {peaks})",
+    { name: ch.name || label(ch.id), peaks: (ch.peaks ?? []).map(p => p.mz.toFixed(4)).join(", ") }));
+  const names = listOf(challengers.map(ch => ch.name || label(ch.id)));
+  const challenger = challengers.length === 1 ? t("{names} explains peaks it cannot", { names }) : challengers.length ? t("{names} explain peaks it cannot", { names }) : "";
   const parts: string[] = [];
   let warn = false;
-  if (a.type === "group" && others.length) { parts.push(`Indistinguishable from ${listOf(others)} by this spectrum`); warn = true; }
+  if (a.type === "group" && others.length) { parts.push(t("Indistinguishable from {others} by this spectrum", { others: listOf(others) })); warn = true; }
   else {
     if (source) parts.push(source);
     if (a.type === "single" || a.type === "group") {
-      if (conflicting) { parts.push("Conflicting fragment evidence"); warn = true; }
-      else if (verdict === "single") parts.push("Told apart from the other isomers considered");
-      else if (verdict === "not run") parts.push("Isomer check not run");
-      else if (verdict === "indistinguishable") { parts.push("Isomers not separated"); warn = true; }
-      else if (verdict) parts.push("Isomer check inconclusive");
+      if (conflicting) { parts.push(t("Conflicting fragment evidence")); warn = true; }
+      else if (verdict === "single") parts.push(t("Told apart from the other isomers considered"));
+      else if (verdict === "not run") parts.push(t("Isomer check not run"));
+      else if (verdict === "indistinguishable") { parts.push(t("Isomers not separated")); warn = true; }
+      else if (verdict) parts.push(t("Isomer check inconclusive"));
     }
   }
   if (challenger) { parts.push(challenger); warn = true; }
 
   const facts: [string, string][] = [];
-  if (a.layer_label) facts.push(["Layer", a.layer_label]);
-  if (a.level_label) facts.push(["Level", a.level_label]);
-  if (score !== null) facts.push(["Final score", score.toFixed(3)]);
-  if (verdict && verdict !== "not run") facts.push(["Isomer check", conflicting ? "conflicting evidence" : verdict]);
-  if (result.context?.gate_passed) facts.push(["Library gate", "passed"]);
+  if (a.layer_label) facts.push([t("Layer"), a.layer_label]);
+  if (a.level_label) facts.push([t("Level"), a.level_label]);
+  if (score !== null) facts.push([t("Final score"), score.toFixed(3)]);
+  if (verdict && verdict !== "not run") facts.push([t("Isomer check"), conflicting ? t("conflicting evidence") : isomerWord(verdict)]);
+  if (result.context?.gate_passed) facts.push([t("Library gate"), t("passed")]);
   if (top?.ccs) facts.push(["CCS", ccsText(top.ccs)]);
   return { headline, level, score, secondary: parts.join(" · "), warn, facts, challengers: sentence };
 }
@@ -91,15 +123,15 @@ const signedPct = (v: number) => `${v < 0 ? "−" : "+"}${Math.abs(v).toFixed(2)
 /** The numbers behind a CCS verdict: "+0.64 % (±1.0 %) · measured 139.6 Å² · DTCCS N2 · MetCCS"; the engine's note when there is no verdict; "" when there is neither. */
 export function ccsNumbers(x: CandidateCcs): string {
   if (typeof x.delta_pct === "number" && typeof x.reference === "number" && typeof x.tolerance_pct === "number") {
-    return [`${signedPct(x.delta_pct)} (±${x.tolerance_pct.toFixed(1)} %)`, `${x.source ?? "reference"} ${x.reference.toFixed(1)} Å²`, x.ref_label, x.dataset,
-      x.in_domain === false ? "outside its training domain" : ""].filter(Boolean).join(" · ");
+    return [`${signedPct(x.delta_pct)} (±${x.tolerance_pct.toFixed(1)} %)`, `${x.source ?? t("reference")} ${x.reference.toFixed(1)} Å²`, x.ref_label, x.dataset,
+      x.in_domain === false ? t("outside its training domain") : ""].filter(Boolean).join(" · ");
   }
   return x.note ?? "";
 }
 
 /** One line for the answer's Details: "Inconsistent · +9.80 % (±1.0 %) · measured 140.5 Å² · DTCCS N2 · tag · moved from rank 1". */
 export function ccsText(x: CandidateCcs): string {
-  return [x.verdict, ccsNumbers(x), x.moved_from ? `moved from rank ${x.moved_from}` : ""].filter(Boolean).join(" · ");
+  return [ccsVerdict(x.verdict), ccsNumbers(x), x.moved_from ? t("moved from rank {n}", { n: x.moved_from }) : ""].filter(Boolean).join(" · ");
 }
 
 // ---------------------------------------------------------------- candidate table
@@ -112,11 +144,11 @@ export const detectText = (c: AnnotationCandidate) => {
 export function isomerText(c: AnnotationCandidate): string {
   const iso = c.isomer;
   if (!iso || (!iso.role && !iso.challenger)) return "—";
-  return (iso.role ?? "not compared") + (iso.challenger ? " · challenger" : "");
+  return (iso.role != null ? isomerWord(iso.role) : t("not compared")) + (iso.challenger ? " · " + t("challenger") : "");
 }
 
 /** The columns of a ranked row that are folded into its detail line: [label, value]. */
 export function candidateDetails(c: AnnotationCandidate): [string, string][] {
-  return [["SMILES", c.smiles || "—"], ["Formula", c.formula || "—"], ["Adduct", c.adduct || "—"], ["Layer", c.layer_label || "—"],
-    ["Detectability (omics / ionizable / adduct)", detectText(c)], ["Isomer role", isomerText(c)]];
+  return [["SMILES", c.smiles || "—"], [t("Formula"), c.formula || "—"], [t("Adduct"), c.adduct || "—"], [t("Layer"), c.layer_label || "—"],
+    [t("Detectability (omics / ionizable / adduct)"), detectText(c)], [t("Isomer role"), isomerText(c)]];
 }

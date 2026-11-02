@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getDocs } from "../api";
 import { Markdown } from "../components/Markdown";
+import { useT } from "../i18n";
 import type { Spec } from "../types";
 
 /** /docs/<page id>: the long notes of a module or workflow (mzdesk/docs/<id>.md). The pages keep one short line; the rest lives here. */
 export function DocsPage({ spec }: { spec: Spec }) {
+  const t = useT();
   const { id = "" } = useParams();
   const module = spec.modules.find(m => m.id === id), pipeline = spec.pipelines.find(p => p.id === id);
   const page = module ?? pipeline;
@@ -17,13 +19,13 @@ export function DocsPage({ spec }: { spec: Spec }) {
     getDocs(id).then(d => { if (live) setText(d.markdown); }).catch(() => { if (live) setFailed(true); });
     return () => { live = false; };
   }, [id]);
-  if (!page) return <p className="page">Unknown page.</p>;
+  if (!page) return <p className="page">{t("Unknown page.")}</p>;
   const back = module ? `/modules/${id}` : `/pipelines/${id}`;
   return (
     <div className="page doc-page">
       <Link className="doc-back" to={back}>← {page.title}</Link>
       {text === null && !failed && <div className="doc-loading" aria-hidden="true"><i /><i /><i /></div>}
-      {failed && <p className="msg">No notes for this page yet.</p>}
+      {failed && <p className="msg">{t("No notes for this page yet.")}</p>}
       {text !== null && <Markdown text={text} />}
     </div>
   );

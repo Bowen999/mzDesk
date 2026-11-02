@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { reportCrash } from "../api";
+import { t } from "../i18n";
 
 type Props = { children: ReactNode; label?: string };
 type State = { error: Error | null; ref: string };
@@ -22,13 +23,15 @@ export class CrashBoundary extends Component<Props, State> {
   render() {
     const { error, ref } = this.state;
     if (!error) return this.props.children;
+    // the reference code is set in <code>: it is a placeholder in the sentence, and the text around it is split off here
+    const [before, after = ""] = t("The error was sent to the maintainer ({ref}). Your other pages are not affected.", { ref: "\u0001" }).split("\u0001");
     return (
       <div className="page crash-page" role="alert">
-        <h1>{this.props.label ? `${this.props.label} stopped` : "Something broke"}</h1>
-        <p className="crash-text">The error was sent to the maintainer{ref ? <> (<code>{ref}</code>)</> : ""}. Your other pages are not affected.</p>
+        <h1>{this.props.label ? t("{label} stopped", { label: this.props.label }) : t("Something broke")}</h1>
+        <p className="crash-text">{ref ? <>{before}<code>{ref}</code>{after}</> : t("The error was sent to the maintainer. Your other pages are not affected.")}</p>
         <div className="actions">
-          <button type="button" className="btn" onClick={() => this.setState({ error: null, ref: "" })}>Try again</button>
-          <button type="button" className="btn secondary" onClick={() => window.location.reload()}>Reload</button>
+          <button type="button" className="btn" onClick={() => this.setState({ error: null, ref: "" })}>{t("Try again")}</button>
+          <button type="button" className="btn secondary" onClick={() => window.location.reload()}>{t("Reload")}</button>
         </div>
       </div>
     );
