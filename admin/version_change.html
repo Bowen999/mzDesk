@@ -264,6 +264,13 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.2', date:'2026-11-02', git:'',
+  title:'MS/MS Annotation：Advanced 里可选"Run FRIGID"；本地版默认跑，服务器默认不跑',
+  state:[['选项','Advanced 里的 Run FRIGID：库和 MS-FINDER 没解决时才跑 FRIGID（只正离子）'], ['默认','本地版勾选；mzdesk.com 不勾（服务器上一次约 2 分钟、占 3 GB 内存）。服务单元里 MZDESK_ANNOTATION_FRIGID=off 决定'], ['不勾时','第 5 步显示"FRIGID is off (Advanced)."，其余步骤照旧'], ['版本','0.5.2']],
+  c:{
+   pipe:['feat','Advanced 新增 Run FRIGID（run_frigid）：勾选时，库闸门没过且 MS-FINDER 结果不够好才跑 FRIGID，和以前一样；不勾则第 5 步跳过。默认值由环境变量 MZDESK_ANNOTATION_FRIGID 决定（off / 0 / no / false 为不跑，没设为跑），页面每次都会把勾选状态发给后端，没发这个字段的 API 调用用服务器默认值。服务器的 systemd 单元设了 off。',true,{w:'mzdesk/spec.py · mzdesk/annotation/pipeline.py · mzdesk/ms2/frigid_engine.py · mzdesk/docs/esi_ms2_annotation.md · deploy/mzdesk.service · tests/test_pipeline.py · tests/conftest.py'}],
+   docs:['doc','版本号 0.5.2，本页加 v0.5.2。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.5.1', date:'2026-11-02', git:'',
   title:'线上版装齐全部引擎：谱库、CCS、MS-FINDER、FRIGID、CFM-ID、深度学习打分、pyopenms；不再有"仅本地版"页面',
   note:'FRIGID 在服务器 CPU 上能跑：Quick 一次约 2 分钟，峰值 3.1 GB 内存（服务器总共 3.9 GB），跑的时候交换区用到 2.1 GB，同机的 MCID 等站仍在 0.2 到 0.5 秒内响应。服务单元给 mzdesk 3.4 GB 上限，并设 OOMScoreAdjust=300，内存不够时内核先杀 mzdesk，不碰别的站。想长期稳，给 droplet 加内存。CFM-ID 靠 Docker：mzdesk 服务获得 docker 组（等同 root 级权限，所以应用从不用用户文本拼 Docker 命令），容器无网络、无 capability、有进程和内存上限。',

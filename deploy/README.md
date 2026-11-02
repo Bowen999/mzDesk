@@ -45,7 +45,8 @@ every step skips what is in place. The Python packages of the main venv (pyopenm
 - **FRIGID** runs on the CPU: a Quick run takes about two minutes and peaks at **3.1 GB resident** (measured), on a 3.9 GB server. The unit therefore allows
   the service 3.4 GB (`MemoryMax`) and sets `OOMScoreAdjust=300`, so if memory ever runs out the kernel stops mzDesk first and not MCID or the other sites.
   During a run the rest of the box is squeezed (swap reached 2.1 GB); the other sites kept answering in 0.2 to 0.5 s. One heavy job (FRIGID or MS-FINDER) runs at
-  a time. More RAM on the droplet is the real fix. nginx lets the De Novo page wait 1300 s (the engine stops a Full run at 20 minutes).
+  a time. MS/MS Annotation's "Run FRIGID" (Advanced) starts unticked on the server (`MZDESK_ANNOTATION_FRIGID=off` in the unit) and ticked in the local version;
+  the De Novo Structure page always runs it when asked. More RAM on the droplet is the real fix. nginx lets the De Novo page wait 1300 s (the engine stops a Full run at 20 minutes).
 - **CFM-ID** runs in Docker. The service may start containers, which is root-equivalent if the app is ever taken over, so the app never builds a Docker command from user
   text: the image and arguments are fixed in `ms2/cfmid_engine.py`, the container gets no network, no capabilities, no privilege gain, a process cap, 1 GB of memory
   and runs as the service's own user. The run's folder is `MZDESK_CFMID_WORKDIR` because the unit's `/tmp` is private and the Docker daemon cannot see it.

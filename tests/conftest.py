@@ -53,5 +53,6 @@ def reports_in_tmp(tmp_path, monkeypatch):
     for name in ("MZDESK_RESEND_API_KEY", "MZDESK_RESEND_URL", "MZDESK_MAIL_FROM", "MZDESK_NTFY_URL", "MZDESK_FEEDBACK_TO", "MZDESK_ADMIN_SALT", "MZDESK_ADMIN_HASH",
                  "MZDESK_SMTP_HOST", "MZDESK_SMTP_PORT", "MZDESK_SMTP_USER", "MZDESK_SMTP_PASSWORD", "MZDESK_SMTP_FROM", "MZDESK_SMTP_SECURITY"):
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.delenv("MZDESK_ANNOTATION_FRIGID", raising=False)          # the local default: MS/MS Annotation may run FRIGID
     admin.reset_throttle()
     yield

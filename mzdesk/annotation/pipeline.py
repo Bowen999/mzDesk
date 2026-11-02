@@ -36,6 +36,7 @@ from dataclasses import dataclass, field
 from mzdesk import adducts
 from mzdesk.annotation import answer as ans
 from mzdesk.annotation import ccs_step, formula_step, frigid_step, library_step, msfinder_step
+from mzdesk.ms2 import frigid_engine
 from mzdesk.annotation.levels import level_name
 from mzdesk.annotation.merge import formula_only_candidates, merge_candidates
 from mzdesk.annotation.rerank import DEFAULT_PH, apply_ccs, rerank
@@ -81,6 +82,7 @@ class Query:
     lib_metrics: tuple = (library_step.PRIMARY_METRIC,)      # the library similarity algorithms: a hit passes the gate when at least one reaches lib_threshold
     lib_threshold: float = library_step.GATE_SIMILARITY
     lib_min_peaks: int = library_step.GATE_MIN_MATCHED          # the fewest matched peaks a library hit may have
+    run_frigid: bool = True                                     # step 5 may run FRIGID (Advanced); the default is the server's (frigid_engine.workflow_default)
     ccs: ccs_step.CcsQuery | None = None
     warnings: list = field(default_factory=list)
 
@@ -144,6 +146,7 @@ def parse_inputs(inputs):
         local_isomers=flag(inputs, "local_isomers", "Also compare with database isomers"), lib_metrics=lib_metrics,
         lib_threshold=number(inputs, "lib_threshold", "Similarity threshold", default=library_step.GATE_SIMILARITY, minimum=0, maximum=1),
         lib_min_peaks=int(number(inputs, "lib_min_peaks", "Minimum matched peaks", default=library_step.GATE_MIN_MATCHED, minimum=1, maximum=1000)),
+        run_frigid=flag(inputs, "run_frigid", "Run FRIGID") if "run_frigid" in inputs else frigid_engine.workflow_default(),
         ccs=ccs, warnings=warnings)
 
 
@@ -448,6 +451,8 @@ def run_query(q, progress=None):
             warnings += got[1].get("warnings", [])
         if good_enough:
             steps.skip(5, "MS-FINDER result good enough.")
+        elif not q.run_frigid:
+            steps.skip(5, "FRIGID is off (Advanced).")
         else:
             targets = frigid_step.pick_targets(formulas, retained, top_adduct)      # the #1 formula of each of the best 2 adducts (owner's design 2026-10-30)
 

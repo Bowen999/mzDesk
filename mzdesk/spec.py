@@ -25,7 +25,7 @@ from mzdesk.ms2.cfmid_engine import ADDUCTS as ESI_ADDUCTS
 # msfinder_engine 顶层只用标准库，这里只读它的加合物名单
 from mzdesk.ms2.msfinder_engine import ADDUCTS as MSFINDER_ADDUCT_NAMES
 # frigid_engine 顶层也只用标准库（memguard / heavy_lock 都是纯标准库），这里只读加合物名单和 Quick / Full 的显示名
-from mzdesk.ms2.frigid_engine import ADDUCTS as FRIGID_ADDUCT_NAMES, MODE_LABELS as FRIGID_MODES
+from mzdesk.ms2.frigid_engine import ADDUCTS as FRIGID_ADDUCT_NAMES, MODE_LABELS as FRIGID_MODES, workflow_default as frigid_workflow_default
 # 指标名字只用标准库（和 ms2_similarity.py 共用一份），所以这里可以直接导入
 from mzdesk.ms2 import metric_names as METRIC_NAMES
 # isotopes 顶层只用标准库（IsoSpecPy 在用到时才导入）
@@ -992,7 +992,10 @@ _PIPELINE_ADVANCED = [
     {**number("lib_threshold", "Similarity threshold", 0.80, 0.01), "min": 0, "max": 1,
      "help": "Minimum similarity for a Level-2 library match."},
     {**number("lib_min_peaks", "Minimum matched peaks", 4, 1), "min": 1,
-     "help": "A library hit needs at least this many matched peaks (all of them if the spectrum has fewer)."}]
+     "help": "A library hit needs at least this many matched peaks (all of them if the spectrum has fewer)."},
+    # on in the local version, off on the hosted server (MZDESK_ANNOTATION_FRIGID); read when the server starts
+    {**checkbox("run_frigid", "Run FRIGID", value=frigid_workflow_default()),
+     "help": "De novo structures, when the library and MS-FINDER do not settle it. Positive mode only; slow."}]
 # MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
     {**number("ccs_observed", "Observed CCS (Å²)", None, None, "e.g. 152.3"), "min": 0, "new_row": True,
@@ -1017,7 +1020,7 @@ EI_DIPENTYL_PHTHALATE = "104.0257 8\n105.03365 10\n121.02855 21\n122.03618 5\n12
 def _caffeine_example(libraries, ms2):
     return {"precursor": _prec("195.0877"), "ms2": _paste(ms2), "ms1": CAFFEINE_MS1, "libraries": libraries, "tol_ppm": 10.0, "tol_da": 0.02,
             "omics": "Either / unknown", "halogen": False, "local_isomers": False, "additive": "Unknown", "alkali": "Unknown", "ph": 2.7,
-            "lib_metrics": [METRIC_NAMES.ENTROPY_WEIGHTED], "lib_threshold": 0.80, "lib_min_peaks": 4}
+            "lib_metrics": [METRIC_NAMES.ENTROPY_WEIGHTED], "lib_threshold": 0.80, "lib_min_peaks": 4, "run_frigid": frigid_workflow_default()}
 
 
 PIPELINES = [

@@ -52,6 +52,12 @@ TOKENIZER_REPO, TOKENIZER_REVISION = "datamol-io/safe-gpt", "3d5fa0988383e898d5a
 
 MODES = {"quick": "Quick (16 samples)", "full": "Full (up to 100 samples)"}
 MODE_LABELS = list(MODES.values())
+
+
+def workflow_default():
+    """Whether MS/MS Annotation runs FRIGID when nobody chose: yes, unless MZDESK_ANNOTATION_FRIGID is off / 0 / no / false. The hosted server turns it
+    off (a run takes about two minutes and 3 GB of its 4 GB), the local version leaves it on; the Advanced section of the workflow can flip either."""
+    return (os.environ.get("MZDESK_ANNOTATION_FRIGID") or "on").strip().lower() not in ("off", "0", "no", "false")
 DEFAULT_MODE = "quick"
 TIMEOUT_S = {"quick": 300, "full": 1200}
 RSS_CAP_MB = 6656               # 6.5 GB resident memory of the process tree (driver's own CPU cap: 6144 MB)

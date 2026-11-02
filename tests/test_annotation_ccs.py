@@ -206,7 +206,7 @@ def test_the_api_answers_400_for_a_bad_ion_mobility_section():
 def test_the_spec_has_the_ion_mobility_fields_at_the_end_of_advanced_with_the_ccs_pages_options():
     fields = {f["id"]: f for f in ESI["inputs"]}
     advanced = [f["id"] for f in ESI["inputs"] if f.get("section") == "Advanced"]
-    assert advanced == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks", "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"]
+    assert advanced == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks", "run_frigid", "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"]
     sections = list(dict.fromkeys(f["section"] for f in ESI["inputs"]))
     assert sections == ["Spectrum", "Search", "Options", "Advanced"] and "Ion Mobility" not in sections      # Advanced is closed by the page itself
     assert not any(f.get("section_collapsed") for f in ESI["inputs"])

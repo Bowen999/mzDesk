@@ -19,6 +19,7 @@ I have an ESI MS/MS spectrum and a precursor m/z. Find the adduct and formula, s
 - The isomer verdict only holds for the candidates that were considered; an isomer that is not in the candidate list has not been ruled out. When the isomer check was not run or could not be done, other isomers are not ruled out either.
 - A formula answer (no structure proposed) is formula-level evidence only.
 - FRIGID candidates are hypotheses, not identifications.
+- Run FRIGID (Advanced): on by default in the local version, off on mzdesk.com, where a run takes about two minutes and 3 GB of the server's 4 GB. Tick it to run FRIGID when the library and MS-FINDER do not settle the structure.
 - In the Formula table, Rank is the list position, not a joint probability: the list is interleaved by BUDDY rank across the adducts (best adduct first within each rank). Filtered formulas can leave gaps in BUDDY rank.
 - Candidates within 10 % of the best base score are ordered by base score × detectability; the others follow in base-score order, so the Final score column does not always go down the list.
 - CCS check: a candidate that disagrees with a measured reference goes behind all the others; one that disagrees with a predicted value only goes behind the other near-ties (within 10 % of the best base score). Levels do not change.

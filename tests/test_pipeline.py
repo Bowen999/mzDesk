@@ -572,7 +572,7 @@ def test_spec_form_matches_the_pipeline():
     pipe = ESI
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
-                                                         "additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks",
+                                                         "additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks", "run_frigid",
                                                          "ccs_observed", "ccs_platform", "ccs_gas", "ccs_tw_calibration"}      # the last four: Ion Mobility (tests/test_annotation_ccs.py)
     assert fields["tol_da"]["value"] == 0.02 and fields["omics"]["options"][0] == "Either / unknown" and fields["omics"]["options"] == list(pipeline.OMICS_CHOICES)
     assert fields["additive"]["options"] == ["Unknown", *adduct_rules.ADDITIVES] and spec.PIPELINE_ADDITIVES == list(adduct_rules.ADDITIVES)
@@ -581,6 +581,8 @@ def test_spec_form_matches_the_pipeline():
     assert {f["section"] for f in pipe["inputs"] if f["id"] in ("additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks")} == {"Advanced"}
     assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:6] == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks"]
     assert fields["lib_min_peaks"]["value"] == library_step.GATE_MIN_MATCHED == 4 and fields["lib_min_peaks"]["min"] == 1
+    assert fields["run_frigid"]["type"] == "checkbox" and fields["run_frigid"]["label"] == "Run FRIGID" and fields["run_frigid"]["section"] == "Advanced"
+    assert fields["run_frigid"]["value"] is True                      # the local default; the server sets MZDESK_ANNOTATION_FRIGID=off (next test)
     assert fields["lib_metrics"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and len(spec.PIPELINE_LIBRARY_METRICS) == 10
     assert fields["lib_metrics"]["type"] == "multiselect" and fields["lib_metrics"]["checkboxes"] and fields["lib_metrics"]["required"]
     assert fields["lib_metrics"]["value"] == [library_step.PRIMARY_METRIC] and fields["lib_threshold"]["label"] == "Similarity threshold"
@@ -836,3 +838,35 @@ def test_real_frigid_runs_when_msfinder_is_not_good_enough(monkeypatch):
     s = {x["id"]: x for x in result["steps"]}
     layers = {src["layer"] for c in result["candidates"] for src in c["sources"]}
     assert s[4]["status"] == "done" and s[5]["status"] == "done" and {"msfinder", "frigid"} <= layers
+
+
+# ---------------------------------------------------------------- Run FRIGID (Advanced): on locally, off on the hosted server
+def test_run_frigid_default_follows_the_server_setting_and_the_form_wins(monkeypatch):
+    for value, expected in (("off", False), ("0", False), ("No", False), ("false", False), ("on", True), ("", True)):
+        monkeypatch.setenv("MZDESK_ANNOTATION_FRIGID", value)
+        assert pipeline.parse_inputs(form()).run_frigid is expected, value                 # a client that does not send the field gets the server's default
+    monkeypatch.setenv("MZDESK_ANNOTATION_FRIGID", "off")
+    assert pipeline.parse_inputs(form(run_frigid=True)).run_frigid is True                 # the page always sends it: the choice wins
+    monkeypatch.delenv("MZDESK_ANNOTATION_FRIGID")
+    assert pipeline.parse_inputs(form(run_frigid=False)).run_frigid is False
+    with pytest.raises(InputError, match="true or false"):
+        pipeline.parse_inputs(form(run_frigid="yes"))
+
+
+def test_the_server_starts_the_page_with_run_frigid_unticked():
+    import os, subprocess, sys
+    code = "from mzdesk import spec; f = next(f for f in spec.PIPELINES[0]['inputs'] if f['id'] == 'run_frigid'); print(f['value'], spec.PIPELINES[0]['examples'][0]['values']['run_frigid'])"
+    env = {**os.environ, "MZDESK_ANNOTATION_FRIGID": "off"}
+    assert subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=120).stdout.split() == ["False", "False"]
+    env.pop("MZDESK_ANNOTATION_FRIGID")
+    assert subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True, timeout=120).stdout.split() == ["True", "True"]
+
+
+def test_with_run_frigid_off_a_weak_msfinder_result_ends_the_structure_search(rig):
+    rig.msfinder([structure_candidate("msfinder", "m1", CAFFEINE, 0.3)], good_enough=False)
+    rig.frigid([structure_candidate("frigid", "f1", ETHER, 0.2, formula="C8H10N4O2")])
+    result = pipeline.run(form(run_frigid=False))
+    assert [s["status"] for s in result["steps"]][2:5] == ["skipped", "done", "skipped"] and "FRIGID is off" in result["steps"][4]["note"]
+    assert "frigid" not in rig.calls and ETHER not in {c["smiles"] for c in result["candidates"]}
+    rig2 = pipeline.run(form(run_frigid=True))
+    assert "frigid" in rig.calls and rig2["steps"][4]["status"] == "done"
