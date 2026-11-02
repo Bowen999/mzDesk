@@ -4,6 +4,7 @@ Password hash: PBKDF2-HMAC-SHA256, 200 000 rounds. A server sets its own in MZDE
 hash that ships to browsers in web/src/lock.ts (the page lock) is not the one that guards the data. Without them the page-lock
 hash is used (local version).
     python -m mzdesk.api.admin            # asks for a password, prints the two lines for /etc/mzdesk/mzdesk.env
+    deploy/set-admin-password.sh          # the same, and installs them on the server
 """
 import hashlib
 import secrets
@@ -53,10 +54,29 @@ def reset_throttle() -> None:
         _wrong.clear()
 
 
-if __name__ == "__main__":
+MIN_LENGTH = 1           # the maintainer's choice; online guesses are limited (8 per address per 15 minutes) and the hash stays on the server
+
+
+def main(argv=None) -> None:
+    """Print the two MZDESK_ADMIN_* lines for a password typed twice (hidden), or read from stdin with --stdin (deploy/set-admin-password.sh)."""
     import getpass
-    first = getpass.getpass("New admin password: ")
-    if len(first) < 12 or first != getpass.getpass("Again: "):
-        raise SystemExit("Use at least 12 characters, typed the same twice.")
-    salt, digest = hash_password(first)
+    import sys
+    argv = sys.argv[1:] if argv is None else argv
+    if "--stdin" in argv:
+        password = sys.stdin.read().rstrip("\r\n")
+    else:
+        password = getpass.getpass("New admin password: ")
+        if password != getpass.getpass("Again: "):
+            raise SystemExit("The two passwords differ.")
+    if len(password) < MIN_LENGTH:
+        raise SystemExit(f"Use at least {MIN_LENGTH} characters.")
+    if len(password) < 8:
+        print("note: under 8 characters can be guessed by many machines working together; 12 or more is safe.", file=sys.stderr)
+    elif len(password) < 12:
+        print("note: 12 characters or more is safer.", file=sys.stderr)
+    salt, digest = hash_password(password)
     print(f"MZDESK_ADMIN_SALT={salt}\nMZDESK_ADMIN_HASH={digest}")
+
+
+if __name__ == "__main__":
+    main()

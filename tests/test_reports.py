@@ -164,3 +164,19 @@ def test_crash_emails_have_an_overall_hourly_budget(monkeypatch):
     for i in range(6):
         client.post("/api/crash", json={"message": f"a different crash {i}", "stack": f"at place {i}"})
     assert len(reports.listing()) == 6 and len(sent) == 3                                              # all stored, only three forwarded
+
+
+def test_the_password_script_hashes_what_it_reads_from_stdin(monkeypatch, capsys):
+    import io
+    monkeypatch.setattr("sys.stdin", io.StringIO("a typed password\n"))
+    admin.main(["--stdin"])
+    out = dict(line.split("=", 1) for line in capsys.readouterr().out.split())
+    monkeypatch.setenv("MZDESK_ADMIN_SALT", out["MZDESK_ADMIN_SALT"])
+    monkeypatch.setenv("MZDESK_ADMIN_HASH", out["MZDESK_ADMIN_HASH"])
+    assert stats.check_password("a typed password") and not stats.check_password("a typed password ")        # the line end is not part of it
+    monkeypatch.setattr("sys.stdin", io.StringIO("abc\n"))                        # short is allowed, with a note
+    admin.main(["--stdin"])
+    assert "MZDESK_ADMIN_HASH=" in capsys.readouterr().out
+    monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
+    with pytest.raises(SystemExit):                                              # but not nothing
+        admin.main(["--stdin"])

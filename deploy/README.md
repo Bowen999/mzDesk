@@ -59,7 +59,8 @@ Forwarding is optional and independent per channel; set it in `/etc/mzdesk/mzdes
 
 `/stats` and `/reports` check the password on the server, with a limit of 8 wrong guesses per address in 15 minutes (nginx limits the paths too).
 By default that is the page lock's password, whose hash ships to every browser inside the page, so a short password can be guessed offline. A server
-should have its own: `python -m mzdesk.api.admin` asks for a password and prints the two `MZDESK_ADMIN_*` lines for `/etc/mzdesk/mzdesk.env`.
+should have its own: `deploy/set-admin-password.sh` asks for a password (hidden, twice), puts only its salted hash into `/etc/mzdesk/mzdesk.env`, restarts the service
+and checks `/stats` and `/reports` with the new and a wrong password. (`python -m mzdesk.api.admin` only prints the two `MZDESK_ADMIN_*` lines.)
 
 ## Security
 
