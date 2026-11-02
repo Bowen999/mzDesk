@@ -2,37 +2,6 @@
 
 A module does one job on one page. A workflow runs several steps in order and ends with one answer.
 
-## Workflows
-
-Each workflow shows its steps on the page. A step can be skipped, and a step that fails does not stop the run.
-
-### MS/MS Annotation
-
-![The steps of MS/MS Annotation](fig:workflow-esi)
-
-- **You give**: an ESI MS/MS spectrum and its precursor m/z. Optional: an MS1 isotope pattern, an observed CCS.
-- **You get**: the adduct, the formula and ranked structure candidates, each with a confidence level.
-
-The library search comes first. MS-FINDER runs only if no library hit passes the Level-2 gate. FRIGID runs only if MS-FINDER is not good enough and **Run FRIGID** is ticked. [Notes](/docs/esi_ms2_annotation)
-
-### EI MS Annotation
-
-![The steps of EI MS Annotation](fig:workflow-ei)
-
-- **You give**: an EI spectrum, usually from GC-MS. Optional: the derivatization, the molecular ion, candidate structures, an alkane series with the sample RT.
-- **You get**: candidate metabolites, named as the original compounds without the derivative, with a level and a Kovats RI.
-
-[Notes](/docs/ei_ms_annotation)
-
-### Targeted Method
-
-![The steps of Targeted Method](fig:workflow-targeted)
-
-- **You give**: one compound. Optional: pH, mobile-phase additive, instrument (Any, LC-MS, GC-MS).
-- **You get**: a method sheet with platform, column, mobile phase and pH, polarity, main ion, theoretical m/z, derivatization, non-MS alternative and published methods.
-
-[Notes](/docs/targeted_method)
-
 ## Modules
 
 ### Compound
@@ -83,3 +52,34 @@ The library search comes first. MS-FINDER runs only if no library hit passes the
 ### Calculator
 
 - [Calculator](/docs/calculator): ppm error, labelled masses, concentration, dilution, collision energy, Kovats RI.
+
+## Workflows
+
+Each workflow shows its steps on the page. A step can be skipped, and a step that fails does not stop the run.
+
+### MS/MS Annotation
+
+![The steps of MS/MS Annotation](fig:workflow-esi)
+
+- **You give**: an ESI MS/MS spectrum and its precursor m/z. Optional: an MS1 isotope pattern, an observed CCS.
+- **You get**: the adduct, the formula and ranked structure candidates, each with a confidence level.
+
+The library search comes first. MS-FINDER runs only if no library hit passes the Level-2 gate. FRIGID runs only if MS-FINDER is not good enough and **Run FRIGID** is ticked. [Notes](/docs/esi_ms2_annotation)
+
+### EI MS Annotation
+
+![The steps of EI MS Annotation](fig:workflow-ei)
+
+- **You give**: an EI spectrum, usually from GC-MS. Optional: the derivatization, the molecular ion, candidate structures, an alkane series with the sample RT.
+- **You get**: candidate metabolites, named as the original compounds without the derivative, with a level and a Kovats RI.
+
+[Notes](/docs/ei_ms_annotation)
+
+### Targeted Method
+
+![The steps of Targeted Method](fig:workflow-targeted)
+
+- **You give**: one compound. Optional: pH, mobile-phase additive, instrument (Any, LC-MS, GC-MS).
+- **You get**: a method sheet with platform, column, mobile phase and pH, polarity, main ion, theoretical m/z, derivatization, non-MS alternative and published methods.
+
+[Notes](/docs/targeted_method)

@@ -154,6 +154,50 @@
 .fg-check { fill: none; stroke: var(--bg); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .fg-tile { fill: var(--ink-2); font-size: 13px; }
 
+/* Module groups: one hue per group, the same in every figure. The app's light theme maps its --ov-* hues to blue and grey (design.css),
+   so the figures carry their own muted palette, light and dark (the same selectors as theme.css: the manual switch and the OS setting).
+   Put a class on a <g>; its children read --g-*. Workflows are the solid theme blue (.fg-wf), so a workflow never looks like a module. */
+.docs {
+  --grp-teal-bg: #eaf6f4;   --grp-teal-line: #b7ddd6;   --grp-teal-ink: #0b6b5e;
+  --grp-green-bg: #eef6ec;  --grp-green-line: #c3dfbd;  --grp-green-ink: #2d6f2a;
+  --grp-violet-bg: #f3f0fb; --grp-violet-line: #d8cff0; --grp-violet-ink: #5b3fa6;
+  --grp-slate-bg: #f1f3f6;  --grp-slate-line: #dbe0e7;  --grp-slate-ink: #4f5664;
+  --grp-amber-bg: #fbf4e4;  --grp-amber-line: #ead6a2;  --grp-amber-ink: #85560a;
+}
+:root[data-theme="dark"] .docs {
+  --grp-teal-bg: rgba(45, 180, 160, .12);   --grp-teal-line: rgba(45, 180, 160, .35);   --grp-teal-ink: #7fd6c8;
+  --grp-green-bg: rgba(110, 190, 100, .12); --grp-green-line: rgba(110, 190, 100, .32); --grp-green-ink: #a3dd98;
+  --grp-violet-bg: rgba(160, 130, 240, .13); --grp-violet-line: rgba(160, 130, 240, .35); --grp-violet-ink: #c6b4fa;
+  --grp-slate-bg: rgba(255, 255, 255, .05); --grp-slate-line: rgba(255, 255, 255, .12); --grp-slate-ink: #b3b8c4;
+  --grp-amber-bg: rgba(230, 170, 70, .12);  --grp-amber-line: rgba(230, 170, 70, .35);  --grp-amber-ink: #f0c67a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .docs {
+    --grp-teal-bg: rgba(45, 180, 160, .12);   --grp-teal-line: rgba(45, 180, 160, .35);   --grp-teal-ink: #7fd6c8;
+    --grp-green-bg: rgba(110, 190, 100, .12); --grp-green-line: rgba(110, 190, 100, .32); --grp-green-ink: #a3dd98;
+    --grp-violet-bg: rgba(160, 130, 240, .13); --grp-violet-line: rgba(160, 130, 240, .35); --grp-violet-ink: #c6b4fa;
+    --grp-slate-bg: rgba(255, 255, 255, .05); --grp-slate-line: rgba(255, 255, 255, .12); --grp-slate-ink: #b3b8c4;
+    --grp-amber-bg: rgba(230, 170, 70, .12);  --grp-amber-line: rgba(230, 170, 70, .35);  --grp-amber-ink: #f0c67a;
+  }
+}
+.fg-g-compound { --g-bg: var(--grp-teal-bg);   --g-line: var(--grp-teal-line);   --g-ink: var(--grp-teal-ink); }
+.fg-g-detect   { --g-bg: var(--grp-green-bg);  --g-line: var(--grp-green-line);  --g-ink: var(--grp-green-ink); }
+.fg-g-ms1      { --g-bg: var(--grp-violet-bg); --g-line: var(--grp-violet-line); --g-ink: var(--grp-violet-ink); }
+.fg-g-spectrum { --g-bg: var(--accent-bg);     --g-line: var(--accent-line);     --g-ink: var(--accent-ink); }
+.fg-g-ortho    { --g-bg: var(--grp-slate-bg);  --g-line: var(--grp-slate-line);  --g-ink: var(--grp-slate-ink); }
+.fg-g-dataset  { --g-bg: var(--grp-amber-bg);  --g-line: var(--grp-amber-line);  --g-ink: var(--grp-amber-ink); }
+.fg-g-calc     { --g-bg: var(--canvas);        --g-line: var(--line-strong);     --g-ink: var(--ink-2); }
+.fg-gbox { fill: var(--g-bg); stroke: var(--g-line); stroke-width: 1.5; }
+.fg-gfill { fill: var(--g-ink); stroke: none; }
+.fg-gbar { fill: var(--g-ink); stroke: none; opacity: .6; }
+.fg-gtext { fill: var(--g-ink); font-size: 14px; font-weight: 500; }
+.fg-gtitle { fill: var(--g-ink); font-size: 16px; font-weight: 600; }
+.fg-wf { fill: var(--accent); stroke: none; }
+.fg-wf-text { fill: var(--bg); font-size: 15px; font-weight: 600; }
+.fg-wf-sub { fill: var(--bg); font-size: 13px; opacity: .88; }
+.fg-wf-dot { fill: var(--bg); stroke: none; opacity: .9; }
+.fg-wf-line { fill: none; stroke: var(--bg); stroke-width: 1.5; opacity: .45; }
+
 /* ---------------------------------------------------------------- narrower screens */
 @media (max-width: 1199px) { .docs-toc { display: none; } }
 @media (max-width: 959px) {

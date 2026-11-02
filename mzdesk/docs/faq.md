@@ -46,7 +46,7 @@ MS-FINDER runs only when no library hit passes the Level-2 gate. FRIGID runs onl
 
 ### Why is Run FRIGID off on mzdesk.com?
 
-A FRIGID run on the server takes about two minutes and 3 GB of its 4 GB of memory. You can tick it under **Advanced**. In the local version it is on once FRIGID is installed. See [Local Version](/docs/local-version#local-or-mzdesk-com).
+A FRIGID run on the server takes about two minutes and 3 GB of its 4 GB of memory. You can tick it under **Advanced**. In the local version it is on once FRIGID is installed. See [Local Version](/docs/local-version#first-use-downloads).
 
 ### Why are MassBank and GNPS the only libraries? Where is NIST?
 

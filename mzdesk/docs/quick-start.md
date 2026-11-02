@@ -40,10 +40,9 @@ Below the card:
 7. **Theme, language and the bug button** for [feedback](/docs/feedback).
 8. **Page head**. The page name and one line: what you give, an arrow, what you get.
 9. **Input form**. A `*` marks a required field. Workflows keep rarely used options under **Advanced**. See [Inputs and Formats](/docs/inputs).
-10. **Example buttons**. **Load example** on a module, one button per example on a workflow.
-11. **Run** and **Clear**. **Clear** empties the form and the results.
-12. **Progress bar**, then the answer, tables and figures. A `?` opens a short explanation. See [Reading Results](/docs/reading-results).
-13. **Steps timeline** (workflows). One row per step with its status, a note and its time. Click a step to see its tables.
+10. **Run** and **Clear**, then the example buttons: **Load example** on a module, one button per example on a workflow. **Clear** empties the form and the results.
+11. **Progress bar**, then the answer, tables and figures. A `?` opens a short explanation. See [Reading Results](/docs/reading-results).
+12. **Steps timeline** (workflows). One row per step with its status, a note and its time. Click a step to see its tables.
 
 The foot of every page names the tools it is **Based on** (see [Licenses and Based On](/docs/licenses)) and links to its **Docs**.
 

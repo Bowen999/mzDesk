@@ -1,26 +1,6 @@
 # Local Version
 
-The local version runs mzDesk on your own computer and opens it in your browser. This page says how it differs from mzdesk.com, and how to install, update and remove it.
-
-## Local or mzdesk.com?
-
-![Where each version computes](fig:local-vs-web)
-
-The pages, the results and the Docs are the same. These things differ:
-
-| | mzdesk.com | Local version |
-|---|---|---|
-| Install | None. Open it in a browser. | One command, about 1.6 GB. |
-| Where it computes | On the mzDesk server. | On your computer. |
-| Your inputs | Sent to the server over HTTPS. | Stay on your computer. Only online lookups leave it. |
-| Internet search switch | None. Online lookups always run. | In the sidebar. Off asks before a run that needs the internet. |
-| Engines and libraries | All installed. | Downloaded on first use. Large ones ask first. |
-| Run FRIGID (MS/MS Annotation, Advanced) | Off. | On once FRIGID is installed. |
-| Speed | Shared with other users. A De Novo Structure run takes about two minutes. | Your hardware. On an Apple-silicon Mac, about 20 to 40 s. |
-| CFM-ID (MS/MS Prediction) | Ready. | You install Docker Desktop. |
-| Updates | Automatic. | `mzdesk update`. |
-
-Use the local version when your data must stay on your computer. For everything that leaves it, see [Privacy and Internet Search](/docs/privacy).
+The local version runs mzDesk on your own computer and opens it in your browser. This page says how to install, update and remove it.
 
 ## Install
 
@@ -42,13 +22,6 @@ irm https://mzdesk.com/install.ps1 | iex
 - It ends with `Run: mzdesk`. If a step fails, it names the step and gives one sentence of reason.
 
 ![What the installer does](fig:install-flow)
-
-Supported systems:
-
-- macOS and Linux, on x86_64 or arm64. On Apple Silicon you need macOS 14 or newer. Linux needs glibc (for example Ubuntu or Debian), not musl (Alpine); on arm64, glibc 2.34 or newer.
-- Windows, 64-bit Intel or AMD, with PowerShell 5.1 or 7. Windows has the core, the libraries, CCS and MolGpKa only. A workflow skips an engine it does not have and says so in the step note.
-
-> **Note** The Windows installer is not verified on Windows yet.
 
 ### What gets installed
 

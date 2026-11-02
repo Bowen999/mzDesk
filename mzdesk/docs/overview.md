@@ -5,14 +5,6 @@ mzDesk helps chemists and biologists identify and check small molecules from mas
 ![What mzDesk does](fig:overview-scene)
 *Give a spectrum, a compound or an m/z value; mzDesk runs a workflow or a module and returns the answer, on mzdesk.com or on your own computer.*
 
-## What you can do
-
-- Annotate an MS/MS or EI spectrum: adduct, formula, structure candidates, confidence level.
-- Search a spectrum against MassBank and GNPS, compare two spectra, clean a spectrum and convert its format.
-- Look up a compound: names, IDs, properties, functional groups.
-- Check whether a compound can be measured, and how: platform, column, pH, polarity, ions.
-- Predict EI and MS/MS spectra, and explain a spectrum with a structure.
-
 ## Workflows and modules
 
 A **module** does one job. A **workflow** chains several modules to answer one question.
@@ -20,9 +12,10 @@ A **module** does one job. A **workflow** chains several modules to answer one q
 ![From input to answer](fig:overview-flow)
 *You give an input. A module or a workflow gives the answer.*
 
-mzDesk has 3 workflows and 28 modules: six groups and the Calculator. Every page says in one line what it needs and what it returns.
+mzDesk has 28 modules (six groups and the Calculator) and 3 workflows. Every page says in one line what it needs and what it returns.
 
-![The modules by group](fig:module-map)
+![28 modules and 3 workflows](fig:catalog)
+*Each module group has its own colour. The workflows are solid blue.*
 
 | Group | For |
 |---|---|
