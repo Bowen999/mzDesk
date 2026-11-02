@@ -993,8 +993,9 @@ _PIPELINE_ADVANCED = [
      "help": "Minimum similarity for a Level-2 library match."},
     {**number("lib_min_peaks", "Minimum matched peaks", 4, 1), "min": 1,
      "help": "A library hit needs at least this many matched peaks (all of them if the spectrum has fewer)."},
-    # on in the local version, off on the hosted server (MZDESK_ANNOTATION_FRIGID); read when the server starts
-    {**checkbox("run_frigid", "Run FRIGID", value=frigid_workflow_default()),
+    # ticked once FRIGID is installed (local version), never on the hosted server (MZDESK_ANNOTATION_FRIGID); spec() reads it again on every call.
+    # needs: ticking it with FRIGID missing offers the download (POST /api/local/needs, mzdesk/local/targets.py)
+    {**checkbox("run_frigid", "Run FRIGID", value=frigid_workflow_default()), "needs": ["frigid"],
      "help": "De novo structures, when the library and MS-FINDER do not settle it. Positive mode only; slow."}]
 # MS/MS Annotation, optional Ion Mobility fields (the end of the Advanced section): one observed CCS checks every structure candidate in step 6 (mzdesk/annotation/ccs_step.py)
 _PIPELINE_CCS = [
@@ -1066,6 +1067,8 @@ PIPELINES = [
     {"id": "targeted_method", "title": "Targeted Method",
      "one_liner": "Compound → method sheet: platform, column, pH, polarity, main ion, methods",
      "based_on": ["MolGpKa", "PubChem", "RepoRT", "mzDesk"],
+     # step 1 always asks PubChem / UniChem, also for a SMILES (workflows/targeted_method.py _lookup): the page sentence makes the "Internet search: off" dialog ask
+     "network": "Targeted Method looks the compound up in PubChem and UniChem by its InChIKey or SMILES; when that fails, the sheet uses values computed locally.",
      "inputs": ([{**structure(label="Compound"), "required": True}]
                 + _section("Conditions",
                            {**number("ph", "pH", None, 0.1, "2.7"), "min": 0, "max": 14, "help": "Blank = 2.7 (0.1 % formic acid)."},
@@ -1097,7 +1100,20 @@ def is_deferred(module):
     return module["subgroup"] in DEFERRED_SUBGROUPS or module["id"] in DEFERRED_MODULES
 
 
+def _pipelines_now():
+    """PIPELINES with the run_frigid default read now: FRIGID can be downloaded while the server runs, and the checkbox (and the examples that
+    set it) follow. Files only, no subprocess. Everything else is shared with PIPELINES, not copied."""
+    ticked = frigid_workflow_default()
+    out = []
+    for pipe in PIPELINES:
+        if any(f["id"] == "run_frigid" for f in pipe["inputs"]):
+            pipe = {**pipe, "inputs": [{**f, "value": ticked} if f["id"] == "run_frigid" else f for f in pipe["inputs"]],
+                    "examples": [{**e, "values": {**e["values"], "run_frigid": ticked}} if "run_frigid" in e["values"] else e for e in pipe.get("examples", [])]}
+        out.append(pipe)
+    return out
+
+
 def spec():
-    return {"groups": GROUPS, "pipelines": PIPELINES,
+    return {"groups": GROUPS, "pipelines": _pipelines_now(),
             "subgroups": [g for g in SUBGROUPS if g["id"] not in DEFERRED_SUBGROUPS],
             "modules": [m for m in MODULES if not is_deferred(m)]}

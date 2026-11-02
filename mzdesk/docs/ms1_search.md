@@ -1,6 +1,6 @@
 # Mass Search
 
-Which database compounds match the precursor m/z, optionally filtered by the isotope pattern.
+Give a precursor m/z, and optionally an isotope pattern. Get the database compounds that match.
 
 ## Results
 

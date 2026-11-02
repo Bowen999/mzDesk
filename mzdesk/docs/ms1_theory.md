@@ -1,6 +1,6 @@
 # Theoretical
 
-Precursor m/z and isotope pattern of a structure or formula for an adduct.
+Give a compound or formula and an adduct. Get the precursor m/z and the isotope pattern.
 
 ## Results
 

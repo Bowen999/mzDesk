@@ -10,6 +10,7 @@ import { FeedbackButton } from "./Feedback";
 import { Icon, moduleIcon, pipelineIcon } from "./Icon";
 import { Logo } from "./Logo";
 import { LockIcon } from "./LockGate";
+import { UpdateNotice } from "./UpdateNotice";
 import { ReportButton } from "../report/ReportButton";
 
 type Entry = { kind: "link"; m: Module } | { kind: "sub"; id: string; title: string; mods: Module[] };
@@ -63,7 +64,7 @@ const glyph = (body: ReactNode) => (
 );
 
 /** Light / System / Dark. In the collapsed rail: one button that cycles. */
-function ThemeSwitch({ compact }: { compact: boolean }) {
+export function ThemeSwitch({ compact }: { compact: boolean }) {
   const t = useT();
   const { pref, setPref } = useTheme();
   if (compact) {
@@ -135,19 +136,17 @@ function BookIcon({ size = 16 }: { size?: number }) {
   );
 }
 
-/** Placeholder: the entry to the general Docs (user guide, methods, how to cite). Not wired yet. */
+/** The entry to the Docs (/docs): user guide, module notes, how to cite. */
 function DocsButton({ compact = false }: { compact?: boolean }) {
   const t = useT();
-  const title = t("Docs: coming soon");
   if (compact) return (
-    <button type="button" className="rail-btn soon" aria-disabled="true" title={title} aria-label={title}><BookIcon size={18} /></button>
+    <NavLink to="/docs" className="rail-btn" title={t("Docs")} aria-label={t("Docs")}><BookIcon size={18} /></NavLink>
   );
   return (
-    <button type="button" className="internet-switch soon" aria-disabled="true" title={title}>
+    <NavLink to="/docs" className="internet-switch docs-entry">
       <BookIcon />
       <span className="internet-label">{t("Docs")}</span>
-      <span className="soon-tag">{t("Soon")}</span>
-    </button>
+    </NavLink>
   );
 }
 
@@ -270,7 +269,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
           </NavLink>))}
       </nav>
       <div className="sidebar-foot">
-        {!spec.hosted && <InternetSwitch compact />}<ReportButton spec={spec} rail /><DocsButton compact />
+        {!spec.hosted && <UpdateNotice compact />}{!spec.hosted && <InternetSwitch compact />}<ReportButton spec={spec} rail /><DocsButton compact />
         <ThemeSwitch compact /><LanguageButton compact /><FeedbackButton rail />
       </div>
     </aside>
@@ -315,6 +314,7 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
         ))}
       </div>
       <div className="sidebar-foot">
+        {!spec.hosted && <UpdateNotice />}
         {!spec.hosted && <InternetSwitch />}
         <ReportButton spec={spec} />
         <DocsButton />

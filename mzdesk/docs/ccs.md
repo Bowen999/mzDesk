@@ -1,6 +1,6 @@
 # CCS
 
-Does the ion mobility agree: the reference CCS of the same compound and adduct, or a model prediction if there is none.
+Give a compound, an adduct and an observed CCS. Get the reference CCS of the same compound and adduct, or a model prediction if there is none, and whether your value agrees.
 
 ## Results
 

@@ -566,9 +566,10 @@ def test_parse_inputs_rejects_bad_forms(over, message):
         pipeline.parse_inputs(form(**over))
 
 
-def test_spec_form_matches_the_pipeline():
+def test_spec_form_matches_the_pipeline(monkeypatch):
     from mzdesk.platform_fit import adduct_rules
     from mzdesk import spec
+    monkeypatch.setattr("mzdesk.ms2.frigid_engine.installed", lambda: True)      # the default is on only once FRIGID is installed
     pipe = ESI
     fields = {f["id"]: f for f in pipe["inputs"]}
     assert "structure" not in fields and set(fields) == {"precursor", "ms2", "ms1", "libraries", "tol_ppm", "tol_da", "omics", "halogen", "local_isomers",
@@ -582,7 +583,7 @@ def test_spec_form_matches_the_pipeline():
     assert [f["id"] for f in pipe["inputs"] if f.get("section") == "Advanced"][:6] == ["additive", "alkali", "ph", "lib_metrics", "lib_threshold", "lib_min_peaks"]
     assert fields["lib_min_peaks"]["value"] == library_step.GATE_MIN_MATCHED == 4 and fields["lib_min_peaks"]["min"] == 1
     assert fields["run_frigid"]["type"] == "checkbox" and fields["run_frigid"]["label"] == "Run FRIGID" and fields["run_frigid"]["section"] == "Advanced"
-    assert fields["run_frigid"]["value"] is True                      # the local default; the server sets MZDESK_ANNOTATION_FRIGID=off (next test)
+    assert fields["run_frigid"]["value"] is True                      # the local default (FRIGID installed); the server sets MZDESK_ANNOTATION_FRIGID=off (next test)
     assert fields["lib_metrics"]["options"] == list(library_step.METRIC_CHOICES) == spec.PIPELINE_LIBRARY_METRICS and len(spec.PIPELINE_LIBRARY_METRICS) == 10
     assert fields["lib_metrics"]["type"] == "multiselect" and fields["lib_metrics"]["checkboxes"] and fields["lib_metrics"]["required"]
     assert fields["lib_metrics"]["value"] == [library_step.PRIMARY_METRIC] and fields["lib_threshold"]["label"] == "Similarity threshold"
@@ -842,6 +843,7 @@ def test_real_frigid_runs_when_msfinder_is_not_good_enough(monkeypatch):
 
 # ---------------------------------------------------------------- Run FRIGID (Advanced): on locally, off on the hosted server
 def test_run_frigid_default_follows_the_server_setting_and_the_form_wins(monkeypatch):
+    monkeypatch.setattr("mzdesk.ms2.frigid_engine.installed", lambda: True)      # the default is on only once FRIGID is installed
     for value, expected in (("off", False), ("0", False), ("No", False), ("false", False), ("on", True), ("", True)):
         monkeypatch.setenv("MZDESK_ANNOTATION_FRIGID", value)
         assert pipeline.parse_inputs(form()).run_frigid is expected, value                 # a client that does not send the field gets the server's default

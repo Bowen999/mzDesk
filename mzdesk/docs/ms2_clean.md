@@ -1,6 +1,6 @@
 # Spectrum Cleanup
 
-Clean an MS2 spectrum, see it, and get it in every common format (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).
+Give an MS2 spectrum in any common format. Get it cleaned, plotted and written in every common format (MS-DIAL, GNPS, MassBank, HMDB, MSP, MGF …).
 
 ## Inputs
 

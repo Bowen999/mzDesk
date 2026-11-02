@@ -1,6 +1,6 @@
 # Ionization
 
-ESI polarity for LC-MS and EI usability for GC-MS.
+Give a compound and a mobile-phase pH. Get the better ESI polarity for LC-MS and whether EI works for GC-MS.
 
 ## Results
 

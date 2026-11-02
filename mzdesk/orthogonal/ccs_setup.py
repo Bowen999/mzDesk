@@ -2,7 +2,7 @@
 
 CCSbase 的源数据（dylanhross/c3sdb，MIT 许可，Ross, Cho, Xu. Anal. Chem. 2020, 92, 4548）：26 个已发表的数据集，全部在 N2 中测得，
 DT / TW / TIMS 三种平台。CCS 页用它查"同一化合物、同一加合物"的参考 CCS。
-这里用固定提交号做稀疏克隆（git --filter=blob:none，只取 LICENSE、README、26 个 json 和 SMILES 缓存，约 5 MB），
+这里用固定提交号做稀疏克隆（git --filter=blob:none，只取 LICENSE、README、26 个 json 和 SMILES 缓存，约 5 MB）；没有 git 就下载该提交的 GitHub 压缩包（约 4 MB，同样的文件），
 读 json（只读数据，克隆里的任何代码都不导入、不运行），用 RDKit 规范化结构（最大片段、中性化、InChIKey 前 14 位 = 连接键），
 建一个紧凑的本地索引（ccs_index.json.gz），再训练一个 CCS 预测模型（没有参考值时的后备；joblib，本机生成）。
 文件都放在 ~/.mzdesk/data/ccs/（环境变量 MZDESK_CCS_DIR 可改目录），LICENSE.txt 放在索引旁边。数据不入库。
@@ -21,6 +21,7 @@ from pathlib import Path
 
 import numpy as np
 
+from mzdesk.local import archive, paths
 from mzdesk.methods import compound_index as ci
 from mzdesk.orthogonal import ccs
 from mzdesk.orthogonal.ccs import CONFIG, Row
@@ -41,15 +42,15 @@ def raw_dir():
 def _git(repo, *args, capture=False):
     """在 repo 里运行 git；capture 返回 stdout 并静音 stderr（用于可能失败的查询）。"""
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
-    cmd = ["git", "-C", str(repo), *args]
+    cmd = [paths.working_git() or "git", "-C", str(repo), *args]
     return subprocess.run(cmd, check=True, env=env, text=True, stdout=subprocess.PIPE if capture else None,
                           stderr=subprocess.DEVNULL if capture else None).stdout
 
 
 def fetch(repo, commit=COMMIT):
-    """稀疏、无 blob 的检出 commit；已经检出同一提交就跳过。"""
-    if shutil.which("git") is None:
-        raise SystemExit("git is needed to download the CCS data (sparse clone of github.com/dylanhross/c3sdb). Install git and run again.")
+    """取固定提交里需要的文件：有可用的 git 就做稀疏克隆，没有就下载该提交的 GitHub 压缩包（约 4 MB，同样只留 SPARSE 里的文件）。已经取过同一提交就跳过。"""
+    if paths.working_git() is None:
+        return fetch_archive(repo, commit)
     repo.mkdir(parents=True, exist_ok=True)
     if not (repo / ".git").exists():
         _git(repo, "init", "-q")
@@ -76,6 +77,19 @@ def fetch(repo, commit=COMMIT):
     head = _git(repo, "rev-parse", "HEAD", capture=True).strip()
     if head != commit:
         raise SystemExit(f"Checked out {head}, expected {commit}.")
+
+
+def fetch_archive(repo, commit=COMMIT):
+    """No git: the same files from the commit's archive on codeload.github.com."""
+    if archive.has_commit(repo, commit):
+        print(f"c3sdb {commit[:10]} is already downloaded in {repo}")
+        return
+    print(f"Downloading c3sdb {commit[:10]} (archive, only the data files) into {repo} ...", flush=True)
+    try:
+        n = archive.fetch(ccs.REPO_URL, commit, repo, SPARSE, log=lambda text: print(text, flush=True))
+    except archive.ArchiveError as exc:
+        raise SystemExit(str(exc)) from None
+    print(f"{n} files kept")
 
 
 # ---------------------------------------------------------------- 读下载的文件（只读 json）

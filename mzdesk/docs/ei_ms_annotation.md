@@ -1,12 +1,12 @@
 # EI MS Annotation
 
-Enter one EI spectrum (usually from GC-MS). Get candidate metabolites, named as the original underivatized compounds, with evidence.
+Give one EI spectrum (usually from GC-MS). Get candidate metabolites, named as the original underivatized compounds, with evidence.
 
 ## Inputs
 
 - **Derivatization**: Auto reads the marker ions: m/z 73 backed by 75 or 147 for TMS (m/z 147 alone when the scan starts above m/z 73); M-31 (MeOx) and M-57 (TBDMS) need the molecular ion.
 - **Molecular ion m/z**: Optional. The M+• of the derivative when derivatized.
-- **Candidate structures**: Optional.
+- **Candidate structures**: Optional. One SMILES or name per line. Names are looked up online (PubChem, UniChem).
 - **Sample RT**: Same unit as the alkane RTs. Give it together with the alkane series.
 
 ## Results

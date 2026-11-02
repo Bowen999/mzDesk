@@ -10,6 +10,7 @@ import { useT } from "../i18n";
 import { RunBar } from "../components/RunBar";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
+import { ensureSetup } from "../setup";
 import type { Field, Module, RunResult, Spec } from "../types";
 
 type Run = { busy: boolean; result: RunResult | null; error: string; log: string; seconds: number | null; signature: string };
@@ -154,19 +155,22 @@ export function ModulePage({ id, spec, active }: { id: string; spec: Spec; activ
     setErrors({});
     setFormError("");
     const mine = ++ticket.current;
+    // Hidden controls (for example MS/MS-only fields in EI mode) are neither sent nor validated.
+    const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
     // Internet search off: online runs ask first. Hidden fields are not sent, so they do not trigger the question.
     confirming.current = true;
     const allowed = await guard.confirm(networkUses(shown, values, mod.network));
-    if (ticket.current === mine) confirming.current = false;
     if (!allowed) {
-      if (ticket.current === mine) setNetNote(t("Cancelled: internet search is off."));
+      if (ticket.current === mine) { confirming.current = false; setNetNote(t("Cancelled: internet search is off.")); }
       return;
     }
     if (ticket.current !== mine) return;
+    // Local version: what the page needs and is not installed yet is downloaded first (a dialog asks before a big one). "Not now" stops here, quietly.
+    const ready = await ensureSetup({ target: `module:${mod.id}`, inputs: payload });
+    if (ticket.current === mine) confirming.current = false;
+    if (!ready || ticket.current !== mine) return;
     setNetNote("");
     const t0 = performance.now(), started = signature;
-    // Hidden controls (for example MS/MS-only fields in EI mode) are neither sent nor validated.
-    const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
     setRun(r => ({ ...IDLE, busy: true, result: r.result, signature: r.signature }));
     try {
       const result = await runModule(mod.id, payload);

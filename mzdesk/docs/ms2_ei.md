@@ -1,6 +1,6 @@
 # EI-MS Prediction
 
-Predict the 70 eV electron-ionization spectrum of a structure (NEIMS). One ion type: [M]+•.
+Give a structure. Get its predicted 70 eV electron-ionization spectrum (NEIMS). One ion type: [M]+•.
 
 ## Inputs
 

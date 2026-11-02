@@ -617,6 +617,7 @@
   "Target conc.",
   "Target concentration",
   "Targeted Method",
+  "Targeted Method looks the compound up in PubChem and UniChem by its InChIKey or SMILES; when that fails, the sheet uses values computed locally.",
   "Task ID",
   "Term",
   "Test / dataset",

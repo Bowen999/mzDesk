@@ -7,8 +7,8 @@ the formula is the only evidence, the spectrum is used through a predicted finge
 
 The score is FRIGID's own: the Tanimoto similarity of the generated structure's fingerprint to the predicted one, 0-1 and independent of the
 other candidates. layer_score_norm = score_norm(score): linear, 0 at 0.5 and 1 at 1.0, clipped. Calibration: 18 real Quick-mode runs with the
-true formula on 18 spectra of a seeded random sample of positive-mode MassBank 2026.03 records (14 [M+H]+, 3 [M+Na]+, 1 [M+NH4]+; no CASMI
-data) and the caffeine run of tests/fixtures/frigid. Two runs gave no structure of the formula at all (a 220-peak spectrum, a sodium citrate); the
+true formula on 18 spectra of a seeded random sample of positive-mode MassBank 2026.03 records (14 [M+H]+, 3 [M+Na]+, 1 [M+NH4]+)
+and the caffeine run of tests/fixtures/frigid. Two runs gave no structure of the formula at all (a 220-peak spectrum, a sodium citrate); the
 other 17, by the score of their top candidate:
       raw score      norm          runs    top-1 is the true structure
       < 0.50         0.00             3        0
@@ -19,7 +19,7 @@ In 9 of the 17 the true structure was generated and ranked first; in the other 8
 known, mostly drug-like compounds: read the table as "a score of 0.85 or more has always been the right structure so far", not as a probability.
 The re-rank multiplies a pure FRIGID hypothesis by 0.7 on top of this.
 
-Time and memory: 34-68 s per run in the CASMI 2022 pilot (3 spectra; 17 s for caffeine on the Apple GPU), up to 80 s on a busy machine, about 5 GB; one heavy job at a time
+Time and memory: 34-68 s per run in a 3-spectrum pilot (17 s for caffeine on the Apple GPU), up to 80 s on a busy machine, about 5 GB; one heavy job at a time
 (heavy lock, shared with MS-FINDER). All real engine rules (formula check, fingerprint, device choice) are the engine's, not repeated here.
 """
 from __future__ import annotations

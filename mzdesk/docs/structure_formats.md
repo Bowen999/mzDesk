@@ -1,6 +1,6 @@
 # Structure & Formats
 
-Enter up to three structures, compare them in 2D / 3D, and export each as SMILES, InChI, InChIKey or MOL.
+Give up to three structures. Get 2D and 3D views and each structure as SMILES, InChI, InChIKey and MOL.
 
 ## Results
 

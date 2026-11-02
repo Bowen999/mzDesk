@@ -1,13 +1,9 @@
 # Fragment Pattern
 
-Find MS2 spectra by fragment, neutral-loss and precursor patterns in one uploaded file (MassQL).
+Give an mzML, mzXML or MGF file and a MassQL query. Get the MS2 spectra in the file that match the fragment, neutral-loss or precursor pattern.
 
 ## Inputs
 
-- **mzML / mzXML / MGF file (one, max 20 MB)**: Only the migrated MS2 subset is supported. Files are processed on the mzDesk server, not sent to GNPS2.
+- **mzML / mzXML / MGF file (one, max 20 MB)**: Only the MS2 part of MassQL is supported. mzDesk reads the file itself and does not send it to GNPS2.
 
 ## Results
-
-### Run notes
-
-- The page runs the migrated MS2 subset of MassQL, not the complete official implementation.

@@ -1,19 +1,22 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { BrowserRouter, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getSpec, trackView } from "./api";
 import { CrashBoundary } from "./components/CrashBoundary";
 import { LockGate } from "./components/LockGate";
+import { SetupDialog } from "./components/SetupDialog";
+import { FeedbackFromLink } from "./components/Feedback";
 import { Brand, Sidebar } from "./components/Sidebar";
 import { SidebarResizer, useSidebarWidth } from "./components/SidebarResizer";
 import { localizeSpec, useT } from "./i18n";
 import { isLockedModule, useUnlocked } from "./lock";
 import { setHostedSite } from "./network";
 import { DevBlocks } from "./pages/DevBlocks";
-import { DocsPage } from "./pages/DocsPage";
+import { DocsLayout } from "./pages/DocsPage";
 import { ModulePage } from "./pages/ModulePage";
 import { PipelinePage } from "./pages/PipelinePage";
 import { ReportsPage } from "./pages/ReportsPage";
 import { StatsPage } from "./pages/StatsPage";
+import { setLocalApp } from "./setup";
 import type { Spec } from "./types";
 
 /** "/" lands on the first module once unlocked (Modules come first in the sidebar); while locked it lands on the first open
@@ -30,11 +33,11 @@ export default function App() {
   const [err, setErr] = useState("");
   // the page list in the chosen language; `t` is a new function whenever the language or its dictionary changes, so this follows them
   const shown = useMemo(() => (spec ? localizeSpec(spec) : null), [spec, t]);
-  useEffect(() => { getSpec().then(s => { setHostedSite(!!s.hosted); setSpec(s); }).catch(e => setErr(String(e))); }, []);
+  useEffect(() => { getSpec().then(s => { setHostedSite(!!s.hosted); setLocalApp(s.hosted === false); setSpec(s); }).catch(e => setErr(String(e))); }, []);
   useEffect(() => { if (spec || err) window.mzdeskReady?.(); }, [spec, err]);     // the opening splash (index.html) leaves once the page list is here
   if (err) return <p className="page">{t("Cannot load /api/spec: {err}", { err })}</p>;
   if (!shown) return <p className="page">{t("Loading…")}</p>;
-  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><CrashBoundary><Shell spec={shown} /></CrashBoundary></BrowserRouter>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><CrashBoundary><Shell spec={shown} /></CrashBoundary><SetupDialog /><FeedbackFromLink /></BrowserRouter>;
 }
 
 /** True while the media query matches (re-renders on change). */
@@ -81,8 +84,13 @@ function Shell({ spec }: { spec: Spec }) {
     document.addEventListener("keydown", key);
     return () => document.removeEventListener("keydown", key);
   }, [drawer]);
-  return (
-    <div className={"layout sidebar-blue" + (drawer ? " drawer-open" : "") + (rail ? " sidebar-collapsed" : "")} style={{ "--sidebar-w": `${rail ? 64 : width}px` } as CSSProperties}>
+  // the Docs take the whole window; the app stays mounted underneath (hidden), so open pages keep their inputs and results
+  const inDocs = pathname === "/docs" || pathname.startsWith("/docs/");
+  const lastAppPath = useRef("/");
+  if (!inDocs) lastAppPath.current = pathname;
+  return (<>
+    {inDocs && <DocsLayout spec={spec} backTo={lastAppPath.current} />}
+    <div className={"layout sidebar-blue" + (drawer ? " drawer-open" : "") + (rail ? " sidebar-collapsed" : "")} style={{ "--sidebar-w": `${rail ? 64 : width}px`, ...(inDocs ? { display: "none" } : null) } as CSSProperties}>
       <header className="topbar">
         <button type="button" className="menu-btn" aria-label={t("Open navigation")} aria-expanded={drawer} aria-controls="app-nav" onClick={() => setDrawer(true)}>
           <span aria-hidden="true" /><span aria-hidden="true" /><span aria-hidden="true" />
@@ -99,7 +107,7 @@ function Shell({ spec }: { spec: Spec }) {
           <Route path="/" element={<Home spec={spec} />} />
           <Route path="/pipelines/:id" element={activePipeline ? null : <p className="page">{t("Unknown pipeline.")}</p>} />
           <Route path="/modules/:id" element={activeModule ? null : <p className="page">{t("Unknown module.")}</p>} />
-          <Route path="/docs/:id" element={<DocsPage spec={spec} />} />
+          <Route path="/docs/*" element={null} />
           {/* hidden dev page: every generic output block with sample data; not in the sidebar */}
           <Route path="/dev/blocks" element={<DevBlocks />} />
           {/* usage statistics: not in the sidebar; its own password check runs on the server */}
@@ -118,5 +126,5 @@ function Shell({ spec }: { spec: Spec }) {
           </div>))}
       </main>
     </div>
-  );
+  </>);
 }

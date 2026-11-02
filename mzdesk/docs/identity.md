@@ -1,6 +1,6 @@
 # Identity
 
-Who is this compound: names, database IDs, synonyms, classification and background.
+Give a compound. Get its names, database IDs, synonyms, classification and background.
 
 ## Results
 
@@ -32,10 +32,9 @@ Who is this compound: names, database IDs, synonyms, classification and backgrou
 
 ### GHS safety
 
-- Reporter-specific GHS classifications from PubChem. Reports can differ by jurisdiction, impurities and additives; this is not a safety data sheet.
+- Reporter-specific GHS classifications from PubChem. Reports can differ by jurisdiction, impurities and additives.
 
 ### Run notes
 
-- Human-associated means an HMDB metabolite record exists. This alone does not prove endogenous biosynthesis.
-- Vendor purity is not standardised: verify it with each vendor.
+- Human-associated means an HMDB metabolite record exists.
 - When no exact stereoisomer matches, UniChem IDs are matched on the first InChIKey block (connectivity only) and may belong to a stereoisomer.

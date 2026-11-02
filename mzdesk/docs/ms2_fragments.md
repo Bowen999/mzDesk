@@ -1,6 +1,6 @@
 # Fragment Explanation
 
-Which peaks the candidate structure explains, and with which fragment (MetFrag).
+Give a candidate structure and an MS2 spectrum. Get the peaks the structure explains and the fragment behind each (MetFrag).
 
 ## Inputs
 

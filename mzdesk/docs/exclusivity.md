@@ -1,6 +1,6 @@
 # Alternative Explanations
 
-Is there another explanation: same formula, isobaric interference, isomers.
+Give a compound or formula and a precursor m/z. Get same-formula compounds, isobaric interferences and isomers. The isomer check also needs an MS2 spectrum.
 
 ## Inputs
 
@@ -22,12 +22,11 @@ Is there another explanation: same formula, isobaric interference, isomers.
 - Compounds with a different formula whose m/z falls within the tolerance at the chosen adduct, in PubChem's copies of the selected databases; one row per formula, closest first, at most 50.
 - Exact m/z and Δ ppm use the compound's closest adduct. Same-formula hits are in the table above, not here.
 - At most 100 compounds per database are examined, so a crowded m/z window is not exhaustive.
-- Different formula, same m/z within tolerance
 
 ### Isomers
 
 - PubChem same-formula candidates, independent of the Databases field: at most its first 100 CIDs are retrieved, and at most 9 other usable connectivities are compared with your compound. The run reports truncation; the set is not exhaustive. Structures with the same connectivity are collapsed, so stereoisomers are not assessed.
-- Distinguishable: MetFrag predicts an observed peak for your compound but not the isomer (local in-silico fragmentation, tree depth 2). This is model-dependent and does not establish a unique identity; not-scored candidates are not ruled out. Requires Java and mzdesk/lib/MetFragCommandLine-2.5.2.jar; the comparison is limited to 120 seconds.
+- Distinguishable: MetFrag predicts an observed peak for your compound but not the isomer (local in-silico fragmentation, tree depth 2). This is model-dependent and does not establish a unique identity; not-scored candidates are not ruled out. Needs Java (the local install includes one). The comparison is limited to 120 seconds.
 - Peaks: at least 1 % of the base peak, without the precursor and its isotope peaks; a distinguishing peak must be at least 5 %. Explained peaks: how many of those peaks the structure explains · their share of the intensity.
 - For structures recognised as lipids this check is skipped: conventional MS/MS usually cannot reliably determine C=C or sn-positions; specific methods or additional evidence may distinguish them.
 - Fragments: View opens that structure with the peaks MetFrag explains for it, each fragment in its own colour on the structure and in the spectrum. It is computed when you click (a few seconds, with a progress bar), with the same peaks and tolerance as this table. Where a fragment fits several places on the structure, one is drawn and the card says how many others fit equally well.
@@ -39,9 +38,4 @@ Is there another explanation: same formula, isobaric interference, isomers.
 
 ### Run notes
 
-- The PubChem same-formula search is not exhaustive: structures that were not tested are not ruled out. A prediction that the compound can be distinguished from the tested isomers is not a unique identification.
-- Predicted MetFrag fragments are model-dependent, not proof of identity. Peaks ≥ 1 % of the base peak are considered and distinguishing peaks must be ≥ 5 %; MetFrag runs at depth 2 with a relative tolerance of 0 ppm.
-- Records with an already-seen connectivity are not compared separately, so stereoisomers are not assessed.
-- PubChem structures that are unavailable or unusable, and candidates MetFrag could not score, are not ruled out. The same holds when the PubChem candidate search fails or could not run.
-- The isomer check is skipped for lipids: conventional MS/MS usually cannot reliably determine C=C double-bond or sn-positions. Specific methods or additional evidence may distinguish them.
-- An isomer check holds only for the candidates that were considered; an isomer outside this set is not ruled out.
+- PubChem structures that are unavailable or unusable, and candidates MetFrag could not score, are not ruled out. The same holds when the PubChem search fails.

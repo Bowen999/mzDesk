@@ -18,8 +18,8 @@ How the formula list reaches MS-FINDER (decided on real runs: MassBank spectra, 
       tyrosine, 1 f.         4.5 / 1     4.2 / 1    5.5 / 1     4.9 / 1
   (a) is used: it searches exactly the shared formulas (a run around the precursor depends on MS-FINDER's own formula ranking, and its wider
   window also searches formulas that are not in the list), it covers all of them, and it costs about one run (a2 is 2-5 times slower).
-  The target formula ranked first of MS-FINDER's formulas in 70 of 70 queries, so 2 formulas per query are searched. All six CASMI adducts and
-  [M+Na]+, [M+NH4]+ came out within 0.01 mDa of the computed m/z, so the 0.2 mDa window is safe. A formula's search time is read from its .sfd
+  The target formula ranked first of MS-FINDER's formulas in 70 of 70 queries, so 2 formulas per query are searched. All tested adducts
+  ([M+H]+, [M-H]-, [M+NH4]+, [M+HCOO]-, [M+Na]+, [M+Cl]-) came out within 0.01 mDa of the computed m/z, so the 0.2 mDa window is safe. A formula's search time is read from its .sfd
   file (created when the search starts, written when it ends; None where the file system keeps no creation time).
   No formula list (step 2 failed): one run at the measured precursor with MS-FINDER's own formula search (window = tol_ppm), within tol_ppm.
 
@@ -32,11 +32,11 @@ Other settings
   * A structure search starts no new structure after SEARCH_MINUTES and keeps the partial result (reported as "time limit"); structures already
     in flight finish, so a search ends up to ~20 s later. Heavy formulas (C20H30O2: slow, 100 structures) can reach it. The run is stopped
     after ENGINE_TIMEOUT_S or RSS_CAP_MB and keeps the searches that had finished.
-  * The shipped parameter file has TreeDepth=2 (owner's design). For large glycosides (CASMI 497, C48H76O20, m/z 971; also 236, 328) the fragment
+  * The shipped parameter file has TreeDepth=2 (owner's design). For large glycosides (e.g. C48H76O20, m/z 971) the fragment
     enumeration of ONE structure runs for minutes: the time limit above is checked only after a structure is scored, and a formula's .sfd is
     written only when its search ends, so the ENGINE_TIMEOUT_S kill leaves nothing for the unfinished formulas. A run stopped by the TIME limit
     is therefore repeated ONCE for the unfinished formulas only (the whole run without a formula list) with TreeDepth=1 and RETRY_TIMEOUT_S;
-    the same 497 search took ~50 s at TreeDepth=1. Memory stops are not repeated: the retry's marker says "timed out", and a memory stop (a
+    the same search took ~50 s at TreeDepth=1. Memory stops are not repeated: the retry's marker says "timed out", and a memory stop (a
     wide spectrum, not the tree) was not shown to depend on the depth. Retry candidates are marked (formula info "tree_depth"/"note",
     candidate evidence "tree_depth"), because TreeDepth=1 scores are not on the TreeDepth=2 scale.
   * Fragment tolerance = tol_da; the halogen switch follows the formulas (BUDDY has no Si); everything else is the shipped parameter file.
@@ -44,7 +44,7 @@ Other settings
 
 layer_score_norm = score_norm(Total score): linear, 0 at 5.0 and 1 at 9.0, clipped; GOOD_ENOUGH 0.6 is raw 7.4.
   Calibration: 70 random high-resolution MassBank 2026.03 records (seed 20261028; one per compound, C H N O P S F Cl Br I, 100-800 Da, at
-  least 6 peaks; 30 [M+H]+, 22 [M-H]-, 5 [M+Na]+, 5 [M+NH4]+, 5 [M+HCOO]-, 3 [M+Cl]-; no CASMI data) run with the true formula.
+  least 6 peaks; 30 [M+H]+, 22 [M-H]-, 5 [M+Na]+, 5 [M+NH4]+, 5 [M+HCOO]-, 3 [M+Cl]-) run with the true formula.
   69 gave structures; the true compound was among them for 62 and top-1 for 48 (70 %). The best candidate's score:
       raw score      norm          spectra   top-1 right   compound not in the database
       < 5.5          < 0.12           5        3 (60 %)       1

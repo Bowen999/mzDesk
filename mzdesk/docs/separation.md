@@ -1,6 +1,6 @@
 # Separation
 
-Which column, and what charge the molecule carries at each pH (MolGpKa pKa prediction).
+Give a compound and a mobile-phase pH. Get the charge at that pH, logD and suitable separation modes (pKa from MolGpKa).
 
 ## Results
 

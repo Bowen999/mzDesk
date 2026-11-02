@@ -44,6 +44,26 @@ export const getJob = (jobId: string) => json<Job>(`${BASE}api/pipelines/jobs/${
 export const startFragments = (body: unknown) => post<{ job_id: string; status: string }>(`${BASE}api/fragments/run`, body);
 export const getFragmentJob = (jobId: string) => json<FragmentJob>(`${BASE}api/fragments/jobs/${jobId}`);
 
+/** The local version only (mzdesk/api/local.py): first-use downloads ("components") and the update check. See setup.ts. */
+export type LocalComponent = { id: string; title: string; size: string; installed: boolean; supported: boolean; ask: boolean; note: string };
+export type SetupMissing = { id: string; title: string; size: string; ask: boolean; why: string };
+export type SetupBlocked = { id: string; title: string; message: string; link: string | null };
+export type SetupUnsupported = { id: string; title: string; message: string };
+export type SetupNeeds = { missing: SetupMissing[]; blocked: SetupBlocked[]; unsupported: SetupUnsupported[] };
+export type SetupJobComponent = { id: string; title: string; status: "waiting" | "running" | "done" | "error"; detail: string };
+export type SetupJob = {
+  status: "running" | "done" | "error" | "cancelled"; current: string | null; elapsed_s: number;
+  components: SetupJobComponent[]; log: string[]; error: string;
+};
+export type UpdateInfo = { current: string; latest: string | null; newer: boolean; released: string | null; notes: string; command: string; checked_at: string | null };
+export const getLocalStatus = () => json<{ local: boolean; platform: string; components: LocalComponent[] }>(`${BASE}api/local/status`);
+/** What a Run needs before it can start. `target` is "module:<id>" or "workflow:<id>"; `inputs` the form values the run sends. */
+export const getSetupNeeds = (target: string, inputs: unknown) => post<SetupNeeds>(`${BASE}api/local/needs`, { target, inputs });
+export const startInstall = (ids: string[]) => post<{ job_id: string }>(`${BASE}api/local/install`, { ids });
+export const getInstallJob = (jobId: string) => json<SetupJob>(`${BASE}api/local/jobs/${jobId}`);
+export const cancelInstall = (jobId: string) => post<{ ok: boolean }>(`${BASE}api/local/jobs/${jobId}/cancel`, {});
+export const getUpdate = () => json<UpdateInfo>(`${BASE}api/update`);
+
 /** Page view beacon for the stats page (fire and forget; never shows an error). */
 export function trackView(path: string) {
   try {

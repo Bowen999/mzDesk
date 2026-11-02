@@ -1,6 +1,6 @@
 # Dataset Finder
 
-Find public datasets by sample metadata and ion polarity (GNPS2 Pan-ReDU).
+Give sample metadata and a polarity. Get the public datasets that match (GNPS2 Pan-ReDU).
 
 ## Inputs
 

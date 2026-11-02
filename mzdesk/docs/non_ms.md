@@ -1,6 +1,6 @@
 # Non-MS Detection
 
-Can it be measured without MS: UV chromophore, fluorescence, or universal detectors (CAD / ELSD / RI). Rule-based.
+Give a compound. Get how well UV, fluorescence and universal detectors (CAD / ELSD / RI) suit it. Rule-based.
 
 ## Results
 
@@ -24,4 +24,3 @@ Can it be measured without MS: UV chromophore, fluorescence, or universal detect
 - CAD and ELSD need a volatile mobile phase: formic or acetic acid, ammonium formate or acetate, no phosphate.
 - A possible native fluorescence should be checked with a standard.
 - The ELSD response is non-linear and less sensitive than CAD.
-- When a strong chromophore is present, UV or FLD is far more sensitive than RI.

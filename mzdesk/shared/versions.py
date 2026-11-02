@@ -148,8 +148,12 @@ def _mono_version():
 
 @lru_cache(maxsize=1)
 def _java_version():
-    """Version of the Java that runs MetFrag, or None."""
+    """Version of the Java that runs MetFrag (java on PATH, else the one inside the jdk4py package), or None."""
     out = _run(["java", "-version"], RUNTIME_TIMEOUT_S) if shutil.which("java") else None
+    if not (out and out[0] == 0):                        # no usable java on PATH (macOS has a stub that only complains): the one in jdk4py
+        from mzdesk.local.paths import find_java
+        bundled = find_java()
+        out = _run([bundled, "-version"], RUNTIME_TIMEOUT_S) if bundled else None
     found = re.search(r'version "([^"]+)"', out[1]) if out and out[0] == 0 else None
     return found.group(1) if found else None
 

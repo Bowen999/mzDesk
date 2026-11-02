@@ -14,7 +14,9 @@ pyopenms>=3.1
 # Optional: enable MS2DeepScore / Spec2Vec deep-learning scores
 gensim>=4.3
 ms2deepscore>=2.0
-# mzdesk/ms2: MetFrag fragment annotation shells out to the bundled JAR in mzdesk/lib/; requires a Java 8+ runtime on PATH.
+# mzdesk/ms2: MetFrag fragment annotation shells out to the bundled JAR in mzdesk/lib/; requires a Java 8+ runtime (`java` on PATH, else the one from jdk4py below).
+# mzdesk/ms2: jdk4py ships a JRE inside the wheel (macOS x86_64/arm64, Linux x86_64/aarch64, Windows amd64), so the local install needs no Java of its own; MetFrag finds Java through it when there is none on PATH.
+jdk4py
 # mzdesk/ms1: BUDDY molecular formula annotation
 msbuddy>=0.3
 # mzdesk/ms1: isotope fine structure (Theoretical page, Mass search isotope filter); imported lazily

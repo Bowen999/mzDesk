@@ -1,6 +1,6 @@
 # Similarity
 
-How alike are two spectra: 14 classic scores, optional deep-learning scores, mirror plot.
+Give two MS2 spectra. Get 14 classic similarity scores, optional deep-learning scores and a mirror plot.
 
 ## Inputs
 

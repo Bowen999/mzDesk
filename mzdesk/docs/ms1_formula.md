@@ -1,6 +1,6 @@
 # Formula Annotation
 
-Rank molecular formulas for the precursor from its MS1 isotopes and MS2 (BUDDY).
+Give a precursor m/z. Add an MS1 isotope pattern and an MS2 spectrum to sharpen the ranking. Get ranked molecular formulas (BUDDY).
 
 ## Inputs
 

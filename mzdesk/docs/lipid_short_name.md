@@ -1,6 +1,6 @@
 # Lipid Short Name
 
-A lipid shorthand name in; LIPID+ and LIPID MAPS names and an illustrative structure out.
+Give a lipid shorthand name. Get its LIPID+ and LIPID MAPS names and an illustrative structure.
 
 ## Results
 

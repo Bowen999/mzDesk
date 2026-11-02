@@ -2,6 +2,11 @@ import { createPortal } from "react-dom";
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from "react";
 import { ApiError, sendFeedback } from "../api";
 import { t, useT } from "../i18n";
+import { isLocalApp } from "../setup";
+
+/** The local version keeps no line to the maintainer (its reports stay on the computer), so its bug button opens this page: mzdesk.com
+ *  opens the feedback dialog when the address has ?feedback (FeedbackFromLink). */
+export const SITE_FEEDBACK_URL = "https://mzdesk.com/?feedback";
 
 /** Simple beetle: body, head, antennae and six legs. Kept to one stroke width so it reads at 16 px. */
 export function BugIcon({ size = 17, className = "" }: { size?: number; className?: string }) {
@@ -69,13 +74,21 @@ async function prepareImage(file: File): Promise<Shot> {
 /**
  * "Send feedback" in the sidebar footer. Opens a dialog with a message box and up to three screenshots
  * (file picker, drag & drop, or paste). The dialog is portalled to <body> so the scrolling sidebar
- * cannot clip it; Esc, the X and the backdrop close it.
+ * cannot clip it; Esc, the X and the backdrop close it. In the local version it opens the dialog of mzdesk.com in a new tab instead.
  */
 export function FeedbackButton({ rail = false }: { rail?: boolean }) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const close = useCallback(() => setOpen(false), []);
+  if (isLocalApp()) {
+    const label = t("Send feedback on mzdesk.com");
+    return (
+      <a className="feedback-btn" href={SITE_FEEDBACK_URL} target="_blank" rel="noopener noreferrer" aria-label={label}
+        data-label={rail ? undefined : label} title={rail ? label : undefined}>
+        <BugIcon />
+      </a>);
+  }
   return (
     <>
       <button ref={trigger} type="button" className="feedback-btn" aria-label={t("Send feedback")}
@@ -86,6 +99,20 @@ export function FeedbackButton({ rail = false }: { rail?: boolean }) {
       {open && <FeedbackDialog onClose={close} />}
     </>
   );
+}
+
+/** mzdesk.com/?feedback (the bug button of the local version links here): opens the feedback dialog once, then drops ?feedback from the
+ *  address so a reload does not open it again. Nothing on the local version. */
+export function FeedbackFromLink() {
+  const [open, setOpen] = useState(() => !isLocalApp() && new URLSearchParams(window.location.search).has("feedback"));
+  useEffect(() => {
+    if (!open) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("feedback");
+    window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  return open ? <FeedbackDialog onClose={close} /> : null;
 }
 
 function FeedbackDialog({ onClose }: { onClose: () => void }) {

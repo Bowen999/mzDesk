@@ -22,6 +22,8 @@ from mzdesk import __version__
 from mzdesk.annotation import pipeline as annotation_pipeline
 from mzdesk.api import admin, reports, security
 from mzdesk.api import feedback as feedback_api
+from mzdesk.api import local as local_api
+from mzdesk.api import release as release_api
 from mzdesk.api import fragments as fragments_api
 from mzdesk.api.request_limits import RequestLimit
 from mzdesk.api import stats, verdicts
@@ -47,6 +49,8 @@ app.add_middleware(RequestLimit)
 app.add_middleware(security.SecurityHeaders)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
 app.include_router(fragments_api.router)
+app.include_router(local_api.router)        # the local version: first-use downloads, update notice (mzdesk/local/)
+app.include_router(release_api.router)      # mzdesk.com only: install scripts, version.json, the release wheel
 reports.install_log_handler()                           # log.exception(...) anywhere in mzdesk also files a crash report
 _modules = {m["id"]: m for m in MODULES if not is_deferred(m)}     # deferred modules (DMPK, ICP-MS, MRM) answer 404
 _pipelines = {p["id"]: p for p in PIPELINES}
@@ -69,15 +73,35 @@ def get_versions():
     return versions.environment()
 
 
+# The general Docs pages (Getting Started, Concepts, Reference), served next to the module and workflow notes. Keep equal to GENERAL_PAGES
+# in web/src/docs/outline.ts (web/tests/docs-outline.test.mjs checks it).
+GENERAL_PAGES = (
+    "overview", "quick-start", "local-version",
+    "workflows-and-modules", "inputs", "reading-results", "session-report", "privacy",
+    "cli", "faq", "changelog", "licenses", "feedback",
+)
+_DOCS_IMG_CHARS = frozenset("abcdefghijklmnopqrstuvwxyz0123456789-")       # a figure name is [a-z0-9-]+
+
+
 @app.get("/api/docs/{page_id}")
 def get_docs(page_id: str):
-    """The long notes of one page (module or workflow): mzdesk/docs/<id>.md, drawn by the frontend's /docs/<id> page."""
-    if page_id not in _modules and page_id not in _pipelines:
+    """The text of one Docs page: mzdesk/docs/<id>.md for a general page, a module or a workflow, drawn by the frontend's /docs/<id> page."""
+    if page_id not in GENERAL_PAGES and page_id not in _modules and page_id not in _pipelines:
         raise HTTPException(404, "unknown page")
     path = DOCS / f"{page_id}.md"
     if not path.is_file():
-        raise HTTPException(404, "no notes for this page")
+        raise HTTPException(404, "no text for this page")
     return {"id": page_id, "markdown": path.read_text(encoding="utf-8")}
+
+
+@app.get("/api/docs-img/{name}")
+def get_docs_img(name: str):
+    """A figure of the Docs: mzdesk/docs/img/<name>.svg (the frontend draws it inline). Scripts cannot run if the file is opened on its own."""
+    path = DOCS / "img" / f"{name}.svg"
+    if not name or not set(name) <= _DOCS_IMG_CHARS or not path.is_file():
+        raise HTTPException(404, "no such figure")
+    return Response(path.read_bytes(), media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=300", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
 
 @app.post("/api/modules/{module_id}/run")

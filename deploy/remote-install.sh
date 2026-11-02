@@ -46,8 +46,27 @@ echo "   python packages"
 /opt/mzdesk/.venv/bin/python -m pip install -q --disable-pip-version-check -r "$STAGE/requirements-server.txt"
 chown -R root:mzdesk /opt/mzdesk && chmod -R u=rwX,g=rX,o= /opt/mzdesk
 systemctl restart mzdesk
+up=0
 for i in $(seq 1 20); do
-  if curl -fsS -o /dev/null http://127.0.0.1:8599/api/health; then echo "   mzdesk is up ($(systemctl is-active mzdesk))"; exit 0; fi
+  if curl -fsS -o /dev/null http://127.0.0.1:8599/api/health; then echo "   mzdesk is up ($(systemctl is-active mzdesk))"; up=1; break; fi
   sleep 1
 done
-echo "!! mzdesk did not answer in 20 s"; journalctl -u mzdesk -n 30 --no-pager; exit 1
+if [ "$up" = 0 ]; then echo "!! mzdesk did not answer in 20 s"; journalctl -u mzdesk -n 30 --no-pager; exit 1; fi
+
+# Release for the local version (staged by deploy.sh). Only now, so version.json never points at a site that is not up.
+# root owns the files and the app (user mzdesk) only reads them: a taken-over app cannot swap the wheel people install.
+# Wheel and checksum first, version.json last and in one step (mv), so a reader sees the old release or the new one, never half of it.
+REL=/var/lib/mzdesk/releases
+if [ -f "$STAGE/release/version.json" ]; then
+  echo "   release $(sed -n 's/.*"version": *"\([^"]*\)".*/\1/p' "$STAGE/release/version.json") -> $REL"
+  install -d -o root -g mzdesk -m 750 "$REL"
+  for f in "$STAGE"/release/mzdesk-*-py3-none-any.whl "$STAGE"/release/mzdesk-*-py3-none-any.whl.sha256; do
+    install -o root -g mzdesk -m 640 "$f" "$REL/"
+  done
+  install -o root -g mzdesk -m 640 "$STAGE/release/version.json" "$REL/.version.json.new"
+  mv -f "$REL/.version.json.new" "$REL/version.json"
+  # keep the newest five wheels (and their checksum files)
+  ls -1 "$REL"/mzdesk-*-py3-none-any.whl | sort -V | head -n -5 | while read -r old; do rm -f "$old" "$old.sha256"; done
+  rm -rf "$STAGE/release"
+  curl -fsS -o /dev/null http://127.0.0.1:8599/version.json && echo "   /version.json is served"
+fi

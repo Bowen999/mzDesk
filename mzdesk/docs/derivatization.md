@@ -1,6 +1,6 @@
 # Derivatization
 
-Reactive groups and the derivatized molecule for GC-MS, CIL LC-MS or LC-UV / FLD.
+Give a compound and the reagents. Get the reactive groups and the derivative's formula and mass, for GC-MS, CIL LC-MS or LC-UV / FLD.
 
 ## Results
 

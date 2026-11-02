@@ -16,6 +16,7 @@ import { StructureProvider } from "../components/StructureHover";
 import { WorkflowProgress } from "../components/WorkflowProgress";
 import { networkUses } from "../network";
 import { dropRun, recordRun } from "../report/log";
+import { ensureSetup } from "../setup";
 import type { AnnotationResult, Field, Job, JobStep, Pipeline, Spec, WorkflowResult } from "../types";
 
 const POLL_MS = 1500;
@@ -152,20 +153,23 @@ export function PipelinePage({ id, spec, active }: { id: string; spec: Spec; act
       return;
     }
     const mine = ++ticket.current;
+    const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
     // Internet search off: a workflow that would fetch a USI asks first.
     confirming.current = true;
-    const allowed = await guard.confirm(networkUses(shown, values));
-    if (ticket.current === mine) confirming.current = false;
+    const allowed = await guard.confirm(networkUses(shown, values, pipe.network));
     if (!allowed) {
-      if (ticket.current === mine) setNetNote(t("Cancelled: internet search is off."));
+      if (ticket.current === mine) { confirming.current = false; setNetNote(t("Cancelled: internet search is off.")); }
       return;
     }
     if (ticket.current !== mine) return;
+    // Local version: what the workflow needs and is not installed yet is downloaded first (a dialog asks before a big one). "Not now" stops here, quietly.
+    const ready = await ensureSetup({ target: `workflow:${pipe.id}`, inputs: payload });
+    if (ticket.current === mine) confirming.current = false;
+    if (!ready || ticket.current !== mine) return;
     setNetNote("");
     setBusy(true); setHasStartedJob(false); setError(""); setErrors({}); setJob(null); dropRun("workflow", pipe.id);
     const t0 = performance.now();
     try {
-      const payload = Object.fromEntries(shown.filter(f => f.id).map(f => [f.id!, values[f.id!]]));
       setRequestedAdduct(requestedAdductOf(pipe.id, payload));
       const { job_id } = await startPipeline(pipe.id, payload);
       if (ticket.current !== mine) return;

@@ -1,16 +1,12 @@
 # Spectrum in Which Set
 
-Search a spectrum in public datasets and the GNPS reference library (GNPS2 fastMASST).
+Give an MS2 spectrum. Get the public datasets and GNPS reference-library entries that match it (GNPS2 fastMASST).
 
 ## Inputs
 
 - **Background**: Choose the background for your ion mode. The default includes positive, alternating and unknown polarity but excludes negative and GC/EI.
 
 ## Results
-
-### Top reference-library names
-
-- Names are grouped as in the original script; a library match is not proof of structure identity.
 
 ### Top suspect names
 

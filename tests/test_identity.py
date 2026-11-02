@@ -121,6 +121,23 @@ def test_cache_roundtrip(tmp_path):
     assert R._cache_get("k") == "v"
 
 
+def test_cache_purges_expired_rows(monkeypatch):
+    """Rows older than CACHE_TTL are deleted at the next write; fresh rows stay."""
+    import sqlite3
+    monkeypatch.setattr(R, "_last_purge", 0.0)
+    R._cache_put("fresh", "v")
+    con = sqlite3.connect(str(R._cache_path()))
+    with con:
+        con.execute("INSERT OR REPLACE INTO cache VALUES (?,?,?)", ("old", "v", R.time.time() - R.CACHE_TTL - 60))
+    con.close()
+    monkeypatch.setattr(R, "_last_purge", 0.0)           # the hourly purge is due again
+    R._cache_put("new", "v")
+    con = sqlite3.connect(str(R._cache_path()))
+    keys = {k for (k,) in con.execute("SELECT k FROM cache")}
+    con.close()
+    assert "old" not in keys and {"fresh", "new"} <= keys
+
+
 def test_cache_unwritable(monkeypatch):
     monkeypatch.setenv("MZDESK_CACHE_DIR", "/proc/nonexistent/x")
     R._cache_put("k", "v")

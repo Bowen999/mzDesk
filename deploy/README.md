@@ -23,6 +23,34 @@ Logs: `journalctl -u mzdesk -f`. Restart: `systemctl restart mzdesk`.
 The unit sets `MZDESK_HOSTED=1` (this is the public website): `/api/spec` then says `hosted`, the sidebar drops the "Internet search" switch and online lookups
 run without asking, since what people type reaches this server anyway. The local version leaves it unset. Read at start, so restart after changing it.
 
+## Releases and the install command
+
+People install the local version with one command (the install page of the Docs shows it):
+
+- macOS / Linux: `curl -fsSL https://mzdesk.com/install.sh | sh`
+- Windows (PowerShell): `irm https://mzdesk.com/install.ps1 | iex`
+
+The app serves four things when `MZDESK_HOSTED=1` (`mzdesk/api/release.py`): `/install.sh` and `/install.ps1` (the files in `mzdesk/install/`),
+`/version.json`, and `/download/mzdesk-X.Y.Z-py3-none-any.whl` (the wheel, plus its `.sha256` file). The last two are read from
+`/var/lib/mzdesk/releases` (`MZDESK_RELEASES_DIR`) at each request, so a release is only a set of files; no restart.
+The scripts check the wheel against the `sha256` in `version.json`; `mzdesk update` on a user's machine runs the same script again.
+
+`deploy/build-release.sh` builds `dist/release/` from this checkout (the version is `mzdesk/__init__.py`): the wheel, its checksum and `version.json`.
+It needs the built frontend (`cd web && npm run build`) and the MetFrag jar, and it looks inside the wheel before writing anything: the pages, docs,
+figures, install scripts, jar and data must be there; benchmark data, tests, secrets and databases must not; large files are listed.
+`deploy/deploy.sh` runs it (with the frontend it just built), uploads `dist/release/` to `/root/mzdesk-deploy/release/`, and `remote-install.sh`
+publishes it **after** the site answers: the wheel and checksum first, then `version.json` in one `mv`, so the old release stays whole until the new one is complete.
+The folder `/var/lib/mzdesk/releases` belongs to root (group `mzdesk`, read only for the app), and the newest five wheels are kept, so
+`curl -fsSL https://mzdesk.com/install.sh | MZDESK_VERSION=0.5.3 sh` still installs an older one.
+
+A release is a version bump: change `__version__`, deploy. Run `deploy/build-release.sh` alone to test the wheel (nothing is uploaded). With
+`MZDESK_RELEASE_ALLOW_STUB_STATIC=1` it builds without a frontend, for tests of the installer only; `deploy.sh` refuses that setting.
+
+nginx: `/download/` has its own limit zone (`mzdesk_download`, 6 per minute per address, burst 6), no response buffering and 15 minutes between two
+writes to a slow client; the install scripts and `version.json` fall under the normal page limit. The app sends the wheel with `Content-Encoding: identity`
+so that its gzip middleware leaves the already compressed file alone. After the first deploy, check from another machine:
+`curl -fsSL https://mzdesk.com/install.sh | head -3` and `curl -s https://mzdesk.com/version.json`.
+
 ## The address (done once)
 
 mzdesk.com is registered at Porkbun. At Porkbun, under DNS for mzdesk.com, the records are:

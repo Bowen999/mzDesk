@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import type { Field, FieldCondition } from "../types";
 import { t, useT } from "../i18n";
 import { countPeaks } from "../peakCount";
+import { ensureSetup } from "../setup";
 
 // Ketcher 很大，只在选 Draw 时才下载
 const StructureEditor = lazy(() => import("./StructureEditor"));
@@ -147,6 +148,12 @@ export function FieldInput({ field, value, onChange, error }: P) {
     "aria-describedby": help ? `${inputId}-help` : undefined,
   };
 
+  // Ticking a box whose option needs components (spec `needs`): download what is missing first (setup.ts); "Not now" leaves it unticked.
+  const tick = (on: boolean) => {
+    if (!on || !f.needs?.length) { onChange(on); return; }
+    void ensureSetup({ ids: f.needs }).then(ok => { if (ok) onChange(true); });
+  };
+
   switch (f.type) {
     case "heading": return <h4 className="field-heading">{f.label}</h4>;
     case "structure": return <StructureInput field={f} value={value} onChange={onChange} error={error} />;
@@ -215,7 +222,7 @@ export function FieldInput({ field, value, onChange, error }: P) {
       </div>);
     case "checkbox": return (
       <label className="field check" htmlFor={inputId}>
-        <span className="check-line"><input {...common} type="checkbox" checked={!!value} onChange={e => onChange(e.target.checked)} /> {f.label}{required && <Req />}</span>
+        <span className="check-line"><input {...common} type="checkbox" checked={!!value} onChange={e => tick(e.target.checked)} /> {f.label}{required && <Req />}</span>
         <Note text={help} error={error} id={`${inputId}-help`} />
       </label>);
     case "slider": return (

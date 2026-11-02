@@ -5,7 +5,7 @@
   "kinds": {
     "group": { "text": ["title"] },
     "module": { "text": ["title", "one_liner", "network"], "children": { "inputs": "field", "outputs": "block" } },
-    "pipeline": { "text": ["title", "one_liner"], "children": { "inputs": "field", "examples": "example" } },
+    "pipeline": { "text": ["title", "one_liner", "network"], "children": { "inputs": "field", "examples": "example" } },
     "example": { "text": ["label"] },
     "field": { "text": ["label", "help", "placeholder", "auto_label", "caption", "columns"], "lookup": ["section", "options"] },
     "block": { "text": ["title", "label", "caption", "help", "columns"], "keyed": ["column_help"], "children": { "items": "item" } },

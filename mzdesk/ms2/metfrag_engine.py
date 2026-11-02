@@ -22,6 +22,7 @@ from rdkit.Chem import Descriptors, rdMolDescriptors
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
+from mzdesk.local import paths
 from mzdesk.shared import depict, ms2_plot
 from mzdesk.shared.spectrum import parse_spectrum  # noqa: F401  re-exported for callers of the engine
 
@@ -387,9 +388,12 @@ def run_metfrag(smiles, peaks, adduct, precursor_mz, tree_depth, tol_abs, tol_pp
         with open(param_path, "w") as f:
             f.write("\n".join(params))
         tick(0.06, "MetFrag is fragmenting the structure")
+        java = paths.find_java()          # `java` on PATH, else the runtime of the jdk4py package
+        if java is None:
+            raise MetFragError("Java was not found on PATH (and the jdk4py package is not installed) — MetFrag needs a Java 8+ runtime.")
         try:
             proc = subprocess.run(
-                ["java", "-jar", str(JAR), str(param_path)],
+                [java, "-jar", str(JAR), str(param_path)],
                 capture_output=True, text=True, timeout=timeout_s)
         except FileNotFoundError:
             raise MetFragError("Java was not found on PATH — MetFrag needs a Java 8+ runtime.") from None

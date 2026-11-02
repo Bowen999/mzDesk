@@ -1,7 +1,7 @@
 """RepoRT 准备，一次性运行：python -m mzdesk.methods.report_setup
 
 RepoRT（michaelwitting/RepoRT，数据许可 CC BY-SA 4.0）是小分子保留时间库，Known methods 页用它查"同一化合物 / 结构最相近的化合物用过什么色谱条件"。
-这里用固定提交号做稀疏克隆（git --filter=blob:none，只取每个数据集的 rtdata_canonical_success / info / metadata / gradient 四个 tsv，约 100 MB），
+这里用固定提交号做稀疏克隆（git --filter=blob:none，只取每个数据集的 rtdata_canonical_success / info / metadata / gradient 四个 tsv，约 100 MB）；没有 git 就下载该提交的 GitHub 压缩包（约 190 MB，只留同样的 tsv），
 再建一个紧凑的本地索引（report_index.npz + report_datasets.json，几十 MB），并把 LICENSE 与引用说明放在索引旁边。
 文件都放在 ~/.mzdesk/data/methods/report/（环境变量 MZDESK_REPORT_DIR 或 MZDESK_METHODS_DIR 可改目录）。数据不入库。
 电荷类别用 MolGpKa（权重已安装时，多进程，十分钟以内）；没装权重就用官能团规则，装好后用 --force 重建。
@@ -18,6 +18,7 @@ import time
 from datetime import date
 from pathlib import Path
 
+from mzdesk.local import archive, paths
 from mzdesk.methods import compound_index as ci
 from mzdesk.methods import report
 
@@ -38,15 +39,16 @@ def raw_dir():
 def _git(repo, *args, capture=False):
     """Run git in ``repo``; ``capture`` returns stdout and keeps stderr quiet (for queries that may fail)."""
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0")
-    cmd = ["git", "-C", str(repo), *args]
+    cmd = [paths.working_git() or "git", "-C", str(repo), *args]
     return subprocess.run(cmd, check=True, env=env, text=True, stdout=subprocess.PIPE if capture else None,
                           stderr=subprocess.DEVNULL if capture else None).stdout
 
 
 def fetch(repo, commit=COMMIT):
-    """Sparse, blob-less checkout of ``commit`` in ``repo``; skipped when that commit is already checked out."""
-    if shutil.which("git") is None:
-        raise SystemExit("git is needed to download RepoRT (sparse clone of github.com/michaelwitting/RepoRT). Install git and run again.")
+    """Sparse, blob-less checkout of ``commit`` in ``repo`` (about 100 MB); skipped when that commit is already checked out.
+    Without a usable git: the commit's archive from codeload.github.com instead (about 190 MB to download, the same tsv files are kept)."""
+    if paths.working_git() is None:
+        return fetch_archive(repo, commit)
     repo.mkdir(parents=True, exist_ok=True)
     if not (repo / ".git").exists():
         _git(repo, "init", "-q")
@@ -73,6 +75,19 @@ def fetch(repo, commit=COMMIT):
     head = _git(repo, "rev-parse", "HEAD", capture=True).strip()
     if head != commit:
         raise SystemExit(f"Checked out {head}, expected {commit}.")
+
+
+def fetch_archive(repo, commit=COMMIT):
+    """No git: stream the commit's tar.gz and keep only the files SPARSE names."""
+    if archive.has_commit(repo, commit):
+        print(f"RepoRT {commit[:10]} is already downloaded in {repo}")
+        return
+    print(f"Downloading RepoRT {commit[:10]} (archive, about 190 MB; only the needed tsv files are kept) into {repo} ...", flush=True)
+    try:
+        n = archive.fetch(report.REPO_URL, commit, repo, SPARSE, log=lambda text: print(text, flush=True), timeout=120)
+    except archive.ArchiveError as exc:
+        raise SystemExit(str(exc)) from None
+    print(f"{n} files kept")
 
 
 def folder_size(path):

@@ -1,6 +1,6 @@
 # Known Methods
 
-Is there a published method (pharmacopoeia, RepoRT)? If not, what do the most similar compounds use?
+Give a compound. Get its published methods (Japanese Pharmacopoeia, RepoRT), or, if there are none, the methods of the most similar compounds.
 
 ## Results
 

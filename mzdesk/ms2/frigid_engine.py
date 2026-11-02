@@ -5,7 +5,7 @@ masked diffusion language model write SMILES for that formula and fingerprint. P
 identification: the score is the Tanimoto similarity of a generated structure to the *predicted* fingerprint.
 
 How it runs: on this machine only. `python -m mzdesk.ms2.frigid_setup` builds a Python 3.10 + PyTorch environment, a pinned clone of FRIGID and the two
-checkpoints in ~/tools/frigid (MZDESK_FRIGID_DIR). A run starts the driver that ships with mzDesk (mzdesk/ms2/frigid_driver/frigid_predict.py, FRIGID's
+checkpoints in ~/.mzdesk/tools/frigid (MZDESK_FRIGID_DIR; ~/tools/frigid is used when it exists). A run starts the driver that ships with mzDesk (mzdesk/ms2/frigid_driver/frigid_predict.py, FRIGID's
 own code plus a small sub-formula assignment) with that environment's Python, in its own process group:
     <dir>/env/bin/python -I frigid_predict.py --input job.json --output result.json
 job.json / result.json sit in a fresh temp folder. The driver files are byte-for-byte the verified ones, so they find the install through the
@@ -32,10 +32,10 @@ import time
 from math import prod
 from pathlib import Path
 
+from mzdesk.local import paths
 from mzdesk.shared import heavy_lock, memguard
 
 FRIGID_COMMIT = "9a3e623007dc5771b0e4488cd8c91b7e49490a59"
-DEFAULT_DIR = Path.home() / "tools" / "frigid"
 SETUP_COMMAND = "python -m mzdesk.ms2.frigid_setup"
 HERE = Path(__file__).resolve().parent
 DRIVER = HERE / "frigid_driver" / "frigid_predict.py"
@@ -55,9 +55,15 @@ MODE_LABELS = list(MODES.values())
 
 
 def workflow_default():
-    """Whether MS/MS Annotation runs FRIGID when nobody chose: yes, unless MZDESK_ANNOTATION_FRIGID is off / 0 / no / false. The hosted server turns it
-    off (a run takes about two minutes and 3 GB of its 4 GB), the local version leaves it on; the Advanced section of the workflow can flip either."""
-    return (os.environ.get("MZDESK_ANNOTATION_FRIGID") or "on").strip().lower() not in ("off", "0", "no", "false")
+    """Whether MS/MS Annotation runs FRIGID when nobody chose: yes once FRIGID is installed, unless MZDESK_ANNOTATION_FRIGID is off / 0 / no / false.
+    The hosted server turns it off (a run takes about two minutes and 3 GB of its 4 GB); the local version leaves it unset, so the box is ticked
+    after the download and starts unticked before it (ticking it offers the download). Files only, no subprocess; the page definition asks again
+    on every /api/spec, the Advanced section of the workflow can flip either."""
+    if (os.environ.get("MZDESK_ANNOTATION_FRIGID") or "on").strip().lower() in ("off", "0", "no", "false"):
+        return False
+    return installed()
+
+
 DEFAULT_MODE = "quick"
 TIMEOUT_S = {"quick": 300, "full": 1200}
 RSS_CAP_MB = 6656               # 6.5 GB resident memory of the process tree (driver's own CPU cap: 6144 MB)
@@ -100,7 +106,8 @@ class FrigidError(RuntimeError):
 
 # ---------------------------------------------------------------- installation
 def install_dir():
-    return Path(os.environ.get("MZDESK_FRIGID_DIR") or DEFAULT_DIR).expanduser()
+    """MZDESK_FRIGID_DIR, else ~/tools/frigid if it exists, else ~/.mzdesk/tools/frigid (read at call time)."""
+    return paths.tool_folder("MZDESK_FRIGID_DIR", Path.home() / "tools" / "frigid", "frigid")
 
 
 def env_python(d=None):
@@ -156,6 +163,12 @@ def status():
             "dlm": _sized(d / "checkpoints" / "DLM.ckpt", DLM_SIZE), "mist": _sized(d / "checkpoints" / "mist_msg_aug.ckpt", MIST_SIZE),
             "tokenizer": tokenizer_file(d),
             "driver": DRIVER if DRIVER.is_file() else None, "length_model": LENGTH_MODEL if LENGTH_MODEL.is_file() and LENGTH_FEATURES.is_file() else None}
+
+
+def installed():
+    """True when De novo structure can run: every part of status() is in place (files only; starts nothing)."""
+    s = status()
+    return all(s[k] for k in ("python", "clone", "mps_patch", "safe_patch", "dlm", "mist", "tokenizer", "driver", "length_model"))
 
 
 def check_frigid():

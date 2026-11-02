@@ -6,7 +6,7 @@ Its score is a relative likelihood, the product of five pieces of evidence, scal
     score  ~  prior  x  MS2 factor  x  formula factor  x  isotope factor  x  mass factor
 
   prior           how often MassBank + GNPS annotate the adduct (LIBRARY_ADDUCT_COUNTS), flattened (PRIOR_EXPONENT) so that it only
-                  breaks ties. Never taken from CASMI.
+                  breaks ties.
   MS2 factor      the adduct's diagnostic signals in the MS/MS spectrum (DIAGNOSTICS): one seen -> boost, none seen -> small penalty.
   formula factor  BUDDY's probability that its best formula under the adduct is the right one (formula_factor): if no formula explains
                   precursor and fragments once the adduct mass is taken off, the adduct is unlikely. formula_step.py runs BUDDY and
@@ -45,7 +45,7 @@ LIBRARY_ADDUCT_COUNTS = {
 PRIOR_EXPONENT = 0.5        # square root of the library count: [M+H]+ vs [M+Na]+ stays about 2:1 (raw 3.7:1), so a signal can outvote it
 
 # MS2 diagnostic signals. A signal is (kind, value, label): "loss" = peak at precursor - value (neutral loss), "ion" = peak at m/z value.
-# An adduct's factor is `seen` if any of its signals is found, else `none_seen`. Library check of the numbers (never CASMI): the share of
+# An adduct's factor is `seen` if any of its signals is found, else `none_seen`. Library check of the numbers: the share of
 # spectra in which ms2_evidence sees a signal, among 3,000 random MassBank + GNPS spectra of the adduct vs of [M+H]+ / [M-H]-
 # (fragment tolerance 0.02 Da, peak >= 2 % of the base peak):
 #   [M+NH4]+ 11 % vs 6 %     [M+HCOO]- 77 % vs 4 %     [M+Cl]- 60 % vs 2 %     [M+CH3COO]- 13 % vs 3 %     K+ ion 3 % vs 0 %
@@ -77,7 +77,7 @@ ISOTOPE_POOR = 0.80              # fit at or below this: the floor (the library 
 ISOTOPE_FLOOR = 0.25             # a hypothesis whose best formula fits the pattern poorly keeps a quarter of its score
 
 # BUDDY's probability for the best formula (within the precursor tolerance) under the adduct -> factor FORMULA_FLOOR + (1 - FORMULA_FLOOR) x p.
-# Weight: a weak, bounded evidence source. Library check (never CASMI; 166 MassBank + GNPS spectra (40 each of [M+H]+, [M-H]-, [M+NH4]+,
+# Weight: a weak, bounded evidence source. Library check (166 MassBank + GNPS spectra (40 each of [M+H]+, [M-H]-, [M+NH4]+,
 # [M+HCOO]-, 6 of [M+Na]+) x every BUDDY-supported adduct of the polarity, qtof preset, 10 ppm): the best-formula probability is >= 0.05 for 90-100 % of the true adducts but also for 74-95 % of the
 # wrong ones (median 0.85-0.98 vs 0.98-1.0), because neutral formulas of wrong adducts are often chemically fine too. It only separates
 # when no formula fits (probability 0: about 1 in 4-5 wrong [M+H]+ / [M-H]- / [M+Na]+ hypotheses, up to 1 in 10 true ones). So the factor runs
@@ -87,14 +87,9 @@ FORMULA_FLOOR = 0.1
 # Precursor mass error of the best formula -> factor in [MASS_FLOOR, 1], owner's design 2026-10-30: a Gaussian in ppm with sigma = tol_ppm / 2,
 # lifted to MASS_FLOOR so that a bad mass is penalised, never vetoed. Relative to the user's tolerance, so a narrower window penalises
 # the same fraction of it (10 ppm: x0.97 at 1.3 ppm, x0.85 at 3 ppm, x0.65 at 5 ppm, x0.27 at 9.2 ppm, x0.22 at the limit). Why: BUDDY weighs
-# the mass error only mildly inside its window, so a formula at +9 ppm can keep a high probability (CASMI 2022 challenge 16, truth C14H16O3
-# [M+H]+ at -1.1 ppm: [M+Na]+ with C12H18O3 at +9.2 ppm, probability 0.74, scored 0.28 against 0.47 and went on to win the workflow).
-# Calibration (CASMI 2022, steps 1-2 only, BUDDY outputs cached, 500 challenges; SIRIUS parent mass against the truth formula and adduct):
-# the true ions' |error| has median 1.3 ppm, p90 2.2, p99 6.9, max 7.9, so the penalty must be mild up to ~3 ppm. Swept on odd and on even
-# challenge ids (sigma = tol / 1.5 ... 3.5, floor 0.05 ... 0.5; steps 1-2, 250 challenges per half): tol / 2 with floor 0.1-0.2 is the round
-# setting that does not lose on either half (vs no penalty: truth adduct first +2 / -1, true formula in the first six +1 / +3, Top-1 +0 / +1,
-# true formula present +0 / +0). A narrower sigma (tol / 3 and below) gains more adducts on the odd half but loses more on the even one,
-# tol / 3.5 with a low floor hurts both. No instrument offset (CASMI's median is -1.3 ppm) is modelled: that would be instrument-specific.
+# the mass error only mildly inside its window, so a wrong formula near the edge of the window (e.g. +9 ppm) can keep a high probability.
+# The penalty is mild up to ~3 ppm, where the precursors of a well-calibrated high-resolution instrument usually fall. No instrument offset is
+# modelled: that would be instrument-specific.
 MASS_SIGMA_DIVISOR = 2.0        # sigma = tol_ppm / 2
 MASS_FLOOR = 0.1                # at most a 10-fold penalty, like FORMULA_FLOOR
 

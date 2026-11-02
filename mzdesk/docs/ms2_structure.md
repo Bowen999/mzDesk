@@ -1,6 +1,6 @@
 # Structure Prediction
 
-Ranked candidate structures from MS-FINDER (offline, local structure DB). Needs Mono (python -m mzdesk.ms2.msfinder_setup).
+Give a precursor m/z and an MS2 spectrum. Get ranked candidate structures from MS-FINDER, searched in its local structure databases (offline).
 
 ## Inputs
 
@@ -27,5 +27,6 @@ Ranked candidate structures from MS-FINDER (offline, local structure DB). Needs 
 
 ### Run notes
 
-- When the local databases hold no candidate for the top formulas, the compound may simply not be in them: PubChem is not used.
+- When the local databases hold no candidate for the top formulas, nothing is returned: PubChem is not used.
 - The extended element range is for PFAS and unusual compositions.
+- In the local version, MS-FINDER and Mono are downloaded the first time a page needs them (0.6 GB).

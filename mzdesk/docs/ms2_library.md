@@ -1,12 +1,12 @@
 # Library Search
 
-Search a spectrum against MassBank and GNPS with the similarity metrics you choose.
+Give an MS/MS or EI spectrum. Get ranked matches from MassBank and GNPS, scored with the similarity metrics you choose.
 
 ## Inputs
 
 - **Precursor m/z (MS/MS only)**: Required for MS/MS unless the spectrum header carries it. Auto = any adduct; a chosen adduct must also match the library record.
 - **Fragment tolerance (Da, MS/MS only)**: Peak-matching tolerance for MS/MS. EI always uses unit mass (0.5 Da) and hides this field.
-- **Libraries**: A selected library that is not installed is skipped; the message gives the setup command.
+- **Libraries**: In the local version, a library that is not installed is downloaded the first time (2.3 GB; it asks first).
 - **Metrics**: Hits are ranked by the first selected metric in this list order, not by the order you clicked.
 
 ## Results
@@ -31,5 +31,4 @@ Search a spectrum against MassBank and GNPS with the similarity metrics you choo
 
 ### Run notes
 
-- EI search: all library EI spectra are ranked by weighted entropy similarity and the top 5,000 are scored with the selected metrics. A spectrum with low entropy but high other scores can be missed.
 - MS2DeepScore and Spec2Vec are N/A for a negative-mode query: the pretrained Spec2Vec model is GNPS AllPositive, i.e. positive-mode spectra only, so a negative-mode score would be meaningless.

@@ -37,11 +37,12 @@ Environment=NUMBA_CACHE_DIR=/var/lib/mzdesk/cache/numba
 # Secrets and mail settings: the admin password hash, the email / push channels for feedback and crash reports. Without the file,
 # reports are still stored (and read at /reports) but not forwarded. The file stays on the server, never in this repo; see deploy/README.md.
 EnvironmentFile=-/etc/mzdesk/mzdesk.env
-# localhost only: nginx is the only way in. Real client IP comes from nginx (X-Forwarded-For, trusted from 127.0.0.1 only).
+# localhost only: nginx is the only way in. Real client IP comes from nginx (X-Forwarded-For, trusted from 127.0.0.1 only); it is used in memory
+# only (rate limits, the daily visitor hash of stats.py). --no-access-log: no request line, and so no IP, reaches the journal.
 # --workers must stay 1: workflow tasks, the queue, fragment-view tasks and the heavy-task lock live in process memory, so with
 # 2 workers a poll that lands on the other process gets 404 while the task is still running. More workers need a shared task store first.
 ExecStart=/opt/mzdesk/.venv/bin/uvicorn mzdesk.api.app:app --host 127.0.0.1 --port 8599 --workers 1 \
-  --no-server-header --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-keep-alive 30 --limit-concurrency 64
+  --no-server-header --no-access-log --proxy-headers --forwarded-allow-ips 127.0.0.1 --timeout-keep-alive 30 --limit-concurrency 64
 Restart=always
 RestartSec=3
 TimeoutStopSec=20

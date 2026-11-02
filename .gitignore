@@ -15,6 +15,9 @@ web/node_modules/
 web/dist/
 mzdesk/static/
 
+# release build (deploy/build-release.sh): the wheel and version.json that mzdesk.com hands out
+dist/
+
 # copyrighted papers stay local (also in subfolders)
 paper/literature/**/*.pdf
 

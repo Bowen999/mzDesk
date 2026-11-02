@@ -44,7 +44,7 @@ from mzdesk.platform_fit import lipid_metabolite_classifier as clf
 # ---------------------------------------------------------------- constants (the owner's start values; change them here only)
 @dataclass(frozen=True)
 class RerankConfig:
-    """Start values of the re-rank. They are the owner's design, not fitted to any data set (never to CASMI, which leaks).
+    """Start values of the re-rank. They are the owner's design, not fitted to any data set.
 
     f_omics: could the platform the user chose detect the molecule? (lipid_metabolite_classifier)
                           classifier says  lipid-type    metabolite-type   both        neither

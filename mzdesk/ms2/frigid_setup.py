@@ -1,6 +1,6 @@
 """FRIGID-base 安装与检查，一次性运行：python -m mzdesk.ms2.frigid_setup [--check] [--verify] [--force] [--dir 文件夹]
 
-De novo structure 页用 FRIGID-base（Coley 组，Apache-2.0）在本机生成候选结构。这个命令把它装到 ~/tools/frigid/（MZDESK_FRIGID_DIR 可改），共约 3 GB 下载：
+De novo structure 页用 FRIGID-base（Coley 组，Apache-2.0）在本机生成候选结构。这个命令把它装到 ~/.mzdesk/tools/frigid/（MZDESK_FRIGID_DIR 可改；~/tools/frigid 已存在时用它），共约 3 GB 下载：
   1. env/        conda 前缀环境 Python 3.10（conda-forge，连同预编译的 antlr 运行库）+ 钉死版本的轮子（mzdesk/lib/frigid/requirements.txt，含 PyTorch 2.6）；
   2. FRIGID/     github.com/coleygroup/FRIGID 的克隆，固定在提交 9a3e623，打两个补丁：mps_patch.diff（设备选择 cuda → mps → cpu）和 SAFE 包的导入补丁
                  （FRIGID 自己的 env/fix_safe_imports.sh 的改动，这里用 Python 重做，因为原脚本用 GNU sed）；
@@ -319,7 +319,7 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true", help="only report what is installed (no download, nothing is started)")
     ap.add_argument("--verify", action="store_true", help="with --check: also compute the md5 of the two checkpoints (a few seconds)")
     ap.add_argument("--force", action="store_true", help="download the checkpoints again even if present")
-    ap.add_argument("--dir", help="install folder (default: MZDESK_FRIGID_DIR or ~/tools/frigid)")
+    ap.add_argument("--dir", help="install folder (default: MZDESK_FRIGID_DIR, ~/tools/frigid if it exists, else ~/.mzdesk/tools/frigid)")
     args = ap.parse_args(argv)
     if args.dir:
         os.environ["MZDESK_FRIGID_DIR"] = args.dir

@@ -2,7 +2,7 @@
 
 MS-FINDER v3.73（RIKEN，Tsugawa 实验室）只发布 Windows GUI 版。这里在本机用 Mono 跑它：
   1. 检查 Mono（没有就停下，给安装命令）；
-  2. 下载官方 MSFINDER.v3.73.zip（约 325 MB，校验大小和 SHA-256）并解压到 ~/tools/msfinder/MSFINDER_v3.73/（MZDESK_MSFINDER_DIR 可改）；
+  2. 下载官方 MSFINDER.v3.73.zip（约 325 MB，校验大小和 SHA-256）并解压到 ~/.mzdesk/tools/msfinder/MSFINDER_v3.73/（MZDESK_MSFINDER_DIR 可改；~/tools/msfinder/MSFINDER_v3.73 已存在时用它）；
   3. 取 tag MSFINDER-v3.73 里 MsfinderConsoleAppCore 的 9 个源文件（逐个校验固定的 SHA-256，一个字节都不改）；
   4. 用 Mono 的 csc 对着 zip 里的 DLL 编译出 MsfinderConsoleApp.exe，放进 MSFINDER_v3.73/（程序从 exe 所在目录找 Resources/）。
 只有运行这条命令时才联网；--check 只报告状态，不下载、不启动 MS-FINDER。
@@ -237,7 +237,7 @@ def main(argv=None):
     ap.add_argument("--check", action="store_true", help="only report what is installed (no download)")
     ap.add_argument("--force", action="store_true", help="download, unzip, fetch and compile again even if present")
     ap.add_argument("--rebuild", action="store_true", help="compile the console exe again from the pinned sources")
-    ap.add_argument("--dir", help="install folder (default: MZDESK_MSFINDER_DIR or ~/tools/msfinder/MSFINDER_v3.73)")
+    ap.add_argument("--dir", help="install folder (default: MZDESK_MSFINDER_DIR, ~/tools/msfinder/MSFINDER_v3.73 if it exists, else ~/.mzdesk/tools/msfinder/MSFINDER_v3.73)")
     args = ap.parse_args(argv)
     if args.dir:
         os.environ["MZDESK_MSFINDER_DIR"] = args.dir

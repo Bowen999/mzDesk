@@ -150,16 +150,33 @@ def _cache_path() -> Path:
     return Path(base) / "identity.sqlite"
 
 
+_PURGE_EVERY_S = 3600          # expired rows are deleted at most once an hour per process (and at the first write)
+_last_purge = 0.0
+
+
 def _cache_open():
-    """Open the cache db; None if unwritable (cache is optional)."""
+    """Open the cache db; None if unwritable (cache is optional).
+    The keys hold what was looked up (a name, an ID, a SMILES), so rows older than CACHE_TTL are deleted (_cache_purge), and
+    secure_delete overwrites deleted rows with zeros instead of leaving them in the file's free pages."""
     try:
         p = _cache_path()
         p.parent.mkdir(parents=True, exist_ok=True)
         con = sqlite3.connect(str(p), timeout=5)
+        con.execute("PRAGMA secure_delete=ON")
         con.execute("CREATE TABLE IF NOT EXISTS cache (k TEXT PRIMARY KEY, v TEXT, t REAL)")
         return con
     except Exception:
         return None
+
+
+def _cache_purge(con, now: float) -> None:
+    """Delete the rows older than CACHE_TTL (they are never read again)."""
+    global _last_purge
+    if now - _last_purge < _PURGE_EVERY_S:
+        return
+    with con:
+        con.execute("DELETE FROM cache WHERE t < ?", (now - CACHE_TTL,))
+    _last_purge = now
 
 
 def _cache_get(key: str) -> Optional[str]:
@@ -182,8 +199,10 @@ def _cache_put(key: str, value: str) -> None:
     if con is None:
         return
     try:
+        now = time.time()
         with con:
-            con.execute("INSERT OR REPLACE INTO cache VALUES (?,?,?)", (key, value, time.time()))
+            con.execute("INSERT OR REPLACE INTO cache VALUES (?,?,?)", (key, value, now))
+        _cache_purge(con, now)
     except Exception:
         pass
     finally:

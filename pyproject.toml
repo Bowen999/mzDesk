@@ -19,7 +19,7 @@ mzdesk = "mzdesk.cli:main"
 packages = { find = { include = ["mzdesk", "mzdesk.*"] } }
 
 [tool.setuptools.package-data]
-mzdesk = ["lib/*.js", "lib/*.jar", "lib/msfinder/*.ini", "lib/frigid/*", "ms2/frigid_driver/*.py", "gnps/redu_cache/*.gz", "static/**/*", "docs/*.md", "data/**/*", "lipid_name_map/data/**/*"]
+mzdesk = ["lib/*.js", "lib/*.jar", "lib/msfinder/*.ini", "lib/frigid/*", "ms2/frigid_driver/*.py", "gnps/redu_cache/*.gz", "static/**/*", "docs/*.md", "docs/img/*.svg", "install/*", "data/**/*", "lipid_name_map/data/**/*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "mzdesk.__version__" }

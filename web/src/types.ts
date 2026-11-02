@@ -16,6 +16,8 @@ export type Field = {
   network_modes?: string[];        // structure: these input modes are resolved online
   network_options?: string[];       // multiselect: these options use the internet
   network_names?: boolean;          // textarea: a line that is not a SMILES / InChI is a name looked up online
+  // first-use downloads (local version, setup.ts)
+  needs?: string[];                 // checkbox: ticking it needs these components (ids of GET /api/local/status); a missing one is downloaded first
 };
 /** Help text for a "?" popover: one string, or a list shown as bullets. */
 export type Help = string | string[];
@@ -39,7 +41,8 @@ export type Module = {
 };
 export type Stage = { id: number; title: string; modules: string[] };
 export type PipelineExample = { label: string; values: Record<string, any> };
-export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[]; based_on?: string[] };
+export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[]; based_on?: string[];
+  network?: string };        // what the workflow sends online whatever the inputs (Module.network); absent when only some inputs do
 export type Group = { id: string; title: string };
 /** hosted: the public website (MZDESK_HOSTED on the server), which has no "Internet search" switch. */
 export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string; hosted?: boolean };

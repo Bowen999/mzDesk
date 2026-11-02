@@ -109,10 +109,10 @@ test("metric cards whose values are all in the verdict are hidden; a card with a
 // ---------------------------------------------------------------- Docs markdown
 test("the Docs markdown draws headings, bullets with bold and code, and paragraphs", () => {
   const html = ssr.render(Markdown, { text: "# Title\n\nSome <sub>sub</sub> text.\n\n## Inputs\n\n- **Label**: help with `code`\n- second\n\n### Block\n\n- one" });
-  assert.match(html, /<h1>Title<\/h1>/);
+  assert.match(html, /<h1 id="title">Title<\/h1>/);
   assert.match(html, /<p>Some <sub>sub<\/sub> text\.<\/p>/);
-  assert.match(html, /<h2>Inputs<\/h2><ul><li><b>Label<\/b>: help with <code>code<\/code><\/li><li>second<\/li><\/ul>/);
-  assert.match(html, /<h3>Block<\/h3><ul><li>one<\/li><\/ul>/);
+  assert.match(html, /<h2 id="inputs">Inputs<\/h2><ul><li><b>Label<\/b>: help with <code>code<\/code><\/li><li>second<\/li><\/ul>/);
+  assert.match(html, /<h3 id="block">Block<\/h3><ul><li>one<\/li><\/ul>/);
   assert.doesNotMatch(ssr.render(Markdown, { text: "<script>alert(1)</script>" }), /<script/, "other tags stay literal text");
 });
 

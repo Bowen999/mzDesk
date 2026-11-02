@@ -31,11 +31,11 @@ import tempfile
 import time
 from pathlib import Path
 
+from mzdesk.local import paths
 from mzdesk.shared import heavy_lock
 
 VERSION = "3.73"
 EXE_NAME = "MsfinderConsoleApp.exe"
-DEFAULT_DIR = Path.home() / "tools" / "msfinder" / f"MSFINDER_v{VERSION}"
 INI_PATH = Path(__file__).resolve().parent.parent / "lib" / "msfinder" / "mzdesk_msfinder.ini"
 SETUP_COMMAND = "python -m mzdesk.ms2.msfinder_setup"
 
@@ -73,12 +73,13 @@ class MsFinderError(RuntimeError):
 
 # ---------------------------------------------------------------- installation
 def install_dir():
-    return Path(os.environ.get("MZDESK_MSFINDER_DIR") or DEFAULT_DIR).expanduser()
+    """MZDESK_MSFINDER_DIR, else ~/tools/msfinder/MSFINDER_v3.73 if it exists, else ~/.mzdesk/tools/msfinder/MSFINDER_v3.73 (read at call time)."""
+    return paths.tool_folder("MZDESK_MSFINDER_DIR", Path.home() / "tools" / "msfinder" / f"MSFINDER_v{VERSION}", Path("msfinder") / f"MSFINDER_v{VERSION}")
 
 
 def find_mono():
-    """Path of the mono executable (MZDESK_MONO, then PATH, then Homebrew) or None."""
-    for cand in (os.environ.get("MZDESK_MONO"), shutil.which("mono"), "/opt/homebrew/bin/mono"):
+    """Path of the mono executable (MZDESK_MONO, the Mono the installer made in ~/.mzdesk/tools/mono, PATH, Homebrew) or None."""
+    for cand in (os.environ.get("MZDESK_MONO"), paths.mono_in_prefix(), shutil.which("mono"), "/opt/homebrew/bin/mono"):
         if cand and Path(cand).is_file() and os.access(cand, os.X_OK):
             return str(cand)
     return None

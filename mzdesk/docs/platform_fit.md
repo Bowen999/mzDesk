@@ -1,6 +1,6 @@
 # Platform
 
-Which workflow can measure it: lipidomics, metabolomics, CIL LC-MS or GC-MS (decided mainly by extraction and derivatization).
+Give a compound. Get which platforms suit it: lipidomics, metabolomics, CIL LC-MS or GC-MS. Extraction and derivatization decide.
 
 ## Results
 

@@ -1,6 +1,6 @@
 # Calculator
 
-Everyday calculations. Own inputs, nothing shared.
+Give masses, concentrations or retention times. Get the ppm error, labelled masses, a concentration conversion, a dilution, a collision-energy conversion and a Kovats RI. Each block has its own inputs.
 
 ## Results
 

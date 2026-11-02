@@ -2,11 +2,15 @@
 import csv
 import json
 import os
-import resource
 import sys
 from pathlib import Path
 
 from mzdesk.gnps import compound_db_check as g
+
+try:
+    import resource
+except ImportError:                  # Windows has no resource limits: the run keeps its time limit only
+    resource = None
 
 MAX_OUTPUT = 10_000_000
 PREVIEW_ROWS = 200
@@ -15,6 +19,8 @@ PREVIEW_ROWS = 200
 def _limits():
     # Native mzML readers may expand compressed peak arrays far beyond the uploaded file size.
     # On Linux cap additional virtual memory after importing the libraries; file size is capped on Unix.
+    if resource is None:
+        return
     if sys.platform.startswith("linux"):
         with open("/proc/self/statm", encoding="ascii") as f:
             current = int(f.read().split()[0]) * os.sysconf("SC_PAGE_SIZE")

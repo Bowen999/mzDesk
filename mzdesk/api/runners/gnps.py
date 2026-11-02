@@ -3,7 +3,6 @@ import base64
 import binascii
 import contextlib
 import csv
-import fcntl
 import io
 import json
 import math
@@ -12,6 +11,12 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+try:
+    import fcntl
+except ImportError:                  # Windows: msvcrt locks the same file
+    fcntl = None
+    import msvcrt
 
 from mzdesk.api import common
 from mzdesk.api.common import EngineError, InputError, fmt
@@ -30,8 +35,11 @@ def _memory_job():
     fd = os.open(base / "web.lock", os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
     try:
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
+            if fcntl:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            else:
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        except (BlockingIOError, PermissionError):      # the second is what msvcrt raises when the lock is taken
             raise InputError("Another GNPS2 data operation is running. Please try again shortly.") from None
         yield
     finally:
