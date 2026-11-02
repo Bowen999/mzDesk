@@ -13,7 +13,7 @@ Server 143.198.233.45 (Ubuntu 24.10, nginx in front of MCID / my-trip / mzDesk).
 | nginx | `/etc/nginx/conf.d/mzdesk.conf` (`nginx-mzdesk.conf`), rate limits in `00-mzdesk-limits.conf`; the old `https://bowenyang.org/mzdesk/` redirects to `mzdesk.com` |
 
 Update after a change: `deploy/deploy.sh` (needs the deploy key `~/.ssh/mzdesk_deploy`). It builds the frontend, syncs the code, installs the
-service unit and the nginx files when they changed (the old ones go to `/root/nginx-backup/`, `nginx -t` guards the reload), restarts and checks.
+Python packages of `requirements-server.txt` that are missing, installs the service unit and the nginx files when they changed (the old ones go to `/root/nginx-backup/`, `nginx -t` guards the reload), restarts and checks.
 The service runs a single uvicorn worker (`--workers 1`): workflow tasks, the queue and the heavy-task lock are kept in process memory, so more
 workers would make task polls return 404 until the task store is shared.
 Logs: `journalctl -u mzdesk -f`. Restart: `systemctl restart mzdesk`.

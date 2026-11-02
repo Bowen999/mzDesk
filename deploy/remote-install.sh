@@ -42,6 +42,8 @@ if [ "$nginx_changed" = 1 ]; then
 fi
 
 [ "$unit_changed" = 1 ] && systemctl daemon-reload
+echo "   python packages"
+/opt/mzdesk/.venv/bin/python -m pip install -q --disable-pip-version-check -r "$STAGE/requirements-server.txt"
 chown -R root:mzdesk /opt/mzdesk && chmod -R u=rwX,g=rX,o= /opt/mzdesk
 systemctl restart mzdesk
 for i in $(seq 1 20); do

@@ -22,7 +22,7 @@ rsync -a --info=progress2 --human-readable --delete --exclude '__pycache__' --ex
 rsync -a --info=progress2 --human-readable --delete -e "$SSH" "$STAGE/static/" "$HOST:/opt/mzdesk/mzdesk/static/"
 echo "== service unit, nginx, restart"
 $SSH "$HOST" 'mkdir -p /root/mzdesk-deploy'
-rsync -a -e "$SSH" deploy/mzdesk.service deploy/00-mzdesk-limits.conf deploy/nginx-mzdesk.conf "$HOST:/root/mzdesk-deploy/"
+rsync -a -e "$SSH" deploy/mzdesk.service deploy/00-mzdesk-limits.conf deploy/nginx-mzdesk.conf deploy/requirements-server.txt "$HOST:/root/mzdesk-deploy/"
 $SSH "$HOST" 'bash -s' < deploy/remote-install.sh
 if [ "$(dig +short mzdesk.com A | head -1)" = "${HOST#*@}" ]; then
   curl -s -o /dev/null -w "== live: https://mzdesk.com/api/health -> %{http_code}\n" https://mzdesk.com/api/health

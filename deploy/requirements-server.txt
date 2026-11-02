@@ -1,0 +1,15 @@
+# What the server's venv (/opt/mzdesk/.venv) needs to run every page offered at mzdesk.com. deploy/remote-install.sh installs it on each deploy
+# (nothing happens when it is satisfied). Left out on purpose, as in requirements.txt: the deep-learning scores (gensim, ms2deepscore) and
+# pyopenms (only for mzML / mzXML files in MassQL; MGF works without it).
+fastapi>=0.110
+uvicorn>=0.27
+rdkit>=2023.9
+plotly>=5.18
+matplotlib>=3.7
+numpy>=1.24
+scipy>=1.10
+scikit-learn>=1.3
+matchms>=0.24
+ms_entropy>=1.1
+msbuddy>=0.3
+IsoSpecPy>=2.2
