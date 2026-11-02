@@ -247,3 +247,26 @@ details.tl-details > summary:focus-visible { outline: 2px solid var(--accent); o
 .fold-more:active { transform: scale(.99); }
 .nav-sub-links { animation: fold-in .2s var(--ease-out); }
 .fields > .field-slot:first-child > .field-heading { margin-top: 0; padding-top: 0; border-top: 0; }
+
+/* ---------------------------------------------------------------- reports page (/reports) and the crash screen */
+.report-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.report { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); overflow: hidden; transition: border-color .15s; }
+.report.open { border-color: var(--accent-line); }
+.report-row {
+  display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 4px 10px; align-items: center; width: 100%; padding: 10px 12px;
+  font: inherit; text-align: left; color: inherit; background: none; border: 0; cursor: pointer;
+}
+.report-row:hover { background: var(--row-hover); }
+.report-ref { font-family: var(--mono, ui-monospace, monospace); font-size: 12px; color: var(--muted); }
+.report-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.report-meta { grid-column: 1 / -1; color: var(--faint); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.report-detail { display: grid; gap: 10px; padding: 4px 12px 14px; animation: fold-in .2s var(--ease-out); }
+.report-body { margin: 0; padding: 10px 12px; max-height: 340px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 12.5px/1.5 var(--mono, ui-monospace, monospace); background: var(--panel, var(--bg)); border: 1px solid var(--line); border-radius: 8px; }
+.report-extra { color: var(--muted); }
+.report-shots { display: flex; flex-wrap: wrap; gap: 8px; }
+.report-shots img { max-width: 220px; max-height: 160px; border: 1px solid var(--line); border-radius: 8px; display: block; }
+.report-foot { margin: 0; color: var(--faint); font-size: 12px; overflow-wrap: anywhere; }
+.report-detail .btn { justify-self: start; }
+.crash-page { max-width: 560px; }
+.crash-text { color: var(--muted); }
+@media (max-width: 640px) { .report-row { grid-template-columns: auto minmax(0, 1fr); } .report-row .badge { justify-self: start; } .report-title { grid-column: 1 / -1; } }

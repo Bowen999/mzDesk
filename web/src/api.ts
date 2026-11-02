@@ -19,7 +19,7 @@ async function json<T>(url: string, init?: RequestInit): Promise<T> {
 const post = <T,>(url: string, body: unknown) =>
   json<T>(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
-/** Where the app is served: "/" locally, "/mzdesk/" behind bowenyang.org (set at build time: MZDESK_BASE=/mzdesk/ npm run build). */
+/** Where the app is served: "/" (mzdesk.com and the local version); a sub-path only when built with MZDESK_BASE=/sub/ npm run build. */
 export const BASE = import.meta.env.BASE_URL;
 export const getSpec = () => json<Spec>(`${BASE}api/spec`);
 /** The long notes of a page (Docs page): markdown text. */
@@ -54,8 +54,25 @@ export type Stats = {
 export const getStats = (password: string, days: number) => post<Stats>(`${BASE}api/stats`, { password, days });
 
 /** The sidebar's Send feedback form. Images are data URLs, already scaled down by the browser. */
-export type FeedbackResult = { ok: boolean; delivered: boolean; note: string };
+export type FeedbackResult = { ok: boolean; delivered: boolean; note: string; ref?: string };
 export const sendFeedback = (body: {
   message: string; page: string; website: string;
   images: { name: string; data: string }[];
 }) => post<FeedbackResult>(`${BASE}api/feedback`, body);
+
+/** A page that failed to draw: the error, its stack and the page path (no form data). Fire and forget; resolves to the report's reference, or "" when it could not be sent. */
+export async function reportCrash(error: Error, componentStack = ""): Promise<string> {
+  try {
+    const r = await post<{ ok: boolean; ref: string }>(`${BASE}api/crash`, {
+      message: error.message || String(error), stack: `${error.stack ?? ""}${componentStack ? `\n--- components${componentStack}` : ""}`, page: window.location.pathname,
+    });
+    return r.ref;
+  } catch { return ""; }
+}
+
+/** The maintainer's reports page (admin password, checked by the server). */
+export type ReportRow = { id: string; time: string; last: string; kind: "feedback" | "crash"; page: string; title: string; version: string; count: number; images: number };
+export type ReportFull = Omit<ReportRow, "images"> & { body: string; detail: string; browser: string; images: { name: string; src: string }[] };
+export const getReports = (password: string) => post<{ reports: ReportRow[]; channels: string[] }>(`${BASE}api/reports`, { password });
+export const getReport = (password: string, id: string) => post<ReportFull>(`${BASE}api/reports/${id}`, { password });
+export const deleteReport = (password: string, id: string) => post<{ ok: boolean }>(`${BASE}api/reports/${id}/delete`, { password });

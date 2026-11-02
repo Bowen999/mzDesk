@@ -93,7 +93,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState<{ delivered: boolean; note: string } | null>(null);
+  const [done, setDone] = useState<{ ref: string } | null>(null);
   const [over, setOver] = useState(false);
   const card = useRef<HTMLDivElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
@@ -186,7 +186,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
         website,
         images: shots.map(s => ({ name: s.name, data: s.dataUrl })),
       });
-      setDone({ delivered: result.delivered, note: result.note || "" });
+      setDone({ ref: result.ref ?? "" });
     } catch (x) {
       setError(x instanceof ApiError ? x.message : "Could not reach the server. Please try again.");
     } finally {
@@ -211,7 +211,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
               <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 5 5L20 7" /></svg>
             </span>
             <h2 id="feedback-title">Thanks for the feedback</h2>
-            <p>{done.delivered ? "Your message is on its way to the mzDesk team." : done.note || "Your message was saved on the server."}</p>
+            <p>Your message reached the mzDesk team.{done.ref && <> <code>{done.ref}</code></>}</p>
             <button ref={closeButton} type="button" className="btn" onClick={onClose}>Close</button>
           </div>
         ) : (

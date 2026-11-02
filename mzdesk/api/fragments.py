@@ -18,6 +18,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 
+from mzdesk.api import reports, security
 from mzdesk.api.common import clean
 from mzdesk.ms2 import fragment_view
 from mzdesk.ms2 import metfrag_engine as mf
@@ -106,8 +107,8 @@ def _run(job_id, key, req):
         except mf.MetFragError as exc:
             _update(job_id, status="error", error=str(exc), log=exc.log)
         except Exception as exc:  # noqa: BLE001 - the job reports it; the thread must not die silently
-            log.exception("fragment view failed")
-            _update(job_id, status="error", error=f"The fragment view failed: {type(exc).__name__}: {exc}")
+            ref = reports.record_crash(exc, "fragment view")
+            _update(job_id, status="error", error=f"The fragment view failed: {type(exc).__name__}: {security.scrub(exc)} (ref {ref})")
         else:
             with _lock:
                 _cache[key] = result

@@ -1,16 +1,16 @@
-"""Feedback endpoint: validation, the .eml fallback, SMTP delivery and the honeypot.
+"""Feedback endpoint: validation, the store, the forwarding channels (email through Resend / SMTP, ntfy) and the honeypot.
 
-The endpoint is network-free here: SMTP is either unset (message goes to the spool folder) or a fake smtplib.SMTP.
+Nothing here touches the network: the Resend and ntfy channels talk to a small local HTTP server, SMTP is a fake smtplib.SMTP.
 """
 import base64
-import email
-import email.policy
-from pathlib import Path
+import json
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
 from fastapi.testclient import TestClient
 
-from mzdesk.api import feedback
+from mzdesk.api import feedback, reports
 from mzdesk.api.app import app
 
 client = TestClient(app)
@@ -22,16 +22,20 @@ PNG = base64.b64decode(
 PNG_URL = "data:image/png;base64," + base64.b64encode(PNG).decode()
 
 
+REAL_FORWARD_ASYNC = reports.forward_async
+
+
 @pytest.fixture(autouse=True)
-def isolated(tmp_path, monkeypatch):
-    """No real SMTP, a private spool folder, and no rate-limit history between tests."""
+def isolated(monkeypatch):
+    """No rate-limit history between tests (the folder and the mail settings are reset by conftest.reports_in_tmp).
+    The background forward is recorded instead of started, so each test sends exactly what it asks for."""
     feedback._HITS.clear()
-    monkeypatch.setenv("MZDESK_FEEDBACK_DIR", str(tmp_path / "feedback"))
-    for name in ("MZDESK_SMTP_HOST", "MZDESK_SMTP_PORT", "MZDESK_SMTP_USER", "MZDESK_SMTP_PASSWORD",
-                 "MZDESK_SMTP_FROM", "MZDESK_SMTP_SECURITY", "MZDESK_FEEDBACK_TO"):
-        monkeypatch.delenv(name, raising=False)
-    yield
+    feedback._CRASH_HITS.clear()
+    queued = []
+    monkeypatch.setattr(reports, "forward_async", queued.append)
+    yield queued
     feedback._HITS.clear()
+    feedback._CRASH_HITS.clear()
 
 
 def _payload(**over):
@@ -41,29 +45,107 @@ def _payload(**over):
     return body
 
 
-def _spooled():
-    return sorted(feedback.spool_dir().glob("*.eml"))
+class Sink:
+    """A local HTTP server that records what it is sent (stands in for api.resend.com and ntfy.sh)."""
+
+    def __init__(self, status=200):
+        self.requests = []
+        sink = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+                sink.requests.append({"path": self.path, "headers": dict(self.headers), "body": body})
+                self.send_response(status)
+                self.end_headers()
+                self.wfile.write(b"{}")
+
+            def log_message(self, *args):
+                pass
+
+        self.server = HTTPServer(("127.0.0.1", 0), Handler)
+        self.url = f"http://127.0.0.1:{self.server.server_port}"
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
 
 
-def test_feedback_is_saved_as_eml_without_smtp():
+@pytest.fixture
+def sink():
+    s = Sink()
+    yield s
+    s.close()
+
+
+def test_feedback_is_stored_with_its_screenshot():
     r = client.post("/api/feedback", json=_payload(images=[{"name": "shot.png", "data": PNG_URL}]))
     assert r.status_code == 200, r.text
-    assert r.json() == {"ok": True, "delivered": False,
-                        "note": "Your message was saved on the server; email delivery is not configured yet."}
+    body = r.json()
+    assert body["ok"] and body["delivered"] and body["note"] == "" and body["ref"].startswith("F-")
 
-    files = _spooled()
-    assert len(files) == 1
-    msg = email.message_from_bytes(files[0].read_bytes(), policy=email.policy.default)
-    assert msg["To"] == "feedback@example.org"
-    assert "The Run button does nothing" in msg.get_body(preferencelist=("plain",)).get_content()
-    attachments = list(msg.iter_attachments())
-    assert len(attachments) == 1
-    assert attachments[0].get_filename() == "shot.png"
-    assert attachments[0].get_content_type() == "image/png"
-    assert attachments[0].get_content() == PNG
+    [row] = reports.listing()
+    assert row["id"] == body["ref"] and row["kind"] == "feedback" and row["page"] == "/modules/ms1_search" and row["images"] == 1
+    full = reports.detail(body["ref"])
+    assert "The Run button does nothing" in full["body"]
+    assert full["images"] == [{"name": "shot.png", "src": PNG_URL}]
 
 
-def test_feedback_is_emailed_when_smtp_is_configured(monkeypatch):
+def test_a_report_is_stored_before_anything_is_forwarded_and_survives_a_dead_mail_service(monkeypatch):
+    monkeypatch.setenv("MZDESK_RESEND_API_KEY", "re_test")
+    monkeypatch.setenv("MZDESK_RESEND_URL", "http://127.0.0.1:9/emails")           # nothing listens there
+    ref = client.post("/api/feedback", json=_payload()).json()["ref"]
+    assert reports.forward(ref) == []                                              # the channel failed...
+    assert reports.detail(ref)["body"].startswith("The Run button")               # ...and the report is still there
+
+
+def test_email_through_resend(monkeypatch, sink):
+    monkeypatch.setenv("MZDESK_RESEND_API_KEY", "re_test_key")
+    monkeypatch.setenv("MZDESK_RESEND_URL", sink.url + "/emails")
+    monkeypatch.setenv("MZDESK_FEEDBACK_TO", "me@example.org")
+    ref = client.post("/api/feedback", json=_payload(images=[{"name": "shot.png", "data": PNG_URL}])).json()["ref"]
+    assert reports.forward(ref) == ["resend"]
+    [req] = sink.requests
+    assert req["headers"]["Authorization"] == "Bearer re_test_key" and req["headers"]["User-Agent"].startswith("mzDesk/")
+    mail = json.loads(req["body"])
+    assert mail["to"] == ["me@example.org"] and mail["from"] == "mzDesk <onboarding@resend.dev>"
+    assert mail["subject"] == f"[mzDesk] Feedback {ref}: The Run button does nothing on the MS1 search page."
+    assert "Page: /modules/ms1_search" in mail["text"]
+    assert base64.b64decode(mail["attachments"][0]["content"]) == PNG and mail["attachments"][0]["filename"] == "shot.png"
+
+
+def test_a_new_report_is_queued_for_forwarding_and_the_background_thread_sends_it(monkeypatch, sink, isolated):
+    monkeypatch.setenv("MZDESK_RESEND_API_KEY", "re_test_key")
+    monkeypatch.setenv("MZDESK_RESEND_URL", sink.url + "/emails")
+    ref = client.post("/api/feedback", json=_payload()).json()["ref"]
+    assert isolated == [ref]
+    threads = []
+    real = threading.Thread
+    monkeypatch.setattr(reports.threading, "Thread", lambda **kw: threads.append(real(**kw)) or threads[-1])
+    REAL_FORWARD_ASYNC(ref)                                    # starts its daemon thread itself
+    assert len(threads) == 1 and threads[0].daemon
+    threads[0].join(5)
+    assert len(sink.requests) == 1
+
+
+def test_without_a_channel_nothing_is_started(monkeypatch):
+    started = []
+    monkeypatch.setattr(reports.threading, "Thread", lambda **kw: started.append(kw))
+    REAL_FORWARD_ASYNC("F-000000")
+    assert started == [] and reports.channels() == []
+
+
+def test_push_through_ntfy_carries_no_message_text(monkeypatch, sink):
+    monkeypatch.setenv("MZDESK_NTFY_URL", sink.url + "/secret-topic")
+    ref = client.post("/api/feedback", json=_payload(message="Private result: the unknown at 301.141 is my patient's drug.")).json()["ref"]
+    assert reports.forward(ref) == ["ntfy"]
+    [req] = sink.requests
+    assert req["path"] == "/secret-topic" and req["headers"]["Title"] == "mzDesk feedback"
+    assert ref in req["body"].decode() and b"patient" not in req["body"]
+
+
+def test_email_through_smtp(monkeypatch):
     sent = []
 
     class FakeSMTP:
@@ -82,42 +164,28 @@ def test_feedback_is_emailed_when_smtp_is_configured(monkeypatch):
         def quit(self):
             pass
 
-    monkeypatch.setattr(feedback.smtplib, "SMTP", FakeSMTP)
+    monkeypatch.setattr(reports.smtplib, "SMTP", FakeSMTP)
     monkeypatch.setenv("MZDESK_SMTP_HOST", "smtp.example.org")
     monkeypatch.setenv("MZDESK_SMTP_USER", "mailer@example.org")
     monkeypatch.setenv("MZDESK_SMTP_PASSWORD", "secret")
-
-    r = client.post("/api/feedback", json=_payload())
-    assert r.status_code == 200, r.text
-    assert r.json()["delivered"] is True
-    assert len(sent) == 1
-    assert sent[0]["To"] == "feedback@example.org"
-    assert sent[0]["From"] == "mailer@example.org"
-    assert not _spooled()
+    ref = client.post("/api/feedback", json=_payload()).json()["ref"]
+    assert reports.channels() == ["smtp"] and reports.forward(ref) == ["smtp"]
+    assert sent[0]["To"] == "feedback@example.org" and sent[0]["From"] == "mailer@example.org"
 
 
-def test_smtp_failure_keeps_the_message(monkeypatch):
-    class BrokenSMTP:
-        def __init__(self, *a, **kw):
-            raise OSError("connection refused")
-
-    monkeypatch.setattr(feedback.smtplib, "SMTP", BrokenSMTP)
-    monkeypatch.setenv("MZDESK_SMTP_HOST", "smtp.example.org")
-    monkeypatch.setenv("MZDESK_SMTP_USER", "mailer@example.org")
-    monkeypatch.setenv("MZDESK_SMTP_PASSWORD", "secret")
-
-    r = client.post("/api/feedback", json=_payload())
-    assert r.status_code == 200
-    assert r.json()["delivered"] is False
-    assert "saved" in r.json()["note"]
-    assert len(_spooled()) == 1
+def test_a_failing_channel_does_not_stop_the_next_one(monkeypatch, sink):
+    monkeypatch.setenv("MZDESK_RESEND_API_KEY", "re_test_key")
+    monkeypatch.setenv("MZDESK_RESEND_URL", "http://127.0.0.1:9/emails")
+    monkeypatch.setenv("MZDESK_NTFY_URL", sink.url + "/t")
+    ref = client.post("/api/feedback", json=_payload()).json()["ref"]
+    assert reports.forward(ref) == ["ntfy"]
 
 
-def test_honeypot_pretends_success_and_sends_nothing():
+def test_honeypot_pretends_success_and_stores_nothing():
     r = client.post("/api/feedback", json=_payload(website="https://spam.example"))
     assert r.status_code == 200
     assert r.json()["delivered"] is True
-    assert not _spooled()
+    assert reports.listing() == []
 
 
 @pytest.mark.parametrize("body", [
@@ -131,7 +199,7 @@ def test_honeypot_pretends_success_and_sends_nothing():
 def test_bad_feedback_is_400(body):
     r = client.post("/api/feedback", json=body)
     assert r.status_code == 400, r.text
-    assert not _spooled()
+    assert reports.listing() == []
 
 
 def test_rate_limit_after_the_first_message():
@@ -139,13 +207,12 @@ def test_rate_limit_after_the_first_message():
     r = client.post("/api/feedback", json=_payload(message="Another bug report."))
     assert r.status_code == 429
     assert "wait" in r.json()["detail"].lower()
-    assert len(_spooled()) == 1
+    assert len(reports.listing()) == 1
 
 
-def test_feedback_dir_can_be_configured(monkeypatch, tmp_path):
+def test_the_store_folder_can_be_configured(monkeypatch, tmp_path):
     target = tmp_path / "elsewhere"
     monkeypatch.setenv("MZDESK_FEEDBACK_DIR", str(target))
-    assert feedback.spool_dir() == Path(target)
-    r = client.post("/api/feedback", json=_payload())
-    assert r.status_code == 200
-    assert len(list(target.glob("*.eml"))) == 1
+    assert reports.spool_dir() == target
+    assert client.post("/api/feedback", json=_payload()).status_code == 200
+    assert (target / "reports.sqlite").is_file()

@@ -19,9 +19,10 @@ from fastapi.staticfiles import StaticFiles
 
 from mzdesk import __version__
 from mzdesk.annotation import pipeline as annotation_pipeline
+from mzdesk.api import admin, reports, security
 from mzdesk.api import feedback as feedback_api
 from mzdesk.api import fragments as fragments_api
-from mzdesk.api.request_limits import MassQLRequestLimit
+from mzdesk.api.request_limits import RequestLimit
 from mzdesk.api import stats, verdicts
 from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
@@ -33,10 +34,15 @@ STATIC = ROOT / "static"
 DOCS = ROOT / "docs"                                   # one markdown file per page, written from the long help texts
 LIB_FILES = {"3Dmol-min.js": ROOT / "lib" / "3Dmol-min.js"}   # 前端按需加载的第三方脚本
 log = logging.getLogger("mzdesk.api")
-app = FastAPI(title="mzDesk API", version=__version__)
+_docs = security.api_docs_enabled()                       # the API browser (/docs, /redoc, /openapi.json) is for local development only
+app = FastAPI(title="mzDesk API", version=__version__, docs_url="/docs" if _docs else None, redoc_url="/redoc" if _docs else None,
+              openapi_url="/openapi.json" if _docs else None)
+# the last one added is the outermost: compression wraps the headers, which wrap the size limit (so a 413 carries them too)
+app.add_middleware(RequestLimit)
+app.add_middleware(security.SecurityHeaders)
 app.add_middleware(GZipMiddleware, minimum_size=1000)   # plotly.js is 4.8 MB raw, 1.5 MB gzipped
-app.add_middleware(MassQLRequestLimit)
 app.include_router(fragments_api.router)
+reports.install_log_handler()                           # log.exception(...) anywhere in mzdesk also files a crash report
 _modules = {m["id"]: m for m in MODULES if not is_deferred(m)}     # deferred modules (DMPK, ICP-MS, MRM) answer 404
 _pipelines = {p["id"]: p for p in PIPELINES}
 
@@ -91,8 +97,8 @@ def _run_module(module_id, inputs):
     except EngineError as exc:
         return JSONResponse(status_code=502, content={"detail": str(exc), "log": exc.log})
     except Exception as exc:  # noqa: BLE001 — report engine bugs instead of a bare 500
-        log.exception("module %s failed", module_id)
-        raise HTTPException(500, f"{module_id} failed: {type(exc).__name__}: {exc}") from None
+        ref = reports.record_crash(exc, f"module {module_id}", inputs)
+        raise HTTPException(500, f"{module_id} failed: {type(exc).__name__}: {security.scrub(exc)} (ref {ref})") from None
     outputs = clean(result.get("outputs", {}))
     return {"status": "ok", "module": module_id, "outputs": outputs, "warnings": result.get("warnings", []),
             "verdict": result.get("verdict") or verdicts.build(module_id, inputs, outputs)}
@@ -108,11 +114,9 @@ def track(body: dict, request: Request):
 
 
 @app.post("/api/stats")
-def get_stats(body: dict):
+def get_stats(body: dict, request: Request):
     """Usage numbers for the stats page; needs the site password (checked here, never sent back)."""
-    if not stats.check_password(body.get("password")):
-        time.sleep(0.6)        # slows guessing; nginx also rate-limits this path
-        raise HTTPException(401, "Wrong password.")
+    admin.require(body.get("password"), request)
     return stats.summary(body.get("days") or 30)
 
 
@@ -123,6 +127,44 @@ async def send_feedback(request: Request):
     Returns {"ok", "delivered", "note"}: delivered=false means the message was saved as an .eml on the server
     instead (SMTP not configured, or the mail server was unreachable). See mzdesk/api/feedback.py."""
     return await feedback_api.submit(request)
+
+
+@app.post("/api/crash")
+async def send_crash(request: Request):
+    """A page that failed to draw in the browser: {"message", "stack", "page"}. Stored as a crash report; the same crash again only counts up."""
+    return await feedback_api.submit_crash(request)
+
+
+@app.post("/api/reports")
+def list_reports(body: dict, request: Request):
+    """The reports page (admin password): feedback and crashes, newest first, without their screenshots."""
+    admin.require(body.get("password"), request)
+    return {"reports": reports.listing(), "channels": reports.channels()}
+
+
+@app.post("/api/reports/{ref}")
+def get_report(ref: str, body: dict, request: Request):
+    """One report in full, screenshots included as data URLs."""
+    admin.require(body.get("password"), request)
+    found = reports.detail(ref)
+    if found is None:
+        raise HTTPException(404, "unknown report")
+    return found
+
+
+@app.post("/api/reports/{ref}/delete")
+def delete_report(ref: str, body: dict, request: Request):
+    admin.require(body.get("password"), request)
+    if not reports.delete(ref):
+        raise HTTPException(404, "unknown report")
+    return {"ok": True}
+
+
+@app.exception_handler(Exception)
+async def unexpected(request: Request, exc: Exception):
+    """Whatever no route caught: stored as a crash report; the caller gets the reference, not the internals."""
+    ref = reports.record_crash(exc, f"{request.method} {request.url.path}", log_it=False)      # the server's own log already has the traceback
+    return JSONResponse(status_code=500, content={"detail": f"Something went wrong (ref {ref})."})
 
 
 # ---------------------------------------------------------------- pipeline jobs (in memory, lost on restart)
@@ -211,7 +253,7 @@ def _job_progress(job_id):
                 job["started"].setdefault(step_id, now)
             step["status"] = status
             if note is not None:
-                step["note"] = note
+                step["note"] = security.strip_paths(note)
             if blocks is not None:
                 step["blocks"] = blocks
             if status in _FINISHED:
@@ -234,8 +276,8 @@ def _run_job_now(job_id, pipeline_id, runner, query, request):
     try:
         result = clean(runner.run_query(query, _job_progress(job_id)))
     except Exception as exc:  # noqa: BLE001 - the job reports it; the thread must not die silently
-        log.exception("pipeline %s failed", pipeline_id)
-        error = f"{pipeline_id} failed: {type(exc).__name__}: {exc}"
+        ref = reports.record_crash(exc, f"pipeline {pipeline_id}")
+        error = f"{pipeline_id} failed: {type(exc).__name__}: {security.scrub(exc)} (ref {ref})"
     stats.record(request, "run", module=pipeline_id, status=500 if error else 200, ms=round(1000 * (time.perf_counter() - t0)))
     with _jobs_lock:                                      # last: a client that sees "done" knows the run is over
         job = _jobs.get(job_id)
@@ -243,7 +285,7 @@ def _run_job_now(job_id, pipeline_id, runner, query, request):
             for step in job["steps"]:
                 done = next((s for s in result["steps"] if s["id"] == step["id"]), None) if result else None
                 if done:                                  # the run's own timing and note are exact
-                    step.update(status=done["status"], seconds=done["seconds"], note=done["note"])
+                    step.update(status=done["status"], seconds=done["seconds"], note=security.strip_paths(done["note"]))
                 elif step["status"] == "running":
                     step.update(status="failed", note=error or "")
             job.update(status="error" if error else "done", result=result, error=error, touched=time.time())
@@ -260,8 +302,8 @@ def run_pipeline(pipeline_id: str, inputs: dict, request: Request):
     except InputError as exc:
         raise HTTPException(400, str(exc)) from None
     except Exception as exc:  # noqa: BLE001
-        log.exception("pipeline %s: reading the form failed", pipeline_id)
-        raise HTTPException(500, f"{pipeline_id} failed: {type(exc).__name__}: {exc}") from None
+        ref = reports.record_crash(exc, f"pipeline {pipeline_id} form", inputs)
+        raise HTTPException(500, f"{pipeline_id} failed: {type(exc).__name__}: {security.scrub(exc)} (ref {ref})") from None
     job_id, status = _start_job(pipeline_id, runner, query, request)
     return {"job_id": job_id, "status": status}
 
@@ -294,8 +336,8 @@ def _depict(smiles: str) -> str | None:
     from mzdesk.api.common import depiction_svg
     try:
         return depiction_svg(smiles, size=(260, 182))
-    except Exception:  # noqa: BLE001 - display only
-        log.exception("depiction failed")
+    except Exception:  # noqa: BLE001 - display only; a SMILES typed by a person is not a crash
+        log.warning("depiction failed", exc_info=True)
         return None
 
 
@@ -308,7 +350,8 @@ def depict(smiles: str = ""):
     svg = _depict(smiles)
     if not svg:
         raise HTTPException(404, "no structure")
-    return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=3600"})
+    return Response(svg, media_type="image/svg+xml",
+                    headers={"Cache-Control": "public, max-age=3600", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox"})
 
 
 @app.get("/lib/{name}")
@@ -334,8 +377,12 @@ if (STATIC / "index.html").exists():
 
     @app.get("/{path:path}")
     def spa(path: str):
-        candidate = (STATIC / path).resolve()
-        if path and candidate.is_file() and STATIC.resolve() in candidate.parents:
+        try:
+            candidate = (STATIC / path).resolve()
+            is_file = bool(path) and candidate.is_file() and STATIC.resolve() in candidate.parents
+        except (ValueError, OSError):                      # a NUL byte or a name too long: it is just another page address
+            is_file = False
+        if is_file:
             return FileResponse(candidate)
         # the page itself must never be cached: it names the current (hashed) assets
         return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})

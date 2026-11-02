@@ -5,8 +5,8 @@ referrer host, and a visitor id. No IP address is stored: the visitor id is a ha
 same person counts once per day and cannot be followed from one day to the next.
 
 Where: MZDESK_STATS_DB, default ~/.mzdesk/stats.sqlite. MZDESK_STATS=0 turns recording off.
-Password: the same one as the page lock (web/src/lock.ts holds the same salt / hash; keep both in sync), checked here on the
-server so the numbers never reach a browser without it.
+Password: checked here on the server so the numbers never reach a browser without it (api/admin.py). A server sets its own
+(MZDESK_ADMIN_SALT / MZDESK_ADMIN_HASH); without them it is the page lock's (web/src/lock.ts holds the same salt / hash; keep both in sync).
 """
 import hashlib
 import hmac
@@ -75,7 +75,7 @@ def _ref_host(ref):
         host = urlparse(ref or "").hostname or ""
     except ValueError:
         return ""
-    return "" if host in ("", "bowenyang.org", "www.bowenyang.org", "localhost", "127.0.0.1") else host[:80]
+    return "" if host in ("", "mzdesk.com", "www.mzdesk.com", "bowenyang.org", "www.bowenyang.org", "localhost", "127.0.0.1") else host[:80]
 
 
 def record(request, kind, *, path="", module="", status=0, ms=0, ref=""):
@@ -96,9 +96,16 @@ def record(request, kind, *, path="", module="", status=0, ms=0, ref=""):
         pass
 
 
+def _credentials():
+    """(salt, hash) in hex: the server's own (MZDESK_ADMIN_SALT / MZDESK_ADMIN_HASH, see api/admin.py) or the page-lock pair."""
+    salt, digest = os.environ.get("MZDESK_ADMIN_SALT", "").strip(), os.environ.get("MZDESK_ADMIN_HASH", "").strip()
+    return (salt, digest) if salt and digest else (SALT_HEX, HASH_HEX)
+
+
 def check_password(password):
-    got = hashlib.pbkdf2_hmac("sha256", str(password or "").encode(), bytes.fromhex(SALT_HEX), ITERATIONS)
-    return hmac.compare_digest(got, bytes.fromhex(HASH_HEX))
+    salt, digest = _credentials()
+    got = hashlib.pbkdf2_hmac("sha256", str(password or "").encode(), bytes.fromhex(salt), ITERATIONS)
+    return hmac.compare_digest(got, bytes.fromhex(digest))
 
 
 def summary(days=30):

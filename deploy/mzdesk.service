@@ -1,5 +1,5 @@
 [Unit]
-Description=mzDesk (FastAPI, served at https://bowenyang.org/mzdesk/ via nginx)
+Description=mzDesk (FastAPI, served at https://mzdesk.com/ via nginx)
 After=network-online.target
 Wants=network-online.target
 
@@ -18,9 +18,9 @@ Environment=MZDESK_CACHE_DIR=/var/lib/mzdesk/cache
 Environment=MZDESK_STATS_DB=/var/lib/mzdesk/stats.sqlite
 Environment=MPLCONFIGDIR=/var/lib/mzdesk/cache/matplotlib
 Environment=NUMBA_CACHE_DIR=/var/lib/mzdesk/cache/numba
-# SMTP for the sidebar's feedback form. Optional: without the file, messages are saved (not emailed) under
-# /var/lib/mzdesk/feedback. Secrets stay in /etc/mzdesk/mail.env, never in this repo; see deploy/README.md.
-EnvironmentFile=-/etc/mzdesk/mail.env
+# Secrets and mail settings: the admin password hash, the email / push channels for feedback and crash reports. Without the file,
+# reports are still stored (and read at /reports) but not forwarded. The file stays on the server, never in this repo; see deploy/README.md.
+EnvironmentFile=-/etc/mzdesk/mzdesk.env
 # localhost only: nginx is the only way in. Real client IP comes from nginx (X-Forwarded-For, trusted from 127.0.0.1 only).
 # --workers must stay 1: workflow tasks, the queue, fragment-view tasks and the heavy-task lock live in process memory, so with
 # 2 workers a poll that lands on the other process gets 404 while the task is still running. More workers need a shared task store first.
@@ -37,6 +37,8 @@ ReadWritePaths=/var/lib/mzdesk
 ProtectHome=yes
 PrivateTmp=yes
 PrivateDevices=yes
+ProtectProc=invisible
+ProcSubset=pid
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectKernelLogs=yes

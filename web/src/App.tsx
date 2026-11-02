@@ -1,6 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { BrowserRouter, matchPath, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { getSpec, trackView } from "./api";
+import { CrashBoundary } from "./components/CrashBoundary";
 import { LockGate } from "./components/LockGate";
 import { Brand, Sidebar } from "./components/Sidebar";
 import { SidebarResizer, useSidebarWidth } from "./components/SidebarResizer";
@@ -9,6 +10,7 @@ import { DevBlocks } from "./pages/DevBlocks";
 import { DocsPage } from "./pages/DocsPage";
 import { ModulePage } from "./pages/ModulePage";
 import { PipelinePage } from "./pages/PipelinePage";
+import { ReportsPage } from "./pages/ReportsPage";
 import { StatsPage } from "./pages/StatsPage";
 import type { Spec } from "./types";
 
@@ -27,7 +29,7 @@ export default function App() {
   useEffect(() => { if (spec || err) window.mzdeskReady?.(); }, [spec, err]);     // the opening splash (index.html) leaves once the page list is here
   if (err) return <p className="page">Cannot load /api/spec: {err}</p>;
   if (!spec) return <p className="page">Loading…</p>;
-  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><Shell spec={spec} /></BrowserRouter>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}><CrashBoundary><Shell spec={spec} /></CrashBoundary></BrowserRouter>;
 }
 
 /** True while the media query matches (re-renders on change). */
@@ -66,7 +68,7 @@ function Shell({ spec }: { spec: Spec }) {
   const collapse = (c: boolean) => { setCollapsed(c); try { localStorage.setItem("mzdesk.sidebarCollapsed", c ? "1" : "0"); } catch { /* not remembered */ } };
   useEffect(() => setDrawer(false), [pathname]);
   useEffect(() => { window.scrollTo({ top: 0, left: 0, behavior: "auto" }); }, [pathname]);
-  useEffect(() => { if (!pathname.startsWith("/stats")) trackView(pathname); }, [pathname]);   // page views for /stats
+  useEffect(() => { if (!pathname.startsWith("/stats") && !pathname.startsWith("/reports")) trackView(pathname); }, [pathname]);   // page views for /stats
   useEffect(() => {
     if (!drawer) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") setDrawer(false); };
@@ -96,15 +98,17 @@ function Shell({ spec }: { spec: Spec }) {
           <Route path="/dev/blocks" element={<DevBlocks />} />
           {/* usage statistics: not in the sidebar; its own password check runs on the server */}
           <Route path="/stats" element={<StatsPage spec={spec} />} />
+          {/* feedback and crash reports: not in the sidebar; the same server-side password */}
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="*" element={<p className="page">Not found.</p>} />
         </Routes>
         {spec.modules.filter(m => visitedModules.includes(m.id) || m.id === activeModule?.id).map(m => (
           <div key={m.id} hidden={m.id !== activeModule?.id}>
-            <LockGate required={isLockedModule(m)}><ModulePage id={m.id} spec={spec} active={m.id === activeModule?.id} /></LockGate>
+            <LockGate required={isLockedModule(m)}><CrashBoundary label={m.title}><ModulePage id={m.id} spec={spec} active={m.id === activeModule?.id} /></CrashBoundary></LockGate>
           </div>))}
         {spec.pipelines.filter(p => visitedPipelines.includes(p.id) || p.id === activePipeline?.id).map(p => (
           <div key={p.id} hidden={p.id !== activePipeline?.id}>
-            <PipelinePage id={p.id} spec={spec} active={p.id === activePipeline?.id} />
+            <CrashBoundary label={p.title}><PipelinePage id={p.id} spec={spec} active={p.id === activePipeline?.id} /></CrashBoundary>
           </div>))}
       </main>
     </div>

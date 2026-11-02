@@ -43,3 +43,15 @@ def held_back_pages_on(request, monkeypatch):
     monkeypatch.setattr(spec, "DEFERRED_MODULES", frozenset())
     monkeypatch.setattr(app_module, "_modules", {m["id"]: m for m in spec.MODULES})
     yield
+
+
+@pytest.fixture(autouse=True)
+def reports_in_tmp(tmp_path, monkeypatch):
+    """Feedback and crash reports go to a throwaway folder in tests, never to ~/.mzdesk; nothing is forwarded; the admin lock starts fresh."""
+    from mzdesk.api import admin
+    monkeypatch.setenv("MZDESK_FEEDBACK_DIR", str(tmp_path / "feedback"))
+    for name in ("MZDESK_RESEND_API_KEY", "MZDESK_RESEND_URL", "MZDESK_MAIL_FROM", "MZDESK_NTFY_URL", "MZDESK_FEEDBACK_TO", "MZDESK_ADMIN_SALT", "MZDESK_ADMIN_HASH",
+                 "MZDESK_SMTP_HOST", "MZDESK_SMTP_PORT", "MZDESK_SMTP_USER", "MZDESK_SMTP_PASSWORD", "MZDESK_SMTP_FROM", "MZDESK_SMTP_SECURITY"):
+        monkeypatch.delenv(name, raising=False)
+    admin.reset_throttle()
+    yield
