@@ -112,6 +112,41 @@ function InternetSwitch({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** Open book. */
+function BookIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M2.5 5h6a3.5 3.5 0 0 1 3.5 3.5V20a2.5 2.5 0 0 0-2.5-2.5h-7z" />
+      <path d="M21.5 5h-6A3.5 3.5 0 0 0 12 8.5V20a2.5 2.5 0 0 1 2.5-2.5h7z" />
+    </svg>
+  );
+}
+
+/** Placeholder: the entry to the general Docs (user guide, methods, how to cite). Not wired yet. */
+function DocsButton({ compact = false }: { compact?: boolean }) {
+  const title = "Docs: coming soon";
+  if (compact) return (
+    <button type="button" className="rail-btn soon" aria-disabled="true" title={title} aria-label={title}><BookIcon size={18} /></button>
+  );
+  return (
+    <button type="button" className="internet-switch soon" aria-disabled="true" title={title}>
+      <BookIcon />
+      <span className="internet-label">Docs</span>
+      <span className="soon-tag">Soon</span>
+    </button>
+  );
+}
+
+/** Placeholder: the interface language. Shows the current one; no other language yet. */
+function LanguageButton({ compact = false }: { compact?: boolean }) {
+  const label = "Language: coming soon";
+  if (compact) return (
+    <button type="button" className="rail-btn lang-btn soon" aria-disabled="true" title={label} aria-label={label}>EN</button>
+  );
+  return <button type="button" className="lang-btn soon" aria-disabled="true" aria-label={label} data-label={label}>EN</button>;
+}
+
 /** collapsed = icon rail: one icon per group (a click opens the sidebar on that group) and per pipeline. */
 export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; collapsed?: boolean; onCollapse?: (c: boolean) => void }) {
   const { pathname } = useLocation();
@@ -143,7 +178,10 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
             <Icon name={pipelineIcon(p.id)} className="nav-icon" />
           </NavLink>))}
       </nav>
-      <div className="sidebar-foot"><InternetSwitch compact /><ReportButton spec={spec} rail /><ThemeSwitch compact /><FeedbackButton rail /></div>
+      <div className="sidebar-foot">
+        <InternetSwitch compact /><ReportButton spec={spec} rail /><DocsButton compact />
+        <ThemeSwitch compact /><LanguageButton compact /><FeedbackButton rail />
+      </div>
     </aside>
   );
 
@@ -188,7 +226,8 @@ export function Sidebar({ spec, collapsed = false, onCollapse }: { spec: Spec; c
       <div className="sidebar-foot">
         <InternetSwitch />
         <ReportButton spec={spec} />
-        <div className="sidebar-foot-row"><ThemeSwitch compact={false} /><FeedbackButton /></div>
+        <DocsButton />
+        <div className="sidebar-foot-row"><ThemeSwitch compact={false} /><LanguageButton /><FeedbackButton /></div>
       </div>
     </aside>
   );

@@ -475,7 +475,7 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .brand { min-width: 0; }
 .brand-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 
-/* ---------------------------------------------------------------- sidebar footer: Internet search + theme switch + feedback */
+/* ---------------------------------------------------------------- sidebar footer: Internet search, report, Docs; theme + language + feedback */
 .sidebar-foot { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: auto; padding: 16px 4px 2px; }
 .sidebar-foot-row { display: flex; align-items: center; gap: 6px; }
 /* Internet search: label + a small track; "On" runs online lookups, "Off" asks first (components/NetworkDialog.tsx) */
@@ -502,9 +502,16 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
 .feedback-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none; padding: 0; color: var(--muted); background: none; border: 0; border-radius: 8px; cursor: pointer; }
 .feedback-btn:hover { color: var(--ink); background: var(--hover); }
 .feedback-btn[aria-expanded="true"] { color: var(--accent-ink); background: var(--accent-bg); }
+/* language: the current language as two letters, between the theme switch and the bug */
+.lang-btn { display: inline-grid; place-items: center; min-width: 32px; height: 32px; flex: none; padding: 0 6px; color: var(--muted); background: none; border: 0; border-radius: 8px; font: inherit; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; cursor: pointer; }
+.lang-btn:hover { color: var(--ink); background: var(--hover); }
+/* placeholders (Docs, language): drawn as they will look, but nothing happens on hover or click yet */
+.internet-switch.soon, .lang-btn.soon, .rail-btn.soon { cursor: default; }
+.internet-switch.soon:hover, .lang-btn.soon:hover, .rail-btn.soon:hover { color: var(--muted); background: none; }
+.soon-tag { flex: none; padding: 0 6px; color: var(--faint); border: 1px solid var(--line-strong); border-radius: 99px; font-size: 10.5px; line-height: 15px; }
 /* hover labels: the buttons are icon-only, so name them above the footer */
-.theme-switch button[data-label], .feedback-btn[data-label] { position: relative; }
-.theme-switch button[data-label]::after, .feedback-btn[data-label]::after {
+.theme-switch button[data-label], .feedback-btn[data-label], .lang-btn[data-label] { position: relative; }
+.theme-switch button[data-label]::after, .feedback-btn[data-label]::after, .lang-btn[data-label]::after {
   content: attr(data-label); position: absolute; left: 50%; bottom: calc(100% + 7px); z-index: 8;
   padding: 4px 8px; color: var(--ink); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px;
   box-shadow: var(--shadow-sm); font-family: var(--sans); font-size: 11px; font-weight: 500; line-height: 1.2;
@@ -512,11 +519,14 @@ div.outputs { container-type: inline-size; display: grid; grid-template-columns:
   transform: translate(-50%, 3px); transition: opacity .12s ease, transform .12s ease;
 }
 .theme-switch button[data-label]:hover::after, .theme-switch button[data-label]:focus-visible::after,
-.feedback-btn[data-label]:hover::after, .feedback-btn[data-label]:focus-visible::after {
+.feedback-btn[data-label]:hover::after, .feedback-btn[data-label]:focus-visible::after,
+.lang-btn[data-label]:hover::after, .lang-btn[data-label]:focus-visible::after {
   opacity: 1; visibility: visible; transform: translate(-50%, 0);
 }
-.feedback-btn[data-label]::after { left: auto; right: 0; transform: translateY(3px); }
-.feedback-btn[data-label]:hover::after, .feedback-btn[data-label]:focus-visible::after { transform: translateY(0); }
+/* near the right edge: the label grows leftwards so the sidebar does not cut it */
+.feedback-btn[data-label]::after, .lang-btn[data-label]::after { left: auto; right: 0; transform: translateY(3px); }
+.feedback-btn[data-label]:hover::after, .feedback-btn[data-label]:focus-visible::after,
+.lang-btn[data-label]:hover::after, .lang-btn[data-label]:focus-visible::after { transform: translateY(0); }
 
 /* ---------------------------------------------------------------- collapse: icon rail */
 .rail-btn { display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0; color: var(--muted); background: none; border: 0; border-radius: 8px; cursor: pointer; }
@@ -577,6 +587,10 @@ body.resizing .sidebar-shell { transition: none; }
 .sidebar-blue .sidebar .rail-btn.internet-rail.off { color: var(--on-side-3); }
 .sidebar-blue .sidebar .feedback-btn { color: var(--on-side-2); }
 .sidebar-blue .sidebar .feedback-btn:hover, .sidebar-blue .sidebar .feedback-btn[aria-expanded="true"] { color: var(--on-side); background: var(--on-side-hover); }
+.sidebar-blue .sidebar .lang-btn { color: var(--on-side-2); }
+.sidebar-blue .sidebar .lang-btn:hover { color: var(--on-side); background: var(--on-side-hover); }
+.sidebar-blue .sidebar .internet-switch.soon:hover, .sidebar-blue .sidebar .lang-btn.soon:hover, .sidebar-blue .sidebar .rail-btn.soon:hover { color: var(--on-side-2); background: none; }
+.sidebar-blue .soon-tag { color: var(--on-side-3); border-color: rgba(255, 255, 255, .3); }
 .sidebar-blue .sidebar-resizer:hover::after, .sidebar-blue .sidebar-resizer.active::after, .sidebar-blue .sidebar-resizer:focus-visible::after { background: rgba(47, 75, 134, .4); }
 .sidebar-blue .sidebar :focus-visible { outline-color: var(--on-side); }
 
