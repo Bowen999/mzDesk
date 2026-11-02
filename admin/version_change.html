@@ -264,6 +264,15 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.1', date:'2026-11-02', git:'',
+  title:'线上版装齐全部引擎：谱库、CCS、MS-FINDER、FRIGID、CFM-ID、深度学习打分、pyopenms；不再有"仅本地版"页面',
+  note:'FRIGID 在服务器 CPU 上能跑：Quick 一次约 2 分钟，峰值 3.1 GB 内存（服务器总共 3.9 GB），跑的时候交换区用到 2.1 GB，同机的 MCID 等站仍在 0.2 到 0.5 秒内响应。服务单元给 mzdesk 3.4 GB 上限，并设 OOMScoreAdjust=300，内存不够时内核先杀 mzdesk，不碰别的站。想长期稳，给 droplet 加内存。CFM-ID 靠 Docker：mzdesk 服务获得 docker 组（等同 root 级权限，所以应用从不用用户文本拼 Docker 命令），容器无网络、无 capability、有进程和内存上限。',
+  state:[['谱库','MassBank + GNPS（955,289 条）装好：Library Search、MS/MS Annotation 的库检索、EI MS Annotation 的 EI 库检索都能用'], ['引擎','MS-FINDER（Mono 来自 conda-forge）、FRIGID（CPU）、CFM-ID（Docker）都能跑'], ['其他','CCS 数据、pyopenms（mzML / mzXML）、MS2DeepScore / Spec2Vec 装好'], ['验证','线上 28 个页面示例和 3 条 workflow 全部通过'], ['版本','0.5.1']],
+  c:{
+   other:['feat','服务器装齐引擎，全部可重复运行：deploy/install-engines.sh（谱库、CCS、Mono + MS-FINDER、FRIGID 环境和检查点、CFM-ID 镜像），Python 包由 deploy.sh 按 requirements-server.txt 补装（pyopenms、gensim、ms2deepscore、onnxruntime、CPU 版 PyTorch）。服务单元加各引擎的 MZDESK_* 路径、docker 组、内存上限 3.4 GB、OOMScoreAdjust；nginx 给 De Novo 页 1300 秒读超时。',true,{w:'deploy/install-engines.sh · deploy/mzdesk.service · deploy/nginx-mzdesk.conf · deploy/requirements-server.txt · deploy/README.md'}],
+   app:['chg','CFM-ID 容器加固：无网络、cap-drop ALL、no-new-privileges、进程上限、可选内存上限（MZDESK_CFMID_MEMORY），Linux 下按调用者用户运行；运行目录可由 MZDESK_CFMID_WORKDIR 指定（服务的 /tmp 是私有的，Docker 守护进程看不到）。FRIGID 的内存守卫学会读 Linux 的 /proc（原来只认 macOS），两份 memguard.py 保持一致。Structure Prediction、De Novo Structure、MS/MS Prediction 的一行描述去掉 "(Local version only)"。',true,{w:'mzdesk/ms2/cfmid_engine.py · mzdesk/ms2/frigid_driver/memguard.py · mzdesk/shared/memguard.py · mzdesk/spec.py · mzdesk/docs/ · tests/test_cfmid.py · tests/test_frigid.py · tests/test_spec_copy.py'}],
+   docs:['doc','版本号 0.5.1，本页加 v0.5.1。',false,{w:'mzdesk/__init__.py · admin/version_change.html'}]
+  }},
  {id:'v0.5.0', date:'2026-11-01', git:'',
   title:'安全加固；域名改到 mzdesk.com；反馈和崩溃报告真正送达',
   note:'DNS 要在 Porkbun 里把 mzdesk.com 和 www 的 A 记录指到 143.198.233.45，之后跑 deploy/cutover.sh（检查 DNS → 申请证书 → 部署 → bowenyang.org/mzdesk/ 301 到 mzdesk.com）。邮件转发需要你在 resend.com 注册并把 API key 放进服务器 /etc/mzdesk/mzdesk.env；不配也行，报告都在 https://mzdesk.com/reports 看。服务器的管理员密码（/stats、/reports）建议用 python -m mzdesk.api.admin 生成自己的哈希放进同一个文件；不放时用的是页面锁的密码，它的哈希随页面发给了每个浏览器。',

@@ -7,6 +7,9 @@ Wants=network-online.target
 Type=simple
 User=mzdesk
 Group=mzdesk
+# the Docker socket (CFM-ID): only this service gets the group. Whoever controls the process could start containers as root, so the app never
+# builds a Docker command from user text: the image and the arguments are fixed in ms2/cfmid_engine.py.
+SupplementaryGroups=docker
 WorkingDirectory=/opt/mzdesk
 Environment=HOME=/var/lib/mzdesk
 Environment=PYTHONUNBUFFERED=1
@@ -16,6 +19,15 @@ Environment=MZDESK_MOLGPKA_DIR=/var/lib/mzdesk/models/molgpka
 Environment=MZDESK_METHODS_DIR=/var/lib/mzdesk/data/methods
 Environment=MZDESK_CACHE_DIR=/var/lib/mzdesk/cache
 Environment=MZDESK_STATS_DB=/var/lib/mzdesk/stats.sqlite
+Environment=MZDESK_LIBRARY_DIR=/var/lib/mzdesk/data/libraries
+Environment=MZDESK_CCS_DIR=/var/lib/mzdesk/data/ccs
+Environment=MZDESK_MONO=/var/lib/mzdesk/tools/mono/bin/mono
+Environment=MZDESK_MSFINDER_DIR=/var/lib/mzdesk/tools/msfinder/MSFINDER_v3.73
+Environment=MZDESK_FRIGID_DIR=/var/lib/mzdesk/tools/frigid
+Environment=MZDESK_FRIGID_DEVICE=cpu
+# CFM-ID runs in Docker: the daemon must see the run's folder (the unit's /tmp is private), and the container is capped (see ms2/cfmid_engine.py)
+Environment=MZDESK_CFMID_WORKDIR=/var/lib/mzdesk/cache/cfmid-work
+Environment=MZDESK_CFMID_MEMORY=1g
 Environment=MPLCONFIGDIR=/var/lib/mzdesk/cache/matplotlib
 Environment=NUMBA_CACHE_DIR=/var/lib/mzdesk/cache/numba
 # Secrets and mail settings: the admin password hash, the email / push channels for feedback and crash reports. Without the file,
@@ -54,8 +66,13 @@ CapabilityBoundingSet=
 AmbientCapabilities=
 SystemCallArchitectures=native
 UMask=0027
-# ---- resource caps (2 CPU / 3.8 GB box shared with MCID and others)
-MemoryMax=1800M
+# ---- resource caps (2 CPU / 3.8 GB box shared with MCID and others). One uvicorn process holds the engines (BUDDY, PyTorch scores, the library
+# index) and starts Mono (MS-FINDER) and FRIGID as children; the CFM-ID container is capped by Docker itself (MZDESK_CFMID_MEMORY).
+# A FRIGID run peaks at 3.1 GB resident (measured, CPU, Quick mode), so the cap leaves the rest of the box little; when memory runs out the
+# kernel takes mzdesk first (OOMScoreAdjust), not MCID or the other sites. More RAM on the droplet would take the pressure off.
+MemoryHigh=3200M
+MemoryMax=3400M
+OOMScoreAdjust=300
 TasksMax=256
 
 [Install]

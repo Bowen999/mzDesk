@@ -2,7 +2,9 @@
 
 fixtures：tests/fixtures/cfmid_*.log 是镜像里真实跑出来的输出（MSRB：PC 16:0/18:1 [M+H]+、心磷脂 [M-2H]2-；cfm-predict：咖啡因 [M+H]+）。
 """
+import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -364,3 +366,25 @@ def test_real_runner_end_to_end():
 def test_runner_writes_the_charge_of_a_multiply_charged_adduct(monkeypatch):
     out = _run(monkeypatch, adduct="[M-2H]2-")
     assert "CHARGE=2-" in out["outputs"]["formats"]["formats"]["MGF"]
+
+
+def test_the_container_gets_no_network_no_capabilities_and_runs_as_the_caller(monkeypatch):
+    monkeypatch.delenv("MZDESK_CFMID_MEMORY", raising=False)
+    flags = cf.container_flags()
+    assert flags[:8] == ["--network", "none", "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--pids-limit", "256"]
+    if sys.platform.startswith("linux"):
+        assert flags[-2:] == ["--user", f"{os.getuid()}:{os.getgid()}"]
+    monkeypatch.setenv("MZDESK_CFMID_MEMORY", "1g")
+    assert ["--memory", "1g"] == cf.container_flags()[8:10]
+    seen = []
+    monkeypatch.setattr(cf.subprocess, "run", lambda cmd, **k: seen.append(cmd) or subprocess.CompletedProcess(cmd, 0, "ok", ""))
+    cf._docker_run(["true"], Path("/work"))
+    assert seen[0][:6] == ["docker", "run", "--rm", "--name", seen[0][4], "--platform"] and "--network" in seen[0] and seen[0][-2:] == [cf.IMAGE, "true"]
+
+
+def test_the_working_folder_can_be_set_for_a_service_with_a_private_tmp(monkeypatch, tmp_path):
+    monkeypatch.delenv("MZDESK_CFMID_WORKDIR", raising=False)
+    assert cf._workdir() is None
+    target = tmp_path / "shared" / "cfmid"
+    monkeypatch.setenv("MZDESK_CFMID_WORKDIR", str(target))
+    assert cf._workdir() == str(target) and target.is_dir()

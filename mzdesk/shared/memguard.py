@@ -1,4 +1,6 @@
-"""memguard.py - small, stdlib-only memory helpers for running heavy ML jobs on macOS (Apple silicon).
+"""memguard.py - small, stdlib-only memory helpers for running heavy ML jobs on macOS (Apple silicon) and on Linux (CPU).
+
+Linux: the numbers come from /proc (MemAvailable, SwapFree, VmRSS / VmHWM per process); there is no MPS, so "phys_footprint" is the RSS.
 
 Copy this single file into another project (mzDesk etc.); it has no third-party imports.
 
@@ -57,6 +59,28 @@ def _to_mb(num: str, unit: str) -> float:
     return float(num) * {"K": 1 / 1024, "M": 1, "G": 1024, "T": 1024 * 1024}[unit.upper()]
 
 
+IS_LINUX = sys.platform.startswith("linux")
+
+
+def parse_meminfo(text: str) -> dict:
+    """Linux: the numbers choose_device() uses, from the text of /proc/meminfo (kB values)."""
+    kb = {key: int(rest.split()[0]) for key, rest in (line.split(":", 1) for line in text.splitlines() if ":" in line) if rest.split()}
+    total, avail = kb["MemTotal"] / 1024, kb["MemAvailable"] / 1024
+    strict = (kb.get("MemFree", 0) + kb.get("Inactive(file)", 0)) / 1024
+    swap_total, swap_free = kb.get("SwapTotal", 0) / 1024, kb.get("SwapFree", 0) / 1024
+    return dict(total_mb=round(total), memory_free_pct=round(100 * avail / total), available_mb_kernel=round(avail), available_mb_strict=round(strict),
+                swap_total_mb=round(swap_total), swap_used_mb=round(swap_total - swap_free), swap_free_mb=round(swap_free))
+
+
+def parse_proc_status(text: str) -> dict | None:
+    """Linux: {rss_mb, phys_footprint_mb, lifetime_max_footprint_mb} from the text of /proc/<pid>/status (VmRSS, VmHWM = the peak RSS)."""
+    kb = {key: int(rest.split()[0]) for key, rest in (line.split(":", 1) for line in text.splitlines() if ":" in line) if rest.split() and rest.split()[0].isdigit()}
+    if "VmRSS" not in kb:
+        return None
+    rss = kb["VmRSS"] / 1024
+    return dict(rss_mb=rss, phys_footprint_mb=rss, lifetime_max_footprint_mb=kb.get("VmHWM", kb["VmRSS"]) / 1024)
+
+
 def system_memory() -> dict:
     """Numbers used by choose_device(). All sizes in MB.
 
@@ -66,6 +90,9 @@ def system_memory() -> dict:
     available_mb_strict : free + inactive + speculative + purgeable pages from vm_stat (no compression credit; much lower
                           on a busy Mac)
     """
+    if IS_LINUX:
+        with open("/proc/meminfo") as f:
+            return parse_meminfo(f.read())
     total_mb = int(_sysctl("hw.memsize")) / MB
     level = int(_sysctl("kern.memorystatus_level"))
     out = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=5).stdout
@@ -137,6 +164,12 @@ _libproc = None
 def proc_memory(pid: int) -> dict | None:
     """{rss_mb, phys_footprint_mb, lifetime_max_footprint_mb} for one pid, or None if it is gone / not readable."""
     global _libproc
+    if IS_LINUX:
+        try:
+            with open(f"/proc/{int(pid)}/status") as f:
+                return parse_proc_status(f.read())
+        except OSError:
+            return None
     if _libproc is None:
         _libproc = ctypes.CDLL(ctypes.util.find_library("proc"), use_errno=True)
     r = _RUsageV4()

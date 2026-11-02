@@ -1,6 +1,7 @@
-# What the server's venv (/opt/mzdesk/.venv) needs to run every page offered at mzdesk.com. deploy/remote-install.sh installs it on each deploy
-# (nothing happens when it is satisfied). Left out on purpose, as in requirements.txt: the deep-learning scores (gensim, ms2deepscore) and
-# pyopenms (only for mzML / mzXML files in MassQL; MGF works without it).
+# What the server's venv (/opt/mzdesk/.venv) needs to run every page at mzdesk.com. deploy/remote-install.sh installs it on each deploy
+# (nothing happens when it is satisfied). PyTorch comes as the CPU build: the default wheel drags in 3 GB of CUDA libraries.
+# FRIGID has its own environment (/var/lib/mzdesk/tools/frigid/env), MS-FINDER its own Mono; see deploy/install-engines.sh.
+--extra-index-url https://download.pytorch.org/whl/cpu
 fastapi>=0.110
 uvicorn>=0.27
 rdkit>=2023.9
@@ -13,3 +14,7 @@ matchms>=0.24
 ms_entropy>=1.1
 msbuddy>=0.3
 IsoSpecPy>=2.2
+pyopenms>=3.1
+gensim>=4.3
+ms2deepscore>=2.0
+onnxruntime>=1.17

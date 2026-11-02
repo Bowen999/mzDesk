@@ -11,7 +11,7 @@ checkbox, slider, file, table, heading。
 模块：group 是侧栏大类（modules / pipelines）；subgroup 是 Modules 下的小类（molecular / detectability / ms1 / ms2 / orthogonal / gnps，以及 2.0 才开放的 dmpk / inorganic；ms2 的显示名是 Spectrum），
   None = 直接列在 Modules 下（Calculator）。DEFERRED_* 里的模块已做好但本版不显示。live=True 表示已接引擎（后端 mzdesk/api/runners/ 包里有对应 runner）。
   example：一组可直接运行的示例输入，前端 "Load example" 按钮填入。
-  one_liner：一行 "<已有的输入> → <得到的结果>"，纯文本，不写引擎名（引擎名放 based_on）；本机才能跑的页面（Docker / Mono / 大型本地安装）末尾加 "(Local version only)"。
+  one_liner：一行 "<已有的输入> → <得到的结果>"，纯文本，不写引擎名（引擎名放 based_on）；没有哪个页面再标 "(Local version only)"：Docker / Mono / FRIGID 的页面在 mzdesk.com 的服务器上也装好了（deploy/install-engines.sh）。
   based_on：页脚 "Based on …" 的名单（module() 的参数；PIPELINES 的每个字典里也有）。页面真正依赖的外部引擎 / 模型 / 数据在前，纯 mzDesk 自己的规则写 "mzDesk"，最多 4 个。
   help / column_help / caption 只写读结果所需的一两句短话；删掉的长说明原样存在 mzdesk/docs/<id>.md（应用内 Docs 页显示）。
 """
@@ -564,7 +564,7 @@ MODULES = [
         example={"precursor": _prec("237.1022"), "ms1": CARBAMAZEPINE_MS1, "ms2": _paste(CARBAMAZEPINE_MASSBANK_MS2)},
         based_on=["BUDDY"]),
 
-    module("ms2_structure", "Structure Prediction", "A", "Precursor + MS2 spectrum → ranked candidate structures (Local version only)",
+    module("ms2_structure", "Structure Prediction", "A", "Precursor + MS2 spectrum → ranked candidate structures",
         [precursor(adducts=MSFINDER_ADDUCTS), spectrum(label="MS2 spectrum"), ms1(),
          checkbox("halogen", "Include halogens (F, Cl, Br, I)"), checkbox("silicon", "Include Si"),
          checkbox("extended", "Extended element range")],
@@ -577,7 +577,7 @@ MODULES = [
         example={"precursor": _prec("195.0877"), "ms2": _paste(CAFFEINE_MSFINDER_MS2)},
         based_on=["MS-FINDER"]),
 
-    module("ms2_denovo", "De Novo Structure", "A", "Precursor + MS2 spectrum → generated candidate structures (Local version only)",
+    module("ms2_denovo", "De Novo Structure", "A", "Precursor + MS2 spectrum → generated candidate structures",
         [precursor(label="Precursor m/z (positive mode only)", adducts=FRIGID_ADDUCTS), spectrum(), ms1(),
          text("formula", "Formula (optional)", placeholder="C8H10N4O2"),
          select("mode", "Mode", FRIGID_MODES), checkbox("halogen", "Include halogens (F, Cl, Br, I)")],
@@ -596,7 +596,7 @@ MODULES = [
          formats("Predicted spectrum in every format", "Formats", id="formats")],
         subgroup="ms2", live=True, example={"structure": _name("cholesterol")}, based_on=["NEIMS"]),
 
-    module("ms2_esi", "MS/MS Prediction", "A", "Structure + adduct → predicted MS/MS at 10 / 20 / 40 eV (Local version only)",
+    module("ms2_esi", "MS/MS Prediction", "A", "Structure + adduct → predicted MS/MS at 10 / 20 / 40 eV",
         [structure(), select("adduct", "Adduct", ESI_ADDUCTS, "[M+H]+")],
         [cards([("Engine", ""), ("Precursor m/z", ""), ("Ion formula", ""), ("Peaks", "")], id="summary", style="metric"),
          figure("Low energy (10 eV)", id="spectrum_low"), figure("Medium energy (20 eV)", id="spectrum_medium"),

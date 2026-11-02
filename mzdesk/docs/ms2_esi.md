@@ -1,6 +1,6 @@
 # MS/MS Prediction
 
-Predict the ESI MS/MS spectrum of a structure at 10 / 20 / 40 eV (CFM-ID 4; MSRB rules for lipids). Needs Docker.
+Predict the ESI MS/MS spectrum of a structure at 10 / 20 / 40 eV (CFM-ID 4; MSRB rules for lipids). Needs Docker and the wishartlab/cfmid image; the container has no network and runs with no extra privileges.
 
 ## Inputs
 

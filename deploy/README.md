@@ -9,6 +9,9 @@ Server 143.198.233.45 (Ubuntu 24.10, nginx in front of MCID / my-trip / mzDesk).
 | Models, Known-methods indexes, caches, `stats.sqlite` | `/var/lib/mzdesk` (owner mzdesk) |
 | Feedback and crash reports (`reports.sqlite`) | `/var/lib/mzdesk/feedback` (owner mzdesk) |
 | Secrets and mail settings | `/etc/mzdesk/mzdesk.env` (root, 0600; `mzdesk.env.example`) |
+| Spectral libraries (MassBank + GNPS index), CCS data | `/var/lib/mzdesk/data/libraries`, `/var/lib/mzdesk/data/ccs` |
+| Engines: Mono (conda-forge, has the Roslyn `csc`) + MS-FINDER, FRIGID (own Python 3.10 env, CPU PyTorch, 2.9 GB of checkpoints) | `/var/lib/mzdesk/tools/` |
+| CFM-ID | Docker image `wishartlab/cfmid:msml4.4.10_msrb1.1.15`; the service has the `docker` group (`SupplementaryGroups`) |
 | Service | `mzdesk.service` → uvicorn on 127.0.0.1:8599, user `mzdesk`, sandboxed, `Restart=always`, one worker |
 | nginx | `/etc/nginx/conf.d/mzdesk.conf` (`nginx-mzdesk.conf`), rate limits in `00-mzdesk-limits.conf`; the old `https://bowenyang.org/mzdesk/` redirects to `mzdesk.com` |
 
@@ -32,6 +35,23 @@ Then run `deploy/cutover.sh` from this checkout. It checks the DNS, gets the Let
 `certbot.timer`), deploys, installs the https site and turns `bowenyang.org/mzdesk/...` into a 301 to `mzdesk.com/...`.
 
 The frontend is built for the root (`/`). `MZDESK_BASE=/sub/` still builds it for a sub-path.
+
+## The engines (all pages run here, none is "local only")
+
+`deploy/install-engines.sh` installs what the local version brings with it (about 7 GB downloaded, 10 GB on disk; FRIGID's checkpoint from Zenodo takes the longest);
+every step skips what is in place. The Python packages of the main venv (pyopenms, PyTorch CPU, ms2deepscore, gensim, ...) come with `deploy.sh`
+(`requirements-server.txt`). The service unit points mzDesk at all of it (`MZDESK_*_DIR`, `MZDESK_MONO`).
+
+- **FRIGID** runs on the CPU: a Quick run takes about two minutes and peaks at **3.1 GB resident** (measured), on a 3.9 GB server. The unit therefore allows
+  the service 3.4 GB (`MemoryMax`) and sets `OOMScoreAdjust=300`, so if memory ever runs out the kernel stops mzDesk first and not MCID or the other sites.
+  During a run the rest of the box is squeezed (swap reached 2.1 GB); the other sites kept answering in 0.2 to 0.5 s. One heavy job (FRIGID or MS-FINDER) runs at
+  a time. More RAM on the droplet is the real fix. nginx lets the De Novo page wait 1300 s (the engine stops a Full run at 20 minutes).
+- **CFM-ID** runs in Docker. The service may start containers, which is root-equivalent if the app is ever taken over, so the app never builds a Docker command from user
+  text: the image and arguments are fixed in `ms2/cfmid_engine.py`, the container gets no network, no capabilities, no privilege gain, a process cap, 1 GB of memory
+  and runs as the service's own user. The run's folder is `MZDESK_CFMID_WORKDIR` because the unit's `/tmp` is private and the Docker daemon cannot see it.
+- Ubuntu's Mono package has no `csc`, which MS-FINDER's console front end needs; Mono comes from conda-forge into `/var/lib/mzdesk/tools/mono`.
+- The deep-learning scores download their models on first use (MS2DeepScore 416 MB, Spec2Vec about 280 MB, from Zenodo, a few minutes): the first request that
+  asks for them can time out in nginx while the download finishes in the background; the next one is fast.
 
 ## Feedback and crash reports
 

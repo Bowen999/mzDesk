@@ -12,7 +12,7 @@ from mzdesk import spec
 DOCS = Path(spec.__file__).resolve().parent / "docs"
 SHOWN_MODULES = [m for m in spec.MODULES if not spec.is_deferred(m)]
 SHOWN = SHOWN_MODULES + list(spec.PIPELINES)
-LOCAL_ONLY = {"ms2_structure", "ms2_denovo", "ms2_esi"}          # Mono / FRIGID install / Docker: not on the hosted site
+LOCAL_ONLY = set()          # Mono / FRIGID / Docker pages are installed on the hosted site too (deploy/install-engines.sh): no page is marked local-only
 BANNED = ("online lookup", "(online)", "one-time", "one time", "first use")
 
 
@@ -53,7 +53,7 @@ def test_every_one_liner_is_a_plain_have_to_get_line(page):
     assert arrow and have.strip() and get.strip() and "→" not in get, line      # "<what I have> → <what I get>", one arrow
     assert "<" not in line and not line.endswith("."), line                       # plain text, no trailing period
     assert len(line) <= 90, line
-    assert line.endswith("(Local version only)") == (page["id"] in LOCAL_ONLY), line      # Docker / Mono / big local install, three words and no explanation
+    assert "Local version only" not in line, line      # every page runs on the hosted site as well
 
 
 def test_no_page_text_has_an_online_lookup_or_one_time_download_remark():

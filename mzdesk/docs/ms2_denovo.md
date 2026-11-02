@@ -1,6 +1,6 @@
 # De Novo Structure
 
-Generated candidate structures from FRIGID when the compound is not in any database (hypotheses). Local version only.
+Generated candidate structures from FRIGID when the compound is not in any database (hypotheses).
 
 ## Inputs
 
@@ -20,7 +20,7 @@ Generated candidate structures from FRIGID when the compound is not in any datab
 - Only candidates with the right formula are shown; isotope-labelled, radical, wrongly charged and duplicate structures are hidden. SMILES carry no stereochemistry (FRIGID does not predict it), so the InChIKey is the 2D block only.
 - A familiar compound can come back because the model saw it in training, not because it read this spectrum.
 - Formula: if you leave it blank the page takes the top-1 formula of BUDDY (Orbitrap settings; halogens are off unless you tick Include halogens) and says so under Formula used; a wrong formula gives wrong structures. FRIGID knows C H N O P S F Cl Br I B Si Se As Fe Co Na K, and only positive-mode adducts.
-- Local version only: needs python -m mzdesk.ms2.frigid_setup (about 3 GB). A run takes roughly 20-40 s and 4-5 GB of memory, and one heavy job (this page or Structure Prediction) runs at a time.
+- Needs python -m mzdesk.ms2.frigid_setup (about 3 GB; deploy/install-engines.sh on the server). On an Apple-silicon Mac a run takes roughly 20-40 s and 4-5 GB of memory; on the CPU of the 4 GB server a Quick run takes about two minutes and peaks at 3.1 GB. One heavy job (this page or Structure Prediction) runs at a time.
 
 ### Run notes
 

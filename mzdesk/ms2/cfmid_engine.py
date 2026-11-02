@@ -5,9 +5,11 @@
 本模块顶层只用标准库（spec.py 要读 ADDUCTS）；rdkit 等在函数里才导入。
 """
 import copy
+import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import uuid
 from functools import lru_cache
@@ -54,10 +56,31 @@ def check_docker():
         raise CFMIDError(DOCKER_DOWN, err)
 
 
+def _workdir():
+    """Where the run's files go: MZDESK_CFMID_WORKDIR when set, else the system temp. The folder must be one the Docker daemon sees too: a service
+    with a private /tmp (the server's systemd unit) has to set it."""
+    folder = os.environ.get("MZDESK_CFMID_WORKDIR")
+    if folder:
+        Path(folder).mkdir(parents=True, exist_ok=True)
+    return folder or None
+
+
+def container_flags():
+    """What the container may do: no network, no capabilities, no privilege gain, a cap on processes (and on memory, MZDESK_CFMID_MEMORY, e.g. 1g).
+    On Linux it also runs as the caller's user, so the files it writes into the mounted folder can be read and removed by the caller."""
+    flags = ["--network", "none", "--cap-drop", "ALL", "--security-opt", "no-new-privileges", "--pids-limit", "256"]
+    memory = (os.environ.get("MZDESK_CFMID_MEMORY") or "").strip()
+    if memory:
+        flags += ["--memory", memory]
+    if sys.platform.startswith("linux"):
+        flags += ["--user", f"{os.getuid()}:{os.getgid()}"]
+    return flags
+
+
 def _docker_run(args, workdir):
     """Run ``args`` in the image with ``workdir`` mounted at /data (the cwd) -> (stdout + stderr, exit code)."""
     name = f"mzdesk-cfmid-{uuid.uuid4().hex[:10]}"
-    cmd = ["docker", "run", "--rm", "--name", name, "--platform", PLATFORM, "--pull", "never",
+    cmd = ["docker", "run", "--rm", "--name", name, "--platform", PLATFORM, "--pull", "never", *container_flags(),
            "-v", f"{workdir}:/data", "-w", "/data", IMAGE, *args]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_S)
@@ -224,7 +247,7 @@ def _predict(smiles, adduct):
 
     precursor_mz, ion_formula = ion_info(Chem.MolFromSmiles(smiles), adduct)      # user errors before Docker starts
     check_docker()
-    with tempfile.TemporaryDirectory(prefix="mzdesk-cfmid-") as d:
+    with tempfile.TemporaryDirectory(prefix="mzdesk-cfmid-", dir=_workdir()) as d:
         tmp = Path(d).resolve()
         text, log = _msrb(tmp, smiles, adduct)
         engine = "MSRB 1.1.15"                                                   # overwritten by the log's own header

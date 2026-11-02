@@ -1,6 +1,6 @@
 # Structure Prediction
 
-Ranked candidate structures from MS-FINDER (offline, local structure DB). Local version only: needs Mono.
+Ranked candidate structures from MS-FINDER (offline, local structure DB). Needs Mono (python -m mzdesk.ms2.msfinder_setup).
 
 ## Inputs
 

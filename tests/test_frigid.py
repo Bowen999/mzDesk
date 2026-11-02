@@ -724,11 +724,11 @@ def test_page_definition_is_live_with_the_agreed_inputs_and_blocks():
     assert m["example"]["ms2"]["value"] == CAFFEINE_MSFINDER_MS2
 
 
-def test_help_text_explains_the_score_and_the_page_says_it_is_local():
+def test_help_text_explains_the_score_and_the_page_is_not_marked_local_only():
     help_ = _module()["outputs"][1]["help"]
     text = help_ if isinstance(help_, str) else " ".join(help_)
     assert "Score" in text and "fingerprint" in text
-    assert "Local version only" in _module()["one_liner"] and "generated" in _module()["one_liner"]
+    assert "Local version only" not in _module()["one_liner"] and "generated" in _module()["one_liner"]
 
 
 # ---------------------------------------------------------------- shipped files
@@ -1068,3 +1068,25 @@ def test_buddy_fallback_gets_ms1_and_the_halogen_switch(monkeypatch, fake_predic
     body = _run({**_no_formula(), "ms1": "195.0877 100\n196.0902 10", "halogen": True}).json()
     assert calls[0]["ms1"] == ((195.0877, 100.0), (196.0902, 10.0)) and calls[0]["halogen"] is True
     assert "no halogens" not in " ".join(body["warnings"])
+
+
+# ---------------------------------------------------------------- the memory guard reads /proc on Linux
+def _memguard():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("frigid_memguard", Path(__file__).parents[1] / "mzdesk" / "ms2" / "frigid_driver" / "memguard.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_meminfo_and_process_status_are_read_the_linux_way():
+    mg = _memguard()
+    meminfo = "MemTotal:        4008960 kB\nMemFree:          200000 kB\nMemAvailable:    2400000 kB\nInactive(file):   600000 kB\nSwapTotal:       4194300 kB\nSwapFree:        3400000 kB\n"
+    got = mg.parse_meminfo(meminfo)
+    assert got["total_mb"] == 3915 and got["available_mb_kernel"] == 2344 and got["memory_free_pct"] == 60
+    assert got["swap_total_mb"] == 4096 and got["swap_free_mb"] == 3320 and got["swap_used_mb"] == 776 and got["available_mb_strict"] == 781
+    status = "Name:\tpython\nVmPeak:\t 3000000 kB\nVmHWM:\t 1500000 kB\nVmRSS:\t 1200000 kB\nThreads:\t4\n"
+    assert mg.parse_proc_status(status) == {"rss_mb": 1200000 / 1024, "phys_footprint_mb": 1200000 / 1024, "lifetime_max_footprint_mb": 1500000 / 1024}
+    assert mg.parse_proc_status("Name:\tkthreadd\n") is None                      # a kernel thread has no VmRSS
+    d = mg.choose_device("cpu", mps_available=False)
+    assert d["chosen"] == "cpu"                                                    # never raises, whatever the platform
