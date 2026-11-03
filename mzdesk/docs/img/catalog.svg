@@ -1,6 +1,6 @@
-<svg viewBox="0 0 720 544" xmlns="http://www.w3.org/2000/svg">
-<title>28 modules and 3 workflows</title>
-<desc>The 28 modules of mzDesk as one bar and six cards, each group in its own colour: Compound (4), Detectability (7), MS1 (2), Spectrum (10), Orthogonal (1), Dataset Search (3) and the Calculator. Below, in solid blue, the 3 workflows: MS/MS Annotation (8 steps), EI MS Annotation (9 steps) and Targeted Method (9 steps).</desc>
+<svg viewBox="0 0 720 636" xmlns="http://www.w3.org/2000/svg">
+<title>28 modules and 4 workflows</title>
+<desc>The 28 modules of mzDesk as one bar and six cards, each group in its own colour: Compound (4), Detectability (7), MS1 (2), Spectrum (10), Orthogonal (1), Dataset Search (3) and the Calculator. Below, in solid blue, the 4 workflows: MS/MS Annotation (8 steps), EI MS Annotation (9 steps), Targeted Method (9 steps) and Lipid Fragment Explanation (3 steps).</desc>
 <defs><clipPath id="cl-compound"><rect x="12" y="62" width="224" height="146" rx="10"/></clipPath><clipPath id="cl-ms1"><rect x="12" y="220" width="224" height="98" rx="10"/></clipPath><clipPath id="cl-ortho"><rect x="12" y="330" width="224" height="84" rx="10"/></clipPath><clipPath id="cl-detect"><rect x="248" y="62" width="224" height="218" rx="10"/></clipPath><clipPath id="cl-dataset"><rect x="248" y="292" width="224" height="122" rx="10"/></clipPath><clipPath id="cl-spectrum"><rect x="484" y="62" width="224" height="290" rx="10"/></clipPath></defs>
 <text class="fg-title" x="12" y="22">28 modules</text>
 <text class="fg-muted" x="708" y="22" text-anchor="end">six groups and the Calculator</text>
@@ -58,44 +58,51 @@
 <text class="fg-small" x="500" y="334">Alternative Explanations</text>
 <g class="fg-g-calc"><rect class="fg-gbox" x="484" y="364" width="224" height="50" rx="10"/>
 <text class="fg-gtitle" x="500" y="394">Calculator</text></g>
-<text class="fg-title" x="12" y="446">3 workflows</text>
+<text class="fg-title" x="12" y="446">4 workflows</text>
 <text class="fg-muted" x="708" y="446" text-anchor="end">each runs a fixed chain of steps</text>
-<rect class="fg-wf" x="12" y="460" width="224" height="80" rx="12"/>
+<rect class="fg-wf" x="12" y="460" width="342" height="80" rx="12"/>
 <text class="fg-wf-text" x="28" y="488">MS/MS Annotation</text>
 <text class="fg-wf-sub" x="28" y="508">8 steps</text>
-<path class="fg-wf-line" d="M30 524H218"/>
+<path class="fg-wf-line" d="M30 524H336"/>
 <circle class="fg-wf-dot" cx="30.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="56.9" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="83.7" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="110.6" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="137.4" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="164.3" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="191.1" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="218.0" cy="524" r="3.5"/>
-<rect class="fg-wf" x="248" y="460" width="224" height="80" rx="12"/>
-<text class="fg-wf-text" x="264" y="488">EI MS Annotation</text>
-<text class="fg-wf-sub" x="264" y="508">9 steps</text>
-<path class="fg-wf-line" d="M266 524H454"/>
-<circle class="fg-wf-dot" cx="266.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="289.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="313.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="336.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="360.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="383.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="407.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="430.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="454.0" cy="524" r="3.5"/>
-<rect class="fg-wf" x="484" y="460" width="224" height="80" rx="12"/>
-<text class="fg-wf-text" x="500" y="488">Targeted Method</text>
-<text class="fg-wf-sub" x="500" y="508">9 steps</text>
-<path class="fg-wf-line" d="M502 524H690"/>
-<circle class="fg-wf-dot" cx="502.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="525.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="549.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="572.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="596.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="619.5" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="643.0" cy="524" r="3.5"/>
-<circle class="fg-wf-dot" cx="666.5" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="73.7" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="117.4" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="161.1" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="204.9" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="248.6" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="292.3" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="336.0" cy="524" r="3.5"/>
+<rect class="fg-wf" x="366" y="460" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="382" y="488">EI MS Annotation</text>
+<text class="fg-wf-sub" x="382" y="508">9 steps</text>
+<path class="fg-wf-line" d="M384 524H690"/>
+<circle class="fg-wf-dot" cx="384.0" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="422.2" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="460.5" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="498.8" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="537.0" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="575.2" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="613.5" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="651.8" cy="524" r="3.5"/>
 <circle class="fg-wf-dot" cx="690.0" cy="524" r="3.5"/>
+<rect class="fg-wf" x="12" y="552" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="28" y="580">Targeted Method</text>
+<text class="fg-wf-sub" x="28" y="600">9 steps</text>
+<path class="fg-wf-line" d="M30 616H336"/>
+<circle class="fg-wf-dot" cx="30.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="68.2" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="106.5" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="144.8" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="183.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="221.2" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="259.5" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="297.8" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="336.0" cy="616" r="3.5"/>
+<rect class="fg-wf" x="366" y="552" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="382" y="580">Lipid Fragment Explanation</text>
+<text class="fg-wf-sub" x="382" y="600">3 steps</text>
+<path class="fg-wf-line" d="M384 616H690"/>
+<circle class="fg-wf-dot" cx="384.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="537.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="690.0" cy="616" r="3.5"/>
 </svg>

@@ -30,8 +30,8 @@ def test_stage_has_a_positive_default():
     assert spec.stage(2, "Slow", 30)["expected_s"] == 30.0 and isinstance(spec.stage(2, "Slow", 30)["expected_s"], float)
 
 
-def test_three_pipelines_are_registered():
-    assert PIPELINE_IDS == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
+def test_four_pipelines_are_registered():
+    assert PIPELINE_IDS == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method", "lipid_fragments"]
 
 
 @pytest.mark.parametrize("stages", [p["stages"] for p in spec.PIPELINES] + [p["stages"] for p in spec.spec()["pipelines"]],

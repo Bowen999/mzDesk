@@ -1,6 +1,7 @@
 [
   "Adduct hypotheses",
   "Answer",
+  "Assumptions",
   "CCS check",
   "Candidate compounds",
   "Candidates",
@@ -10,6 +11,7 @@
   "EI library hits",
   "Evidence",
   "FRIGID structures",
+  "Flags",
   "Formulas",
   "How the CCS check ranks",
   "How the rank is set",

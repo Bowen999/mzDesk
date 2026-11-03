@@ -98,9 +98,10 @@ def test_predicted_spectrum_page_is_gone():
 
 
 def test_the_workflows():
-    assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
-    esi, ei_ms, targeted = PIPELINES
-    assert [p["title"] for p in PIPELINES] == ["MS/MS Annotation", "EI MS Annotation", "Targeted Method"]
+    assert [p["id"] for p in PIPELINES] == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method", "lipid_fragments"]
+    esi, ei_ms, targeted, lipid = PIPELINES
+    assert [p["title"] for p in PIPELINES] == ["MS/MS Annotation", "EI MS Annotation", "Targeted Method", "Lipid Fragment Explanation"]
+    assert [s["title"] for s in lipid["stages"]] == ["Lipid name", "Structure", "Fragment explanation"]
     assert [(s["id"], s["title"]) for s in esi["stages"]] == [
         (1, "Adduct"), (2, "Formula"), (3, "Library search"), (4, "MS-FINDER structures"), (5, "FRIGID structures"),
         (6, "Merge and re-rank"), (7, "Isomer check"), (8, "Answer")]

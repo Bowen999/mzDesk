@@ -35,7 +35,7 @@ def _strings(node, key=""):
 
 
 def test_the_shown_pages_leave_out_what_waits_for_2_0():
-    assert _ids(spec.PIPELINES) == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]
+    assert _ids(spec.PIPELINES) == ["esi_ms2_annotation", "ei_ms_annotation", "targeted_method", "lipid_fragments"]
     assert not {"mrm", "met_shift", "stability", "nca", "icp_isotopes", "icp_sp"} & set(_ids(SHOWN_MODULES)) and len(SHOWN_MODULES) > 20
 
 

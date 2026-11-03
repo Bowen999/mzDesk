@@ -25,7 +25,7 @@ The foot of every page reads **Based on**, then the names of what the page relie
 | BUDDY (msbuddy) | Formula Annotation, De Novo Structure, MS/MS Annotation | Apache-2.0 | [GitHub](https://github.com/Philipbear/msbuddy) |
 | MS-FINDER | Structure Prediction, MS/MS Annotation | Program CC BY 4.0, source code LGPL-3.0 | [GitHub](https://github.com/systemsomicslab/MsdialWorkbench) |
 | FRIGID | De Novo Structure, MS/MS Annotation | Code and DLM checkpoint Apache-2.0; MIST checkpoint MIT | [GitHub](https://github.com/coleygroup/FRIGID) |
-| MetFrag | Fragment Explanation, Alternative Explanations, the fragment view | | |
+| MetFrag | Fragment Explanation, Alternative Explanations, Lipid Fragment Explanation, the fragment view | | |
 | CFM-ID and MSRB | MS/MS Prediction | | |
 | NEIMS | EI-MS Prediction, Ionization, EI MS Annotation | Original code Apache-2.0 | [GitHub](https://github.com/brain-research/deep-molecular-massspec) |
 | MolGpKa | Separation, Ionization, Adducts, Targeted Method | MIT | [GitHub](https://github.com/Xundrug/MolGpKa) |
@@ -37,7 +37,7 @@ The foot of every page reads **Based on**, then the names of what the page relie
 | IsoSpecPy | Mass Search, Theoretical, Calculator | BSD-2-Clause | [GitHub](https://github.com/MatteoLacki/IsoSpec) |
 | pyOpenMS | Fragment Pattern (reads mzML and mzXML) | BSD-3-Clause | [Project page](https://pyopenms.readthedocs.io) |
 | MassQL | Fragment Pattern | mzDesk runs its own code for the MS2 part of the query language. | |
-| LIPID+ | Lipid Short Name | Ships inside mzDesk | |
+| LIPID+ | Lipid Short Name, Lipid Fragment Explanation | Ships inside mzDesk | |
 
 - MetFrag ships inside mzDesk.
 - In the local version, MS-FINDER, FRIGID, NEIMS and MolGpKa are downloaded from their official sources the first time a page needs them. CFM-ID and MSRB come as a Docker image from their authors. See [First-use downloads](/docs/local-version#first-use-downloads).

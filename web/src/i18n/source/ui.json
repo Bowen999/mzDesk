@@ -159,6 +159,8 @@
   "Library hit, gate not passed",
   "Library match, gate passed",
   "Light",
+  "Lipid name",
+  "Lipid short name, e.g. {example}",
   "Load example",
   "Loading figure…",
   "Loading structure editor…",

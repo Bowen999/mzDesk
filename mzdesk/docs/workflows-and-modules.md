@@ -83,3 +83,12 @@ The library search comes first. MS-FINDER runs only if no library hit passes the
 - **You get**: a method sheet with platform, column, mobile phase and pH, polarity, main ion, theoretical m/z, derivatization, non-MS alternative and published methods.
 
 [Notes](/docs/targeted_method)
+
+### Lipid Fragment Explanation
+
+![The steps of Lipid Fragment Explanation](fig:workflow-lipid)
+
+- **You give**: a lipid short name, a SMILES or a drawing, and its MS2 spectrum. Optional: the precursor m/z and adduct, the tree depth.
+- **You get**: the LIPID+ and LIPID MAPS names (from a short name only), an illustrative structure and the peaks it explains.
+
+[Notes](/docs/lipid_fragments)

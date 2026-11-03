@@ -12,7 +12,7 @@ MS/MS Annotation starts with one line, for example **Caffeine · Level 2a · 1.0
 - **Line below**: where the answer comes from, and what the spectrum cannot separate.
 - **Details**: the full statement, and the layer, level, score, isomer check, library gate and CCS check.
 
-EI MS Annotation and Targeted Method start with a statement, a badge when there is one, and a short list of facts.
+EI MS Annotation, Targeted Method and Lipid Fragment Explanation start with a statement, a badge when there is one, and a short list of facts.
 
 ## Confidence levels
 

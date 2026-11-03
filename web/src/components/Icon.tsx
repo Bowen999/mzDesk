@@ -23,8 +23,8 @@ export function moduleIcon(m: Pick<Module, "id" | "subgroup">) {
   return MODULE_ICONS.has(m.id) ? m.id : m.subgroup ?? "module";
 }
 
-// the three workflows have their own icon (icons.svg: symbol id = workflow id); a new workflow falls back to the generic chain until it gets one
-const PIPELINE_ICONS = new Set(["esi_ms2_annotation", "ei_ms_annotation", "targeted_method"]);
+// the workflows have their own icon (icons.svg: symbol id = workflow id); a new workflow falls back to the generic chain until it gets one
+const PIPELINE_ICONS = new Set(["esi_ms2_annotation", "ei_ms_annotation", "targeted_method", "lipid_fragments"]);
 
 export function pipelineIcon(id: string) {
   return PIPELINE_ICONS.has(id) ? id : "pipeline";

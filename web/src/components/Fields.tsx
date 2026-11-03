@@ -10,6 +10,7 @@ const StructureEditor = lazy(() => import("./StructureEditor"));
 /** The wire value of the first structure mode. The visible label is "Name / ID" on pages that
  *  cannot accept a formula; the value stays the same so the backend contract does not change. */
 const NAME_MODE = "Name / ID / Formula";
+const LIPID_MODE = "Lipid name";              // Lipid Fragment Explanation: a lipid shorthand, read locally (spec.py LIPID_NAME_MODE)
 const POSITIVE = "Positive";
 const NEGATIVE = "Negative";
 
@@ -32,7 +33,7 @@ export function initialValues(fields: Field[]): Record<string, any> {
   for (const f of fields) {
     if (!f.id) continue;
     switch (f.type) {
-      case "structure": v[f.id] = { mode: NAME_MODE, value: "", label: "", buffers: {} }; break;
+      case "structure": v[f.id] = { mode: f.modes?.[0] ?? NAME_MODE, value: "", label: "", buffers: {} }; break;
       case "precursor": {
         const mode = f.ion_modes?.[0] ?? POSITIVE;
         v[f.id] = { precursor_mz: "", ion_mode: mode, adduct: f.adducts?.[mode]?.[0] ?? "Auto" };
@@ -295,10 +296,13 @@ function StructureInput({ field, value, onChange, error }: P) {
   const name = `structure-mode-${field.id ?? "field"}-${uid}`;
   const allowFormula = field.allow_formula === true;
   const nameLabel = allowFormula ? t("Name / ID / Formula") : t("Name / ID");
-  const modes: [string, string][] = [[NAME_MODE, nameLabel], ["Draw", t("Draw")], ["SMILES / InChI", "SMILES / InChI"]];     // [value sent, label shown]
-  const namePlaceholder = allowFormula
-    ? t("Name, CAS, formula, InChIKey or database ID, e.g. caffeine")
-    : t("Name, CAS, InChIKey or database ID, e.g. caffeine");
+  const modeLabels: Record<string, string> = { [NAME_MODE]: nameLabel, [LIPID_MODE]: t("Lipid name"), Draw: t("Draw"), "SMILES / InChI": "SMILES / InChI" };
+  const modes: [string, string][] = (field.modes ?? [NAME_MODE, "Draw", "SMILES / InChI"]).map(m => [m, modeLabels[m] ?? m]);     // [value sent, label shown]
+  const namePlaceholder = value.mode === LIPID_MODE
+    ? t("Lipid short name, e.g. {example}", { example: field.placeholder || "PC 16:0/18:1" })
+    : allowFormula
+      ? t("Name, CAS, formula, InChIKey or database ID, e.g. caffeine")
+      : t("Name, CAS, InChIKey or database ID, e.g. caffeine");
   const set = (patch: Partial<typeof value>) => onChange({ ...value, ...patch });
   // Keep one buffer per mode, so Name → Draw → Name does not erase the typed identifier.
   const switchMode = (m: string) => {

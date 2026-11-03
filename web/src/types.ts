@@ -10,6 +10,7 @@ export type Field = {
   checkboxes?: boolean;             // multiselect: a column of tick boxes instead of chips (several algorithms, with a long name each)
   new_row?: boolean;                // starts a new row of the form grid
   label_field?: boolean;           // structure: an optional label input inside the field names the compound on the result cards
+  modes?: string[];                 // structure: the input modes offered, in order (the first is the default); unset = Name / ID, Draw, SMILES / InChI
   // internet use (spec.py): the frontend asks before running online while the sidebar switch is off
   network?: boolean;               // checkbox: ticking it uses the internet
   network_sources?: string[];      // spectrum: these input sources are fetched online

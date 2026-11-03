@@ -12,9 +12,9 @@ A **module** does one job. A **workflow** chains several modules to answer one q
 ![From input to answer](fig:overview-flow)
 *You give an input. A module or a workflow gives the answer.*
 
-mzDesk has 28 modules (six groups and the Calculator) and 3 workflows. Every page says in one line what it needs and what it returns.
+mzDesk has 28 modules (six groups and the Calculator) and 4 workflows. Every page says in one line what it needs and what it returns.
 
-![28 modules and 3 workflows](fig:catalog)
+![28 modules and 4 workflows](fig:catalog)
 *Each module group has its own colour. The workflows are solid blue.*
 
 | Group | For |

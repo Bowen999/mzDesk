@@ -1,7 +1,7 @@
 """FastAPI：/api/spec 给前端页面定义，/api/modules/{id}/run 运行模块，其余路径托管前端静态文件。
 
 已接引擎的模块（spec 里 live=True）由 mzdesk/api/runners 计算；其余模块返回 placeholder。
-Pipeline（ESI MS/MS Annotation、EI MS Annotation、Targeted Method）跑得久：POST /api/pipelines/{id}/run 起一个后台线程，GET /api/pipelines/jobs/{job_id} 查每一步的进度和结果。
+Pipeline（ESI MS/MS Annotation、EI MS Annotation、Targeted Method、Lipid Fragment Explanation）跑得久：POST /api/pipelines/{id}/run 起一个后台线程，GET /api/pipelines/jobs/{job_id} 查每一步的进度和结果。
 引擎共用一台机器和一把重任务锁，所以 pipeline 任务一次只跑一个，后到的排队（status "queued"）。
 """
 import copy
@@ -31,7 +31,7 @@ from mzdesk.api.common import EngineError, InputError, clean
 from mzdesk.api.runners import RUNNERS
 from mzdesk.shared import versions
 from mzdesk.spec import MODULES, PIPELINES, is_deferred, spec
-from mzdesk.workflows import ei_ms_annotation, targeted_method
+from mzdesk.workflows import ei_ms_annotation, lipid_fragments, targeted_method
 
 ROOT = Path(__file__).resolve().parents[1]
 STATIC = ROOT / "static"
@@ -206,7 +206,7 @@ async def unexpected(request: Request, exc: Exception):
 # ---------------------------------------------------------------- pipeline jobs (in memory, lost on restart)
 JOB_LIMIT, JOB_TTL_S = 20, 3600           # at most 20 jobs are kept; a job is dropped an hour after its last update
 # pipeline id -> module with parse_inputs() and run_query(); the workflows package modules return the generic result (mzdesk/workflows/common.py)
-_PIPELINE_RUNNERS = {m.PIPELINE_ID: m for m in (annotation_pipeline, ei_ms_annotation, targeted_method)}
+_PIPELINE_RUNNERS = {m.PIPELINE_ID: m for m in (annotation_pipeline, ei_ms_annotation, targeted_method, lipid_fragments)}
 # The engines (BUDDY, MS-FINDER, FRIGID) share one machine and one heavy-job lock that gives up after 20 s, so two workflow runs at once make
 # steps 4-5 fail. Runs therefore go one at a time, first come first served: a job waits with status "queued" until it is first in _order and
 # nothing is _active. _turn wakes the waiting threads whenever _active or _order changes.

@@ -255,7 +255,7 @@ const SECTIONS = [
   {id:'lipid', name:'Lipid Short Name', d:'脂质简写名 · LIPID MAPS 名 · 示意结构', w:'mzdesk/lipid/ · mzdesk/lipid_name_map/ · mzdesk/api/runners/lipid.py'},
   {id:'dmpk',  name:'DMPK',       d:'代谢物 · 稳定性 · 药代 · 内标',     w:'mzdesk/dmpk/ · mzdesk/api/runners/nca.py · mzdesk/api/runners/stability.py'},
   {id:'icp',   name:'Inorganic MS', d:'ICP-MS 日常计算：同位素 · 干扰 · IDMS · 质量歧视 · 单颗粒', w:'mzdesk/inorganic/ · mzdesk/api/runners/inorganic.py'},
-  {id:'pipe',  name:'Workflow',   d:'3 条流程：MS/MS 注释 · EI MS 注释 · 靶向方法开发', w:'mzdesk/spec.py · mzdesk/workflows/'},
+  {id:'pipe',  name:'Workflow',   d:'4 条流程：MS/MS 注释 · EI MS 注释 · 靶向方法开发 · 脂质碎片解析', w:'mzdesk/spec.py · mzdesk/workflows/'},
   {id:'other', name:'Other',      d:'身份 · 排他性 · 正交 · MRM · 报告等', w:'mzdesk/ms2/mrm.py · mzdesk/api/runners/mrm.py · mzdesk/spec.py · mzdesk/shared/'},
   {id:'docs',  name:'Docs',       d:'计划 · 本页',                     w:'admin/README.md · admin/version_change.html'},
   {id:'app',   name:'App',        d:'网页 · API',                      w:'web/ · mzdesk/api/'}
@@ -264,6 +264,16 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.7', date:'2026-11-03', git:'',
+  title:'新流程 Lipid Fragment Explanation（脂质碎片解析）：脂质简称或结构 + MS2 → LIPID+ / LIPID MAPS 名称、示意结构、MetFrag 碎片解析',
+  note:'按确认的两点做：SMILES / 手绘结构不给名称（名称卡片显示 —）；只到总组成的名字（PC 34:1）按默认规则拆链，不让谱图挑拆法。示意结构里假设的部分（C=C 位置、官能团位置、拆链）只是示意，它们解释的碎片不能当作这些位置的证据。',
+  state:[['输入','脂质简称（本地读，不联网）/ 手绘 / SMILES；前体 m/z 可空；MS2 必填；树深度默认 3（1–4）；容差 0.002 Da + 10 ppm'], ['步骤','1 名称（LIPID+）→ 2 结构（示意结构或给定结构）→ 3 碎片解析（MetFrag）'], ['Auto 加合物','有前体 m/z（表单或谱图头）时，选该极性下理论 m/z 最接近且在 10 ppm / 0.01 Da（取大）以内的加合物；没有或都不符时用 [M+H]+ / [M-H]- 并提示'], ['画不出的类','游离固醇、硫苷脂等没有模板的类：名称照给，第 2、3 步跳过，提示改用 SMILES 或手绘'], ['用时','PG 18:1/18:1 示例约 2–3 秒'], ['版本','0.5.7']],
+  c:{
+   pipe:['feat','新流程 lipid_fragments（mzdesk/workflows/lipid_fragments.py）：只串联已有两页——Lipid Short Name 的名字规范化和示意结构、Fragment Explanation 的 run_fragments（MetFrag）。结果：答案句（"The illustrative structure of PG 18:1/18:1 explains 4 of 13 peaks (91.6 % of the intensity)."）、有假设时的 "Assumed parts" 徽章、事实列表（输入名、分子式、加合物、树深度）；块依次为 LIPID+、LIPID MAPS、示意结构、碎片解析卡片、观测谱图（悬停看碎片）、峰表、Assumptions / Flags（折叠）。两个示例：PG 18:1/18:1（负离子）、PG 36:2（链按默认规则拆）。',true,{w:'mzdesk/workflows/lipid_fragments.py · mzdesk/workflows/__init__.py · mzdesk/spec.py · mzdesk/api/app.py'}],
+   lipid:['chg','runners/lipid.py 拆出 read_name、name_cards、illustrate、flag_lines 供流程复用；Lipid Short Name 页的输出不变。',false,{w:'mzdesk/api/runners/lipid.py'}],
+   app:['feat','structure 字段可以用 spec 的 modes 指定输入方式和顺序（第一项是默认）；新方式 "Lipid name" 带脂质简称的占位提示。侧栏新图标 lipid_fragments；6 种界面语言补齐新文字。',false,{w:'web/src/components/Fields.tsx · web/src/types.ts · web/src/components/Icon.tsx · web/src/assets/icons.svg · web/src/i18n/'}],
+   docs:['doc','版本号 0.5.7，本页加 v0.5.7；Docs 新页 lipid_fragments、步骤图 workflow-lipid.svg，Workflows and Modules 加一节，总览图 catalog.svg 改为 4 条流程（2×2），overview、changelog 更新；测试 tests/test_workflow_lipid_fragments.py（22 项）、web/tests/pipeline-form.test.mjs 加 2 项，流程名单相关的 4 个测试加上新流程。',false,{w:'mzdesk/__init__.py · admin/version_change.html · mzdesk/docs/ · tests/ · web/tests/'}]
+  }},
  {id:'v0.5.6', date:'2026-11-03', git:'',
   title:'五个引擎（MS-FINDER、FRIGID、CFM-ID、NEIMS、RepoRT）开放 Windows；首次下载显示真实进度；默认端口 8000 改为 8731',
   note:'Windows 一侧没有在真机上跑过：.github/workflows/windows.yml 提供单元测试和手动触发的真实安装（推送后在 Actions 里运行）。CFM-ID 靠 Docker，Windows 的 CI 机器跑不了 Linux 容器，只测了命令行。',

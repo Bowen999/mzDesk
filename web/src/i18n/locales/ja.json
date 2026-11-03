@@ -1154,5 +1154,15 @@
   "Finishing…": "まもなく完了…",
   "Setting up mzDesk": "mzDesk をセットアップ中",
   "You can cancel at any time. Finished downloads are kept.": "いつでもキャンセルできます。ダウンロード済みのファイルは保持されます。",
-  "{got} of {total}": "{got} / {total}"
+  "{got} of {total}": "{got} / {total}",
+  "A short name gives the names and an illustrative structure. SMILES or a drawing gives no names.": "略称からは名称と例示構造が得られます。SMILES や描画した構造からは名称は得られません。",
+  "Auto (match the precursor m/z)": "自動（プリカーサー m/z に合わせる）",
+  "Blank = theoretical m/z. Auto picks the adduct that fits the precursor m/z; without one, [M+H]+ / [M-H]-.": "空欄 = 理論 m/z。自動はプリカーサー m/z に合う付加イオンを選びます。指定がなければ [M+H]+ / [M-H]-。",
+  "Default 3. Higher is slower and can over-explain.": "既定は 3。大きいほど遅く、過剰に帰属することがあります。",
+  "Lipid": "脂質",
+  "Lipid Fragment Explanation": "脂質フラグメント帰属",
+  "Lipid name or structure + MS2 spectrum → names, illustrative structure, explained peaks": "脂質名または構造 + MS2 スペクトル → 名称、例示構造、帰属ピーク",
+  "Lipid short name, e.g. {example}": "脂質略称（例：{example}）",
+  "PG 18:1/18:1, negative": "PG 18:1/18:1、負イオン",
+  "PG 36:2, chains assumed": "PG 36:2、鎖は仮定"
 }

@@ -1154,5 +1154,15 @@
   "Finishing…": "Finalizando…",
   "Setting up mzDesk": "Configurando mzDesk",
   "You can cancel at any time. Finished downloads are kept.": "Puedes cancelar en cualquier momento. Las descargas terminadas se conservan.",
-  "{got} of {total}": "{got} de {total}"
+  "{got} of {total}": "{got} de {total}",
+  "A short name gives the names and an illustrative structure. SMILES or a drawing gives no names.": "Un nombre corto da los nombres y una estructura ilustrativa. Un SMILES o un dibujo no da nombres.",
+  "Auto (match the precursor m/z)": "Auto (según el m/z del precursor)",
+  "Blank = theoretical m/z. Auto picks the adduct that fits the precursor m/z; without one, [M+H]+ / [M-H]-.": "En blanco = m/z teórico. Auto elige el aducto que coincide con el m/z del precursor; sin valor, [M+H]+ / [M-H]-.",
+  "Default 3. Higher is slower and can over-explain.": "Por defecto 3. Más alto es más lento y puede explicar de más.",
+  "Lipid": "Lípido",
+  "Lipid Fragment Explanation": "Explicación de fragmentos de lípidos",
+  "Lipid name or structure + MS2 spectrum → names, illustrative structure, explained peaks": "Nombre o estructura del lípido + espectro MS2 → nombres, estructura ilustrativa, picos explicados",
+  "Lipid short name, e.g. {example}": "Nombre corto del lípido, p. ej. {example}",
+  "PG 18:1/18:1, negative": "PG 18:1/18:1, negativo",
+  "PG 36:2, chains assumed": "PG 36:2, cadenas supuestas"
 }

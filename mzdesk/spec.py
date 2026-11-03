@@ -53,6 +53,8 @@ CCS_PLATFORMS = ["DTIMS (stepped field)", "DTIMS (single field)", "TIMS", "TWIMS
 CCS_GASES = ["N₂", "He"]
 CCS_TW_CALIBRATIONS = ["N₂ reference values", "He reference values (N₂→He)"]
 DATABASES = ["HMDB", "PubChem", "LIPID MAPS", "KEGG", "ChEBI", "DrugBank", "NORMAN SusDat"]
+# The extra structure-field mode of Lipid Fragment Explanation: a lipid shorthand, read by mzdesk.lipid_name_map (local, no lookup)
+LIPID_NAME_MODE = "Lipid name"
 
 
 # ---- 字段 ----
@@ -1080,6 +1082,30 @@ PIPELINES = [
                 stage(6, "Non-MS detection", 0.1), stage(7, "Derivatization", 0.1), stage(8, "Known methods", 0.3), stage(9, "Theoretical m/z", 0.1)],
      "examples": [{"label": "Caffeine, any platform", "values": {"structure": _name("caffeine"), "additive": "Formic acid", "instrument": "Any"}},
                   {"label": "D-Glucose, GC-MS", "values": {"structure": _name("D-glucose"), "additive": "Formic acid", "instrument": "GC-MS"}}]},
+    {"id": "lipid_fragments", "title": "Lipid Fragment Explanation",
+     "one_liner": "Lipid name or structure + MS2 spectrum → names, illustrative structure, explained peaks",
+     "based_on": ["LIPID+", "MetFrag", "RDKit"],
+     # modes: the structure field offers a lipid shorthand first (no Name / ID lookup, so nothing goes online); a SMILES or a drawing gives no names
+     "inputs": (_section("Lipid",
+                         {**structure("lipid", "Lipid"), "modes": [LIPID_NAME_MODE, "Draw", "SMILES / InChI"], "network_modes": [], "required": True,
+                          "placeholder": "PC 16:0/18:1",
+                          "help": "A short name gives the names and an illustrative structure. SMILES or a drawing gives no names."})
+                + _section("Spectrum",
+                           {**precursor(label="Precursor m/z (optional)", adducts=METFRAG_ADDUCTS), "header_fallback": True,
+                            "auto_label": "Auto (match the precursor m/z)",
+                            "help": "Blank = theoretical m/z. Auto picks the adduct that fits the precursor m/z; without one, [M+H]+ / [M-H]-."},
+                           {**spectrum(), "required": True})
+                + _section("Fragmentation",
+                           {**slider("tree_depth", "Tree depth (bond cleavages)", 1, 4, 1, 3), "help": "Default 3. Higher is slower and can over-explain."},
+                           number("tol_abs", "Absolute tolerance (Da)", 0.002, 0.001), number("tol_ppm", "Relative tolerance (ppm)", 10.0, 1))),
+     # expected_s: names and the drawing are local (0.05-0.3 s); one MetFrag run at depth 3 on a lipid is 1.5-3 s (JVM start included)
+     "stages": [stage(1, "Lipid name", 0.1), stage(2, "Structure", 0.3), stage(3, "Fragment explanation", 2.5)],
+     "examples": [{"label": "PG 18:1/18:1, negative",
+                   "values": {"lipid": {"mode": LIPID_NAME_MODE, "value": "PG 18:1/18:1"}, "precursor": _prec("773.5359", "Negative", "Auto"),
+                              "ms2": _paste(PG_36_2_MS2), "tree_depth": 3}},
+                  {"label": "PG 36:2, chains assumed",
+                   "values": {"lipid": {"mode": LIPID_NAME_MODE, "value": "PG 36:2"}, "precursor": _prec("773.5359", "Negative", "Auto"),
+                              "ms2": _paste(PG_36_2_MS2), "tree_depth": 3}}]},
 ]
 
 

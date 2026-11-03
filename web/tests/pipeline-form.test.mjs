@@ -53,3 +53,24 @@ test("the observed CCS is an empty number input, a section value that is not sen
   const init = initialValues(inputs);
   assert.deepEqual([init.ccs_observed, init.ccs_platform, init.ccs_gas], ["", "", "N₂"]);
 });
+
+// Lipid Fragment Explanation: the structure field offers a lipid short name first (spec.py LIPID_NAME_MODE), then Draw and SMILES.
+const lipidInputs = [
+  { type: "structure", id: "lipid", label: "Lipid", modes: ["Lipid name", "Draw", "SMILES / InChI"], network_modes: [], required: true, placeholder: "PC 16:0/18:1", section: "Lipid" },
+];
+const lipidSpec = { groups: [], subgroups: [], modules: [], pipelines: [{ id: "lipid_fragments", title: "Lipid Fragment Explanation", one_liner: "x", inputs: lipidInputs, stages: [], examples: [] }] };
+
+test("a structure field with modes starts on its first mode and shows only those modes, in order", () => {
+  assert.deepEqual(initialValues(lipidInputs).lipid, { mode: "Lipid name", value: "", label: "", buffers: {} });
+  const html = ssr.render(PipelinePage, { id: "lipid_fragments", spec: lipidSpec, active: true });
+  const labels = [...html.matchAll(/<input type="radio"[^>]*\/>\s*([^<]+)<\/label>/g)].map(m => m[1].trim());
+  assert.deepEqual(labels, ["Lipid name", "Draw", "SMILES / InChI"]);
+  assert.match(html, /<input type="radio"[^>]*checked=""[^>]*\/>\s*Lipid name/);
+  assert.match(html, /placeholder="Lipid short name, e.g. PC 16:0\/18:1"/);
+  assert.doesNotMatch(html, /Name \/ ID/);
+  assert.deepEqual(missingRequired(lipidInputs, initialValues(lipidInputs)).map(f => f.id), ["lipid"]);
+});
+
+test("a structure field without modes keeps Name / ID, Draw and SMILES", () => {
+  assert.equal(initialValues([{ type: "structure", id: "s" }]).s.mode, "Name / ID / Formula");
+});

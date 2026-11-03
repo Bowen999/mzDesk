@@ -1154,5 +1154,15 @@
   "Finishing…": "即将完成…",
   "Setting up mzDesk": "正在设置 mzDesk",
   "You can cancel at any time. Finished downloads are kept.": "随时可以取消，已下载完成的文件会保留。",
-  "{got} of {total}": "{got} / {total}"
+  "{got} of {total}": "{got} / {total}",
+  "A short name gives the names and an illustrative structure. SMILES or a drawing gives no names.": "简称给出名称和示意结构；SMILES 或手绘结构不给名称。",
+  "Auto (match the precursor m/z)": "自动（按前体离子 m/z 匹配）",
+  "Blank = theoretical m/z. Auto picks the adduct that fits the precursor m/z; without one, [M+H]+ / [M-H]-.": "留空 = 理论 m/z。自动：选与前体离子 m/z 相符的加合物；没有前体时用 [M+H]+ / [M-H]-。",
+  "Default 3. Higher is slower and can over-explain.": "默认 3。越高越慢，也可能过度解释。",
+  "Lipid": "脂质",
+  "Lipid Fragment Explanation": "脂质碎片解析",
+  "Lipid name or structure + MS2 spectrum → names, illustrative structure, explained peaks": "脂质名称或结构 + MS2 谱图 → 名称、示意结构、已解释的峰",
+  "Lipid short name, e.g. {example}": "脂质简称，例如 {example}",
+  "PG 18:1/18:1, negative": "PG 18:1/18:1，负离子",
+  "PG 36:2, chains assumed": "PG 36:2，链按假设拆分"
 }

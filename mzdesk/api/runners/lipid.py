@@ -50,7 +50,7 @@ def _flag_codes(result, raw):
     return codes
 
 
-def _flag_lines(result, raw=""):
+def flag_lines(result, raw=""):
     """Flags 只给英文短句（不显示内部码）；卡片 "—" 的 "?" 已经说过的（同一个码）不再重复。"""
     from mzdesk.lipid import texts
 
@@ -70,31 +70,33 @@ def _reject_text(result, raw):
     return texts.REASON_TEXT.get(result["reason"], result["reason"])
 
 
-def _structure(result, raw):
-    """(svg, 假设列表, 说明)；画不了时 svg 为 None，说明是一句话。"""
+def illustrate(result, raw):
+    """(Illustration or None, svg or None, assumptions, note). When nothing can be drawn, the note is one sentence and the rest is empty.
+    The Lipid Fragment Explanation workflow (mzdesk/workflows/lipid_fragments.py) explains the spectrum with this same structure."""
     from mzdesk.lipid import draw, structure as ls
 
     try:
         ill = ls.illustrate(result, raw)
     except ls.NoStructureForClass:
-        return None, [], "No illustrative structure for this lipid class."
+        return None, None, [], "No illustrative structure for this lipid class."
     except ls.BranchedChain:
-        return None, [], "Branched chain: structure not drawn."
+        return None, None, [], "Branched chain: structure not drawn."
     except ls.Unsupported:
-        return None, [], "No illustrative structure for this name."
+        return None, None, [], "No illustrative structure for this name."
     except Exception:                       # noqa: BLE001 - the names are still the answer; a drawing bug must not hide them
         log.exception("illustrative structure failed for %r", raw)
-        return None, [], "No illustrative structure for this name."
+        return None, None, [], "No illustrative structure for this name."
     assumptions = list(ill.assumptions)
     if ls.positions_in_name(raw):
         assumptions.insert(0, "Positions given in the name are not used")
-    return draw.illustration_svg(ill), assumptions, None
+    return ill, draw.illustration_svg(ill), assumptions, None
 
 
-def run_lipid_short_name(inputs):
+def read_name(raw):
+    """Lipid shorthand -> the normalize() result. A rejected or unsupported name is an input error (400) with one sentence saying why."""
     from mzdesk.lipid_name_map import normalize
 
-    raw = str(inputs.get("name") or "").strip()
+    raw = str(raw or "").strip()
     if not raw:
         raise InputError("Enter a lipid name.")
     r = normalize(raw)
@@ -102,14 +104,27 @@ def run_lipid_short_name(inputs):
         why = _reject_text(r, raw)
         shown = raw if len(raw) <= 60 else raw[:57] + "..."
         raise InputError(f"Cannot read “{shown}”. {why}" if r["status"] == "rejected" else f"“{shown}” is not supported. {why}")
-    svg, assumptions, no_structure = _structure(r, raw)
-    outputs = {
+    return r
+
+
+def name_cards(r):
+    """The LIPID+ and LIPID MAPS card data of a normalize() result: {"lipid_plus": {...}, "lipid_maps": {...}}."""
+    return {
         "lipid_plus": {"values": _present(L1=r["L1"], L2=r["L2"], L3=r["L3"])},
         "lipid_maps": {"values": {k: v for k, v in (("Species", _maps_value(r, "LM_species", "species")),
                                                     ("Molecular species", _maps_value(r, "LM_molecular", "molecular"))) if v}},
+    }
+
+
+def run_lipid_short_name(inputs):
+    raw = str(inputs.get("name") or "").strip()
+    r = read_name(raw)
+    _, svg, assumptions, no_structure = illustrate(r, raw)
+    outputs = {
+        **name_cards(r),
         "no_structure": {"items": [no_structure] if no_structure else []},
         "assumptions": {"items": assumptions},
-        "flags": {"items": _flag_lines(r, raw)},
+        "flags": {"items": flag_lines(r, raw)},
     }
     if svg:
         outputs["structure"] = {"svg": svg}
