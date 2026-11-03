@@ -1,6 +1,7 @@
 <svg viewBox="0 0 720 544" xmlns="http://www.w3.org/2000/svg">
 <title>28 modules and 3 workflows</title>
 <desc>The 28 modules of mzDesk as one bar and six cards, each group in its own colour: Compound (4), Detectability (7), MS1 (2), Spectrum (10), Orthogonal (1), Dataset Search (3) and the Calculator. Below, in solid blue, the 3 workflows: MS/MS Annotation (8 steps), EI MS Annotation (9 steps) and Targeted Method (9 steps).</desc>
+<defs><clipPath id="cl-compound"><rect x="12" y="62" width="224" height="146" rx="10"/></clipPath><clipPath id="cl-ms1"><rect x="12" y="220" width="224" height="98" rx="10"/></clipPath><clipPath id="cl-ortho"><rect x="12" y="330" width="224" height="84" rx="10"/></clipPath><clipPath id="cl-detect"><rect x="248" y="62" width="224" height="218" rx="10"/></clipPath><clipPath id="cl-dataset"><rect x="248" y="292" width="224" height="122" rx="10"/></clipPath><clipPath id="cl-spectrum"><rect x="484" y="62" width="224" height="290" rx="10"/></clipPath></defs>
 <text class="fg-title" x="12" y="22">28 modules</text>
 <text class="fg-muted" x="708" y="22" text-anchor="end">six groups and the Calculator</text>
 <g class="fg-g-compound"><rect class="fg-gbar" x="12.0" y="34" width="96.9" height="10" rx="5"/></g>
@@ -10,23 +11,23 @@
 <g class="fg-g-ortho"><rect class="fg-gbar" x="580.9" y="34" width="24.2" height="10" rx="5"/></g>
 <g class="fg-g-dataset"><rect class="fg-gbar" x="608.1" y="34" width="72.6" height="10" rx="5"/></g>
 <g class="fg-g-calc"><rect class="fg-gbar" x="683.8" y="34" width="24.2" height="10" rx="5"/></g>
-<g class="fg-g-compound"><rect class="fg-gbox" x="12" y="62" width="224" height="146" rx="10"/>
+<g class="fg-g-compound"><rect class="fg-gbox" x="12" y="62" width="224" height="146" rx="10"/><g clip-path="url(#cl-compound)"><g transform="translate(236 208) scale(.62) translate(-236 -208)"><path class="fg-gpat" d="M214.5 183.5L198.0 193.0L181.5 183.5L181.5 164.5L198.0 155.0L214.5 164.5Z"/><path class="fg-gpat" d="M181.6 202.5L165.1 212.0L148.6 202.5L148.6 183.5L165.1 174.0L181.6 183.5Z"/><path class="fg-gpat" d="M181.6 164.5L165.1 174.0L148.6 164.5L148.6 145.5L165.1 136.0L181.6 145.5Z"/><path class="fg-gpat" d="M214.5 145.5L198.0 155.0L181.5 145.5L181.5 126.5L198.0 117.0L214.5 126.5Z"/><path class="fg-gpat" d="M175.5 161.0L165.1 167.0L154.7 161.0L154.7 149.0L165.1 143.0L175.5 149.0Z"/></g></g>
 <text class="fg-gtitle" x="28" y="86">Compound</text><text class="fg-gtext" x="220" y="86" text-anchor="end">4</text></g>
 <path class="fg-line" d="M24 96H224"/>
 <text class="fg-small" x="28" y="118">Identity</text>
 <text class="fg-small" x="28" y="142">Structure &amp; Formats</text>
 <text class="fg-small" x="28" y="166">Properties &amp; Groups</text>
 <text class="fg-small" x="28" y="190">Lipid Short Name</text>
-<g class="fg-g-ms1"><rect class="fg-gbox" x="12" y="220" width="224" height="98" rx="10"/>
+<g class="fg-g-ms1"><rect class="fg-gbox" x="12" y="220" width="224" height="98" rx="10"/><g clip-path="url(#cl-ms1)"><g transform="translate(236 318) scale(.62) translate(-236 -318)"><rect class="fg-gpat-f" x="156" y="264" width="9" height="46" rx="2"/><rect class="fg-gpat-f" x="174" y="276" width="9" height="34" rx="2"/><rect class="fg-gpat-f" x="192" y="290" width="9" height="20" rx="2"/><rect class="fg-gpat-f" x="210" y="300" width="9" height="10" rx="2"/></g></g>
 <text class="fg-gtitle" x="28" y="244">MS1</text><text class="fg-gtext" x="220" y="244" text-anchor="end">2</text></g>
 <path class="fg-line" d="M24 254H224"/>
 <text class="fg-small" x="28" y="276">Mass Search</text>
 <text class="fg-small" x="28" y="300">Theoretical</text>
-<g class="fg-g-ortho"><rect class="fg-gbox" x="12" y="330" width="224" height="84" rx="10"/>
+<g class="fg-g-ortho"><rect class="fg-gbox" x="12" y="330" width="224" height="84" rx="10"/><g clip-path="url(#cl-ortho)"><g transform="translate(236 414) scale(.62) translate(-236 -414)"><circle class="fg-gpat-f" cx="218" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="218" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="218" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="372" r="2.6"/></g></g>
 <text class="fg-gtitle" x="28" y="354">Orthogonal</text><text class="fg-gtext" x="220" y="354" text-anchor="end">1</text></g>
 <path class="fg-line" d="M24 364H224"/>
 <text class="fg-small" x="28" y="386">CCS</text>
-<g class="fg-g-detect"><rect class="fg-gbox" x="248" y="62" width="224" height="218" rx="10"/>
+<g class="fg-g-detect"><rect class="fg-gbox" x="248" y="62" width="224" height="218" rx="10"/><g clip-path="url(#cl-detect)"><g transform="translate(472 280) scale(.62) translate(-472 -280)"><path class="fg-gpat" d="M438 280A34 34 0 0 1 472 246"/><path class="fg-gpat" d="M416 280A56 56 0 0 1 472 224"/><path class="fg-gpat" d="M394 280A78 78 0 0 1 472 202"/><path class="fg-gpat" d="M372 280A100 100 0 0 1 472 180"/></g></g>
 <text class="fg-gtitle" x="264" y="86">Detectability</text><text class="fg-gtext" x="456" y="86" text-anchor="end">7</text></g>
 <path class="fg-line" d="M260 96H460"/>
 <text class="fg-small" x="264" y="118">Platform</text>
@@ -36,13 +37,13 @@
 <text class="fg-small" x="264" y="214">Non-MS Detection</text>
 <text class="fg-small" x="264" y="238">Derivatization</text>
 <text class="fg-small" x="264" y="262">Known Methods</text>
-<g class="fg-g-dataset"><rect class="fg-gbox" x="248" y="292" width="224" height="122" rx="10"/>
+<g class="fg-g-dataset"><rect class="fg-gbox" x="248" y="292" width="224" height="122" rx="10"/><g clip-path="url(#cl-dataset)"><g transform="translate(472 414) scale(.62) translate(-472 -414)"><path class="fg-gpat" d="M446 392L410 374"/><path class="fg-gpat" d="M410 374L432 348"/><path class="fg-gpat" d="M446 392L432 348"/><path class="fg-gpat" d="M410 374L380 390"/><path class="fg-gpat" d="M410 374L386 344"/><path class="fg-gpat" d="M432 348L386 344"/><circle class="fg-gpat-f" cx="446" cy="392" r="4.5"/><circle class="fg-gpat-f" cx="410" cy="374" r="4.5"/><circle class="fg-gpat-f" cx="432" cy="348" r="4.5"/><circle class="fg-gpat-f" cx="380" cy="390" r="4.5"/><circle class="fg-gpat-f" cx="386" cy="344" r="4.5"/></g></g>
 <text class="fg-gtitle" x="264" y="316">Dataset Search</text><text class="fg-gtext" x="456" y="316" text-anchor="end">3</text></g>
 <path class="fg-line" d="M260 326H460"/>
 <text class="fg-small" x="264" y="348">Spectrum in Which Set</text>
 <text class="fg-small" x="264" y="372">Dataset Finder</text>
 <text class="fg-small" x="264" y="396">Fragment Pattern</text>
-<g class="fg-g-spectrum"><rect class="fg-gbox" x="484" y="62" width="224" height="290" rx="10"/>
+<g class="fg-g-spectrum"><rect class="fg-gbox" x="484" y="62" width="224" height="290" rx="10"/><g clip-path="url(#cl-spectrum)"><g transform="translate(708 352) scale(.62) translate(-708 -352)"><path class="fg-gpat" d="M696 344V330"/><path class="fg-gpat" d="M688 344V314"/><path class="fg-gpat" d="M680 344V322"/><path class="fg-gpat" d="M672 344V284"/><path class="fg-gpat" d="M664 344V326"/><path class="fg-gpat" d="M656 344V304"/><path class="fg-gpat" d="M648 344V318"/><path class="fg-gpat" d="M640 344V260"/><path class="fg-gpat" d="M632 344V324"/><path class="fg-gpat" d="M624 344V310"/><path class="fg-gpat" d="M616 344V328"/><path class="fg-gpat" d="M608 344V292"/><path class="fg-gpat" d="M600 344V320"/><path class="fg-gpat" d="M592 344V274"/><path class="fg-gpat" d="M584 344V326"/><path class="fg-gpat" d="M576 344V316"/><path class="fg-gpat" d="M568 344V308"/><path class="fg-gpat" d="M560 344V324"/><path class="fg-gpat" d="M556 344H702"/></g></g>
 <text class="fg-gtitle" x="500" y="86">Spectrum</text><text class="fg-gtext" x="692" y="86" text-anchor="end">10</text></g>
 <path class="fg-line" d="M496 96H696"/>
 <text class="fg-small" x="500" y="118">Spectrum Cleanup</text>

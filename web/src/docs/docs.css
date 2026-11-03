@@ -165,19 +165,19 @@
   --grp-amber-bg: #fbf4e4;  --grp-amber-line: #ead6a2;  --grp-amber-ink: #85560a;
 }
 :root[data-theme="dark"] .docs {
-  --grp-teal-bg: rgba(45, 180, 160, .12);   --grp-teal-line: rgba(45, 180, 160, .35);   --grp-teal-ink: #7fd6c8;
-  --grp-green-bg: rgba(110, 190, 100, .12); --grp-green-line: rgba(110, 190, 100, .32); --grp-green-ink: #a3dd98;
-  --grp-violet-bg: rgba(160, 130, 240, .13); --grp-violet-line: rgba(160, 130, 240, .35); --grp-violet-ink: #c6b4fa;
-  --grp-slate-bg: rgba(255, 255, 255, .05); --grp-slate-line: rgba(255, 255, 255, .12); --grp-slate-ink: #b3b8c4;
-  --grp-amber-bg: rgba(230, 170, 70, .12);  --grp-amber-line: rgba(230, 170, 70, .35);  --grp-amber-ink: #f0c67a;
+  --grp-teal-bg: rgba(45, 180, 160, .16);   --grp-teal-line: rgba(45, 180, 160, .45);   --grp-teal-ink: #8be3d4;
+  --grp-green-bg: rgba(110, 190, 100, .15); --grp-green-line: rgba(110, 190, 100, .42); --grp-green-ink: #b0e6a5;
+  --grp-violet-bg: rgba(160, 130, 240, .17); --grp-violet-line: rgba(160, 130, 240, .46); --grp-violet-ink: #d2c3fb;
+  --grp-slate-bg: rgba(255, 255, 255, .07); --grp-slate-line: rgba(255, 255, 255, .2);  --grp-slate-ink: #c3c8d3;
+  --grp-amber-bg: rgba(230, 170, 70, .15);  --grp-amber-line: rgba(230, 170, 70, .45);  --grp-amber-ink: #f5d08a;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .docs {
-    --grp-teal-bg: rgba(45, 180, 160, .12);   --grp-teal-line: rgba(45, 180, 160, .35);   --grp-teal-ink: #7fd6c8;
-    --grp-green-bg: rgba(110, 190, 100, .12); --grp-green-line: rgba(110, 190, 100, .32); --grp-green-ink: #a3dd98;
-    --grp-violet-bg: rgba(160, 130, 240, .13); --grp-violet-line: rgba(160, 130, 240, .35); --grp-violet-ink: #c6b4fa;
-    --grp-slate-bg: rgba(255, 255, 255, .05); --grp-slate-line: rgba(255, 255, 255, .12); --grp-slate-ink: #b3b8c4;
-    --grp-amber-bg: rgba(230, 170, 70, .12);  --grp-amber-line: rgba(230, 170, 70, .35);  --grp-amber-ink: #f0c67a;
+    --grp-teal-bg: rgba(45, 180, 160, .16);   --grp-teal-line: rgba(45, 180, 160, .45);   --grp-teal-ink: #8be3d4;
+    --grp-green-bg: rgba(110, 190, 100, .15); --grp-green-line: rgba(110, 190, 100, .42); --grp-green-ink: #b0e6a5;
+    --grp-violet-bg: rgba(160, 130, 240, .17); --grp-violet-line: rgba(160, 130, 240, .46); --grp-violet-ink: #d2c3fb;
+    --grp-slate-bg: rgba(255, 255, 255, .07); --grp-slate-line: rgba(255, 255, 255, .2);  --grp-slate-ink: #c3c8d3;
+    --grp-amber-bg: rgba(230, 170, 70, .15);  --grp-amber-line: rgba(230, 170, 70, .45);  --grp-amber-ink: #f5d08a;
   }
 }
 .fg-g-compound { --g-bg: var(--grp-teal-bg);   --g-line: var(--grp-teal-line);   --g-ink: var(--grp-teal-ink); }
@@ -189,6 +189,8 @@
 .fg-g-calc     { --g-bg: var(--canvas);        --g-line: var(--line-strong);     --g-ink: var(--ink-2); }
 .fg-gbox { fill: var(--g-bg); stroke: var(--g-line); stroke-width: 1.5; }
 .fg-gfill { fill: var(--g-ink); stroke: none; }
+.fg-gpat { fill: none; stroke: var(--g-ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .15; }
+.fg-gpat-f { fill: var(--g-ink); stroke: none; opacity: .13; }
 .fg-gbar { fill: var(--g-ink); stroke: none; opacity: .6; }
 .fg-gtext { fill: var(--g-ink); font-size: 14px; font-weight: 500; }
 .fg-gtitle { fill: var(--g-ink); font-size: 16px; font-weight: 600; }
