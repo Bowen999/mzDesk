@@ -31,6 +31,12 @@ def home(tmp_path, monkeypatch):
     return tmp_path
 
 
+def posix_only(monkeypatch, *ids):
+    """Make these components macOS / Linux only (no component is, any more; the mechanism is still there for the next one that cannot do Windows)."""
+    reg = {cid: dataclasses.replace(c, platforms=components.POSIX_ONLY) if cid in ids else c for cid, c in components.REGISTRY.items()}
+    monkeypatch.setattr(components, "REGISTRY", reg)
+
+
 def with_installed(monkeypatch, **flags):
     """The registry with installed() fixed per id (all others: not installed)."""
     reg = {cid: dataclasses.replace(c, check=lambda v=flags.get(cid, False): v) for cid, c in components.REGISTRY.items()}
@@ -48,11 +54,12 @@ def test_registry_has_the_eight_components_in_install_order():
 def test_ask_flags_and_platforms_follow_the_contract():
     reg = components.REGISTRY
     assert [cid for cid in IDS if reg[cid].ask] == ["libraries", "msfinder", "frigid", "cfmid", "neims"]
-    assert [cid for cid in IDS if "win32" in reg[cid].platforms] == ["libraries", "molgpka", "ccs"]
-    assert all(set(reg[cid].platforms) == {"darwin", "linux"} for cid in ("msfinder", "frigid", "cfmid", "neims", "repo"))
+    assert [cid for cid in IDS if "win32" in reg[cid].platforms] == IDS            # every component has a Windows path (verified by the Windows CI job)
+    assert all(set(reg[cid].platforms) == {"darwin", "linux", "win32"} for cid in IDS)
 
 
 def test_unsupported_platform_is_reported_with_the_reason(monkeypatch):
+    posix_only(monkeypatch, "msfinder")
     monkeypatch.setattr(components, "current_platform", lambda: "win32")
     info = {i["id"]: i for i in components.status()}
     assert info["msfinder"]["supported"] is False and info["msfinder"]["installed"] is False and info["msfinder"]["note"] == "macOS / Linux only for now"
@@ -302,6 +309,7 @@ def test_repo_brings_molgpka_along(monkeypatch):
 
 
 def test_unsupported_components_are_listed_and_do_not_block(monkeypatch):
+    posix_only(monkeypatch, "msfinder", "frigid", "cfmid")
     with_installed(monkeypatch)
     monkeypatch.setattr(components, "current_platform", lambda: "win32")
     got = targets.needs("workflow:esi_ms2_annotation", {"libraries": ["GNPS"], "run_frigid": True, "ccs_observed": "150"})
@@ -359,7 +367,7 @@ def test_job_runs_components_in_order_and_streams_the_log(fakes):
     assert [(c["id"], c["status"]) for c in snap["components"]] == [("one", "done"), ("two", "done")]
     assert snap["log"][:3] == ["Downloading a", "50 %", "done a"] and snap["log"][-1] == "second component"
     assert snap["elapsed_s"] >= 0 and set(snap) == {"status", "current", "elapsed_s", "components", "log", "error"}
-    assert set(snap["components"][0]) == {"id", "title", "status", "detail"} and snap["components"][1]["detail"] == "installed"
+    assert set(snap["components"][0]) == {"id", "title", "status", "detail", "step", "progress", "got_mb", "total_mb"} and snap["components"][1]["detail"] == "installed"
     assert store.get(job.id) is job and store.get("nope") is None
 
 

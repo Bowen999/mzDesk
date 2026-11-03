@@ -35,6 +35,8 @@ test("confirm: what will be downloaded with its sizes, the total on the button, 
   assert.match(html, /mzDesk needs to download:/);
   assert.match(html, /<span class="setup-name">Spectral libraries<\/span><span class="setup-size">2\.3 GB<\/span><span class="setup-why">MassBank and GNPS spectra<\/span>/);
   assert.match(html, /<span class="setup-name">MS-FINDER<\/span><span class="setup-size">0\.6 GB<\/span>/);
+  assert.match(html, /Downloaded once, then kept on this computer\./);
+  assert.match(html, /You can cancel at any time\. Finished downloads are kept\./);
   assert.deepEqual(buttons(html), ["Not now", "Download 2.9 GB"]);
   assert.match(html, /class="btn" data-autofocus/, "the primary button takes the focus");
   assert.match(html, /CFM-ID: macOS \/ Linux only for now\./, "an unsupported component is one line of the dialog");
@@ -57,11 +59,14 @@ test("progress: one row per component, the bar, the clock and Cancel; the state 
     missing: [...missing, { id: "molgpka", title: "MolGpKa", size: "12 MB", ask: false, why: "" }],
   });
   const html = view(s, { percent: 61.4 });
-  assert.match(html, /<h2 id="setup-title">First-time setup<\/h2>/);
+  assert.match(html, /<h2 id="setup-title">Setting up mzDesk<\/h2>/);
   assert.match(html, /Keep this page open\. The run starts when this is done\./);
   assert.match(html, /role="progressbar"[^>]*aria-valuemin="0"[^>]*aria-valuemax="100"[^>]*aria-valuenow="61"/);
   assert.match(html, /aria-valuetext="Installing MS-FINDER \(2 of 3\)"/);
   assert.match(html, /<span style="width:61\.4%"><\/span>/);
+  assert.match(html, /<span class="setup-pct">61%<\/span><span class="setup-clock">2:05<\/span>/, "the overall percent sits next to the clock");
+  assert.match(html, /You can cancel at any time\. Finished downloads are kept\./);
+  assert.doesNotMatch(html, /setup-file|setup-transfer|is-finishing/, "no file progress from an older server");
   assert.match(html, /<span class="setup-clock">2:05<\/span>/);
   assert.match(html, /<li class="setup-row is-done">.*?Spectral libraries<span class="setup-size">2\.3 GB<\/span>.*?<span class="setup-word">Done<\/span><\/li>/);
   assert.match(html, /<li class="setup-row is-running">.*?<span class="setup-word">Installing<\/span><span class="setup-detail" title="Unpacking massbank\/…">Unpacking massbank\/…<\/span><\/li>/);
@@ -82,6 +87,33 @@ test("progress: before the server answers every missing component waits; a tick 
 test("progress: a failed component shows its last line in the alert colour class", () => {
   const html = view(state("progress", { job: job([{ id: "libraries", title: "Spectral libraries", status: "error", detail: "curl: (22) 404" }]) }));
   assert.match(html, /<li class="setup-row is-error">.*?<span class="setup-word">Failed<\/span><span class="setup-detail" title="curl: \(22\) 404">curl: \(22\) 404<\/span>/);
+});
+
+test("progress: a running row with a step shows it, the file's thin bar and 'got of total'; the raw path line is left out", () => {
+  const s = state("progress", {
+    job: job([
+      { id: "libraries", title: "Spectral libraries", status: "running", detail: "https://example.org/data/MSFINDER.v3.73.zip", step: "Downloading MSFINDER.v3.73.zip", progress: 0.18, got_mb: 412, total_mb: 2300 },
+      { id: "msfinder", title: "MS-FINDER", status: "waiting", detail: "", step: "", progress: null, got_mb: null, total_mb: null },
+    ]),
+  });
+  const html = view(s, { percent: 30 });
+  assert.match(html, /<li class="setup-row is-running">.*?<span class="setup-word" title="Downloading MSFINDER\.v3\.73\.zip">Downloading MSFINDER\.v3\.73\.zip<\/span><span class="setup-transfer">0.41 of 2.3 GB<\/span>/);
+  assert.match(html, /<span class="setup-file" aria-hidden="true"><span style="width:18%"><\/span><\/span>/);
+  assert.doesNotMatch(html, /setup-detail|https:\/\/example/, "a clean step replaces the raw url line");
+  assert.match(html, /<li class="setup-row is-waiting">.*?<span class="setup-word"[^>]*>Waiting<\/span><\/li>/);
+  assert.equal((html.match(/setup-file/g) ?? []).length, 1, "only the running row has a bar");
+  // a step without a path in the raw line keeps both
+  const both = view(state("progress", { job: job([{ id: "msfinder", title: "MS-FINDER", status: "running", detail: "make: Nothing to be done", step: "Compiling", progress: null }]) }));
+  assert.match(both, /<span class="setup-word" title="Compiling">Compiling<\/span><span class="setup-detail" title="make: Nothing to be done">make: Nothing to be done<\/span>/);
+  assert.doesNotMatch(both, /setup-file|setup-transfer/, "progress null: no per-file bar");
+});
+
+test("progress: every component done but the job not finished is the full 'Finishing…' state", () => {
+  const html = view(state("progress", { job: job([{ id: "libraries", title: "Spectral libraries", status: "done", detail: "" }]) }), { percent: 99 });
+  assert.match(html, /class="setup-bar-row is-finishing"/);
+  assert.match(html, /<span style="width:100%"><\/span>/);
+  assert.match(html, /<span class="setup-pct">Finishing…<\/span>/);
+  assert.match(html, /aria-valuenow="100"/);
 });
 
 // ---------------------------------------------------------------- blocked and error
@@ -147,6 +179,39 @@ test("the bar: never empty, never 100 before the job ends, fast at first, slower
   assert.equal(percent([row("a", "1 GB", "done"), row("b", "1 GB", "done")], 0), 99, "all done, the job not yet: 99");
   assert.ok(percent([row("a", "1 GB", "done"), row("b", "1 GB", "running")], 30) > half);
   assert.ok(percent([row("a", "9 GB", "running"), row("b", "?", "waiting")], 5) < 100);
+});
+
+test("megabytes: MB below 1000, GB from there; 'got of total' in the unit of the total", () => {
+  assert.equal(S.formatMb(412), "412 MB");
+  assert.equal(S.formatMb(2300), "2.3 GB");
+  assert.equal(S.formatMb(1234), "1.23 GB");
+  assert.equal(S.formatMb(12000), "12 GB");
+  assert.equal(S.transferText({ gotMb: 412, totalMb: 2300 }), "0.41 of 2.3 GB");
+  assert.equal(S.transferText({ gotMb: 412.4, totalMb: 900 }), "412 of 900 MB");
+  assert.equal(S.transferText({ gotMb: 1500, totalMb: 1000 }), "1 of 1 GB", "never more than the total");
+  assert.equal(S.transferText({ gotMb: 33, totalMb: null }), "33 MB");
+  assert.equal(S.transferText({ gotMb: null, totalMb: null, progress: 0.184 }), "18%");
+  assert.equal(S.transferText({ gotMb: null, totalMb: null, progress: null }), "");
+});
+
+test("rows: the new fields are optional; progress comes from got/total when the server sends no fraction", () => {
+  const old = S.setupRows(state("progress", { job: job([{ id: "libraries", title: "L", status: "running", detail: "x" }]) }));
+  assert.deepEqual([old[0].step, old[0].progress, old[0].gotMb], ["", null, null]);
+  const derived = S.setupRows(state("progress", { job: job([{ id: "libraries", title: "L", status: "running", detail: "", got_mb: 50, total_mb: 200 }]) }));
+  assert.equal(derived[0].progress, 0.25);
+  const odd = S.setupRows(state("progress", { job: job([{ id: "libraries", title: "L", status: "running", detail: "", progress: 7, got_mb: -1, total_mb: "x" }]) }));
+  assert.deepEqual([odd[0].progress, odd[0].gotMb, odd[0].totalMb], [1, null, null], "a fraction is clamped, junk numbers are dropped");
+});
+
+test("the bar: the real fraction of the running file moves the bar; without it the time estimate stays", () => {
+  const t0 = 1_000_000, seen = { a: t0 };
+  const row = (progress, status = "running") => ({ id: "a", title: "a", size: "1 GB", status, detail: "", progress });
+  assert.ok(Math.abs(S.setupPercent([row(0.5)], seen, t0) - 50) < 1e-9, "half of the only slice");
+  assert.equal(S.setupPercent([row(1)], seen, t0), 99, "never 100 before the job ends");
+  assert.equal(S.setupPercent([row(0)], seen, t0), 6, "never empty");
+  assert.equal(S.setupPercent([row(null)], seen, t0 + 20000), S.setupPercent([row(undefined)], seen, t0 + 20000), "no fraction: the eased estimate");
+  const two = [{ ...row(null, "done"), id: "x" }, row(0.5)];
+  assert.ok(Math.abs(S.setupPercent(two, seen, t0) - 75) < 1e-9, "a done slice and half of the next");
 });
 
 // ---------------------------------------------------------------- the words

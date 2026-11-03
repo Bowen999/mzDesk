@@ -1,6 +1,6 @@
 """MS-FINDER engine for the Structure prediction page: formula and structure candidates from one MS/MS spectrum.
 
-Runs the official MS-FINDER v3.73 release (RIKEN, Tsugawa lab) through Mono, on this machine only. The release is the Windows
+Runs the official MS-FINDER v3.73 release (RIKEN, Tsugawa lab) through Mono (on Windows: directly, with the .NET Framework), on this machine only. The release is the Windows
 GUI build; `python -m mzdesk.ms2.msfinder_setup` adds a console front end compiled from the project's own sources (nothing patched)
 and applies ONE fix to StructureFinder.dll (the thread fix below); nothing else in the release is changed.
 One run = one spectrum: write a .mat query file into a fresh temp folder, call
@@ -33,7 +33,6 @@ import json
 import os
 import re
 import shutil
-import signal
 import subprocess
 import sys
 import tempfile
@@ -41,7 +40,7 @@ import time
 from pathlib import Path
 
 from mzdesk.local import paths
-from mzdesk.shared import heavy_lock
+from mzdesk.shared import heavy_lock, procgroup
 
 VERSION = "3.73"
 EXE_NAME = "MsfinderConsoleApp.exe"
@@ -93,8 +92,25 @@ def install_dir():
     return paths.tool_folder("MZDESK_MSFINDER_DIR", Path.home() / "tools" / "msfinder" / f"MSFINDER_v{VERSION}", Path("msfinder") / f"MSFINDER_v{VERSION}")
 
 
+NATIVE = "native"           # what find_mono() answers on Windows: the .NET Framework runs MsfinderConsoleApp.exe itself, no Mono
+
+
+def framework_ready():
+    """Windows: is .NET Framework 4.7.2 or newer there? (4.7.2 added netstandard.dll, which the release DLLs need.) It ships with Windows 10 1803+ and 11."""
+    windir = os.environ.get("WINDIR") or os.environ.get("SystemRoot") or r"C:\Windows"
+    return (Path(windir) / "Microsoft.NET" / "Framework64" / "v4.0.30319" / "netstandard.dll").is_file()
+
+
+def launch_command(mono, exe):
+    """The start of the command line that runs the console exe: ``mono exe`` on macOS / Linux, ``exe`` alone on Windows."""
+    return [str(exe)] if mono == NATIVE else [str(mono), str(exe)]
+
+
 def find_mono():
-    """Path of the mono executable (MZDESK_MONO, the Mono the installer made in ~/.mzdesk/tools/mono, PATH, Homebrew) or None."""
+    """Path of the mono executable (MZDESK_MONO, the Mono the installer made in ~/.mzdesk/tools/mono, PATH, Homebrew) or None.
+    On Windows there is no Mono: NATIVE when the .NET Framework is recent enough, else None."""
+    if sys.platform == "win32":
+        return NATIVE if framework_ready() else None
     for cand in (os.environ.get("MZDESK_MONO"), paths.mono_in_prefix(), shutil.which("mono"), "/opt/homebrew/bin/mono"):
         if cand and Path(cand).is_file() and os.access(cand, os.X_OK):
             return str(cand)
@@ -145,6 +161,9 @@ def check_msfinder():
     """Return (mono, exe, ini) or raise MsFinderError with a message that says what to do."""
     s = status()
     if not s["mono"]:
+        if sys.platform == "win32":
+            raise MsFinderError("Structure Prediction needs the .NET Framework 4.7.2 or newer, which this Windows does not have. "
+                                "Install it from https://dotnet.microsoft.com/download/dotnet-framework, then try again.")
         raise MsFinderError("Structure Prediction runs MS-FINDER through Mono, which is not installed here. The module is part of the local "
                             f"version of mzDesk only. Install Mono (for example `brew install mono`), then run `{SETUP_COMMAND}`.")
     if not s["exe"] or not s["resources"]:
@@ -347,40 +366,12 @@ def parse_structure_results(text):
 
 # ---------------------------------------------------------------- process
 def _group_rss_mb(pgid):
-    """Resident memory (MB) of every process in the process group, from `ps`.
-
-    When ps is missing or blocked (containers, sandboxes) fall back to the kernel's per-process
-    RSS for the group leader, so the cap still fires instead of silently reading 0.
-    """
-    out = ""
-    try:
-        out = subprocess.run(["ps", "-axo", "pgid=,rss="], capture_output=True, text=True, timeout=5).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        out = ""
-    total = 0
-    for line in out.splitlines():
-        parts = line.split()
-        if len(parts) == 2 and parts[0] == str(pgid) and parts[1].isdigit():
-            total += int(parts[1])
-    if total:
-        return total / 1024.0
-    try:
-        from mzdesk.shared.memguard import proc_memory
-        mem = proc_memory(int(pgid))
-        return (mem or {}).get("rss_mb", 0.0)
-    except Exception:  # noqa: BLE001 - a missing probe must not kill the run
-        return 0.0
+    """Resident memory (MB) of every process in the process group (see mzdesk.shared.procgroup)."""
+    return procgroup.group_rss_mb(pgid)
 
 
 def _kill_group(proc):
-    try:
-        os.killpg(proc.pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        pass
-    try:
-        proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        pass
+    procgroup.kill_group(proc)
 
 
 def run_watched(cmd, cwd, env, timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB, poll_s=POLL_S, label="MS-FINDER"):
@@ -389,7 +380,7 @@ def run_watched(cmd, cwd, env, timeout=TIMEOUT_S, rss_cap_mb=RSS_CAP_MB, poll_s=
     Past ``timeout`` seconds or ``rss_cap_mb`` of resident memory the whole group is killed and MsFinderError raised (with the output so far).
     """
     with tempfile.TemporaryFile(mode="w+b") as log_file:
-        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log_file, stderr=subprocess.STDOUT, start_new_session=True)
+        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log_file, stderr=subprocess.STDOUT, **procgroup.popen_kwargs())
 
         def tail():
             log_file.seek(0)
@@ -458,7 +449,7 @@ def predict(precursor_mz, positive, adduct, ms2, ms1=None, *, halogen=False, sil
                 run_ini.write_bytes(ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen, silicon, extended).encode("utf-8"))
                 ini = run_ini
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
-            cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(ini)]
+            cmd = [*launch_command(mono, exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(ini)]
             _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
             log = copy_note + log
             formula_files = sorted(out_dir.glob("Formula result-*.txt"))
@@ -620,7 +611,7 @@ def explain_candidates(precursor_mz, positive, adduct, ms2, candidates, *, tol_d
             text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=bool(elements & {"F", "Cl", "Br", "I"}), silicon="Si" in elements)
             run_ini.write_bytes(ini_with_values(text, {**switches, "UserDefinedDbFilePath": db}).encode("utf-8"))
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
-            cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
+            cmd = [*launch_command(mono, exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
             _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)         # exit code 1 = success: judge by the files
             log = copy_note + log
             formula_files = sorted(out_dir.glob("Formula result-*.txt"))
@@ -746,7 +737,7 @@ def predict_queries(queries, *, halogen=False, values=None, timeout=TIMEOUT_S, r
             text = ini_with_elements(Path(ini).read_bytes().decode("utf-8"), halogen=halogen)
             run_ini.write_bytes(ini_with_values(text, values or {}).encode("utf-8"))
             env = {**os.environ, "LC_ALL": "en_US.UTF-8", "LANG": "en_US.UTF-8"}
-            cmd = [mono, str(exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
+            cmd = [*launch_command(mono, exe), "predict", "-i", str(in_dir), "-o", str(out_dir), "-m", str(run_ini)]
             stopped = None
             try:
                 _, log, peak = run_watched(cmd, str(exe.parent), env, timeout, rss_cap_mb)     # exit code 1 = success: judge by the files

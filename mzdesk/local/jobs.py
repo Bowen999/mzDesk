@@ -9,7 +9,7 @@ import threading
 import time
 import uuid
 
-from mzdesk.local import components
+from mzdesk.local import components, progress
 from mzdesk.local.runner import Cancelled, Ctx, InstallError
 
 LOG_LINES = 30                  # the tail the dialog shows
@@ -21,7 +21,8 @@ class Job:
         self.id = uuid.uuid4().hex[:12]
         self.status = "running"                       # running | done | error | cancelled
         self.started, self.ended = time.monotonic(), None
-        self.rows = [{"id": cid, "title": components.REGISTRY[cid].title, "status": "waiting", "detail": ""} for cid in ids]
+        self.rows = [{"id": cid, "title": components.REGISTRY[cid].title, "status": "waiting", "detail": "", "step": "", "progress": None,
+                      "got_mb": None, "total_mb": None} for cid in ids]
         self.log = collections.deque(maxlen=LOG_LINES)
         self.error = ""
         self.lock = threading.Lock()
@@ -32,9 +33,12 @@ class Job:
     def _write(self, line):
         with self.lock:
             self.log.append(line)
+            change = progress.parse(line)
             for row in self.rows:
                 if row["status"] == "running":
                     row["detail"] = line
+                    if change:
+                        row.update(change)
         if self.on_line:
             self.on_line(line)
 
@@ -45,6 +49,8 @@ class Job:
                     row["status"] = status
                     if detail is not None:
                         row["detail"] = detail
+                    if status != "running":
+                        row.update(step="", progress=None, got_mb=None, total_mb=None)
 
     def _finish(self, status, error=""):
         with self.lock:

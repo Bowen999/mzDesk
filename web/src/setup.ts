@@ -26,7 +26,11 @@ export type SetupState = {
   cancelling: boolean;
   seen: Record<string, number>;        // component id -> Date.now() when it was first seen running (the bar's clock)
 };
-export type SetupRow = { id: string; title: string; size: string; status: SetupJobComponent["status"]; detail: string };
+/** A row of the progress view. step / progress / gotMb / totalMb are empty on a server that does not report them (see SetupJobComponent). */
+export type SetupRow = {
+  id: string; title: string; size: string; status: SetupJobComponent["status"]; detail: string;
+  step?: string; progress?: number | null; gotMb?: number | null; totalMb?: number | null;
+};
 
 const CLOSED: SetupState = { phase: null, forRun: false, missing: [], blocked: [], unsupported: [], job: null, error: "", log: [], cancelling: false, seen: {} };
 const POLL_MS = 1000;
@@ -179,16 +183,56 @@ export function totalSize(items: { size: string }[]): string | null {
   return gb >= 0.95 ? `${Math.round(gb * 10) / 10} GB` : `${Math.max(1, Math.round(gb * 1000))} MB`;
 }
 
+const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : null);
+
 /** The rows of the progress view: the job's components, with the sizes of the needs; before the first answer of the job, every missing one waits. */
 export function setupRows(s: SetupState): SetupRow[] {
   const size = (id: string) => s.missing.find(m => m.id === id)?.size ?? "";
-  if (!s.job?.components?.length) return s.missing.map(m => ({ id: m.id, title: m.title, size: m.size, status: "waiting", detail: "" }));
-  return s.job.components.map(c => ({ id: c.id, title: c.title, size: size(c.id), status: c.status, detail: c.detail ?? "" }));
+  if (!s.job?.components?.length) return s.missing.map(m => ({ id: m.id, title: m.title, size: m.size, status: "waiting", detail: "", step: "", progress: null, gotMb: null, totalMb: null }));
+  return s.job.components.map(c => {
+    const gotMb = num(c.got_mb), totalMb = num(c.total_mb);
+    let progress = num(c.progress);
+    if (progress === null && gotMb !== null && totalMb) progress = gotMb / totalMb;
+    return {
+      id: c.id, title: c.title, size: size(c.id), status: c.status, detail: c.detail ?? "",
+      step: typeof c.step === "string" ? c.step.trim() : "", progress: progress === null ? null : Math.min(1, progress), gotMb, totalMb,
+    };
+  });
 }
 
-/** The bar. The server reports which component runs, not how far it is, so the bar is eased on time: each component is a slice as wide as its
- *  download (a size we cannot read counts as 0.3 GB), a running one fills its slice fast at first and slower and slower (progressCurve.ts
- *  waitingPercent: towards 90%, slower the bigger it is), a finished one fills it. Never empty, never 100 before the job ends. */
+/** A size in megabytes without its unit, in the unit it is read in: whole MB with thousands separators, or GB with one decimal from
+ *  10 GB and two below (trailing zeros dropped). */
+function inUnit(mb: number, unit: "MB" | "GB", gbDecimals: number): string {
+  if (unit === "MB") return Math.round(mb).toLocaleString("en-US");
+  return String(parseFloat((mb / 1000).toFixed(gbDecimals)));
+}
+
+/** Megabytes as the dialog writes them: "412 MB", from 1000 MB on "1.24 GB". */
+export function formatMb(mb: number): string {
+  const unit = mb >= 1000 ? "GB" : "MB";
+  return `${inUnit(mb, unit, mb >= 10000 ? 1 : 2)} ${unit}`;
+}
+
+/** "412 of 2,300 MB" for the file that downloads now (both numbers in the unit of the total: "0.41 of 2.3 GB" from 1000 MB on);
+ *  "412 MB" when the total is unknown; "18%" when only a fraction is known; "" without a number. */
+export function transferText(r: Pick<SetupRow, "gotMb" | "totalMb" | "progress">): string {
+  const got = num(r.gotMb), total = num(r.totalMb);
+  if (got !== null && total) {
+    const unit = total >= 1000 ? "GB" : "MB", decimals = total >= 10000 ? 1 : 2;
+    return t("{got} of {total}", { got: inUnit(Math.min(got, total), unit, decimals), total: `${inUnit(total, unit, decimals)} ${unit}` });
+  }
+  if (got !== null) return formatMb(got);
+  const p = num(r.progress);
+  return p === null ? "" : `${Math.round(Math.min(p, 1) * 100)}%`;
+}
+
+/** Every row is done but the job has not said so yet (it checks the install): the bar is full and says so. */
+export const isFinishing = (rows: SetupRow[]) => rows.length > 0 && rows.every(r => r.status === "done");
+
+/** The bar. Each component is a slice as wide as its download (a size we cannot read counts as 0.3 GB). A finished one fills its slice. A
+ *  running one fills it by the real fraction of the file that downloads now when the server reports it (progress, capped at 99% of the slice),
+ *  otherwise eased on time: fast at first and slower and slower (progressCurve.ts waitingPercent: towards 90%, slower the bigger it is).
+ *  Never empty, never 100 before the job ends. (The dialog keeps the highest value it showed: a new file starts at 0 again.) */
 export function setupPercent(rows: SetupRow[], seen: Record<string, number>, now: number): number {
   let total = 0, got = 0;
   for (const r of rows) {
@@ -196,8 +240,12 @@ export function setupPercent(rows: SetupRow[], seen: Record<string, number>, now
     total += w;
     if (r.status === "done") got += w;
     else if (r.status === "running") {
-      const seconds = Math.max(0, (now - (seen[r.id] ?? now)) / 1000);
-      got += w * waitingPercent(seconds, { start: 3, cap: 90, tau: 20 + 60 * w }) / 100;
+      const real = num(r.progress);
+      if (real !== null) got += w * Math.min(real, 0.99);
+      else {
+        const seconds = Math.max(0, (now - (seen[r.id] ?? now)) / 1000);
+        got += w * waitingPercent(seconds, { start: 3, cap: 90, tau: 20 + 60 * w }) / 100;
+      }
     }
   }
   return total ? Math.min(99, Math.max(FLOOR, 100 * got / total)) : FLOOR;

@@ -42,7 +42,7 @@ The installer puts `~/.mzdesk/bin` on your PATH: a link in `~/.local/bin` if tha
 mzdesk
 ```
 
-mzDesk starts and opens `http://localhost:8000` in your browser. If port 8000 is busy, it takes the next free port up to 8020 and prints the address. Press `Ctrl+C` in the terminal to stop it. If `mzdesk` is not found, open a new terminal window.
+mzDesk starts and opens `http://localhost:8731` in your browser. If port 8731 is busy, it takes the next free port up to 8750 and prints the address. Press `Ctrl+C` in the terminal to stop it. If `mzdesk` is not found, open a new terminal window.
 
 ## First-use downloads
 
@@ -51,14 +51,15 @@ The first time you run a page that needs a missing component, mzDesk downloads i
 | Component | Used by | Download | Asks first | Systems |
 |---|---|---|---|---|
 | `libraries`: MassBank and GNPS spectra | Library Search, MS/MS Annotation, EI MS Annotation | 2.3 GB | Yes, except inside MS/MS Annotation | macOS, Linux, Windows |
-| `msfinder`: MS-FINDER with Mono | Structure Prediction, MS/MS Annotation | 0.5 GB | Yes, except inside MS/MS Annotation | macOS, Linux |
-| `frigid`: FRIGID model | De Novo Structure; MS/MS Annotation with **Run FRIGID** | 3 GB | Always | macOS, Linux |
-| `cfmid`: CFM-ID 4 and MSRB, a Docker image | MS/MS Prediction | 0.2 GB (about 1 GB on disk) | Yes | macOS, Linux |
-| `neims`: NEIMS weights | EI-MS Prediction, EI MS Annotation | about 1 GB | Yes | macOS, Linux |
+| `msfinder`: MS-FINDER (with Mono on macOS and Linux) | Structure Prediction, MS/MS Annotation | 0.5 GB | Yes, except inside MS/MS Annotation | macOS, Linux, Windows |
+| `frigid`: FRIGID model | De Novo Structure; MS/MS Annotation with **Run FRIGID** | 3 GB | Always | macOS, Linux, Windows |
+| `cfmid`: CFM-ID 4 and MSRB, a Docker image | MS/MS Prediction | 0.2 GB (about 1 GB on disk) | Yes | macOS, Linux, Windows |
+| `neims`: NEIMS weights | EI-MS Prediction, EI MS Annotation | about 1 GB | Yes | macOS, Linux, Windows |
 | `molgpka`: MolGpKa weights | Separation, Ionization, Adducts, Known Methods, Targeted Method, MS/MS Annotation | 0.2 GB | No | macOS, Linux, Windows |
 | `ccs`: CCSbase data and model | CCS; MS/MS Annotation when you give an observed CCS | 8 MB | No | macOS, Linux, Windows |
-| `repo`: RepoRT retention data | Known Methods, Targeted Method | 0.2 GB | No | macOS, Linux |
+| `repo`: RepoRT retention data | Known Methods, Targeted Method | 0.2 GB | No | macOS, Linux, Windows |
 
+- On Windows, `msfinder` needs no Mono: it runs MS-FINDER with the .NET Framework 4.7.2 or newer that comes with Windows 10 (version 1803 and later) and Windows 11. `cfmid` needs Docker Desktop in Linux-container mode. `frigid` builds a 6 GB Python environment; if its setup stops on a very long file path, turn on long paths in Windows or install mzDesk closer to the drive root.
 - `neims` and `molgpka` convert their weights once with TensorFlow or PyTorch in a temporary environment that is deleted afterwards. That is most of their download size.
 - `cfmid` needs Docker Desktop. mzDesk cannot install it. If Docker is missing or stopped, the page says so and links to [docs.docker.com/get-docker](https://docs.docker.com/get-docker/).
 - The MS2DeepScore (416 MB) and Spec2Vec (about 280 MB) models download themselves the first time you tick **Deep-learning scores**.

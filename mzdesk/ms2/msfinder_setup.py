@@ -71,14 +71,15 @@ def _download(url, dest, expect_size=None):
     print(f"Downloading {url}\n  -> {dest}" + (f" ({expect_size / 1e6:.0f} MB, this can take a while)" if expect_size else ""))
     request = urllib.request.Request(url, headers={"User-Agent": "mzdesk-msfinder-setup"})
     with urllib.request.urlopen(request, timeout=60) as resp, open(part, "wb") as out:
-        done, report = 0, 50 << 20
+        total = expect_size or int(resp.headers.get("Content-Length") or 0)
+        done, report = 0, 10 << 20
         while block := resp.read(1 << 20):
             out.write(block)
             done += len(block)
             if done >= report:
-                print(f"  {done >> 20} MB", flush=True)
-                report += 50 << 20
-    part.rename(dest)
+                print(f"  {done >> 20} / {total >> 20} MB" if total else f"  {done >> 20} MB", flush=True)
+                report += 10 << 20
+    part.replace(dest)
 
 
 def get_zip(install, force=False):
@@ -258,8 +259,55 @@ def apply_thread_fix(install):
     return state
 
 
+# ---------------------------------------------------------------- Windows: the two prebuilt files
+WIN_DIR = mf.INI_PATH.parent / "win"
+WIN_EXE = WIN_DIR / mf.EXE_NAME
+WIN_EXE_SHA256 = "15d38b986b4139c8e7398bbf25f3afbec847525c5af71b7c4c0620ed6714f931"       # built from SOURCES by this module on macOS / Linux
+WIN_FIXED_DLL = WIN_DIR / "StructureFinder.fixed.dll"                                    # its SHA-256 is mf.STRUCTUREFINDER_FIXED_SHA256
+
+
+def install_prebuilt(install):
+    """Windows: MS-FINDER is a Windows program, so there is no Mono and nothing to compile. The console exe and the thread-fixed StructureFinder.dll
+    (mzdesk/lib/msfinder/win/, see NOTICE.md there) are copied into the install after their SHA-256 is checked. Same end state as on macOS / Linux:
+    the exe next to the DLLs, the release DLL kept as StructureFinder.dll.original, the marker file. Returns the thread-fix state ("fixed")."""
+    install = Path(install)
+    for path, expect in ((WIN_EXE, WIN_EXE_SHA256), (WIN_FIXED_DLL, mf.STRUCTUREFINDER_FIXED_SHA256)):
+        if not path.is_file():
+            raise SetupError(f"{path} is missing from this mzDesk; reinstall mzDesk.")
+        digest = sha256_of(path)
+        if digest != expect:
+            raise SetupError(f"{path} has sha256 {digest}, expected {expect}; reinstall mzDesk.")
+    exe = install / mf.EXE_NAME
+    if not exe.is_file() or sha256_of(exe) != WIN_EXE_SHA256:
+        shutil.copy2(WIN_EXE, exe)
+    state = mf.thread_fix_state(install)
+    if state == "fixed":
+        return state
+    dll = install / mf.STRUCTUREFINDER_DLL
+    if state != "release":
+        raise SetupError(f"{dll} is {'missing' if state == 'missing' else 'not the MS-FINDER v3.73 release file (unknown SHA-256)'}; "
+                         f"the thread fix is only applied to the release file. Run `{mf.SETUP_COMMAND} --force` to reinstall.")
+    original = install / (mf.STRUCTUREFINDER_DLL + ".original")
+    if not original.is_file() or sha256_of(original) != mf.STRUCTUREFINDER_SHA256:
+        shutil.copy2(dll, original)
+    new = install / (mf.STRUCTUREFINDER_DLL + ".threadfix.part")
+    shutil.copy2(WIN_FIXED_DLL, new)
+    (install / mf.THREAD_FIX_MARKER).write_text(json.dumps({
+        "fix": "FragmentPeakMatcher.maxBondDissociationEnergy marked [ThreadStatic] (mzdesk/lib/msfinder/ThreadStaticPatch.cs)",
+        "release_sha256": mf.STRUCTUREFINDER_SHA256, "fixed_sha256": mf.STRUCTUREFINDER_FIXED_SHA256, "cecil": "prebuilt (mzdesk/lib/msfinder/win)",
+        "same_as_reference_build": True}, indent=1) + "\n", encoding="utf-8")
+    os.replace(new, dll)
+    state = mf.thread_fix_state(install)
+    if state != "fixed":
+        raise SetupError(f"The thread fix was written but {dll} does not check out as fixed ({state}).")
+    print(f"Thread fix applied to {dll}; the release file is kept as {original.name}.")
+    return state
+
+
 # ---------------------------------------------------------------- status and setup
 def _mono_version(mono):
+    if mono == mf.NATIVE:
+        return ".NET Framework 4.7.2 or newer, built into Windows"
     try:
         out = subprocess.run([mono, "--version"], capture_output=True, text=True, timeout=30).stdout
     except (OSError, subprocess.TimeoutExpired):
@@ -271,7 +319,9 @@ def check():
     """Print what is in place; returns 0 when Structure prediction can run, else 1. Starts nothing but `mono --version`."""
     s = mf.status()
     print("MS-FINDER status (mzDesk Structure prediction)")
-    print(f"  Mono             : {s['mono'] + '  (' + _mono_version(s['mono']) + ')' if s['mono'] else 'NOT FOUND (install Mono, for example: brew install mono)'}")
+    runtime = "Runtime          " if sys.platform == "win32" else "Mono             "
+    missing = "NOT FOUND (needs .NET Framework 4.7.2 or newer)" if sys.platform == "win32" else "NOT FOUND (install Mono, for example: brew install mono)"
+    print(f"  {runtime}: {s['mono'] + '  (' + _mono_version(s['mono']) + ')' if s['mono'] else missing}")
     print(f"  Install folder   : {s['dir']}  (MZDESK_MSFINDER_DIR changes it)")
     print(f"  Databases        : {s['resources'] if s['resources'] else 'NOT FOUND (Resources/ is missing)'}")
     exe = s["exe"]
@@ -290,12 +340,19 @@ def setup(install, force=False, rebuild=False):
     print("Installing MS-FINDER v3.73 (program CC BY 4.0, source LGPL-3.0; the citation is in this module's docstring).")
     mono = mf.find_mono()
     if not mono:
+        if sys.platform == "win32":
+            raise SetupError("The .NET Framework 4.7.2 or newer was not found. Install it from https://dotnet.microsoft.com/download/dotnet-framework, "
+                             f"then run `{mf.SETUP_COMMAND}` again.")
         raise SetupError("Mono was not found. Install it first (macOS: `brew install mono`; Debian / Ubuntu: `apt install mono-complete`), "
                          f"then run `{mf.SETUP_COMMAND}` again.")
-    print(f"Mono: {mono} ({_mono_version(mono)})")
+    print(f"Runtime: {mono} ({_mono_version(mono)})")
     if force or not (install / "Resources").is_dir():
         unzip(get_zip(install, force), install)
         print(f"Unzipped to {install}")
+    if mono == mf.NATIVE:
+        install_prebuilt(install)
+        print(f"Done: {install / mf.EXE_NAME}")
+        return check()
     src_dir = work_dir(install) / "console_src"
     fetch_sources(src_dir, force)
     exe = install / mf.EXE_NAME

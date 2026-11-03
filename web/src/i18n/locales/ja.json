@@ -1150,5 +1150,9 @@
   "Targeted Method looks the compound up in PubChem and UniChem by its InChIKey or SMILES; when that fails, the sheet uses values computed locally.": "ターゲット分析法では、化合物の InChIKey または SMILES で PubChem と UniChem を検索します。検索に失敗した場合は、ローカルで計算した値を使います。",
   "Send feedback on mzdesk.com": "mzdesk.com でフィードバックを送信",
   "The error was saved on this computer ({ref}). Your other pages are not affected.": "エラーはこのコンピューターに保存されました（{ref}）。ほかのページには影響しません。",
-  "The error was saved on this computer. Your other pages are not affected.": "エラーはこのコンピューターに保存されました。ほかのページには影響しません。"
+  "The error was saved on this computer. Your other pages are not affected.": "エラーはこのコンピューターに保存されました。ほかのページには影響しません。",
+  "Finishing…": "まもなく完了…",
+  "Setting up mzDesk": "mzDesk をセットアップ中",
+  "You can cancel at any time. Finished downloads are kept.": "いつでもキャンセルできます。ダウンロード済みのファイルは保持されます。",
+  "{got} of {total}": "{got} / {total}"
 }

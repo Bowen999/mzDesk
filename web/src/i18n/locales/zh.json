@@ -1150,5 +1150,9 @@
   "Targeted Method looks the compound up in PubChem and UniChem by its InChIKey or SMILES; when that fails, the sheet uses values computed locally.": "靶向方法会用化合物的 InChIKey 或 SMILES 在 PubChem 和 UniChem 中查询；查询失败时，方法单使用本地计算的数值。",
   "Send feedback on mzdesk.com": "在 mzdesk.com 上发送反馈",
   "The error was saved on this computer ({ref}). Your other pages are not affected.": "错误已保存在这台电脑上（{ref}）。其他页面不受影响。",
-  "The error was saved on this computer. Your other pages are not affected.": "错误已保存在这台电脑上。其他页面不受影响。"
+  "The error was saved on this computer. Your other pages are not affected.": "错误已保存在这台电脑上。其他页面不受影响。",
+  "Finishing…": "即将完成…",
+  "Setting up mzDesk": "正在设置 mzDesk",
+  "You can cancel at any time. Finished downloads are kept.": "随时可以取消，已下载完成的文件会保留。",
+  "{got} of {total}": "{got} / {total}"
 }

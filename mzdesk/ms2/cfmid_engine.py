@@ -81,7 +81,7 @@ def _docker_run(args, workdir):
     """Run ``args`` in the image with ``workdir`` mounted at /data (the cwd) -> (stdout + stderr, exit code)."""
     name = f"mzdesk-cfmid-{uuid.uuid4().hex[:10]}"
     cmd = ["docker", "run", "--rm", "--name", name, "--platform", PLATFORM, "--pull", "never", *container_flags(),
-           "-v", f"{workdir}:/data", "-w", "/data", IMAGE, *args]
+           "--mount", f"type=bind,source={workdir},target=/data", "-w", "/data", IMAGE, *args]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT_S)
     except subprocess.TimeoutExpired:

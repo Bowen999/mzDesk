@@ -2,8 +2,8 @@
 
 Every function takes the install's Ctx (mzdesk.local.runner): its log lines reach the dialog, a cancel stops the child process.
 Nothing here edits a shell profile, installs system-wide or asks for administrator rights; everything lands in ~/.mzdesk.
-Windows: micromamba and the throw-away environment are written for it but not tested there (the components that need Mono, git or conda are
-macOS / Linux only).
+Windows: MS-FINDER needs no Mono there (the .NET Framework runs it); micromamba, git from conda-forge and the throw-away environment are written
+for it and are exercised by the Windows CI job (.github/workflows/windows.yml).
 """
 import io
 import os
@@ -148,6 +148,12 @@ def ensure_mono(ctx, system=True):
     conda-forge has no osx-arm64 build: on Apple Silicon the environment is made for osx-64 and Mono runs under Rosetta 2."""
     from mzdesk.ms2 import msfinder_engine as mf
 
+    if os.name == "nt":                         # MS-FINDER is a Windows program: the .NET Framework that comes with Windows runs it, no Mono
+        if mf.find_mono():
+            ctx.log("Runtime: .NET Framework (built into Windows)")
+            return mf.NATIVE, None
+        raise InstallError("MS-FINDER needs the .NET Framework 4.7.2 or newer. Install it from https://dotnet.microsoft.com/download/dotnet-framework, "
+                           "then try again.")
     mine = paths.mono_in_prefix()
     candidates = [str(mine)] if mine.is_file() else []
     if system:
@@ -160,8 +166,6 @@ def ensure_mono(ctx, system=True):
             ctx.log(f"Mono: {mono}")
             return mono, _own_bin(mono)
         ctx.log(f"The Mono at {mono} cannot be used ({why}).")
-    if os.name == "nt":
-        raise InstallError("Mono is only set up on macOS and Linux.")
     subdir = None
     if sys.platform == "darwin" and platform.machine().lower() == "arm64":
         if not rosetta_ready():

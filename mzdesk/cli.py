@@ -1,19 +1,21 @@
-"""mzdesk 命令。
+"""The mzdesk command.
 
-用法：
-  mzdesk                      启动，默认 http://localhost:8000（被占用就依次试到 8020，并打印地址）
-  mzdesk --open               启动后打开浏览器（安装器写的启动脚本带这个参数）
-  mzdesk --port 8599          指定端口（不再往后找；开发用 python -m mzdesk --port 8599）
-  mzdesk --host 0.0.0.0       监听所有地址（Docker）
-  mzdesk --reload             开发模式，改后端代码自动重启
+Usage:
+  mzdesk                      start mzDesk at http://localhost:8731 (if that port is busy, the next free one up to 8750; the address is printed)
+  mzdesk --open               also open the browser (the launcher the installer writes passes this)
+  mzdesk --port 8599          use this port only (no search; for development: python -m mzdesk --port 8599)
+  mzdesk --host 0.0.0.0       listen on all addresses (Docker)
+  mzdesk --reload             development mode: restart when the backend code changes
   mzdesk setup [--list] [--check] [--yes] [id ... | all]
-                              在终端里装第一次使用时才下载的组件（libraries msfinder frigid cfmid neims molgpka ccs repo）；
-                              每个组件问一次 y/N，--yes 不问，--list / --check 只显示状态
-  mzdesk update [--check]     --check 只显示最新版本；否则下载 $MZDESK_BASE_URL/install.sh（Windows: install.ps1）并运行它
+                              install, in the terminal, the components that are otherwise downloaded on first use
+                              (libraries msfinder frigid cfmid neims molgpka ccs repo); asks y/N for each one, --yes does not ask,
+                              --list / --check only show the status
+  mzdesk update [--check]     --check only shows the newest version; otherwise downloads $MZDESK_BASE_URL/install.sh (Windows: install.ps1) and runs it
   mzdesk version
 
-环境变量：MZDESK_BASE_URL（默认 https://mzdesk.com，装/更新脚本和版本文件的服务器）、MZDESK_UPDATE_URL（版本文件，默认 <BASE>/version.json）、
-MZDESK_NO_UPDATE_CHECK=1（不检查新版本）。前端在 web/，npm run build 后输出到 mzdesk/static/，由后端托管。
+Environment: MZDESK_BASE_URL (default https://mzdesk.com: the server of the installer scripts and the version file), MZDESK_UPDATE_URL (the version file,
+default <BASE>/version.json), MZDESK_NO_UPDATE_CHECK=1 (do not look for a new version). The frontend is in web/; `npm run build` writes it to
+mzdesk/static/, which the backend serves.
 """
 import argparse
 import itertools
@@ -31,7 +33,7 @@ from pathlib import Path
 
 from mzdesk import __version__
 
-DEFAULT_PORT, LAST_PORT = 8000, 8020
+DEFAULT_PORT, LAST_PORT = 8731, 8750
 SUBCOMMANDS = ("setup", "update", "version")
 
 
@@ -83,7 +85,7 @@ def run_server(args):
     if port is None:
         port = find_port(args.host)
         if port is None:
-            print(f"Ports {DEFAULT_PORT}-{LAST_PORT} are all in use. Close another mzdesk, or choose a port: mzdesk --port 9000", file=sys.stderr)
+            print(f"Ports {DEFAULT_PORT}-{LAST_PORT} are all in use. Close another mzdesk, or choose a port: mzdesk --port 9731", file=sys.stderr)
             return 1
     line = update.terminal_line()
     if line:
@@ -107,7 +109,7 @@ def _status_line(comp):
 
 def run_setup(args, ask=input, out=print):
     """`mzdesk setup`: 0 when everything asked for is installed, 1 otherwise. ``ask`` and ``out`` are the terminal (replaced in the tests)."""
-    from mzdesk.local import components, jobs
+    from mzdesk.local import components, jobs, terminal
     from mzdesk.local.runner import InstallError
 
     registry = components.REGISTRY
@@ -141,19 +143,33 @@ def run_setup(args, ask=input, out=print):
             out(f"{cid}: skipped.")
     if not todo:
         return 0
+    ui = terminal.Terminal(sys.stdout) if out is print else None
+    live = bool(ui and ui.live)                 # a terminal: the themed live view; a file or a pipe: the plain log lines, as before
     try:
-        job = jobs.JobStore().start(todo, on_line=out)
+        job = jobs.JobStore().start(todo, on_line=None if live else out)
     except InstallError as exc:
         out(str(exc))
         return 1
     try:
-        job.thread.join()
+        if live:
+            ui.title(job.snapshot()["components"])
+            while job.thread.is_alive():
+                ui.render(job.snapshot())
+                job.thread.join(0.25)
+            ui.render(job.snapshot())
+        else:
+            job.thread.join()
     except KeyboardInterrupt:
+        if live:
+            ui.say()
         out("Cancelling ...")
         job.ctx.cancel()
         job.thread.join()
         return 130
     snap = job.snapshot()
+    if live:
+        ui.finish(snap)
+        return 0 if snap["status"] == "done" else 1
     for row in snap["components"]:
         out(f"{row['id']}: {row['status']}")
     if snap["status"] != "done":

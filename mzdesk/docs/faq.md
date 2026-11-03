@@ -72,4 +72,4 @@ Mostly. SMILES, InChI, formulas and spectra are read on your computer. Names, ID
 
 ### Which systems does the local version run on?
 
-macOS and Linux on x86_64 or arm64, and 64-bit Windows. Windows has the core, the libraries, CCS and MolGpKa only, and is not verified yet. See [Local Version](/docs/local-version#install).
+macOS and Linux on x86_64 or arm64, and 64-bit Windows. Every component has a Windows version, but the engines (MS-FINDER, FRIGID, NEIMS, CFM-ID, RepoRT) are new there and less tested than on macOS and Linux. See [Local Version](/docs/local-version#install).

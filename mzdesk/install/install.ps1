@@ -43,6 +43,59 @@
         }
     }
 
+    # The steps are written in mzDesk's blue (Cyan is the closest colour every console has); text and result do not depend on it.
+    function Write-Step {
+        param([string]$Text)
+        Write-Host $Text -ForegroundColor Cyan
+    }
+
+    # Download a file with a progress bar in the console (Invoke-WebRequest shows nothing here because the progress bar of Windows PowerShell 5.1
+    # makes downloads many times slower). Falls back to Invoke-WebRequest when the stream cannot be read or the output is not a console.
+    function Save-Download {
+        param([string]$Url, [string]$Path)
+        $show = $false
+        try { $show = -not [Console]::IsOutputRedirected } catch { $show = $false }
+        if ($show) {
+            try {
+                $request = [Net.HttpWebRequest]::Create($Url)
+                $response = $request.GetResponse()
+                try {
+                    $total = [double]$response.ContentLength
+                    $source = $response.GetResponseStream()
+                    $target = [IO.File]::Create($Path)
+                    try {
+                        $buffer = New-Object byte[] 1048576
+                        $done = 0.0
+                        $last = [DateTime]::UtcNow
+                        while (($count = $source.Read($buffer, 0, $buffer.Length)) -gt 0) {
+                            $target.Write($buffer, 0, $count)
+                            $done += $count
+                            if ($total -gt 0 -and (([DateTime]::UtcNow - $last).TotalMilliseconds -gt 200)) {
+                                $last = [DateTime]::UtcNow
+                                $percent = [int](100 * $done / $total)
+                                $filled = [int]($percent / 4)
+                                $gauge = ('#' * $filled) + ('-' * (25 - $filled))
+                                $mbDone = [math]::Round($done / 1MB)
+                                $mbTotal = [math]::Round($total / 1MB)
+                                Write-Host ("`r  [$gauge] $percent%  $mbDone of $mbTotal MB") -NoNewline -ForegroundColor Cyan
+                            }
+                        }
+                    } finally {
+                        $target.Dispose()
+                    }
+                } finally {
+                    $response.Close()
+                }
+                Write-Host ''
+                return
+            } catch {
+                Write-Host ''
+                if (Test-Path -LiteralPath $Path) { Remove-Item -Force -LiteralPath $Path -ErrorAction SilentlyContinue }
+            }
+        }
+        Invoke-WebRequest -UseBasicParsing -Uri $Url -OutFile $Path
+    }
+
     $step = 'starting'
     $tmp = $null
     try {
@@ -72,7 +125,7 @@
             $uv = (Get-Command uv).Source
         } else {
             $step = 'installing uv'
-            Write-Host 'Installing uv, the tool that sets up Python (astral.sh) ...'
+            Write-Step 'Installing uv, the tool that sets up Python (astral.sh) ...'
             # UV_UNMANAGED_INSTALL: put uv into this folder and leave the PATH alone. A child PowerShell runs astral's script,
             # so that nothing in it can end this one.
             $env:UV_UNMANAGED_INSTALL = $bin
@@ -116,10 +169,10 @@
 
         # ---- 4. wheel
         $step = "downloading mzDesk $version"
-        Write-Host "Downloading mzDesk $version ..."
+        Write-Step "Downloading mzDesk $version ..."
         $wheelPath = "$tmp\$wheel"
         try {
-            Invoke-WebRequest -UseBasicParsing -Uri "$base/download/$wheel" -OutFile $wheelPath
+            Save-Download -Url "$base/download/$wheel" -Path $wheelPath
         } catch {
             throw "cannot download the wheel from $base/download/$wheel."
         }
@@ -137,7 +190,7 @@
         if ($usable) {
             Write-Host "Using the Python environment in $venv"
         } else {
-            Write-Host "Setting up Python 3.12 in $venv ..."
+            Write-Step "Setting up Python 3.12 in $venv ..."
             if (Test-Path -LiteralPath $venv) { Remove-Item -Recurse -Force -LiteralPath $venv }
             # --managed-python: Python comes from uv, so the environment does not depend on a Python of the system
             $code = Invoke-Native $uv @('venv', $venv, '--python', '3.12', '--managed-python')
@@ -146,7 +199,7 @@
 
         # ---- 6. packages
         $step = 'installing mzDesk and its packages'
-        Write-Host "Installing mzDesk $version and its packages (about 1 GB; a few minutes) ..."
+        Write-Step "Installing mzDesk $version and its packages (about 1 GB; a few minutes) ..."
         # --reinstall-package: a rebuilt wheel of the same version replaces the old one; the other packages stay if they still fit
         $code = Invoke-Native $uv @('pip', 'install', '--python', $py, '--reinstall-package', 'mzdesk', $wheelPath)
         if ($code -ne 0) { throw 'uv could not install the packages (see the message above; the internet is needed).' }
@@ -173,9 +226,9 @@
         if ($newTerminal) { Write-Host 'Terminal windows that are already open must be closed and opened again to find it.' }
 
         if ($env:MZDESK_UPDATING -eq '1') {
-            Write-Host "Updated to $version"
+            Write-Step "Updated to $version"
         } else {
-            Write-Host "mzDesk $version is installed. Run: mzdesk"
+            Write-Step "mzDesk $version is installed. Run: mzdesk"
         }
     } catch {
         Write-Host "mzDesk was not installed. Step `"$step`": $($_.Exception.Message)" -ForegroundColor Red

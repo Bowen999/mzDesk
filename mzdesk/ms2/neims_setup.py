@@ -41,14 +41,15 @@ def _download(dest):
     print(f"Downloading {ZIP_URL}\n  -> {dest} (about 466 MB, this can take a while)")
     request = urllib.request.Request(ZIP_URL, headers={"User-Agent": "mzdesk"})
     with urllib.request.urlopen(request, timeout=60) as resp, open(part, "wb") as out:
-        done, report = 0, 50 << 20
+        total = int(resp.headers.get("Content-Length") or 0)
+        done, report = 0, 10 << 20
         while block := resp.read(1 << 20):
             out.write(block)
             done += len(block)
             if done >= report:
-                print(f"  {done >> 20} MB", flush=True)
-                report += 50 << 20
-    part.rename(dest)
+                print(f"  {done >> 20} / {total >> 20} MB" if total else f"  {done >> 20} MB", flush=True)
+                report += 10 << 20
+    part.replace(dest)
 
 
 def get_zip():

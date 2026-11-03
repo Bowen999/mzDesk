@@ -47,7 +47,7 @@ def _fetch(rel, dest):
     with urllib.request.urlopen(request, timeout=60) as resp, open(part, "wb") as out:
         while block := resp.read(1 << 20):
             out.write(block)
-    part.rename(dest)
+    part.replace(dest)
 
 
 def get_file(rel, sha):

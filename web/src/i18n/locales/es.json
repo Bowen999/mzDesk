@@ -1150,5 +1150,9 @@
   "Targeted Method looks the compound up in PubChem and UniChem by its InChIKey or SMILES; when that fails, the sheet uses values computed locally.": "Método dirigido busca el compuesto en PubChem y UniChem por su InChIKey o su SMILES; si falla, la ficha usa valores calculados localmente.",
   "Send feedback on mzdesk.com": "Enviar comentarios en mzdesk.com",
   "The error was saved on this computer ({ref}). Your other pages are not affected.": "El error se guardó en este ordenador ({ref}). Sus otras páginas no se ven afectadas.",
-  "The error was saved on this computer. Your other pages are not affected.": "El error se guardó en este ordenador. Sus otras páginas no se ven afectadas."
+  "The error was saved on this computer. Your other pages are not affected.": "El error se guardó en este ordenador. Sus otras páginas no se ven afectadas.",
+  "Finishing…": "Finalizando…",
+  "Setting up mzDesk": "Configurando mzDesk",
+  "You can cancel at any time. Finished downloads are kept.": "Puedes cancelar en cualquier momento. Las descargas terminadas se conservan.",
+  "{got} of {total}": "{got} de {total}"
 }

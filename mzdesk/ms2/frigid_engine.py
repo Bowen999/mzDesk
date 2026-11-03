@@ -7,7 +7,7 @@ identification: the score is the Tanimoto similarity of a generated structure to
 How it runs: on this machine only. `python -m mzdesk.ms2.frigid_setup` builds a Python 3.10 + PyTorch environment, a pinned clone of FRIGID and the two
 checkpoints in ~/.mzdesk/tools/frigid (MZDESK_FRIGID_DIR; ~/tools/frigid is used when it exists). A run starts the driver that ships with mzDesk (mzdesk/ms2/frigid_driver/frigid_predict.py, FRIGID's
 own code plus a small sub-formula assignment) with that environment's Python, in its own process group:
-    <dir>/env/bin/python -I frigid_predict.py --input job.json --output result.json
+    <dir>/env/bin/python (Windows: env/python.exe) -I frigid_predict.py --input job.json --output result.json
 job.json / result.json sit in a fresh temp folder. The driver files are byte-for-byte the verified ones, so they find the install through the
 environment variables that child_env() sets (FRIGID_ROOT, FRIGID_MIST_CKPT, FRIGID_DLM_CKPT, HF_HOME) and the length model through the job's "length_model". The driver chooses the device itself (device "auto": Apple GPU (MPS) only when the Mac has
 >= 12 GB available and swap to spare, else CPU); MZDESK_FRIGID_DEVICE = auto | mps | cpu overrides it. The SAFE token-length model that the
@@ -24,7 +24,6 @@ ADDUCTS and MODE_LABELS); RDKit is imported inside the functions that need it.
 import json
 import os
 import re
-import signal
 import subprocess
 import sys
 import tempfile
@@ -33,7 +32,7 @@ from math import prod
 from pathlib import Path
 
 from mzdesk.local import paths
-from mzdesk.shared import heavy_lock, memguard
+from mzdesk.shared import heavy_lock, memguard, procgroup
 
 FRIGID_COMMIT = "9a3e623007dc5771b0e4488cd8c91b7e49490a59"
 SETUP_COMMAND = "python -m mzdesk.ms2.frigid_setup"
@@ -111,7 +110,9 @@ def install_dir():
 
 
 def env_python(d=None):
-    return (d or install_dir()) / "env" / "bin" / "python"
+    """The environment's Python: env/bin/python (macOS, Linux) or env/python.exe (a conda environment on Windows keeps it in the prefix itself)."""
+    env = (d or install_dir()) / "env"
+    return env / "python.exe" if sys.platform == "win32" else env / "bin" / "python"
 
 
 def tokenizer_file(d=None):
@@ -124,7 +125,8 @@ def tokenizer_file(d=None):
 
 def safe_init(d=None):
     """<env>/lib/python3.x/site-packages/safe/__init__.py or None."""
-    hits = sorted(((d or install_dir()) / "env").glob("lib/python3*/site-packages/safe/__init__.py"))
+    env = (d or install_dir()) / "env"
+    hits = sorted(env.glob("lib/python3*/site-packages/safe/__init__.py")) or sorted(env.glob("Lib/site-packages/safe/__init__.py"))
     return hits[0] if hits else None
 
 
@@ -332,23 +334,12 @@ def _net_charge(Chem, smiles, flagged):
 
 # ---------------------------------------------------------------- process
 def _kill_group(proc):
-    try:
-        os.killpg(proc.pid, signal.SIGKILL)
-    except (ProcessLookupError, PermissionError):
-        pass
-    try:
-        proc.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        pass
+    procgroup.kill_group(proc)
 
 
 def _group_rss_mb(pgid):
-    """Resident memory (MB) of the process group from `ps`; 0 when ps is not available. Stand-in for the guard on systems without libproc."""
-    try:
-        out = subprocess.run(["ps", "-axo", "pgid=,rss="], capture_output=True, text=True, timeout=5).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        return 0.0
-    return sum(int(p[1]) for p in (ln.split() for ln in out.splitlines()) if len(p) == 2 and p[0] == str(pgid) and p[1].isdigit()) / 1024.0
+    """Resident memory (MB) of the process group; 0 when it cannot be read. Stand-in for the guard on systems without libproc."""
+    return procgroup.group_rss_mb(pgid)
 
 
 def _stop_guard(guard):
@@ -366,22 +357,20 @@ def run_watched(cmd, cwd, env, timeout, rss_cap_mb=RSS_CAP_MB, footprint_cap_mb=
     unified memory is not in RSS). Past ``timeout`` seconds or either cap the whole group is killed and FrigidError raised (with the output so far).
     """
     with tempfile.TemporaryFile(mode="w+b") as log_file:
-        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log_file, stderr=subprocess.STDOUT, start_new_session=True)
+        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=log_file, stderr=subprocess.STDOUT, **procgroup.popen_kwargs())
         reasons = []
 
         def on_exceed(reason):
             reasons.append(reason)
-            try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except (ProcessLookupError, PermissionError):
-                pass
+            procgroup.kill_group(proc, wait_s=0.1)
 
         def tail():
             log_file.seek(0)
             return log_file.read().decode("utf-8", "replace").strip()[-4000:]
 
-        guards = [memguard.MemoryGuard("cpu", pid=proc.pid, cap_mb=rss_cap_mb, poll_s=poll_s, on_exceed=on_exceed),
-                  memguard.MemoryGuard("mps", pid=proc.pid, cap_mb=footprint_cap_mb, poll_s=poll_s, on_exceed=on_exceed)]
+        guards = [memguard.MemoryGuard("cpu", pid=proc.pid, cap_mb=rss_cap_mb, poll_s=poll_s, on_exceed=on_exceed)]
+        if sys.platform != "win32":              # Windows has no unified GPU memory: its "footprint" is private bytes, which RSS already covers
+            guards.append(memguard.MemoryGuard("mps", pid=proc.pid, cap_mb=footprint_cap_mb, poll_s=poll_s, on_exceed=on_exceed))
         for g in guards:
             g.start()
         peak_rss = 0.0

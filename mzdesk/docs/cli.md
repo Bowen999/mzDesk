@@ -8,7 +8,7 @@ This page lists the `mzdesk` commands of the local version and the environment v
 mzdesk
 ```
 
-mzDesk starts and opens `http://localhost:8000` in your browser. If port 8000 is busy, it takes the next free port up to 8020 and prints the address. Press `Ctrl+C` in the terminal to stop it.
+mzDesk starts and opens `http://localhost:8731` in your browser. If port 8731 is busy, it takes the next free port up to 8750 and prints the address. Press `Ctrl+C` in the terminal to stop it.
 
 | Option | Effect |
 |---|---|

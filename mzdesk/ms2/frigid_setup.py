@@ -96,14 +96,15 @@ def download(url, dest, expect_size=None):
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=60) as resp:
             resume = bool(offset) and getattr(resp, "status", None) == 206
-            done, report = (offset if resume else 0), 100 << 20
+            done, report = (offset if resume else 0), 10 << 20
+            total = expect_size or (done + int(resp.headers.get("Content-Length") or 0))
             with open(part, "ab" if resume else "wb") as out:
                 while block := resp.read(1 << 20):
                     out.write(block)
                     done += len(block)
                     if done >= report:
-                        print(f"  {done >> 20} MB", flush=True)
-                        report += 100 << 20
+                        print(f"  {done >> 20} / {total >> 20} MB" if total > done else f"  {done >> 20} MB", flush=True)
+                        report = done + (10 << 20)
     except OSError as exc:
         raise SetupError(f"Download failed ({exc}). Run the command again: a partial download is resumed.") from None
     part.replace(dest)
@@ -122,7 +123,7 @@ def fetch_file(url, dest, size, md5, force=False):
     try:
         verify_file(dest, size, md5)
     except SetupError:
-        dest.rename(dest.with_name(dest.name + ".bad"))
+        dest.replace(dest.with_name(dest.name + ".bad"))
         raise
     return True
 
@@ -151,10 +152,19 @@ def extract_member(tar_path, name, dest, size, md5):
 
 
 # ---------------------------------------------------------------- steps
+def conda_candidates():
+    """Where a conda / mamba may be, besides PATH and CONDA_EXE (the folders differ on Windows: Scripts\\conda.exe)."""
+    home = Path.home()
+    if sys.platform == "win32":
+        return [str(home / base / "Scripts" / "conda.exe") for base in ("miniforge3", "miniconda3", "anaconda3", "mambaforge", "micromamba")] + [
+            str(home / "AppData" / "Local" / base / "Scripts" / "conda.exe") for base in ("miniforge3", "miniconda3", "anaconda3")] + [
+            str(Path(os.environ.get("ProgramData", r"C:\ProgramData")) / base / "Scripts" / "conda.exe") for base in ("miniforge3", "miniconda3", "anaconda3")]
+    return ["/opt/anaconda3/bin/conda", str(home / "miniforge3/bin/conda"), str(home / "miniconda3/bin/conda"),
+            str(home / "anaconda3/bin/conda"), "/opt/homebrew/Caskroom/miniforge/base/bin/conda"]
+
+
 def find_conda():
-    for cand in (os.environ.get("CONDA_EXE"), shutil.which("conda"), shutil.which("mamba"), shutil.which("micromamba"),
-                 "/opt/anaconda3/bin/conda", str(Path.home() / "miniforge3/bin/conda"), str(Path.home() / "miniconda3/bin/conda"),
-                 str(Path.home() / "anaconda3/bin/conda"), "/opt/homebrew/Caskroom/miniforge/base/bin/conda"):
+    for cand in (os.environ.get("CONDA_EXE"), shutil.which("conda"), shutil.which("mamba"), shutil.which("micromamba"), *conda_candidates()):
         if cand and Path(cand).is_file() and os.access(cand, os.X_OK):
             return cand
     return None
@@ -198,7 +208,7 @@ def clone_frigid(install):
         return clone, False
     if clone.exists() and any(clone.iterdir()):
         raise SetupError(f"{clone} exists and is not a git clone.")
-    for cmd in (["git", "clone", "--quiet", REPO_URL, str(clone)], ["git", "-C", str(clone), "checkout", "--quiet", "--detach", fe.FRIGID_COMMIT]):
+    for cmd in (["git", "clone", "--quiet", "--config", "core.autocrlf=false", REPO_URL, str(clone)], ["git", "-C", str(clone), "checkout", "--quiet", "--detach", fe.FRIGID_COMMIT]):
         r = _run(cmd)
         if r.returncode != 0:
             raise SetupError(f"{' '.join(cmd[:3])} failed:\n" + (r.stdout + r.stderr)[-2000:])
@@ -229,7 +239,8 @@ def apply_safe_patch(install):
     orig = init.with_name("__init__.py.orig")
     if not orig.exists():
         shutil.copy2(init, orig)
-    init.write_text("".join("# " + ln + "\n" for ln in init.read_text(encoding="utf-8").splitlines()) + SAFE_INIT_LAST_LINE + "\n", encoding="utf-8")
+    with open(init, "w", encoding="utf-8", newline="\n") as f:
+        f.write("".join("# " + ln + "\n" for ln in init.with_name("__init__.py.orig").read_text(encoding="utf-8").splitlines()) + SAFE_INIT_LAST_LINE + "\n")
     return "applied"
 
 

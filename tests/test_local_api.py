@@ -27,7 +27,7 @@ def home(tmp_path, monkeypatch):
 
 @pytest.fixture
 def client():
-    return TestClient(app, base_url="http://localhost:8000")
+    return TestClient(app, base_url="http://localhost:8731")
 
 
 def fake_registry(monkeypatch, run, **flags):
@@ -99,14 +99,14 @@ def test_needs_rejects_bad_requests(client):
 @pytest.mark.parametrize("path,body", [("/api/local/needs", {"target": "module:ccs"}), ("/api/local/install", {"ids": ["molgpka"]}),
                                        ("/api/local/jobs/x/cancel", {})])
 def test_posts_refuse_a_foreign_host(client, path, body):
-    for host in ("evil.example", "evil.example:8000", "localhost.evil.example", "192.168.1.5:8000", "127.0.0.1.evil.example"):
+    for host in ("evil.example", "evil.example:8731", "localhost.evil.example", "192.168.1.5:8731", "127.0.0.1.evil.example"):
         assert client.post(path, json=body, headers={"Host": host}).status_code == 403, host
-    for host in ("localhost", "localhost:8000", "127.0.0.1:8599", "[::1]:8000", "LOCALHOST:9"):
+    for host in ("localhost", "localhost:8731", "127.0.0.1:8599", "[::1]:8731", "LOCALHOST:9"):
         assert client.post(path, json=body, headers={"Host": host}).status_code != 403, host
 
 
-@pytest.mark.parametrize("origin", ["http://evil.example", "http://localhost:3000", "https://localhost:8000", "null", "http://127.0.0.1:8000",
-                                    "http://localhost.evil.example:8000"])
+@pytest.mark.parametrize("origin", ["http://evil.example", "http://localhost:3000", "https://localhost:8731", "null", "http://127.0.0.1:8731",
+                                    "http://localhost.evil.example:8731"])
 def test_posts_refuse_a_cross_site_origin(client, origin):
     for path, body in (("/api/local/needs", {"target": "module:ccs"}), ("/api/local/install", {"ids": ["molgpka"]}), ("/api/local/jobs/x/cancel", {})):
         assert client.post(path, json=body, headers={"Origin": origin}).status_code == 403, (path, origin)
@@ -114,7 +114,7 @@ def test_posts_refuse_a_cross_site_origin(client, origin):
 
 
 def test_same_origin_posts_pass(client):
-    ok = {"Origin": "http://localhost:8000"}
+    ok = {"Origin": "http://localhost:8731"}
     assert client.post("/api/local/needs", json={"target": "module:ccs"}, headers=ok).status_code == 200
     ok = {"Origin": "http://127.0.0.1:5175", "Host": "127.0.0.1:5175"}                 # the vite dev server keeps the browser's Host
     assert client.post("/api/local/needs", json={"target": "module:ccs"}, headers=ok).status_code == 200
@@ -138,7 +138,8 @@ def test_install_job_through_the_api(client, monkeypatch):
     assert first.status_code == 200 and set(first.json()) == {"job_id"}
     body = wait_done(client, first.json()["job_id"])
     assert body["status"] == "done" and body["current"] is None and body["error"] == "" and "hello from the setup" in body["log"]
-    assert body["components"] == [{"id": "molgpka", "title": "MolGpKa pKa model", "status": "done", "detail": "installed"}]
+    assert body["components"] == [{"id": "molgpka", "title": "MolGpKa pKa model", "status": "done", "detail": "installed", "step": "", "progress": None,
+                                   "got_mb": None, "total_mb": None}]
     status = {c["id"]: c for c in client.get("/api/local/status").json()["components"]}
     assert status["molgpka"]["installed"] is True and state["done"]
     assert client.get("/api/local/jobs/unknown").status_code == 404
@@ -177,6 +178,9 @@ def test_cancel_through_the_api(client, monkeypatch):
 
 
 def test_unsupported_component_is_refused_with_its_reason(client, monkeypatch):
+    import dataclasses
+    monkeypatch.setattr(components, "REGISTRY", {k: dataclasses.replace(c, platforms=components.POSIX_ONLY) if k == "msfinder" else c
+                                                 for k, c in components.REGISTRY.items()})
     monkeypatch.setattr(components, "current_platform", lambda: "win32")
     reply = client.post("/api/local/install", json={"ids": ["msfinder"]})
     assert reply.status_code == 400 and "macOS / Linux only for now" in reply.json()["detail"]

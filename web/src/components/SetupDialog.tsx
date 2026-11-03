@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { useT } from "../i18n";
 import {
-  cancelSetup, clock, confirmSetup, dismissSetup, retrySetup, setupPercent, setupRows, totalSize, useSetup,
+  cancelSetup, clock, confirmSetup, dismissSetup, isFinishing, retrySetup, setupPercent, setupRows, totalSize, transferText, useSetup,
   type SetupRow, type SetupState,
 } from "../setup";
 import "./setup.css";
@@ -10,6 +10,8 @@ import "./setup.css";
 /**
  * The one dialog of first-use downloads (setup.ts): confirm -> progress, or blocked, or error. Mounted once (App.tsx).
  * Escape and the backdrop answer "no" (Not now / Close); while it downloads Escape is Cancel and the backdrop does nothing.
+ * Progress: the overall bar (real fraction of the running file when the server reports it, else eased on time), and per row the step it
+ * is at, with a thin bar and "412 of 2,300 MB" while a file downloads.
  */
 const glyph = (body: ReactNode) => (
   <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{body}</svg>
@@ -26,18 +28,30 @@ function linkLabel(link: string | null): { href: string; label: string } | null 
   try { const u = new URL(link); return { href: link, label: (u.host + u.pathname).replace(/\/$/, "") }; } catch { return null; }
 }
 
+/** The raw last log line stays as a small mono line, except where a clean `step` already says it and the line is only a path or a link. */
+const rawLine = (r: SetupRow) =>
+  r.status === "error" ? r.detail : r.status === "running" && r.detail && (!r.step || !/[\\/]|https?:/i.test(r.detail)) && r.detail !== r.step ? r.detail : "";
+
 function Rows({ rows }: { rows: SetupRow[] }) {
   const t = useT();
   const word = { waiting: t("Waiting"), running: t("Installing"), done: t("Done"), error: t("Failed") };
   return (
     <ul className="setup-rows">
-      {rows.map(r => (
-        <li key={r.id} className={"setup-row is-" + r.status}>
-          <span className="setup-mark" aria-hidden="true">{r.status === "done" ? <CheckIcon /> : r.status === "error" ? "!" : null}</span>
-          <span className="setup-name">{r.title}{r.size && <span className="setup-size">{r.size}</span>}</span>
-          <span className="setup-word">{word[r.status]}</span>
-          {(r.status === "running" || r.status === "error") && r.detail && <span className="setup-detail" title={r.detail}>{r.detail}</span>}
-        </li>))}
+      {rows.map(r => {
+        const label = r.status === "running" && r.step ? r.step : word[r.status];
+        const known = r.status === "running" && typeof r.progress === "number";
+        const transfer = known ? transferText(r) : "";
+        const raw = rawLine(r);
+        return (
+          <li key={r.id} className={"setup-row is-" + r.status}>
+            <span className="setup-mark" aria-hidden="true">{r.status === "done" ? <CheckIcon /> : r.status === "error" ? "!" : null}</span>
+            <span className="setup-name">{r.title}{r.size && <span className="setup-size">{r.size}</span>}</span>
+            <span className="setup-word" title={label !== word[r.status] ? label : undefined}>{label}</span>
+            {transfer && <span className="setup-transfer">{transfer}</span>}
+            {known && <span className="setup-file" aria-hidden="true"><span style={{ width: `${Math.round(Math.min(1, r.progress as number) * 1000) / 10}%` }} /></span>}
+            {raw && <span className="setup-detail" title={raw}>{raw}</span>}
+          </li>);
+      })}
     </ul>
   );
 }
@@ -58,6 +72,8 @@ export function SetupView({ state, percent = 0, cardRef, onConfirm, onDismiss, o
   const running = rows.findIndex(r => r.status === "running");
   const summary = running >= 0 ? t("Installing {name} ({n} of {total})", { name: rows[running].title, n: running + 1, total: rows.length }) : "";
   const total = totalSize(state.missing);
+  const finishing = phase === "progress" && isFinishing(rows);
+  const shownPercent = finishing ? 100 : percent;
   const tone = phase === "confirm" || phase === "progress" ? " is-info" : "";
   const props = { ref: cardRef, role: "dialog", "aria-modal": true, "aria-labelledby": "setup-title", className: "dialog-card setup-card" + tone, "data-phase": phase } as const;
 
@@ -74,6 +90,7 @@ export function SetupView({ state, percent = 0, cardRef, onConfirm, onDismiss, o
           </li>))}
       </ul>
       <p className="dialog-note">{t("Downloaded once, then kept on this computer.")}</p>
+      <p className="dialog-note">{t("You can cancel at any time. Finished downloads are kept.")}</p>
       {note}
       <div className="dialog-actions">
         <button type="button" className="btn secondary" onClick={onDismiss}>{t("Not now")}</button>
@@ -84,17 +101,19 @@ export function SetupView({ state, percent = 0, cardRef, onConfirm, onDismiss, o
   if (phase === "progress") return (
     <div {...props} aria-describedby="setup-desc" tabIndex={-1}>
       <div className="dialog-badge"><DownloadIcon /></div>
-      <h2 id="setup-title">{t("First-time setup")}</h2>
+      <h2 id="setup-title">{t("Setting up mzDesk")}</h2>
       <p id="setup-desc">{state.forRun ? t("Keep this page open. The run starts when this is done.") : t("Keep this page open.")}</p>
-      <div className="setup-bar-row">
+      <div className={"setup-bar-row" + (finishing ? " is-finishing" : "")}>
         <div className="setup-bar" role="progressbar" aria-label={t("Setup progress")} aria-valuemin={0} aria-valuemax={100}
-          aria-valuenow={Math.round(percent)} aria-valuetext={summary || undefined}>
-          <span style={{ width: `${percent}%` }} />
+          aria-valuenow={Math.round(shownPercent)} aria-valuetext={finishing ? t("Finishing…") : summary || undefined}>
+          <span style={{ width: `${shownPercent}%` }} />
         </div>
+        <span className="setup-pct">{finishing ? t("Finishing…") : `${Math.round(shownPercent)}%`}</span>
         <span className="setup-clock">{clock(state.job?.elapsed_s ?? 0)}</span>
       </div>
-      <p className="sr-only" aria-live="polite">{summary}</p>
+      <p className="sr-only" aria-live="polite">{finishing ? t("Finishing…") : summary}</p>
       <Rows rows={rows} />
+      <p className="dialog-note">{t("You can cancel at any time. Finished downloads are kept.")}</p>
       {note}
       <div className="dialog-actions">
         <button type="button" className="btn secondary" disabled={state.cancelling} onClick={onCancel}>{state.cancelling ? t("Cancelling…") : t("Cancel")}</button>

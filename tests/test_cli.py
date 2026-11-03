@@ -99,7 +99,7 @@ def test_port_search_skips_busy_ports():
 
 
 def test_default_port_range():
-    assert (cli.DEFAULT_PORT, cli.LAST_PORT) == (8000, 8020)
+    assert (cli.DEFAULT_PORT, cli.LAST_PORT) == (8731, 8750)
 
 
 def run_args(**kw):
@@ -117,11 +117,11 @@ def fake_uvicorn(monkeypatch):
 
 
 def test_server_starts_on_the_first_free_port_and_prints_the_address(fake_uvicorn, monkeypatch, capsys):
-    monkeypatch.setattr(cli, "find_port", lambda host: 8003)
+    monkeypatch.setattr(cli, "find_port", lambda host: 8734)
     assert cli.run_server(run_args()) == 0
     (args, kw) = fake_uvicorn[0]
-    assert args == ("mzdesk.api.app:app",) and kw == {"host": "127.0.0.1", "port": 8003, "reload": False}
-    assert f"mzDesk {__version__} is running at http://127.0.0.1:8003" in capsys.readouterr().out
+    assert args == ("mzdesk.api.app:app",) and kw == {"host": "127.0.0.1", "port": 8734, "reload": False}
+    assert f"mzDesk {__version__} is running at http://127.0.0.1:8734" in capsys.readouterr().out
 
 
 def test_an_explicit_port_is_used_as_given(fake_uvicorn, monkeypatch):
@@ -133,11 +133,11 @@ def test_an_explicit_port_is_used_as_given(fake_uvicorn, monkeypatch):
 def test_all_ports_busy_is_a_clear_error(fake_uvicorn, monkeypatch, capsys):
     monkeypatch.setattr(cli, "find_port", lambda host: None)
     assert cli.run_server(run_args()) == 1 and not fake_uvicorn
-    assert "8000-8020 are all in use" in capsys.readouterr().err
+    assert "8731-8750 are all in use" in capsys.readouterr().err
 
 
 def test_the_start_prints_the_update_line_from_the_cache(fake_uvicorn, monkeypatch, capsys):
-    monkeypatch.setattr(cli, "find_port", lambda host: 8000)
+    monkeypatch.setattr(cli, "find_port", lambda host: 8731)
     monkeypatch.setattr(update, "terminal_line", lambda: "mzDesk 99.0.0 is available (you have 0.5.3). Update: mzdesk update")
     monkeypatch.setattr(update, "check_in_background", lambda: None)
     cli.run_server(run_args())
@@ -157,19 +157,19 @@ def test_open_opens_the_browser_once_the_server_answers(monkeypatch):
     opened.clear()
     cli._open_when_up("127.0.0.1", free_pair(), wait_s=0.5)                               # nothing listens: no browser
     assert opened == []
-    assert cli.browser_url("0.0.0.0", 8000) == "http://localhost:8000"
+    assert cli.browser_url("0.0.0.0", 8731) == "http://localhost:8731"
 
 
 def test_open_flag_starts_the_opener_thread(fake_uvicorn, monkeypatch):
     seen = []
-    monkeypatch.setattr(cli, "find_port", lambda host: 8001)
+    monkeypatch.setattr(cli, "find_port", lambda host: 8732)
     monkeypatch.setattr(cli, "_open_when_up", lambda host, port: seen.append((host, port)))
     cli.run_server(run_args(open=True))
     deadline = 50
     while not seen and deadline:
         threading.Event().wait(0.05)
         deadline -= 1
-    assert seen == [("127.0.0.1", 8001)]
+    assert seen == [("127.0.0.1", 8732)]
     seen.clear()
     cli.run_server(run_args())
     threading.Event().wait(0.2)
@@ -234,6 +234,7 @@ def test_setup_yes_without_names_does_nothing(monkeypatch, capsys):
 
 def test_setup_says_why_a_component_is_unavailable(monkeypatch, capsys):
     ran = fake_registry(monkeypatch)
+    components.REGISTRY["msfinder"] = dataclasses.replace(components.REGISTRY["msfinder"], platforms=components.POSIX_ONLY)
     monkeypatch.setattr(components, "current_platform", lambda: "win32")
     assert cli.main(["setup", "--yes", "msfinder", "ccs"]) == 0
     out = capsys.readouterr().out

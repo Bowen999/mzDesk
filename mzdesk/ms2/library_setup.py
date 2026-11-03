@@ -66,22 +66,22 @@ def _download(url, dest, size=None):
         resp = urllib.request.urlopen(_request(url, headers), timeout=60)
     except urllib.error.HTTPError as exc:
         if exc.code == 416 and have:                           # 已经下完，只差改名
-            part.rename(dest)
+            part.replace(dest)
             return
         raise
     mode = "ab" if have and resp.status == 206 else "wb"
     done = have if mode == "ab" else 0
-    report = done + (100 << 20)
+    report = done + (10 << 20)
     with resp, open(part, mode) as out:
         while block := resp.read(1 << 20):
             out.write(block)
             done += len(block)
             if done >= report:
-                print(f"  {done >> 20} MB" + (f" / {size >> 20} MB" if size else ""), flush=True)
-                report += 100 << 20
+                print(f"  {done >> 20} / {size >> 20} MB" if size else f"  {done >> 20} MB", flush=True)
+                report = done + (10 << 20)
     if size and done != size:
         raise SystemExit(f"Download stopped at {done} of {size} bytes. Run the command again to resume.")
-    part.rename(dest)
+    part.replace(dest)
 
 
 def _sidecar(path):

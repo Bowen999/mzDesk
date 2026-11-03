@@ -50,7 +50,13 @@ export type SetupMissing = { id: string; title: string; size: string; ask: boole
 export type SetupBlocked = { id: string; title: string; message: string; link: string | null };
 export type SetupUnsupported = { id: string; title: string; message: string };
 export type SetupNeeds = { missing: SetupMissing[]; blocked: SetupBlocked[]; unsupported: SetupUnsupported[] };
-export type SetupJobComponent = { id: string; title: string; status: "waiting" | "running" | "done" | "error"; detail: string };
+/** One component of an install job. `step`, `progress`, `got_mb` and `total_mb` come from newer servers only (all optional):
+ *  step = what the running component does right now ("Unpacking"; "" when unknown); progress = 0..1 of the file downloading right now
+ *  (null when unknown, and null again when the next file starts), got_mb / total_mb = the same in megabytes. */
+export type SetupJobComponent = {
+  id: string; title: string; status: "waiting" | "running" | "done" | "error"; detail: string;
+  step?: string; progress?: number | null; got_mb?: number | null; total_mb?: number | null;
+};
 export type SetupJob = {
   status: "running" | "done" | "error" | "cancelled"; current: string | null; elapsed_s: number;
   components: SetupJobComponent[]; log: string[]; error: string;

@@ -26,6 +26,15 @@ TMP=""                   # scratch folder, removed on exit
 
 say() { printf '%s\n' "$*"; }
 
+# mzDesk blue for the steps and the progress bar, only when a person is watching (a terminal; NO_COLOR turns it off)
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
+  ACC=$(printf '\033[1;38;2;123;156;240m') RST=$(printf '\033[0m') BAR=$(printf '\033[38;2;123;156;240m')
+else
+  ACC='' RST='' BAR=''
+fi
+# step TEXT: what is happening now (the same words with or without colour)
+step() { printf '%s%s%s\n' "$ACC" "$*" "$RST"; }
+
 # One clear sentence and the step that failed. The marker file tells the exit trap that the message is already out
 # (fail may run inside $( ), where a plain variable would not survive).
 fail() {
@@ -60,7 +69,11 @@ sha256_of() {
 # download URL FILE: a progress bar when a person is watching, quiet otherwise
 download() {
   if [ -t 2 ]; then bar="-#"; else bar="-sS"; fi
-  curl -fL "$bar" --retry 3 --connect-timeout 20 -o "$2" "$1"
+  [ -t 2 ] && printf '%s' "$BAR" >&2
+  rc=0
+  curl -fL "$bar" --retry 3 --connect-timeout 20 -o "$2" "$1" || rc=$?
+  [ -t 2 ] && printf '%s' "$RST" >&2
+  return $rc
 }
 
 main() {
@@ -96,7 +109,7 @@ main() {
     uv=$(command -v uv)
   else
     STEP="installing uv"
-    say "Installing uv, the tool that sets up Python (astral.sh) ..."
+    step "Installing uv, the tool that sets up Python (astral.sh) ..."
     download https://astral.sh/uv/install.sh "$TMP/uv-install.sh" || fail "cannot download the uv installer from astral.sh (is the internet reachable?)."
     # UV_UNMANAGED_INSTALL: put uv into this folder and leave the PATH and the shell profiles alone
     UV_UNMANAGED_INSTALL="$MZ/bin" sh "$TMP/uv-install.sh" >"$TMP/uv.log" 2>&1 </dev/null || { cat "$TMP/uv.log" >&2; fail "the uv installer failed."; }
@@ -126,7 +139,7 @@ main() {
 
   # ---- 4. wheel
   STEP="downloading mzDesk $version"
-  say "Downloading mzDesk $version ..."
+  step "Downloading mzDesk $version ..."
   download "$BASE/download/$wheel" "$TMP/$wheel" || fail "cannot download the wheel from $BASE/download/$wheel."
   STEP="checking the download"
   got=$(sha256_of "$TMP/$wheel")
@@ -138,7 +151,7 @@ main() {
   if [ -x "$venv/bin/python" ] && "$venv/bin/python" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' >/dev/null 2>&1; then
     say "Using the Python environment in $venv"
   else
-    say "Setting up Python 3.12 in $venv ..."
+    step "Setting up Python 3.12 in $venv ..."
     rm -rf "$venv"
     # --managed-python: Python comes from uv, so the environment does not depend on a Python of the system
     "$uv" venv "$venv" --python 3.12 --managed-python </dev/null || fail "uv could not create the Python environment (it needs the internet to fetch Python)."
@@ -146,7 +159,7 @@ main() {
 
   # ---- 6. packages
   STEP="installing mzDesk and its packages"
-  say "Installing mzDesk $version and its packages (about 1 GB; a few minutes) ..."
+  step "Installing mzDesk $version and its packages (about 1 GB; a few minutes) ..."
   if [ "$os" = linux ]; then
     # PyPI's PyTorch for Linux brings gigabytes of CUDA libraries; the CPU build is all mzDesk needs
     set -- --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match
@@ -187,9 +200,9 @@ EOF
   [ "$new_terminal" = 0 ] || say "Open a new terminal window so that the mzdesk command is found."
 
   if [ "${MZDESK_UPDATING:-}" = 1 ]; then
-    say "Updated to $version"
+    step "Updated to $version"
   else
-    say "mzDesk $version is installed. Run: mzdesk"
+    step "mzDesk $version is installed. Run: mzdesk"
   fi
 }
 

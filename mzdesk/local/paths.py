@@ -91,7 +91,8 @@ def working_git():
 
     On macOS /usr/bin/git is a stub that opens the "install the command line developer tools" dialog when they are missing, so it only counts
     when `xcode-select -p` finds them."""
-    for cand in (tools_dir() / "git" / "bin" / exe("git"), shutil.which("git")):
+    own = tools_dir() / "git"
+    for cand in (own / "bin" / exe("git"), own / "Library" / "cmd" / "git.exe", own / "Library" / "bin" / "git.exe", shutil.which("git")):
         if not cand or not Path(cand).is_file():
             continue
         if sys.platform == "darwin" and str(cand) == "/usr/bin/git":

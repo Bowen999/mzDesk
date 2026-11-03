@@ -1,5 +1,6 @@
-"""memguard.py - small, stdlib-only memory helpers for running heavy ML jobs on macOS (Apple silicon) and on Linux (CPU).
+"""memguard.py - small, stdlib-only memory helpers for running heavy ML jobs on macOS (Apple silicon), on Linux (CPU) and on Windows (CPU).
 
+Windows: the numbers come from kernel32 / psapi through ctypes (working set as "rss", private bytes as "phys_footprint").
 Linux: the numbers come from /proc (MemAvailable, SwapFree, VmRSS / VmHWM per process); there is no MPS, so "phys_footprint" is the RSS.
 
 Copy this single file into another project (mzDesk etc.); it has no third-party imports.
@@ -60,6 +61,7 @@ def _to_mb(num: str, unit: str) -> float:
 
 
 IS_LINUX = sys.platform.startswith("linux")
+IS_WINDOWS = sys.platform == "win32"
 
 
 def parse_meminfo(text: str) -> dict:
@@ -81,6 +83,86 @@ def parse_proc_status(text: str) -> dict | None:
     return dict(rss_mb=rss, phys_footprint_mb=rss, lifetime_max_footprint_mb=kb.get("VmHWM", kb["VmRSS"]) / 1024)
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# Windows (ctypes only): memory status, per-process working set / private bytes, process tree. There is no MPS, so "phys_footprint" is the
+# private (commit) size of the process; "rss" is its working set.
+# ----------------------------------------------------------------------------------------------------------------------
+def _win_system_memory() -> dict:
+    class MEMORYSTATUSEX(ctypes.Structure):
+        _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong), ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong), ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong), ("sullAvailExtendedVirtual", ctypes.c_ulonglong)]
+    st = MEMORYSTATUSEX()
+    st.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
+    if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(st)):
+        raise OSError("GlobalMemoryStatusEx failed")
+    total, avail = st.ullTotalPhys / MB, st.ullAvailPhys / MB
+    page_total, page_free = st.ullTotalPageFile / MB, st.ullAvailPageFile / MB      # commit limit = RAM + page files
+    swap_total = max(0.0, page_total - total)
+    swap_free = max(0.0, min(page_free, swap_total))
+    return dict(total_mb=round(total), memory_free_pct=round(100 * avail / total) if total else 0,
+                available_mb_kernel=round(avail), available_mb_strict=round(avail),
+                swap_total_mb=round(swap_total), swap_used_mb=round(swap_total - swap_free), swap_free_mb=round(swap_free))
+
+
+class _WinCounters(ctypes.Structure):          # PROCESS_MEMORY_COUNTERS_EX
+    _fields_ = [("cb", ctypes.c_ulong), ("PageFaultCount", ctypes.c_ulong), ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t), ("QuotaPeakPagedPoolUsage", ctypes.c_size_t), ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t), ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t), ("PeakPagefileUsage", ctypes.c_size_t), ("PrivateUsage", ctypes.c_size_t)]
+
+
+def _win_proc_memory(pid: int) -> dict | None:
+    k32, psapi = ctypes.windll.kernel32, ctypes.windll.psapi
+    k32.OpenProcess.restype = ctypes.c_void_p
+    handle = k32.OpenProcess(0x1000 | 0x0010, False, int(pid))         # PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ
+    if not handle:
+        handle = k32.OpenProcess(0x1000, False, int(pid))
+    if not handle:
+        return None
+    try:
+        c = _WinCounters()
+        c.cb = ctypes.sizeof(c)
+        psapi.GetProcessMemoryInfo.argtypes = [ctypes.c_void_p, ctypes.POINTER(_WinCounters), ctypes.c_ulong]
+        if not psapi.GetProcessMemoryInfo(handle, ctypes.byref(c), c.cb):
+            return None
+        return dict(rss_mb=c.WorkingSetSize / MB, phys_footprint_mb=(c.PrivateUsage or c.WorkingSetSize) / MB,
+                    lifetime_max_footprint_mb=c.PeakWorkingSetSize / MB)
+    finally:
+        k32.CloseHandle(ctypes.c_void_p(handle))
+
+
+def _win_tree_pids(root: int) -> list[int]:
+    class PROCESSENTRY32(ctypes.Structure):
+        _fields_ = [("dwSize", ctypes.c_ulong), ("cntUsage", ctypes.c_ulong), ("th32ProcessID", ctypes.c_ulong),
+                    ("th32DefaultHeapID", ctypes.c_size_t), ("th32ModuleID", ctypes.c_ulong), ("cntThreads", ctypes.c_ulong),
+                    ("th32ParentProcessID", ctypes.c_ulong), ("pcPriClassBase", ctypes.c_long), ("dwFlags", ctypes.c_ulong),
+                    ("szExeFile", ctypes.c_char * 260)]
+    k32 = ctypes.windll.kernel32
+    k32.CreateToolhelp32Snapshot.restype = ctypes.c_void_p
+    snap = k32.CreateToolhelp32Snapshot(0x2, 0)                          # TH32CS_SNAPPROCESS
+    if not snap or snap == ctypes.c_void_p(-1).value:
+        return [int(root)]
+    kids: dict[int, list[int]] = {}
+    try:
+        entry = PROCESSENTRY32()
+        entry.dwSize = ctypes.sizeof(entry)
+        ok = k32.Process32First(ctypes.c_void_p(snap), ctypes.byref(entry))
+        while ok:
+            kids.setdefault(entry.th32ParentProcessID, []).append(entry.th32ProcessID)
+            ok = k32.Process32Next(ctypes.c_void_p(snap), ctypes.byref(entry))
+    finally:
+        k32.CloseHandle(ctypes.c_void_p(snap))
+    seen, stack = [], [int(root)]
+    while stack:
+        x = stack.pop()
+        if x not in seen:
+            seen.append(x)
+            stack.extend(kids.get(x, []))
+    return seen or [int(root)]
+
+
+
 def system_memory() -> dict:
     """Numbers used by choose_device(). All sizes in MB.
 
@@ -93,6 +175,8 @@ def system_memory() -> dict:
     if IS_LINUX:
         with open("/proc/meminfo") as f:
             return parse_meminfo(f.read())
+    if IS_WINDOWS:
+        return _win_system_memory()
     total_mb = int(_sysctl("hw.memsize")) / MB
     level = int(_sysctl("kern.memorystatus_level"))
     out = subprocess.run(["vm_stat"], capture_output=True, text=True, timeout=5).stdout
@@ -164,6 +248,8 @@ _libproc = None
 def proc_memory(pid: int) -> dict | None:
     """{rss_mb, phys_footprint_mb, lifetime_max_footprint_mb} for one pid, or None if it is gone / not readable."""
     global _libproc
+    if IS_WINDOWS:
+        return _win_proc_memory(pid)
     if IS_LINUX:
         try:
             with open(f"/proc/{int(pid)}/status") as f:
@@ -182,6 +268,11 @@ def proc_memory(pid: int) -> dict | None:
 def tree_pids(root: int) -> list[int]:
     """root + all descendants (via ps). Falls back to [root] when ps is unavailable or blocked."""
     root = int(root)
+    if IS_WINDOWS:
+        try:
+            return _win_tree_pids(root)
+        except Exception:  # noqa: BLE001
+            return [root]
     try:
         out = subprocess.run(["ps", "-axo", "pid=,ppid="], capture_output=True, text=True, timeout=5).stdout
     except (OSError, subprocess.TimeoutExpired):
@@ -223,6 +314,9 @@ def tree_memory(root: int, include_children: bool = True) -> dict:
 # the guard
 # ----------------------------------------------------------------------------------------------------------------------
 def _kill_tree(pid: int) -> None:
+    if IS_WINDOWS:
+        subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True)
+        return
     for p in sorted(tree_pids(pid), reverse=True):  # children first
         try:
             os.kill(p, signal.SIGKILL)

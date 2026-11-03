@@ -1,0 +1,64 @@
+name: Windows
+
+# unit: the Windows paths of the engines, on every change to them (fast, no downloads).
+# engines: the real installs and one prediction per engine; started by hand (Actions -> Windows -> Run workflow), it downloads about 10 GB.
+# CFM-ID needs Linux containers, which a Windows runner cannot run: it is covered by the unit job (the docker command line) only.
+on:
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: "Also install and run MS-FINDER, FRIGID, NEIMS and RepoRT (long)"
+        type: boolean
+        default: false
+  pull_request:
+    paths: ["mzdesk/ms2/**", "mzdesk/local/**", "mzdesk/shared/**", "mzdesk/methods/report*.py", "mzdesk/cli.py", "mzdesk/install/**", "tests/**", ".github/workflows/windows.yml"]
+  push:
+    branches: [main]
+    paths: ["mzdesk/ms2/**", "mzdesk/local/**", "mzdesk/shared/**", "mzdesk/methods/report*.py", "mzdesk/cli.py", "mzdesk/install/**", "tests/**", ".github/workflows/windows.yml"]
+
+jobs:
+  unit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt pytest httpx
+      - name: install.ps1 is valid PowerShell (Windows PowerShell 5.1, the one every Windows has)
+        shell: powershell
+        run: |
+          $errors = $null; $tokens = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD\mzdesk\install\install.ps1", [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Host $_.Message }; exit 1 }
+      - name: Tests of the local version and the engines
+        run: python -m pytest tests/test_windows_support.py tests/test_terminal.py tests/test_install_scripts.py tests/test_local_components.py tests/test_local_api.py tests/test_local_progress.py tests/test_cli.py tests/test_msfinder.py tests/test_msfinder_retry.py tests/test_frigid.py tests/test_cfmid.py tests/test_neims.py -q
+
+  engines:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.engines }}
+    runs-on: windows-latest
+    timeout-minutes: 150
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+      - run: python -m pip install -r requirements.txt
+      - name: Install through the same code the dialog uses
+        run: python -m mzdesk setup --yes msfinder neims molgpka repo
+      - name: MS-FINDER
+        run: python validation/windows/smoke.py msfinder
+      - name: NEIMS
+        run: python validation/windows/smoke.py neims
+      - name: RepoRT
+        run: python validation/windows/smoke.py repo
+      - name: FRIGID setup (conda comes with the runner)
+        run: |
+          $env:CONDA_EXE = Join-Path $env:CONDA "Scripts\conda.exe"
+          python -m mzdesk setup --yes frigid
+      - name: FRIGID
+        run: python validation/windows/smoke.py frigid

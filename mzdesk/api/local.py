@@ -30,7 +30,7 @@ def hosted():
 
 
 def host_name(host_header):
-    """'localhost:8000' -> 'localhost'; '[::1]:8000' -> '[::1]'; '' for nothing usable."""
+    """'localhost:8731' -> 'localhost'; '[::1]:8731' -> '[::1]'; '' for nothing usable."""
     host = (host_header or "").strip().lower()
     if host.startswith("["):
         return host.partition("]")[0] + "]"

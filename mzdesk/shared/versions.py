@@ -141,7 +141,7 @@ def _mono_version():
     """Version of the Mono that runs MS-FINDER (MZDESK_MONO, then PATH), or None."""
     from mzdesk.ms2 import msfinder_engine
     mono = msfinder_engine.find_mono()
-    out = _run([mono, "--version"], RUNTIME_TIMEOUT_S) if mono else None
+    out = _run([mono, "--version"], RUNTIME_TIMEOUT_S) if mono and mono != msfinder_engine.NATIVE else None
     found = re.search(r"compiler version ([\d.]+)", out[1]) if out and out[0] == 0 else None
     return found.group(1) if found else None
 

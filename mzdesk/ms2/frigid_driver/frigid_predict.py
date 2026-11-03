@@ -44,7 +44,10 @@ import gc
 import json
 import os
 import random
-import resource
+try:
+    import resource
+except ImportError:          # Windows has no resource module
+    resource = None
 import sys
 import tempfile
 import time
@@ -262,7 +265,11 @@ def predict(job: dict, models: dict) -> dict:
     elif n_match < cfg["n_required"] and job["mode"] == "full":
         out_warn.append(f"only {n_match} formula-matched unique molecules found in {total_gen} samples")
 
-    mem = dict(ru_maxrss_mb=round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1048576, 1))  # bytes on macOS
+    if resource is not None:
+        mem = dict(ru_maxrss_mb=round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1048576, 1))  # bytes on macOS
+    else:                                                                    # Windows: the kernel's peak working set of this process
+        import memguard as _mg
+        mem = dict(ru_maxrss_mb=round((_mg.proc_memory(os.getpid()) or {}).get("lifetime_max_footprint_mb", 0.0), 1))
     if device == "mps":
         mem["mps_current_allocated_mb"] = round(torch.mps.current_allocated_memory() / 1048576, 1)
         mem["mps_driver_allocated_mb"] = round(torch.mps.driver_allocated_memory() / 1048576, 1)
@@ -305,7 +312,7 @@ def main() -> int:
     guard = None
 
     def write(res):
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             json.dump(res, f, indent=1)
 
     def on_exceed(reason):  # called from the guard thread: leave a structured failure behind, then die hard
@@ -314,7 +321,7 @@ def main() -> int:
         os._exit(3)
 
     try:
-        job = validate(json.load(open(args.input)))
+        job = validate(json.load(open(args.input, encoding="utf-8")))
         warnings.filterwarnings("ignore")
         import torch
         import memguard
