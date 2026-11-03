@@ -23,6 +23,10 @@ needs_posix = pytest.mark.skipif(sys.platform == "win32" or not shutil.which("cu
 
 
 # ---------------------------------------------------------------- the text of the scripts
+not_on_windows = pytest.mark.skipif(sys.platform == "win32", reason="sh scripts run on macOS / Linux; bash on a Windows machine may be WSL, which cannot read Windows paths")
+
+
+@not_on_windows
 @pytest.mark.parametrize("shell", ["sh", "bash", "dash"])
 def test_install_sh_parses(shell):
     if not shutil.which(shell):
@@ -30,6 +34,7 @@ def test_install_sh_parses(shell):
     subprocess.run([shell, "-n", str(SH)], check=True)
 
 
+@not_on_windows
 @pytest.mark.parametrize("script", ["build-release.sh", "deploy.sh", "remote-install.sh"])
 def test_deploy_scripts_parse(script):
     if not shutil.which("bash"):
