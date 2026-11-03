@@ -264,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.6', date:'2026-11-03', git:'',
+  title:'五个引擎（MS-FINDER、FRIGID、CFM-ID、NEIMS、RepoRT）开放 Windows；首次下载显示真实进度；默认端口 8000 改为 8731',
+  note:'Windows 一侧没有在真机上跑过：.github/workflows/windows.yml 提供单元测试和手动触发的真实安装（推送后在 Actions 里运行）。CFM-ID 靠 Docker，Windows 的 CI 机器跑不了 Linux 容器，只测了命令行。',
+  state:[['Windows','MS-FINDER 直接用 Windows 自带的 .NET Framework 4.7.2+ 运行，不要 Mono：安装时把预编译的 MsfinderConsoleApp.exe 和已加线程修复的 StructureFinder.dll（mzdesk/lib/msfinder/win/，校验 SHA-256）放进安装目录。FRIGID 的 119 个固定依赖在 win_amd64 / cp310 上都有轮子（用 pip --platform 核对过）。'], ['进度','下载函数统一打印 "X / Y MB"，任务行多了 step、progress、got_mb、total_mb；对话框画真实的单文件进度条，终端 mzdesk setup 和安装脚本用 mzDesk 蓝色的进度条和英文提示。'], ['端口','默认 8731，被占用依次试到 8750。']],
+  c:{
+   app:['feat','本地版：五个引擎开放 Windows（components.py 的平台开关）；进程组、内存监控（memguard 的 Windows 分支、shared/procgroup.py）、conda / git / 换行符 / 覆盖式改名的 Windows 处理；下载进度解析（local/progress.py）、终端界面（local/terminal.py）；默认端口 8731。',true,{w:'mzdesk/local/ · mzdesk/shared/ · mzdesk/ms2/ · mzdesk/cli.py · mzdesk/install/'}],
+   docs:['doc','版本号 0.5.6，本页加 v0.5.6，Docs changelog、local-version、faq 更新；新增 Windows CI（.github/workflows/windows.yml）、validation/windows/smoke.py 和测试 test_windows_support / test_terminal / test_local_progress。',false,{w:'mzdesk/__init__.py · admin/version_change.html · mzdesk/docs/ · tests/ · .github/'}]
+  }},
  {id:'v0.5.5', date:'2026-11-02', git:'',
   title:'MS-FINDER 同一输入每次结果一致：修复 MS-FINDER 并行打分的线程竞争；同分候选顺序固定',
   note:'MS-FINDER 的 30 秒结构搜索时限（SEARCH_MINUTES = 0.5）没有改：撞到时限的分子式（100 条谱图里 460 次搜索中有 15 次）结果仍标为 time limit，候选列表每次可能不同；怎么处理待定。之前的等价性测试（validation/equivalence/run_v0.5.3_20261102）和 CASMI 结果是修复前跑的，要重跑。',
