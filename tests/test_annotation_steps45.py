@@ -309,7 +309,7 @@ def replay(monkeypatch, tmp_path):
     exe, ini = tmp_path / "MsfinderConsoleApp.exe", tmp_path / "x.ini"
     exe.write_text("")
     ini.write_text(mf.INI_PATH.read_text())
-    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": tmp_path, "exe": exe, "resources": tmp_path, "ini": ini})
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": tmp_path, "exe": exe, "resources": tmp_path, "ini": ini, "thread_fix": True})
     seen = {}
 
     def install(case, code=1, error=None):

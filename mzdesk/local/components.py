@@ -83,7 +83,7 @@ def library_installed(name):
 def _msfinder_installed():
     from mzdesk.ms2 import msfinder_engine as mf
     s = mf.status()
-    return all(s[k] for k in ("mono", "exe", "resources", "ini"))
+    return all(s[k] for k in ("mono", "exe", "resources", "ini", "thread_fix"))     # no thread fix: the setup runs again and applies it
 
 
 def _frigid_installed():

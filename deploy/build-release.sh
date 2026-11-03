@@ -77,7 +77,8 @@ def has(pattern):
 
 # must be there
 need = ["mzdesk/__init__.py", "mzdesk/api/app.py", "mzdesk/api/release.py", "mzdesk/static/index.html", "mzdesk/lib/MetFragCommandLine-*.jar",
-        "mzdesk/install/install.sh", "mzdesk/install/install.ps1", "mzdesk/docs/*.md", "mzdesk/docs/img/*.svg", "mzdesk/data/*"]
+        "mzdesk/install/install.sh", "mzdesk/install/install.ps1", "mzdesk/docs/*.md", "mzdesk/docs/img/*.svg", "mzdesk/data/*",
+        "mzdesk/lib/msfinder/mzdesk_msfinder.ini", "mzdesk/lib/msfinder/ThreadStaticPatch.cs"]
 for pattern in need:
     if not has(pattern):
         (warnings if stub and pattern in ("mzdesk/docs/img/*.svg",) else errors).append(f"missing in the wheel: {pattern}")

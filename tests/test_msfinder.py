@@ -4,6 +4,7 @@ fixtures：tests/fixtures/msfinder/ 是真实运行的结果文件（咖啡因�
 最后的集成测试（test_real_run_*）真的启动 MS-FINDER（每次约 4-5 s，峰值约 2.3 GB 内存，一次一个）；没有 Mono / MS-FINDER 时它们跳过（python -m mzdesk.ms2.msfinder_setup）。
 卤素 / Si 开关的两个集成测试用 MassBank 的真实谱（出处和许可见各常量上方的注释），没有编造峰。
 """
+import json
 import os
 import re
 import sys
@@ -332,7 +333,7 @@ def fake_install(monkeypatch, tmp_path):
     exe, ini = tmp_path / "MsfinderConsoleApp.exe", tmp_path / "x.ini"
     exe.write_text("")
     ini.write_text("")
-    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": tmp_path, "exe": exe, "resources": tmp_path, "ini": ini})
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": tmp_path, "exe": exe, "resources": tmp_path, "ini": ini, "thread_fix": True})
     seen = {}
 
     def install(formula=CAFFEINE_FORMULA, structure=CAFFEINE_STRUCTURE, number=77, log="Writing done"):
@@ -394,7 +395,7 @@ def test_real_shipped_file_is_not_modified_by_a_run_with_both_switches(fake_inst
     before = mf.INI_PATH.read_bytes()
     seen = fake_install()
     monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": mf.INI_PATH.parent, "exe": mf.INI_PATH, "resources": mf.INI_PATH.parent,
-                                                "ini": mf.INI_PATH})
+                                                "ini": mf.INI_PATH, "thread_fix": True})
     mf.predict(195.0877, True, None, PEAKS, halogen=True, silicon=True)
     assert seen["ini_path"] != mf.INI_PATH and _ini_values(seen["ini_text"])["SiCheck"] == "True"
     assert mf.INI_PATH.read_bytes() == before
@@ -461,7 +462,7 @@ def tree_install(monkeypatch, tmp_path):
     exe = _fake_install_tree(live)
     ini = tmp_path / "x.ini"
     ini.write_text("")
-    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": live, "exe": exe, "resources": live / "Resources", "ini": ini})
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": live, "exe": exe, "resources": live / "Resources", "ini": ini, "thread_fix": True})
     seen = {"cwds": []}
 
     def fake_run(cmd, cwd, env, timeout, rss_cap_mb, **kw):
@@ -796,7 +797,99 @@ def test_setup_unzip_drops_the_top_folder_and_blocks_path_traversal(tmp_path, mo
     assert not (tmp_path / "escaped.txt").exists()
 
 
+# ---------------------------------------------------------------- thread fix of StructureFinder.dll
+def _release_dll():
+    """The MS-FINDER v3.73 release StructureFinder.dll on this machine (kept by the setup as .original), or None."""
+    d = mf.install_dir()
+    for p in (d / "StructureFinder.dll.original", d / "StructureFinder.dll"):
+        if p.is_file() and mf._sha256(p) == mf.STRUCTUREFINDER_SHA256:
+            return p
+    return None
+
+
+def test_thread_fix_state_tells_release_fixed_and_unknown_files_apart(tmp_path, monkeypatch):
+    assert mf.thread_fix_state(tmp_path) == "missing"
+    dll = tmp_path / "StructureFinder.dll"
+    dll.write_bytes(b"release")
+    monkeypatch.setattr(mf, "STRUCTUREFINDER_SHA256", mf._sha256(dll))
+    assert mf.thread_fix_state(tmp_path) == "release"
+    dll.write_bytes(b"fixed by another Cecil")
+    assert mf.thread_fix_state(tmp_path) == "unknown"                       # no marker: not trusted
+    (tmp_path / mf.THREAD_FIX_MARKER).write_text(json.dumps({"fixed_sha256": mf._sha256(dll)}))
+    assert mf.thread_fix_state(tmp_path) == "fixed"
+    dll.write_bytes(b"changed afterwards")
+    assert mf.thread_fix_state(tmp_path) == "unknown"                       # the marker names another file
+    monkeypatch.setattr(mf, "STRUCTUREFINDER_FIXED_SHA256", mf._sha256(dll))
+    assert mf.thread_fix_state(tmp_path) == "fixed"                         # the reference build needs no marker
+
+
+def test_check_msfinder_refuses_an_install_without_the_thread_fix(monkeypatch, tmp_path):
+    monkeypatch.setattr(mf, "status", lambda: {"mono": "/usr/bin/mono", "dir": tmp_path, "exe": tmp_path, "resources": tmp_path, "ini": tmp_path,
+                                                "thread_fix": False})
+    with pytest.raises(mf.MsFinderError, match="thread fix") as err:
+        mf.check_msfinder()
+    assert mf.SETUP_COMMAND in str(err.value)
+
+
+def test_installer_reinstalls_msfinder_when_the_thread_fix_is_missing(monkeypatch, tmp_path):
+    from mzdesk.local import components
+    ready = {"mono": "m", "dir": tmp_path, "exe": tmp_path, "resources": tmp_path, "ini": tmp_path, "thread_fix": True}
+    monkeypatch.setattr(mf, "status", lambda: ready)
+    assert components._msfinder_installed()
+    monkeypatch.setattr(mf, "status", lambda: {**ready, "thread_fix": False})
+    assert not components._msfinder_installed()
+
+
+def test_apply_thread_fix_only_touches_the_release_file(tmp_path):
+    with pytest.raises(su.SetupError, match="missing"):
+        su.apply_thread_fix(tmp_path)
+    (tmp_path / "StructureFinder.dll").write_bytes(b"some other build")
+    with pytest.raises(su.SetupError, match="not the MS-FINDER v3.73 release"):
+        su.apply_thread_fix(tmp_path)
+    assert (tmp_path / "StructureFinder.dll").read_bytes() == b"some other build"
+
+
+def test_equal_scores_are_ordered_by_the_rows_not_by_the_file():
+    """MS-FINDER writes equal scores in thread-finish order; the parsed order must not depend on it."""
+    lines = CAFFEINE_STRUCTURE.splitlines()
+    head, rows = lines[0], [ln for ln in lines[1:] if ln.strip()]
+    cols = head.split("\t")
+    i_score = cols.index("Total score")
+    tied = []
+    for ln in rows[:3]:
+        cells = ln.split("\t")
+        cells[i_score] = "7.5"
+        tied.append("\t".join(cells))
+    a = mf.parse_structure_results("\n".join([head, *tied]) + "\n")["rows"]
+    b = mf.parse_structure_results("\n".join([head, *reversed(tied)]) + "\n")["rows"]
+    assert len(a) == 3 and [r["inchikey"] for r in a] == [r["inchikey"] for r in b] == sorted(r["inchikey"] for r in a)
+
+
+@pytest.mark.skipif(_release_dll() is None or not mf.find_mono() or not su.find_cecil(mf.find_mono()),
+                    reason="needs the MS-FINDER v3.73 release StructureFinder.dll, Mono and Mono.Cecil")
+def test_real_thread_fix_marks_the_field_and_is_repeatable(tmp_path, capsys):
+    """Compiles and runs ThreadStaticPatch.cs on a copy of the release DLL (a few seconds)."""
+    inst = tmp_path / "MSFINDER_v3.73"
+    inst.mkdir()
+    (inst / "StructureFinder.dll").write_bytes(_release_dll().read_bytes())
+    assert su.apply_thread_fix(inst) == "fixed"
+    assert mf._sha256(inst / "StructureFinder.dll.original") == mf.STRUCTUREFINDER_SHA256
+    marker = json.loads((inst / mf.THREAD_FIX_MARKER).read_text())
+    assert marker["fixed_sha256"] == mf._sha256(inst / "StructureFinder.dll")
+    if "0.11.1.0__" in marker["cecil"]:
+        assert marker["fixed_sha256"] == mf.STRUCTUREFINDER_FIXED_SHA256     # the reference build: same bytes every time
+    assert su.apply_thread_fix(inst) == "fixed"                             # a second setup run changes nothing
+    assert marker == json.loads((inst / mf.THREAD_FIX_MARKER).read_text())
+
+
 # ---------------------------------------------------------------- the real thing
+@pytest.mark.skipif(NO_MSFINDER is not None, reason=f"MS-FINDER not available: {NO_MSFINDER}")
+def test_real_runs_give_the_same_structure_scores_every_time():
+    """Three real runs of the same caffeine spectrum (~5 s each). Without the thread fix the 15 candidates' scores differed between runs
+    (2026-11-02, MassBank MSBNK-LCSB-LU119905, CC BY 4.0); with it they are identical, in the same order."""
+    ms2 = [tuple(map(float, ln.split())) for ln in CAFFEINE_MSFINDER_MS2.splitlines()]
+    runs = [[(s["inchikey"], s["score"]) for s in mf.predict(195.0877, True, None, ms2)["structures"]] for _ in range(3)]
+    assert len(runs[0]) > 5 and runs[0] == runs[1] == runs[2]
 @pytest.mark.skipif(NO_MSFINDER is not None, reason=f"MS-FINDER not available: {NO_MSFINDER}")
 def test_real_run_ranks_caffeine_first_with_ms1_isotopes():
     """One real MS-FINDER run: MassBank MSBNK-LCSB-LU119905 (CC BY 4.0) + an MS1 isotope pattern. ~5 s, ~2.3 GB peak."""

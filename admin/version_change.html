@@ -264,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.5', date:'2026-11-02', git:'',
+  title:'MS-FINDER 同一输入每次结果一致：修复 MS-FINDER 并行打分的线程竞争；同分候选顺序固定',
+  note:'MS-FINDER 的 30 秒结构搜索时限（SEARCH_MINUTES = 0.5）没有改：撞到时限的分子式（100 条谱图里 460 次搜索中有 15 次）结果仍标为 time limit，候选列表每次可能不同；怎么处理待定。之前的等价性测试（validation/equivalence/run_v0.5.3_20261102）和 CASMI 结果是修复前跑的，要重跑。',
+  state:[['原因','MS-FINDER v3.73 并行给结构候选打分，所有线程共用 static 字段 FragmentPeakMatcher.maxBondDissociationEnergy（SpectralAssigner.cs 第 21、38、341 行），候选常用到别的候选的键能，Total score 每次差最多 0.5'], ['修复','安装时把这个字段标为 [ThreadStatic]（Mono.Cecil，Mono 自带），只改这一处；原文件留作 StructureFinder.dll.original'], ['验证','14 条谱图各重跑，分数和顺序完全一致；咖啡因真实运行 3 次的测试，修复前失败、修复后通过'], ['旧安装','安装检查要求有这个修复，没有时 setup 再跑一次（不下载）'], ['版本','0.5.5']],
+  c:{
+   ms2:['fix','MS-FINDER 结果可重复。setup（mzdesk/ms2/msfinder_setup.py）最后一步用 mzdesk/lib/msfinder/ThreadStaticPatch.cs 给 StructureFinder.dll 的 maxBondDissociationEnergy 加 [ThreadStatic]：只对 SHA-256 等于发布版的文件动手，写到临时文件再一次 rename，旁边写标记文件（补丁后的 SHA-256），重跑不变。msfinder_engine.thread_fix_state() 判断 release / fixed / unknown / missing；check_msfinder() 拒绝没修复的安装并提示运行 setup；安装器（mzdesk/local/components.py）没有修复时把 MS-FINDER 当作未装，自动再跑 setup。同分候选按 InChIKey、SMILES、分子式、名称排序（以前按线程完成顺序）。',true,{w:'mzdesk/ms2/msfinder_engine.py · mzdesk/ms2/msfinder_setup.py · mzdesk/lib/msfinder/ThreadStaticPatch.cs · mzdesk/local/components.py'}],
+   docs:['doc','版本号 0.5.5，本页加 v0.5.5，Docs changelog 加一句；测试：线程修复的状态判断、拒绝未修复的安装、安装器重跑 setup、同分排序、对发布版 DLL 真打补丁、咖啡因真实运行 3 次结果一致。',false,{w:'mzdesk/__init__.py · admin/version_change.html · mzdesk/docs/changelog.md · tests/test_msfinder.py · tests/test_local_components.py'}]
+  }},
  {id:'v0.5.4', date:'2026-11-02', git:'',
   title:'本地版一键安装（curl / PowerShell）、大依赖第一次用到时再下载、新版本提示；英文 Docs 写完，侧栏 Docs 入口开通',
   note:'安装命令、version.json 和安装包都由 mzdesk.com 提供：deploy/build-release.sh 打包（wheel + version.json 到 dist/release/），deploy.sh 上传到 /var/lib/mzdesk/releases。Windows 的 install.ps1 没有在 Windows 上跑过。安装包里带 Pan-ReDU 快照（6.4 MB），再分发许可仍未确认，已确认照旧放入。',

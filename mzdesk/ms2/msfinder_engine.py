@@ -1,7 +1,8 @@
 """MS-FINDER engine for the Structure prediction page: formula and structure candidates from one MS/MS spectrum.
 
 Runs the official MS-FINDER v3.73 release (RIKEN, Tsugawa lab) through Mono, on this machine only. The release is the Windows
-GUI build; `python -m mzdesk.ms2.msfinder_setup` adds a console front end compiled from the project's own sources (nothing patched).
+GUI build; `python -m mzdesk.ms2.msfinder_setup` adds a console front end compiled from the project's own sources (nothing patched)
+and applies ONE fix to StructureFinder.dll (the thread fix below); nothing else in the release is changed.
 One run = one spectrum: write a .mat query file into a fresh temp folder, call
     mono MsfinderConsoleApp.exe predict -i <in> -o <out> -m mzdesk_msfinder.ini
 and read `Formula result-N.txt` / `Structure result-N.txt` (N is a sum of date parts, so the files are found by glob).
@@ -19,8 +20,16 @@ Things worth knowing (all checked against the sources of tag MSFINDER-v3.73 and 
     0-byte database (seen 2026-10-30). A normal run writes nothing into the install, but no run ever works in the shared install: each one gets
     its own copy-on-write clone of it inside the run's temp folder (private_install), deleted with that folder.
   * A run loads about 2.3 GB of databases and takes 4-5 s, so runs are serialised and watched (time and memory).
+  * Thread fix (found 2026-11-02): the release scores the structure candidates of a formula in parallel, and every scoring thread writes and
+    reads ONE static field, FragmentPeakMatcher.maxBondDissociationEnergy (SpectralAssigner.cs lines 21, 38 and 341 at the tag). A candidate
+    is then often scored with another candidate's bond energy, so identical input gave different Total scores on every run (up to 0.5;
+    3 runs of the same spectra on an idle machine all differed). The setup marks the field [ThreadStatic] (mzdesk/lib/msfinder/
+    ThreadStaticPatch.cs, Mono.Cecil from Mono's GAC); with it, 14 of 14 test spectra gave the same scores on every run. The release DLL is
+    kept next to it as StructureFinder.dll.original. check_msfinder() refuses to run an install without the fix.
 Top-level imports are the standard library only (spec.py reads ADDUCTS).
 """
+import hashlib
+import json
 import os
 import re
 import shutil
@@ -38,6 +47,13 @@ VERSION = "3.73"
 EXE_NAME = "MsfinderConsoleApp.exe"
 INI_PATH = Path(__file__).resolve().parent.parent / "lib" / "msfinder" / "mzdesk_msfinder.ini"
 SETUP_COMMAND = "python -m mzdesk.ms2.msfinder_setup"
+
+# Thread fix of StructureFinder.dll (top of this file). The release file, and the file the fix makes from it with Mono.Cecil 0.11.1
+# (Cecil writes the same bytes every time; another Cecil version may not, so the marker records what was actually written).
+STRUCTUREFINDER_DLL = "StructureFinder.dll"
+STRUCTUREFINDER_SHA256 = "d67e4a57db3582661e3bdf25f62c2c77dfc7b58fabfa156e1dd8fa78ceef94c6"
+STRUCTUREFINDER_FIXED_SHA256 = "2bd9f959afb9457f40ad6911b67fa29ac58d9aee07745381fa43ece4712d9820"
+THREAD_FIX_MARKER = "StructureFinder.dll.mzdesk-threadfix.json"
 
 TIMEOUT_S = 300             # one run is 4-5 s; a very large spectrum can take longer
 RSS_CAP_MB = 4096           # a run peaks at about 2.3 GB; anything near double is a runaway
@@ -85,14 +101,44 @@ def find_mono():
     return None
 
 
+def _sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def thread_fix_state(install=None):
+    """State of the thread fix in an install folder: "fixed", "release" (the unfixed release file), "missing" (no StructureFinder.dll)
+    or "unknown" (a file that is neither: another version or changed by hand). "fixed" = the marker the setup writes names this file's
+    SHA-256 (or the file is the known fixed build)."""
+    d = Path(install) if install else install_dir()
+    dll = d / STRUCTUREFINDER_DLL
+    if not dll.is_file():
+        return "missing"
+    digest = _sha256(dll)
+    if digest == STRUCTUREFINDER_SHA256:
+        return "release"
+    if digest == STRUCTUREFINDER_FIXED_SHA256:
+        return "fixed"
+    try:
+        marker = json.loads((d / THREAD_FIX_MARKER).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return "unknown"
+    return "fixed" if isinstance(marker, dict) and marker.get("fixed_sha256") == digest else "unknown"
+
+
 def status():
-    """What is in place: {"mono", "dir", "exe", "resources", "ini"} with paths or None (never starts MS-FINDER)."""
+    """What is in place: {"mono", "dir", "exe", "resources", "ini", "thread_fix"} with paths or None (never starts MS-FINDER).
+    thread_fix is True when StructureFinder.dll carries the thread fix (thread_fix_state() == "fixed")."""
     d = install_dir()
     exe = d / EXE_NAME
     res = d / "Resources"
     has_db = res.is_dir() and any(res.glob("MsfinderStructureDB-*")) and any(res.glob("MsfinderFormulaDB-*"))
     return {"mono": find_mono(), "dir": d, "exe": exe if exe.is_file() else None,
-            "resources": res if has_db else None, "ini": INI_PATH if INI_PATH.is_file() else None}
+            "resources": res if has_db else None, "ini": INI_PATH if INI_PATH.is_file() else None,
+            "thread_fix": thread_fix_state(d) == "fixed"}
 
 
 def check_msfinder():
@@ -107,6 +153,9 @@ def check_msfinder():
                             f"Run {SETUP_COMMAND} (MZDESK_MSFINDER_DIR changes the folder).")
     if not s["ini"]:
         raise MsFinderError(f"The mzDesk parameter file {INI_PATH} is missing; reinstall mzDesk.")
+    if not s["thread_fix"]:
+        raise MsFinderError(f"MS-FINDER in {s['dir']} lacks mzDesk's thread fix (without it the structure scores change from run to run). "
+                            f"Run {SETUP_COMMAND} once to apply it; nothing is downloaded.")
     return s["mono"], s["exe"], s["ini"]
 
 
@@ -253,7 +302,10 @@ def _databases(text):
 
 
 def _by_score(row):
-    return float("inf") if row["score"] is None else -row["score"]          # best first, unscored last (the sort is stable)
+    """Best first, unscored last; equal scores by InChIKey, SMILES, formula, name. MS-FINDER writes equal scores in the order its scoring
+    threads finished, which changes from run to run, so the tie-break must come from the rows themselves."""
+    score = float("inf") if row.get("score") is None else -row["score"]
+    return (score, row.get("inchikey") or "", row.get("smiles") or "", row.get("formula") or "", row.get("name") or "")
 
 
 def _counts(rows):

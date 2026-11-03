@@ -4,6 +4,7 @@ This page lists what changed in each version of mzDesk, newest first.
 
 ## v0.5 (2026-11-01)
 
+- v0.5.5: MS-FINDER gives the same structure scores every time it runs on the same spectrum. Before, MS-FINDER's parallel scoring mixed values between candidates, so scores changed slightly from run to run. Run `mzdesk setup` once if Structure Prediction asks for it; nothing is downloaded.
 - mzdesk.com is live, with every engine installed: spectral libraries, CCS, MS-FINDER, FRIGID, CFM-ID and the deep-learning scores.
 - The bug button sends feedback to the maintainer. A page that fails to draw, or a run that fails, shows a reference code such as `E-1A2B3C`.
 - MS/MS Annotation: **Run FRIGID** under **Advanced**. It is on in the local version and off on mzdesk.com.

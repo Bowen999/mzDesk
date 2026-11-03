@@ -101,7 +101,9 @@ def test_simple_components_follow_their_folders(home, monkeypatch):
     assert not reg["ccs"].installed()                                           # the environment variable moves the folder
 
 
-def test_msfinder_needs_mono_exe_databases_and_the_parameter_file(home, monkeypatch):
+def test_msfinder_needs_mono_exe_databases_the_parameter_file_and_the_thread_fix(home, monkeypatch):
+    import json
+    from mzdesk.ms2 import msfinder_engine as mf
     folder = home / "msf"
     monkeypatch.setenv("MZDESK_MSFINDER_DIR", str(folder))
     monkeypatch.setenv("MZDESK_MONO", sys.executable)
@@ -111,6 +113,9 @@ def test_msfinder_needs_mono_exe_databases_and_the_parameter_file(home, monkeypa
     touch(folder / "Resources" / "MsfinderStructureDB-VS1.esd")
     assert not reg["msfinder"].installed()
     touch(folder / "Resources" / "MsfinderFormulaDB-VS1.efd")
+    assert not reg["msfinder"].installed()                                      # no thread fix yet: the setup must run again
+    (folder / "StructureFinder.dll").write_bytes(b"fixed")
+    (folder / mf.THREAD_FIX_MARKER).write_text(json.dumps({"fixed_sha256": mf._sha256(folder / "StructureFinder.dll")}))
     assert reg["msfinder"].installed()
     monkeypatch.setenv("MZDESK_MONO", str(home / "no-such-mono"))
     monkeypatch.setattr(paths, "mono_in_prefix", lambda: home / "none")
