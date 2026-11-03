@@ -25,7 +25,7 @@ from mzdesk.api.app import app
 from mzdesk.ms2 import frigid_engine as fe
 from mzdesk.ms2 import frigid_setup as su
 from mzdesk.ms2 import msfinder_engine as mf
-from mzdesk.shared import heavy_lock
+from mzdesk.shared import heavy_lock, procgroup
 from mzdesk.spec import CAFFEINE_MSFINDER_MS2, FRIGID_ADDUCTS, MODULES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -491,11 +491,7 @@ def _python(code):
 
 
 def _alive(pid):
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return procgroup.pid_alive(pid)
 
 
 def test_run_watched_returns_exit_code_output_and_peaks():
@@ -947,7 +943,7 @@ def test_tokenizer_fetch_runs_in_the_env_python_and_pins_the_revision(tmp_path, 
     monkeypatch.setenv("HF_HUB_OFFLINE", "1")
     assert su.fetch_tokenizer(tmp_path) is True
     cmd, kw = calls[0]
-    assert cmd[:3] == [str(tmp_path / "env" / "bin" / "python"), "-I", "-c"] and fe.TOKENIZER_REVISION in cmd[3] and "datamol-io/safe-gpt" in cmd[3]
+    assert cmd[:3] == [str(fe.env_python(tmp_path)), "-I", "-c"] and fe.TOKENIZER_REVISION in cmd[3] and "datamol-io/safe-gpt" in cmd[3]
     assert kw["env"]["HF_HOME"] == str(tmp_path / "hf_cache") and "HF_HUB_OFFLINE" not in kw["env"]            # online for this one step
 
 

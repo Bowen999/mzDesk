@@ -79,6 +79,7 @@ def test_install_prebuilt_refuses_a_damaged_bundle(monkeypatch, tmp_path):
 
 # ---------------------------------------------------------------- FRIGID
 def test_env_python_and_safe_init_follow_the_conda_layout_of_windows(monkeypatch, tmp_path):
+    monkeypatch.setattr(fe.sys, "platform", "linux")
     assert fe.env_python(tmp_path) == tmp_path / "env" / "bin" / "python"
     monkeypatch.setattr(fe.sys, "platform", "win32")
     assert fe.env_python(tmp_path) == tmp_path / "env" / "python.exe"
@@ -145,6 +146,19 @@ def test_memguard_reads_windows_memory():
         assert memguard.tree_memory(os.getpid())["n_procs"] >= 2
     finally:
         proc.kill()
+
+
+def test_pid_alive_tells_a_running_child_from_a_gone_one():
+    proc = _sleeper()
+    try:
+        assert procgroup.pid_alive(proc.pid)
+        procgroup.kill_group(proc)
+        proc.wait(timeout=10)
+        time.sleep(0.2)
+        assert not procgroup.pid_alive(proc.pid)
+    finally:
+        if proc.poll() is None:
+            proc.kill()
 
 
 @windows

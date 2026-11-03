@@ -14,6 +14,9 @@ import pytest
 
 from mzdesk.local import archive, components, jobs, paths, prereq, targets
 from mzdesk.local.runner import Cancelled, Ctx, InstallError
+from mzdesk.shared import procgroup
+
+posix_only_test = pytest.mark.skipif(sys.platform == "win32", reason="Mono, shell scripts and the macOS git stub exist on macOS / Linux only (Windows has its own tests)")
 
 IDS = ["libraries", "msfinder", "frigid", "cfmid", "neims", "molgpka", "ccs", "repo"]
 
@@ -124,6 +127,8 @@ def test_msfinder_needs_mono_exe_databases_the_parameter_file_and_the_thread_fix
     (folder / "StructureFinder.dll").write_bytes(b"fixed")
     (folder / mf.THREAD_FIX_MARKER).write_text(json.dumps({"fixed_sha256": mf._sha256(folder / "StructureFinder.dll")}))
     assert reg["msfinder"].installed()
+    if sys.platform == "win32":                                                 # there the .NET Framework runs it: no Mono to be missing
+        return
     monkeypatch.setenv("MZDESK_MONO", str(home / "no-such-mono"))
     monkeypatch.setattr(paths, "mono_in_prefix", lambda: home / "none")
     monkeypatch.setattr("shutil.which", lambda *a, **k: None)
@@ -138,11 +143,12 @@ def test_frigid_needs_every_part(home, monkeypatch):
     monkeypatch.setenv("MZDESK_FRIGID_DIR", str(folder))
     comp = components.REGISTRY["frigid"]
     assert not comp.installed() and not fe.installed()
-    py = touch(folder / "env/bin/python")
+    py = touch(fe.env_python(folder))
     py.chmod(0o755)
     touch(folder / "FRIGID/src/dlm/sampler.py", text="device = os.environ.get('FRIGID_DEVICE')")
     (folder / "FRIGID/src/mist").mkdir(parents=True)
-    touch(folder / "env/lib/python3.10/site-packages/safe/__init__.py", text="# x\nfrom .converter import SAFEConverter, decode, encode\n")
+    site = "env/Lib/site-packages" if sys.platform == "win32" else "env/lib/python3.10/site-packages"
+    touch(folder / site / "safe/__init__.py", text="# x\nfrom .converter import SAFEConverter, decode, encode\n")
     touch(folder / "checkpoints/DLM.ckpt", size=fe.DLM_SIZE)
     touch(folder / "checkpoints/mist_msg_aug.ckpt", size=fe.MIST_SIZE)
     assert not comp.installed()                                                 # the tokenizer is still missing
@@ -178,6 +184,7 @@ def test_engine_folder_rule(home, monkeypatch):
     assert frigid_engine.install_dir() == home / "mine"                                             # the variable wins
 
 
+@posix_only_test
 def test_the_mono_made_by_the_installer_comes_before_the_one_on_path(home, monkeypatch):
     from mzdesk.ms2 import msfinder_engine
     own = touch(home / ".mzdesk/tools/mono/bin/mono")
@@ -435,8 +442,7 @@ def test_cancel_kills_the_child_process_tree(monkeypatch, home):
     assert snap["status"] == "cancelled" and snap["error"] == "" and not state
     pid = int(marker.read_text())
     time.sleep(0.3)
-    with pytest.raises(ProcessLookupError):
-        os.kill(pid, 0)                                         # the grandchild is gone too
+    assert not procgroup.pid_alive(pid)                         # the grandchild is gone too
     assert store.cancel("unknown") is False
 
 
@@ -586,6 +592,7 @@ def test_ccs_and_repo_setups_use_the_archive_without_git(archive_server, tmp_pat
 
 
 # ---------------------------------------------------------------- Java and git discovery
+@posix_only_test
 def test_java_on_path_must_start_else_jdk4py(monkeypatch, tmp_path):
     paths.find_java.cache_clear()
     fake_java = tmp_path / "java"
@@ -614,11 +621,14 @@ def types_module(name, **attrs):
 
 def test_metfrag_reports_the_missing_java(monkeypatch):
     from mzdesk.ms2 import metfrag_engine as mf
+    if not list(Path(mf.__file__).resolve().parent.parent.glob("lib/MetFragCommandLine-*.jar")):
+        pytest.skip("the MetFrag jar is not in git (copy it to mzdesk/lib/ to run this test)")
     monkeypatch.setattr(paths, "find_java", lambda: None)
     with pytest.raises(mf.MetFragError, match="jdk4py"):
         mf.run_metfrag("CC(C)O", [(43.0542, 100.0)], "[M+H]+", None, 2, 0.01, 0.0)
 
 
+@posix_only_test
 def test_working_git_ignores_the_macos_stub_without_developer_tools(monkeypatch, tmp_path):
     monkeypatch.setattr(sys, "platform", "darwin")
     monkeypatch.setattr("shutil.which", lambda name, *a, **k: "/usr/bin/git")
@@ -644,6 +654,7 @@ def test_micromamba_platform_names(monkeypatch):
         prereq.micromamba_platform()
 
 
+@posix_only_test
 def test_a_mono_that_works_is_used_without_downloading(home, monkeypatch):
     own = touch(home / ".mzdesk/tools/mono/bin/mono")
     own.chmod(0o755)
@@ -653,6 +664,7 @@ def test_a_mono_that_works_is_used_without_downloading(home, monkeypatch):
     assert mono == str(own) and own_bin == own.parent
 
 
+@posix_only_test
 def test_mono_on_apple_silicon_needs_rosetta_and_an_osx_64_environment(home, monkeypatch):
     monkeypatch.setattr(prereq, "mono_works", lambda mono: (False, "no csc"))
     monkeypatch.setattr(sys, "platform", "darwin")
@@ -699,21 +711,21 @@ def test_throwaway_environment_command_never_uses_the_main_environment(home, mon
 
 def test_missing_uv_says_how_to_get_it(monkeypatch):
     monkeypatch.setattr(prereq, "find_uv", lambda: None)
-    with pytest.raises(InstallError, match="uv was not found.*install.sh"):
+    with pytest.raises(InstallError, match=r"uv was not found.*install\.(sh|ps1)"):
         prereq.throwaway_python(Ctx(lambda line: None), ["torch"], "/x.py", "x")
 
 
 def test_uv_is_looked_up_in_mzdesk_bin_then_on_path(home, monkeypatch):
-    on_path = touch(home / "elsewhere/uv")
+    on_path = touch(home / "elsewhere" / paths.exe("uv"))
     on_path.chmod(0o755)
     monkeypatch.setattr("shutil.which", lambda name, *a, **k: str(on_path) if name == "uv" else None)
     assert prereq.find_uv() == str(on_path)                                      # the installer may have left uv on PATH only
-    own = touch(home / ".mzdesk/bin/uv")
+    own = touch(home / ".mzdesk/bin" / paths.exe("uv"))
     own.chmod(0o755)
     assert prereq.find_uv() == str(own)                                          # ~/.mzdesk/bin/uv comes first
     own.unlink()
     on_path.unlink()
-    local = touch(home / ".local/bin/uv")
+    local = touch(home / ".local/bin" / paths.exe("uv"))
     local.chmod(0o755)
     monkeypatch.setattr("shutil.which", lambda *a, **k: None)
     assert prereq.find_uv() == str(local)

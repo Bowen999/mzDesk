@@ -1,0 +1,7 @@
+# Scripts and patches are read by sh / git apply: keep LF even on a Windows checkout (the CI job runs `bash -n` on them).
+*.sh text eol=lf
+*.diff text eol=lf
+# Prebuilt Windows files and models: never touch the bytes (their SHA-256 is checked).
+*.exe binary
+*.dll binary
+*.joblib binary

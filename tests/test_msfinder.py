@@ -18,7 +18,10 @@ from fastapi.testclient import TestClient
 from mzdesk.api.app import app
 from mzdesk.ms2 import msfinder_engine as mf
 from mzdesk.ms2 import msfinder_setup as su
+from mzdesk.shared import procgroup
 from mzdesk.spec import CAFFEINE_MS1, CAFFEINE_MSFINDER_MS2, MODULES, MSFINDER_ADDUCTS
+
+posix_only_test = pytest.mark.skipif(sys.platform == "win32", reason="Windows runs MS-FINDER without Mono (see test_windows_support.py)")
 
 FIX = Path(__file__).parent / "fixtures" / "msfinder"
 CAFFEINE_FORMULA = (FIX / "caffeine_formula.txt").read_text()
@@ -256,6 +259,7 @@ def test_missing_install_says_what_to_run(monkeypatch, tmp_path):
     assert mf.SETUP_COMMAND in str(exc.value) and str(tmp_path / "nothing") in str(exc.value) and "MZDESK_MSFINDER_DIR" in str(exc.value)
 
 
+@posix_only_test
 def test_missing_mono_names_the_local_version(monkeypatch):
     monkeypatch.setattr(mf, "find_mono", lambda: None)
     with pytest.raises(mf.MsFinderError) as exc:
@@ -264,6 +268,7 @@ def test_missing_mono_names_the_local_version(monkeypatch):
     assert "Mono" in msg and "local version" in msg and mf.SETUP_COMMAND in msg
 
 
+@posix_only_test
 def test_mono_comes_from_the_environment_first(monkeypatch):
     monkeypatch.setenv("MZDESK_MONO", sys.executable)
     assert mf.find_mono() == sys.executable
@@ -281,6 +286,7 @@ def test_input_errors_come_before_the_install_check(monkeypatch, tmp_path):
         mf.predict(195.0877, True, None, [(100.0 + i * 0.01, 1.0) for i in range(mf.MAX_PEAKS + 1)])
 
 
+@posix_only_test
 def test_online_server_without_mono_answers_502_with_a_clear_message(monkeypatch):
     monkeypatch.setattr(mf, "find_mono", lambda: None)
     r = _run({"precursor": PRECURSOR, "ms2": _paste(CAFFEINE_MSFINDER_MS2)})
@@ -300,11 +306,7 @@ def test_run_watched_returns_exit_code_and_output():
 
 
 def _alive(pid):
-    try:
-        os.kill(pid, 0)
-    except ProcessLookupError:
-        return False
-    return True
+    return procgroup.pid_alive(pid)
 
 
 def test_run_watched_timeout_kills_the_whole_process_group():
@@ -483,7 +485,7 @@ def test_a_run_works_in_its_own_copy_of_the_install_and_the_shared_install_stays
     res = mf.predict(195.0877, True, None, PEAKS)
     cwd = seen["cwds"][0]
     assert cwd != live and live not in cwd.parents and seen["exe"] == cwd / "MsfinderConsoleApp.exe"
-    assert seen["files"] == ["Common.dll", "MsfinderConsoleApp.exe", "Resources/MsfinderFormulaDB-VS13_bin.efd"]       # the whole install is there
+    assert [f.replace("\\", "/") for f in seen["files"]] == ["Common.dll", "MsfinderConsoleApp.exe", "Resources/MsfinderFormulaDB-VS13_bin.efd"]       # the whole install is there
     assert (live / "Resources" / "MsfinderFormulaDB-VS13_bin.efd").read_bytes() == b"database"                       # the run's damage stayed in its copy
     assert not cwd.exists()                                                                                          # deleted with the temp folder
     assert res["formulas"] and res["install_copy"] in ("clone", "copy")
@@ -754,7 +756,7 @@ def test_setup_refuses_a_source_that_does_not_match_its_pin(tmp_path):
     table = {"a.cs": su.sha256_of(good), "Process/b.cs": su.sha256_of(other)}
     su.verify_sources(tmp_path, table)
     other.write_text("class B { /* patched */ }")
-    with pytest.raises(su.SetupError, match="Process/b.cs"):
+    with pytest.raises(su.SetupError, match=r"Process[/\\]b\.cs"):
         su.verify_sources(tmp_path, table)
     other.unlink()
     with pytest.raises(su.SetupError, match="Missing"):
@@ -770,7 +772,7 @@ def test_setup_compile_command_matches_the_verified_build(tmp_path):
     cmd = su.compile_command("/m/csc", "/m/Facades", "/bin/dir", src, "/out/x.exe")
     assert cmd[:5] == ["/m/csc", "-nologo", "-target:exe", "-platform:anycpu", "-out:/out/x.exe"]
     refs = [a for a in cmd if a.startswith("-r:")]
-    assert "-r:/bin/dir/MsfinderCommon.dll" in refs and "-r:/m/Facades/netstandard.dll" in refs and "-r:System.Numerics.dll" in refs and len(refs) == 11 + 4
+    assert "-r:" + str(Path("/bin/dir") / "MsfinderCommon.dll") in refs and "-r:" + str(Path("/m/Facades") / "netstandard.dll") in refs and "-r:System.Numerics.dll" in refs and len(refs) == 11 + 4
     assert [Path(a).name for a in cmd if a.endswith(".cs")] == ["Program.cs", "A.cs", "B.cs", "T.cs"]
 
 

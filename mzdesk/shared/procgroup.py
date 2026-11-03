@@ -4,6 +4,7 @@
     procgroup.group_rss_mb(proc.pid)     # resident memory of the child and everything it started, in MB (0.0 when it cannot be read)
     procgroup.kill_group(proc)           # SIGKILL to the group (POSIX) / taskkill /T /F (Windows), then wait up to 10 s for the child
 """
+import ctypes
 import os
 import signal
 import subprocess
@@ -44,6 +45,28 @@ def group_rss_mb(pid):
         return float((proc_memory(int(pid)) or {}).get("rss_mb", 0.0))
     except Exception:  # noqa: BLE001
         return 0.0
+
+
+def pid_alive(pid):
+    """Is there a running process with this id? (os.kill(pid, 0) is not a probe on Windows: it raises OSError for a pid that is gone.)"""
+    if WINDOWS:
+        k32 = ctypes.windll.kernel32
+        k32.OpenProcess.restype = ctypes.c_void_p
+        handle = k32.OpenProcess(0x1000, False, int(pid))               # PROCESS_QUERY_LIMITED_INFORMATION
+        if not handle:
+            return False
+        try:
+            code = ctypes.c_ulong()
+            return bool(k32.GetExitCodeProcess(ctypes.c_void_p(handle), ctypes.byref(code))) and code.value == 259     # STILL_ACTIVE
+        finally:
+            k32.CloseHandle(ctypes.c_void_p(handle))
+    try:
+        os.kill(int(pid), 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
 
 
 def kill_group(proc, wait_s=10):
