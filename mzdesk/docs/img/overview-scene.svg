@@ -1,6 +1,6 @@
-<svg viewBox="0 0 720 569" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 720 533" xmlns="http://www.w3.org/2000/svg">
 <title>What mzDesk does</title>
-<desc>On the left, what you give: a spectrum (MS/MS or EI, as text, a file or a USI), a compound (a name, a SMILES or a drawing) or an m/z value. In the middle, mzDesk: 28 modules in six groups plus the Calculator, each group in its own colour, and, below them, 3 workflows that run a fixed chain of steps (adduct, formula, library, structure, answer); a dashed line marks the online lookups in PubChem, UniChem and GNPS. On the right, what you get: an answer such as Caffeine, Level 2a, 1.00; ranked candidates; a method sheet; and the Session report. At the bottom, the two places it runs: mzdesk.com in a browser, with nothing to install, and the local version on your own computer, where your data stays.</desc>
+<desc>On the left, what you give: a spectrum (MS/MS or EI, as text, a file or a USI), a compound (a name, a SMILES or a drawing) or an m/z value. In the middle, mzDesk: 28 modules in six groups plus the Calculator, each group in its own colour, and, below them, 3 workflows that run a fixed chain of steps (adduct, formula, library, structure, answer). On the right, what you get: an answer such as Caffeine, Level 2a, 1.00; ranked candidates; a method sheet; and the Session report. At the bottom, the two places it runs: mzdesk.com in a browser, with nothing to install, and the local version on your own computer, where your data stays.</desc>
 <defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
 <!-- drawn on a 760 x 600 grid, scaled to the 720-wide figure frame -->
 <g transform="scale(0.94737)">
@@ -66,11 +66,6 @@
 <text class="fg-muted" x="470" y="318" text-anchor="middle">answer</text>
 <text class="fg-small" x="380" y="346" text-anchor="middle">a fixed chain, one answer</text>
 
-<!-- online lookups: dashed, they happen only for some inputs -->
-<path class="fg-dash" d="M380 360V384"/>
-<rect class="fg-box-soft" x="262" y="384" width="236" height="30" rx="15"/>
-<text class="fg-small" x="380" y="404" text-anchor="middle">Online: PubChem, UniChem, GNPS</text>
-
 <!-- 3. results -->
 <path class="fg-arrow-accent" d="M514 206C536 206 532 87 552 87" marker-end="url(#ahx)"/>
 <path class="fg-arrow-accent" d="M514 206C536 206 532 167 552 167" marker-end="url(#ahx)"/>
@@ -102,6 +97,7 @@
 <text class="fg-title" x="606" y="324">Session report</text>
 <text class="fg-muted" x="606" y="344">.html and .json</text>
 
+<g transform="translate(0 -38)">
 <!-- where it runs -->
 <circle class="fg-dot" cx="28" cy="446" r="12"/><text class="fg-dot-text" x="28" y="446" dy=".35em" text-anchor="middle">4</text>
 <text class="fg-title" x="50" y="452">Where it runs</text>
@@ -123,5 +119,6 @@
 <text class="fg-title" x="516" y="512">Local version</text>
 <text class="fg-muted" x="516" y="534">Runs on your computer.</text>
 <text class="fg-muted" x="516" y="554">Your data stays there.</text>
+</g>
 </g>
 </svg>
