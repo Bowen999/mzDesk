@@ -264,6 +264,14 @@ const SECTIONS = [
 // 新版本加在最前面（新→旧）。c: {行 id: [类型, 一句话, 是否改变输出(true), {w:'动了的文件'}]}，只写有变动的行
 // state = 这一版的几个要点 [[标签, 值], …]；git = 提交后填短哈希（可省）；note = 一句补充（可省）
 const VERSIONS = [
+ {id:'v0.5.8', date:'2026-11-04', git:'',
+  title:'Platform 的 CIL LC-MS 改名 CIL Metabolomics；所有衍生化试剂都画完整产物结构',
+  note:'按确认的三点做：所有显示的地方都改名（tile 名、模块说明、docs、5 种语言、测试；试剂前缀 "CIL ·" 不变）；GC 4 种 + UV/FLD 3 种都补完整产物图；中文译名「CIL 代谢组学」（tile 名本身和其他三个 tile 一样不翻译）。',
+  state:[['改名','CIL LC-MS → CIL Metabolomics'], ['完整产物图','11 种试剂全部有：GC（TMS、MeOx + TMS、TBDMS、TFAA）、CIL（4 通道）、UV/FLD（OPA、FMOC-Cl、DNPH）'], ['保护','画出的产物分子式与 derive() 报告的不一致时不显示图'], ['版本','0.5.8']],
+  c:{
+   prop:['feat','reaction_product 覆盖全部试剂：GC 硅烷化复用 derivatize()；TFAA / FMOC-Cl 酰化（_acyl_product）；DNPH 与丹磺酰肼共用 _hydrazone_product；OPA 把伯胺 N 并入 1-(2-羟乙硫基)异吲哚环。Platform tile 改名 CIL Metabolomics。',true,{w:'mzdesk/platform_fit/derivatization.py · mzdesk/api/runners/structure.py'}],
+   docs:['doc','版本号 0.5.8，本页加 v0.5.8；platform_fit、derivatization、workflows-and-modules、changelog 更新；5 种语言的模块说明改名；测试 tests/test_derivatization.py 新增全试剂产物分子式检查。',false,{w:'mzdesk/docs/ · web/src/i18n/ · tests/test_derivatization.py'}]
+  }},
  {id:'v0.5.7', date:'2026-11-03', git:'',
   title:'新流程 Lipid Fragment Explanation（脂质碎片解析）：脂质简称或结构 + MS2 → LIPID+ / LIPID MAPS 名称、示意结构、MetFrag 碎片解析',
   note:'按确认的两点做：SMILES / 手绘结构不给名称（名称卡片显示 —）；只到总组成的名字（PC 34:1）按默认规则拆链，不让谱图挑拆法。示意结构里假设的部分（C=C 位置、官能团位置、拆链）只是示意，它们解释的碎片不能当作这些位置的证据。',

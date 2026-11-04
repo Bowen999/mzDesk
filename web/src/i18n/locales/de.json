@@ -178,7 +178,7 @@
   "Compound → names, IDs, classification": "Verbindung → Namen, IDs, Klassifikation",
   "Compound → published methods, or those of similar compounds": "Verbindung → publizierte Methoden oder die ähnlicher Verbindungen",
   "Compound → suitability for UV, fluorescence, CAD / ELSD / RI": "Verbindung → Eignung für UV, Fluoreszenz, CAD / ELSD / RI",
-  "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS": "Verbindung → geeignete Plattformen: Lipidomik, Metabolomik, CIL LC-MS, GC-MS",
+  "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS": "Verbindung → geeignete Plattformen: Lipidomik, Metabolomik, CIL-Metabolomik, GC-MS",
   "Compounds": "Verbindungen",
   "Concentration": "Konzentration",
   "Conditions": "Bedingungen",

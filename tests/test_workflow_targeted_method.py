@@ -788,7 +788,7 @@ def test_both_examples_run_through_the_job_api_with_live_step_blocks(offline, in
     assert by_step[4] == ["ionization_chips", "ionization_notes"] and "derivatization" in by_step[7] and by_step[8][:2] == ["methods_summary", "methods_exact"]
     platform_block = next(b for b in blocks if b["id"] == "platform")
     assert (platform_block["type"], platform_block["title"]) == ("portal", "Platform") and [t["label"] for t in platform_block["data"]["tiles"]] == [
-        "Lipidomics", "Metabolomics", "CIL LC-MS", "GC-MS"]
+        "Lipidomics", "Metabolomics", "CIL Metabolomics", "GC-MS"]
     assert_no_transitions(body)
     json.dumps(body)                                                                           # the whole job is plain JSON
 

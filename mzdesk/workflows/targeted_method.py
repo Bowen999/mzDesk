@@ -154,7 +154,7 @@ def step_identity(q):
 
 # ---------------------------------------------------------------- step 2: Platform
 def step_platform(q):
-    """The four Platform tiles (Lipidomics, Metabolomics, CIL LC-MS, GC-MS) and the verdicts behind the decisions. The verdicts are those of the
+    """The four Platform tiles (Lipidomics, Metabolomics, CIL Metabolomics, GC-MS) and the verdicts behind the decisions. The verdicts are those of the
     neutral form of the largest fragment (a salt or mixture is analysed by its main component)."""
     from rdkit import Chem
 

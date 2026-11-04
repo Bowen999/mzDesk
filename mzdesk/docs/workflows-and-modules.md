@@ -13,7 +13,7 @@ A module does one job on one page. A workflow runs several steps in order and en
 
 ### Detectability
 
-- [Platform](/docs/platform_fit): lipidomics, metabolomics, CIL LC-MS or GC-MS.
+- [Platform](/docs/platform_fit): lipidomics, metabolomics, CIL Metabolomics or GC-MS.
 - [Separation](/docs/separation): charge, logD and separation modes at a pH.
 - [Ionization](/docs/ionization): ESI polarity and EI usability.
 - [Adducts](/docs/adducts): expected ions, strongest first.

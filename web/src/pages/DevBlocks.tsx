@@ -56,7 +56,7 @@ const DATA: Record<string, BlockData> = {
   plain: { values: { Name: "Caffeine", Formula: "C8H10N4O2", "Exact mass": { value: "194.0804", note: "Da" } } },
   portal: { tiles: [
     { label: "GC-MS (TMS)", status: "yes", value: "Silylation works", chips: ["–OH", "–NH₂"], help: "Two silylation sites: both groups are derivatized by MSTFA." },
-    { label: "CIL LC-MS", status: "partial", value: "Amine only", chips: ["dansyl", "dabsyl"], help: ["Only the amine reacts.", "The phenol needs a second reagent."] },
+    { label: "CIL Metabolomics", status: "partial", value: "Amine only", chips: ["dansyl", "dabsyl"], help: ["Only the amine reacts.", "The phenol needs a second reagent."] },
     { label: "LC-UV / FLD", status: "no", value: "Native absorbance is enough" },
     { label: "Acylation", status: "yes", value: "Acetic anhydride" },
     { label: "Alkylation", status: "no", value: "No acidic carboxyl group", help: "Alkylation targets –COOH, which is absent." } ] },

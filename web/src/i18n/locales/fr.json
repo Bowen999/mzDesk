@@ -178,7 +178,7 @@
   "Compound → names, IDs, classification": "Composé → noms, ID, classification",
   "Compound → published methods, or those of similar compounds": "Composé → méthodes publiées, ou celles de composés similaires",
   "Compound → suitability for UV, fluorescence, CAD / ELSD / RI": "Composé → aptitude à la détection UV, fluorescence, CAD / ELSD / RI",
-  "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS": "Composé → plateformes adaptées : lipidomique, métabolomique, CIL LC-MS, GC-MS",
+  "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS": "Composé → plateformes adaptées : lipidomique, métabolomique, métabolomique CIL, GC-MS",
   "Compounds": "Composés",
   "Concentration": "Concentration",
   "Conditions": "Conditions",

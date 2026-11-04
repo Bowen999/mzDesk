@@ -449,10 +449,10 @@ def test_platform_page_is_a_portal_and_a_reaction_block():
     assert (reaction["type"], reaction["id"], reaction["title"]) == ("reaction", "reactions", "Why and how") and reaction["help"]
     out = _run("platform_fit", mod["example"]).json()["outputs"]
     tiles = {t["label"]: t for t in out["platform"]["tiles"]}
-    assert list(tiles) == ["Lipidomics", "Metabolomics", "CIL LC-MS", "GC-MS"]
+    assert list(tiles) == ["Lipidomics", "Metabolomics", "CIL Metabolomics", "GC-MS"]
     # the example (tyrosine) shows everything: CIL chips, GC partial and the reaction block
     assert mod["example"]["structure"] == {"mode": "Name / ID / Formula", "value": "L-tyrosine"}
-    assert tiles["CIL LC-MS"]["status"] == "yes" and tiles["CIL LC-MS"]["chips"] and tiles["GC-MS"]["status"] == "partial"
+    assert tiles["CIL Metabolomics"]["status"] == "yes" and tiles["CIL Metabolomics"]["chips"] and tiles["GC-MS"]["status"] == "partial"
     assert [o["label"] for o in out["reactions"]["options"]] == ["CIL · Dansyl chloride", "CIL · DmPA bromide", "GC · TMS"]
 
 

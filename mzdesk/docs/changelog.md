@@ -4,6 +4,7 @@ This page lists what changed in each version of mzDesk, newest first.
 
 ## v0.5 (2026-11-01)
 
+- v0.5.8: The Platform tile **CIL LC-MS** is now called **CIL Metabolomics**. Every derivatization reaction now shows the complete product structure next to its functional-group scheme: the GC reagents (TMS, MeOx + TMS, TBDMS, TFAA) and the LC-UV / FLD reagents (OPA, FMOC-Cl, DNPH), as the four CIL channels already did.
 - v0.5.7: New workflow **Lipid Fragment Explanation**. Give a lipid short name (or a SMILES or a drawing) and its MS2 spectrum; get the LIPID+ and LIPID MAPS names, an illustrative structure with its assumed parts shaded, and the peaks that structure explains (MetFrag, tree depth 3 by default). **Auto** picks the adduct that fits the precursor m/z.
 - v0.5.6: MS-FINDER, FRIGID, CFM-ID, NEIMS and RepoRT now install and run on Windows (MS-FINDER uses the .NET Framework that comes with Windows; CFM-ID needs Docker Desktop). First-use downloads show a real progress bar with the file and step, in the app and in the terminal. mzDesk now opens at `http://localhost:8731` (it was 8000, which other programs often use).
 - v0.5.5: MS-FINDER gives the same structure scores every time it runs on the same spectrum. Before, MS-FINDER's parallel scoring mixed values between candidates, so scores changed slightly from run to run. Run `mzdesk setup` once if Structure Prediction asks for it; nothing is downloaded.

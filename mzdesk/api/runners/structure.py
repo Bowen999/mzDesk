@@ -106,7 +106,7 @@ def _ion_note(charge):
 def _reaction_options(results, *, detail, mol=None, groups=None):
     """Reaction-block options for the derivatization results that apply (n > 0). detail=True (Platform page): formula / mass / heavy mass and the EI ions,
     caveats and label note in the option's "?"; detail=False (Derivatization page: the table has them): the scheme only, the "?" explains the abbreviations.
-    When mol and groups are given, each option carries its own reactive-site SVG; all four CIL channel options also carry a complete product SVG."""
+    When mol and groups are given, each option carries its own reactive-site SVG; every option also carries a complete product SVG."""
     from mzdesk.platform_fit import derivatization as deriv
 
     options = []
@@ -136,7 +136,7 @@ def _reaction_options(results, *, detail, mol=None, groups=None):
 
 
 def run_platform_fit(inputs):
-    """Platform 页：脂质组 / 代谢组分类、CIL LC-MS、GC-MS 四个 tile；CIL 或 GC 适用时再给一个官能团反应块（衍生化引擎）。"""
+    """Platform 页：脂质组 / 代谢组分类、CIL Metabolomics、GC-MS 四个 tile；CIL 或 GC 适用时再给一个官能团反应块（衍生化引擎）。"""
     from mzdesk.platform_fit import derivatization as deriv
     from mzdesk.platform_fit import display_en as en
     from mzdesk.platform_fit import lipid_metabolite_classifier as clf
@@ -163,7 +163,7 @@ def run_platform_fit(inputs):
                 else "CIL rule: no amine, phenol, hydroxyl, carboxyl or carbonyl group."]
     if category == "Lipidome":
         cil_help.append("Lipid: usually measured by lipidomics, not CIL.")
-    tiles.append(bl.tile("CIL LC-MS", "yes" if cil["cil"] else "no", chips=cil["short"], help=cil_help))
+    tiles.append(bl.tile("CIL Metabolomics", "yes" if cil["cil"] else "no", chips=cil["short"], help=cil_help))
 
     gc_option = deriv.gc_option(mol, groups)
     status = {"yes": "yes", "after derivatization": "partial", "no": "no"}[gc["gc"]]

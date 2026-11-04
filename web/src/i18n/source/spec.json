@@ -123,7 +123,7 @@
   "Compound → names, IDs, classification",
   "Compound → published methods, or those of similar compounds",
   "Compound → suitability for UV, fluorescence, CAD / ELSD / RI",
-  "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS",
+  "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS",
   "Compounds",
   "Concentration",
   "Conditions",

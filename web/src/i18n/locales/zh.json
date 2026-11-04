@@ -178,7 +178,7 @@
   "Compound → names, IDs, classification": "化合物 → 名称、ID、分类",
   "Compound → published methods, or those of similar compounds": "化合物 → 已发表的方法，或相似化合物的方法",
   "Compound → suitability for UV, fluorescence, CAD / ELSD / RI": "化合物 → 对 UV、荧光、CAD / ELSD / RI 的适用性",
-  "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS": "化合物 → 适用平台：脂质组学、代谢组学、CIL LC-MS、GC-MS",
+  "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS": "化合物 → 适用平台：脂质组学、代谢组学、CIL 代谢组学、GC-MS",
   "Compounds": "化合物",
   "Concentration": "浓度",
   "Conditions": "条件",

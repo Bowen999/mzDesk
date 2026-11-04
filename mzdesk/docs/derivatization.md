@@ -1,6 +1,6 @@
 # Derivatization
 
-Give a compound and the reagents. Get the reactive groups and the derivative's formula and mass, for GC-MS, CIL LC-MS or LC-UV / FLD.
+Give a compound and the reagents. Get the reactive groups and the derivative's formula and mass, for GC-MS, CIL Metabolomics or LC-UV / FLD.
 
 ## Results
 
@@ -11,5 +11,5 @@ Give a compound and the reagents. Get the reactive groups and the derivative's f
 
 ### Reactions
 
-- All four CIL channels show complete substrate and product structures, including every label. Other reagents use functional-group schemes; ×n = number of groups.
+- Every reagent shows the complete substrate and product structures, including every label, next to its functional-group scheme; ×n = number of groups.
 - Choose a reagent above the scheme; the substrate highlights only its reactive groups.

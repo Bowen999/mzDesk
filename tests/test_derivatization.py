@@ -72,17 +72,17 @@ def test_opa_delta_and_no_group_row():
 
 def test_platform_tiles_for_caffeine_glucose_pc_and_glycine():
     caffeine = _tiles(CAFFEINE)
-    assert list(caffeine) == ["Lipidomics", "Metabolomics", "CIL LC-MS", "GC-MS"]
+    assert list(caffeine) == ["Lipidomics", "Metabolomics", "CIL Metabolomics", "GC-MS"]
     assert [caffeine[k]["status"] for k in caffeine] == ["no", "yes", "no", "yes"] and caffeine["GC-MS"]["value"] == "Volatile as is"
     glucose = _tiles(GLUCOSE)
     assert glucose["GC-MS"]["status"] == "partial" and glucose["GC-MS"]["value"] == "After derivatization" and glucose["GC-MS"]["chips"] == ["MeOx + TMS"]
-    assert glucose["CIL LC-MS"]["status"] == "yes" and glucose["CIL LC-MS"]["chips"] == ["hydroxyl"]
+    assert glucose["CIL Metabolomics"]["status"] == "yes" and glucose["CIL Metabolomics"]["chips"] == ["hydroxyl"]
     pc = _tiles(PC)
     assert [pc[k]["status"] for k in pc] == ["yes", "no", "no", "no"] and pc["Lipidomics"]["value"] == "Glycerophospholipid"
     assert pc["GC-MS"]["value"] == "Not volatile" and "quaternary ammonium" in _help(pc["GC-MS"])
     gly = _tiles("NCC(=O)O")
-    assert gly["CIL LC-MS"]["status"] == "yes" and gly["CIL LC-MS"]["chips"] == ["amine / phenol", "carboxyl"]
-    assert "amine / phenol (dansyl)" in _help(gly["CIL LC-MS"]) and "carboxyl (DmPA)" in _help(gly["CIL LC-MS"])
+    assert gly["CIL Metabolomics"]["status"] == "yes" and gly["CIL Metabolomics"]["chips"] == ["amine / phenol", "carboxyl"]
+    assert "amine / phenol (dansyl)" in _help(gly["CIL Metabolomics"]) and "carboxyl (DmPA)" in _help(gly["CIL Metabolomics"])
 
 
 def test_platform_tile_help_has_the_rule_hits_and_the_lipid_features():
@@ -181,20 +181,50 @@ def test_dansylhydrazine_full_product_has_every_hydrazone_and_the_same_formula(s
     assert d.reaction_product_svg(res["mol"], r, res["groups"]).lstrip().startswith(("<?xml", "<svg"))
 
 
-def test_full_product_svgs_cover_all_four_cil_channels():
+_SVG = ("<?xml", "<svg")
+_PRODUCT_CASES = ["NCC(=O)O", "NCCc1ccc(O)c(O)c1", "NCCCCC(N)C(=O)O", GLUCOSE, "NC(CS)C(=O)O", "NC(Cc1c[nH]c2ccccc12)C(=O)O",
+                  "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C", "O=Cc1ccccc1", "OC(=O)C1CCCN1", "C[N+](C)(C)CC(O)CC(=O)[O-]", "O=c1cc[nH]c(=O)[nH]1"]
+
+
+@pytest.mark.parametrize("smiles", _PRODUCT_CASES)
+def test_every_reagent_full_product_has_the_reported_formula(smiles):
+    """All eleven reagents (GC, CIL, UV / FLD): the drawn product is the molecule whose formula derive() reports."""
+    res = d.derive(smiles, list(d.REAGENTS))
+    for r in res["results"]:
+        if not r["n"]:
+            assert d.reaction_product(res["mol"], r, res["groups"]) is None
+            continue
+        product = d.reaction_product(res["mol"], r, res["groups"])
+        assert d.formula_string(d.parent_formula(product)) == r["formula"], (smiles, r["name"])
+        assert d.reaction_product_svg(res["mol"], r, res["groups"]).lstrip().startswith(_SVG), (smiles, r["name"])
+
+
+@pytest.mark.parametrize(("smiles", "reagent", "product"), [
+    ("NCCc1ccc(O)c(O)c1", "UV/FLD · OPA + 2-mercaptoethanol (primary amine)", "OCCSc1c2ccccc2cn1CCc1ccc(O)c(O)c1"),
+    ("NCCc1ccc(O)c(O)c1", "GC · Acylation (TFAA)", "O=C(NCCc1ccc(OC(=O)C(F)(F)F)c(OC(=O)C(F)(F)F)c1)C(F)(F)F"),
+    ("NCC(=O)O", "UV/FLD · FMOC-Cl (amine)", "O=C(O)CNC(=O)OCC1c2ccccc2-c2ccccc21"),
+    ("CC(=O)C", "UV/FLD · DNPH (carbonyl)", "CC(C)=NNc1ccc([N+](=O)[O-])cc1[N+](=O)[O-]"),
+    ("NCC(=O)O", "GC · TMS (MSTFA / BSTFA)", "C[Si](C)(C)OC(=O)CN([Si](C)(C)C)[Si](C)(C)C"),
+])
+def test_gc_and_uv_full_products(smiles, reagent, product):
+    res = d.derive(smiles, [reagent])
+    got = d.reaction_product(res["mol"], res["results"][0], res["groups"])
+    assert Chem.MolToSmiles(got) == Chem.MolToSmiles(Chem.MolFromSmiles(product))
+
+
+def test_full_product_svgs_on_the_platform_and_derivatization_pages():
     platform = _options("NC(Cc1ccc(O)cc1)C(=O)O")
-    for label in ("CIL · Dansyl chloride", "CIL · DmPA bromide"):
-        assert platform[label]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
-    assert "product_svg" not in platform["GC · TMS"]
+    for label in ("CIL · Dansyl chloride", "CIL · DmPA bromide", "GC · TMS"):
+        assert platform[label]["product_svg"].lstrip().startswith(_SVG)
 
     body = client.post("/api/modules/derivatization/run", json={
         "structure": {"mode": "SMILES / InChI", "value": GLUCOSE},
-        "reagents": ["GC · TMS (MSTFA / BSTFA)", "CIL · Dansyl chloride, base-activated (hydroxyl)"],
+        "reagents": ["GC · TMS (MSTFA / BSTFA)", "GC · MeOx + TMS", "CIL · Dansyl chloride, base-activated (hydroxyl)"],
     })
     assert body.status_code == 200, body.text
     options = {o["label"]: o for o in body.json()["outputs"]["deriv_reactions"]["options"]}
-    assert options["CIL · Dansyl chloride (base)"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
-    assert "product_svg" not in options["GC · TMS"]
+    for label in ("CIL · Dansyl chloride (base)", "GC · TMS", "GC · MeOx + TMS"):
+        assert options[label]["product_svg"].lstrip().startswith(_SVG)
 
     body = client.post("/api/modules/derivatization/run", json={
         "structure": {"mode": "SMILES / InChI", "value": "CC(=O)CC(=O)C"},
@@ -202,15 +232,15 @@ def test_full_product_svgs_cover_all_four_cil_channels():
     })
     assert body.status_code == 200, body.text
     options = {o["label"]: o for o in body.json()["outputs"]["deriv_reactions"]["options"]}
-    assert options["CIL · Dansylhydrazine"]["product_svg"].lstrip().startswith(("<?xml", "<svg"))
-    assert "product_svg" not in options["UV/FLD · DNPH"]
+    for label in ("CIL · Dansylhydrazine", "UV/FLD · DNPH"):
+        assert options[label]["product_svg"].lstrip().startswith(_SVG)
 
 
 def test_platform_lipid_with_an_amine_keeps_cil_yes_and_says_lipidomics():
     pe = "CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCCN)OC(=O)CCCCCCCCCCCCCCC"
     tiles = _tiles(pe)
-    assert tiles["Lipidomics"]["status"] == "yes" and tiles["CIL LC-MS"]["status"] == "yes"
-    assert "usually measured by lipidomics" in _help(tiles["CIL LC-MS"])
+    assert tiles["Lipidomics"]["status"] == "yes" and tiles["CIL Metabolomics"]["status"] == "yes"
+    assert "usually measured by lipidomics" in _help(tiles["CIL Metabolomics"])
     assert "CIL · Dansyl chloride" in _options(pe)
 
 
@@ -343,8 +373,8 @@ def test_zwitterion_is_neutralized():
 
 def test_quaternary_ammonium_stays_charged_and_lipid_cil_note():
     tiles = _tiles(PC)
-    assert tiles["GC-MS"]["status"] == "no" and tiles["CIL LC-MS"]["status"] == "no"
-    assert "Lipid: usually measured by lipidomics, not CIL." in tiles["CIL LC-MS"]["help"]
+    assert tiles["GC-MS"]["status"] == "no" and tiles["CIL Metabolomics"]["status"] == "no"
+    assert "Lipid: usually measured by lipidomics, not CIL." in tiles["CIL Metabolomics"]["help"]
     assert "quaternary ammonium" in _help(tiles["GC-MS"]) and "formal charge" in _help(tiles["GC-MS"])
 
 
@@ -569,7 +599,7 @@ def test_sodium_benzoate_has_a_carboxyl_channel_and_a_gc_verdict():
     rows = {row[0]: row for row in _table(body)}
     assert rows["CIL · DmPA bromide"][2] == "C₁₇H₁₇NO₃" and rows["GC · TMS"][2] == "C₁₀H₁₄O₂Si"        # benzoic acid + DmPA / + TMS
     tiles = _tiles(salt)
-    assert tiles["CIL LC-MS"]["status"] == "yes" and tiles["GC-MS"]["status"] != "no"
+    assert tiles["CIL Metabolomics"]["status"] == "yes" and tiles["GC-MS"]["status"] != "no"
     platform = _page("platform_fit", salt)
     assert platform["warnings"].count(PARTS_NOTE) == 1
     assert {o["label"] for o in platform["outputs"]["reactions"]["options"]} == {"CIL · DmPA bromide", "GC · TMS"}
@@ -593,7 +623,7 @@ def test_neutralize_protonates_a_carboxylate_next_to_a_quaternary_n():
 def test_quaternary_ammonium_acids_get_the_carboxyl_channel_and_stay_not_gc_amenable(name):
     smiles = QUATERNARY_ACIDS[name]
     tiles = _tiles(smiles)
-    assert tiles["CIL LC-MS"]["status"] == "yes" and "carboxyl" in tiles["CIL LC-MS"]["chips"], name
+    assert tiles["CIL Metabolomics"]["status"] == "yes" and "carboxyl" in tiles["CIL Metabolomics"]["chips"], name
     assert tiles["GC-MS"]["status"] == "no" and "Rule:" in _help(tiles["GC-MS"]), name         # [NX4+] / ionic rule untouched
     r = _row(smiles, "CIL · DmPA bromide (carboxyl)")
     assert r["n"] == 1 and r["charge"] == 1, name

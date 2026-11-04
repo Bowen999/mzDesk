@@ -308,19 +308,20 @@ def _dmpa_product(mol, result, groups):
     return _clean_product(product)
 
 
-def _dansylhydrazine_product(mol, result, groups):
-    targets = _product_sites(result, groups, "Dansylhydrazine")
+def _hydrazone_product(mol, result, groups, reagent, tag_smiles):
+    """Every C=O of the carbonyl channel becomes C=N–NH–tag; the carbonyl O leaves as water. ``tag_smiles`` is the hydrazine with its terminal NH2."""
+    targets = _product_sites(result, groups, reagent)
     product = Chem.AddHs(mol)
     carbonyl_o = []
     for i in targets:
         oxygen = [n.GetIdx() for n in product.GetAtomWithIdx(i).GetNeighbors()
                   if n.GetAtomicNum() == 8 and product.GetBondBetweenAtoms(i, n.GetIdx()).GetBondType() == Chem.BondType.DOUBLE]
         if len(oxygen) != 1:
-            raise ValueError(f"Dansylhydrazine reaction site {i} is not a carbonyl carbon.")
+            raise ValueError(f"{reagent} reaction site {i} is not a carbonyl carbon.")
         carbonyl_o.append(oxygen[0])
 
-    # PubChem CID 94442: Dns-SO2-NH-NH2. Terminal NH2 loses two H; carbonyl O leaves as water after C=N formation.
-    tag = Chem.RWMol(Chem.AddHs(Chem.MolFromSmiles("CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)NN")))
+    # The terminal NH2 of the hydrazine loses two H and forms the C=N double bond.
+    tag = Chem.RWMol(Chem.AddHs(Chem.MolFromSmiles(tag_smiles)))
     terminal = next(a for a in tag.GetAtoms() if a.GetAtomicNum() == 7
                     and sum(n.GetAtomicNum() == 1 for n in a.GetNeighbors()) == 2
                     and any(n.GetAtomicNum() == 7 for n in a.GetNeighbors()))
@@ -335,23 +336,82 @@ def _dansylhydrazine_product(mol, result, groups):
     return _clean_product(edit.GetMol())
 
 
+def _dansylhydrazine_product(mol, result, groups):
+    # PubChem CID 94442: Dns-SO2-NH-NH2.
+    return _hydrazone_product(mol, result, groups, "Dansylhydrazine", "CN(C)C1=CC=CC2=C1C=CC=C2S(=O)(=O)NN")
+
+
+def _dnph_product(mol, result, groups):
+    # PubChem CID 3772977: 2,4-dinitrophenylhydrazine.
+    return _hydrazone_product(mol, result, groups, "DNPH", "NNC1=C(C=C(C=C1)[N+](=O)[O-])[N+](=O)[O-]")
+
+
+def _acyl_product(mol, result, groups, reagent, tag_smiles):
+    """One H of every labelled N / O / S site is replaced by the acyl group of ``tag_smiles`` (atom 0 = the carbonyl C that bonds to the site)."""
+    targets = _product_sites(result, groups, reagent)
+    product = _without_site_hydrogens(mol, targets, reagent)
+    product = _attach_at_sites(product, targets, Chem.MolFromSmiles(tag_smiles), 0, Chem.BondType.SINGLE)
+    return _clean_product(product)
+
+
+def _tfaa_product(mol, result, groups):
+    # Trifluoroacetyl, CF3CO–: TFAA (PubChem CID 9845) gives the ester / amide / thioester, CF3COOH leaves.
+    return _acyl_product(mol, result, groups, "TFAA", "C(=O)C(F)(F)F")
+
+
+def _fmoc_product(mol, result, groups):
+    # Fmoc, 9-fluorenylmethoxycarbonyl: FMOC-Cl (PubChem CID 34367) gives the carbamate / carbonate, HCl leaves.
+    return _acyl_product(mol, result, groups, "FMOC-Cl", "C(=O)OCC1C2=CC=CC=C2C3=CC=CC=C13")
+
+
+def _opa_product(mol, result, groups):
+    """OPA + 2-mercaptoethanol: every primary amine N becomes the ring N of a 1-(2-hydroxyethylthio)-2-R-isoindole (both N–H leave)."""
+    targets = _product_sites(result, groups, "OPA + 2-ME")
+    work = Chem.RWMol(Chem.AddHs(mol))
+    leaving = []
+    for i in targets:
+        hs = [n.GetIdx() for n in work.GetAtomWithIdx(i).GetNeighbors() if n.GetAtomicNum() == 1]
+        if len(hs) != 2:
+            raise ValueError(f"OPA reaction site {i} is not a primary amine.")
+        leaving += hs
+    for i in sorted(leaving, reverse=True):
+        work.RemoveAtom(i)
+    product = work.GetMol()
+    ring = Chem.MolFromSmiles("C1=C2C=CC=CC2=C(SCCO)N1")         # 2H-isoindole; its N is replaced by the amine N
+    ring_n = next(a.GetIdx() for a in ring.GetAtoms() if a.GetAtomicNum() == 7)
+    ring_c = [n.GetIdx() for n in ring.GetAtomWithIdx(ring_n).GetNeighbors()]
+    for target in targets:
+        offset = product.GetNumAtoms()
+        edit = Chem.RWMol(Chem.CombineMols(product, ring))
+        for c in ring_c:
+            edit.AddBond(target, offset + c, ring.GetBondBetweenAtoms(ring_n, c).GetBondType())
+        edit.RemoveAtom(offset + ring_n)
+        product = edit.GetMol()
+    return _clean_product(product)
+
+
+def _silyl_product(mol, result, groups):
+    """GC TMS / MeOx + TMS / TBDMS: the derivative that derivatize() builds."""
+    return Chem.MolFromSmiles(derivatize(Chem.MolToSmiles(mol), result["reagent"])["smiles"])
+
+
+_PRODUCTS = {"Dansyl chloride": _dansyl_chloride_product, "Dansyl chloride (base)": _dansyl_chloride_product, "DmPA bromide": _dmpa_product,
+             "Dansylhydrazine": _dansylhydrazine_product, "TMS": _silyl_product, "MeOx + TMS": _silyl_product, "TBDMS": _silyl_product,
+             "TFAA": _tfaa_product, "OPA + 2-ME": _opa_product, "FMOC-Cl": _fmoc_product, "DNPH": _dnph_product}
+assert set(_PRODUCTS) == set(SCHEMES)
+
+
 def reaction_product(mol, result, groups):
-    """Complete product for the four CIL channels (A / H / C / K); None for reagents without a full-structure renderer."""
+    """Complete product of any reagent (CIL, GC, UV / FLD); None when nothing reacts."""
     if not result["n"]:
         return None
-    if result["name"] in ("Dansyl chloride", "Dansyl chloride (base)"):
-        return _dansyl_chloride_product(mol, result, groups)
-    if result["name"] == "DmPA bromide":
-        return _dmpa_product(mol, result, groups)
-    if result["name"] == "Dansylhydrazine":
-        return _dansylhydrazine_product(mol, result, groups)
-    return None
+    return _PRODUCTS[result["name"]](mol, result, groups)
 
 
 def reaction_product_svg(mol, result, groups, size=(640, 480)) -> Optional[str]:
-    """Full-product depiction for the four CIL channels; other reagents keep their functional-group schemes."""
+    """Full-product depiction; None when nothing reacts, or when the drawn product's formula is not the one derive() reports (never show a wrong picture)."""
     product = reaction_product(mol, result, groups)
-    if product is None:
+    if product is None or formula_string(parent_formula(product)) != result["formula"]:
         return None
     rdCoordGen.AddCoords(product)       # keeps multiple large labels separated
     drawer = _depict.svg_drawer(*size)

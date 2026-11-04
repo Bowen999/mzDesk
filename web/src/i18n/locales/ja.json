@@ -178,7 +178,7 @@
   "Compound → names, IDs, classification": "化合物 → 名称、ID、分類",
   "Compound → published methods, or those of similar compounds": "化合物 → 発表済みの分析法、または類似化合物の分析法",
   "Compound → suitability for UV, fluorescence, CAD / ELSD / RI": "化合物 → UV、蛍光、CAD / ELSD / RI への適合性",
-  "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS": "化合物 → 適したプラットフォーム：リピドミクス、メタボロミクス、CIL LC-MS、GC-MS",
+  "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS": "化合物 → 適したプラットフォーム：リピドミクス、メタボロミクス、CILメタボロミクス、GC-MS",
   "Compounds": "化合物",
   "Concentration": "濃度",
   "Conditions": "条件",

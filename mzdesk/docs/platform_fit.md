@@ -1,6 +1,6 @@
 # Platform
 
-Give a compound. Get which platforms suit it: lipidomics, metabolomics, CIL LC-MS or GC-MS. Extraction and derivatization decide.
+Give a compound. Get which platforms suit it: lipidomics, metabolomics, CIL Metabolomics or GC-MS. Extraction and derivatization decide.
 
 ## Results
 
@@ -12,4 +12,4 @@ Give a compound. Get which platforms suit it: lipidomics, metabolomics, CIL LC-M
 ### Why and how
 
 - Shown when CIL or GC-MS applies. Choosing a reagent updates the structure to highlight only its reactive groups.
-- All four CIL channels show complete substrate and product structures, including every label; other reagents use functional-group schemes. Masses are monoisotopic.
+- Every reaction (the CIL channels and the GC route) shows the complete substrate and product structures, including every label, next to its functional-group scheme. Masses are monoisotopic.

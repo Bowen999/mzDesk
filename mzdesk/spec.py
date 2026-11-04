@@ -397,7 +397,7 @@ MODULES = [
         subgroup="molecular", live=True, example={"name": "PC 16:0/18:1"}, based_on=["LIPID+", "RDKit"]),
 
     # ---- Detectability：7 页。只有 Platform 的脂质组 / 代谢组部分接了引擎，其余都是占位 ----
-    module("platform_fit", "Platform", "A", "Compound → suitable platforms: lipidomics, metabolomics, CIL LC-MS, GC-MS",
+    module("platform_fit", "Platform", "A", "Compound → suitable platforms: lipidomics, metabolomics, CIL Metabolomics, GC-MS",
         [structure()],
         [portal("Platform", id="platform",
                 help=["Yes: expected to work. Partial: after derivatization. No: not expected.", "The ? on a tile gives the reason."]),
