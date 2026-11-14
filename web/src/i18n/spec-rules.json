@@ -1,0 +1,14 @@
+{
+  "_about": "Which strings of the page list (/api/spec) are display text. One list, read by localizeSpec (index.ts) and by mzdesk/spec_i18n.py, so the two cannot drift. A kind is a node of the spec tree; 'root' names the kind of each top-level list. text: keys whose string (or list of strings) is translated in place. keyed: keys holding an object whose KEYS are column names and whose values are help text (both are translated; the English key is kept too, because a table that gets its columns from a run still looks up by the English name). children: keys holding a list of nodes of another kind. lookup: strings the code also uses as a lookup key, a value or in a comparison (section titles group and compare; a cards item label is the key into the run's values; the options of a select / radio / multiselect are the values sent to the server), so localizeSpec leaves them alone: they are in the translation list, and the component that draws one calls t() on it. context: {block id: {English text: context}} for a string that means something else in that block than everywhere else; the dictionary entry of it is 'text|context' (a language without it falls back to the plain text), and a block id here must be one block of one page (tests/test_i18n.py). Never listed: ids, types, field values, example inputs, adducts, ion_modes, visible_when and other comparisons, flags, numbers, cls, based_on (engine and database names), stages (their titles come back from the run).",
+  "context": { "redu": { "Column": "metadata" }, "values": { "Column": "metadata" }, "lipid_maps": { "Species": "lipid" } },
+  "root": { "groups": "group", "subgroups": "group", "pipelines": "pipeline", "modules": "module" },
+  "kinds": {
+    "group": { "text": ["title"] },
+    "module": { "text": ["title", "one_liner", "network"], "children": { "inputs": "field", "outputs": "block" } },
+    "pipeline": { "text": ["title", "one_liner", "network"], "children": { "inputs": "field", "examples": "example" } },
+    "example": { "text": ["label"] },
+    "field": { "text": ["label", "help", "placeholder", "auto_label", "caption", "columns"], "lookup": ["section", "options"] },
+    "block": { "text": ["title", "label", "caption", "help", "columns"], "keyed": ["column_help"], "children": { "items": "item" } },
+    "item": { "text": ["unit", "help"], "lookup": ["label"] }
+  }
+}

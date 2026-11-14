@@ -1,0 +1,307 @@
+class_full,lm_head,source,fmt,evidence,note
+AMP,AMP,lmsd,standard,lmsd n=3; purity=1.00,fatty acyl adenylate
+As-PL,As-PL,lmsd,standard,lmsd n=15; purity=0.94,LMSD minority heads: AS-PL(1)
+BMP,LBPA,lmsd,standard,lmsd n=130; purity=1.00; others: SwissLipids BMP(3407); MS-DIAL BMP(1222); goslin=shorthand2020,@alt_head=BMP | LMSD writes LBPA (130 of 130 rows); BMP is the Shorthand2020 / SwissLipids / MS-DIAL spelling (n=4629 elsewhere); pygoslin folds LBPA into BMP
+BMP-oacyl,SLBPA,lmsd,species_only,lmsd n=2; purity=1.00; others: LipidBlast HBMP(10206); goslin=lipidmaps,"@alt_head=HBMP | 0.3.0: acyl on the head group, no LIPID MAPS 2020 chain-level notation known -> species only; LMSD SLBPA n=2 (sum only, no chain level); LipidBlast HBMP n=10206"
+CAR,CAR,lmsd,standard,lmsd n=136; purity=1.00; others: MS-DIAL CAR(77); goslin=shorthand2020,
+CDP-DAG,CDP-DG,lmsd,standard,lmsd n=36; purity=1.00; others: SwissLipids CDP-DAG(6889); goslin=lipidmaps,"@alt_head=CDP-DAG | LMSD abbreviation is CDP-DG (n=36); Shorthand2020 / SwissLipids write CDP-DAG (n=6889); 0.3.0: CDP-DG alias promoted to verified (LMSD n=36, purity 1.00)"
+CL,CL,lmsd,standard,lmsd n=1306; purity=1.00; others: SwissLipids CL(79535); LipidBlast CL(12059); goslin=shorthand2020,chains joined with _ (4 chains); pair notation CL x:y_u:v (two diacyl halves) is not an LM spelling
+CL-lyso,MLCL,inferred,standard,SwissLipids/LipidBlast/Goslin MLCL n=19194 (no LMSD row); Shorthand2020 grammar spells it LCL; others: SwissLipids MLCL(8000); LipidBlast MLCL(11194),@alt_head=LCL | MLCL = SwissLipids/LipidBlast/Goslin; LCL = Shorthand2020 grammar; 3 chains
+CL-lyso2,DLCL,inferred,standard,SwissLipids/LipidBlast DLCL n=835; Shorthand2020 DLCL (no LMSD row); others: SwissLipids DLCL(210); LipidBlast DLCL(625); goslin=shorthand2020,2 chains (DLCL)
+CPA,CPA,lmsd,standard,lmsd n=6; purity=1.00; goslin=shorthand2020,
+Cer,Cer,lmsd,sphingo,lmsd n=400; purity=1.00; others: SwissLipids Cer(1277); MS-DIAL Cer(39253); goslin=shorthand2020,
+Cer-Hex,HexCer,lmsd,sphingo,lmsd n=254; purity=1.00; others: SwissLipids HexCer(743); MS-DIAL HexCer(26572); LipidBlast HexCer(1958); goslin=shorthand2020,LMSD HexCer (GlcCer/GalCer merged)
+Cer-Hex-Ins-phos,MIPC,lmsd,sphingo,lmsd n=48; purity=1.00; others: SwissLipids MIPC(83); goslin=shorthand2020,
+Cer-Hex-Ins2-phos2,M(IP)2C,lmsd,sphingo,lmsd n=48; purity=1.00; others: SwissLipids M(83); goslin=shorthand2020,
+Cer-Hex-NeuAc,NeuAcHexCer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GM4(420); readback=FAIL class_unknown; goslin=shorthand2020,@alt_head=Hex-NeuAc-Cer | GM4; LMSD NeuAcHexCer (n=8); the package reads Hex-NeuAc-Cer and GM4 but not NeuAcHexCer
+Cer-Hex-oacyl,AHexCer,inferred,o_acyl,"LipidBlast AHexCer n=10800; LMSD has 1 row (ref=Cer-Hex-oacyl) written HexCer, i.e. the same string as the Cer-Hex rows; others: LipidBlast AHexCer(10800),HexCer(6988)","LMSD spelling HexCer would collide with Cer-Hex, AHexCer keeps them apart; the single LMSD row counts DB and O one higher than L1 (DB+1, O+1); LipidBlast AHexCer (O-c:d)a:b;2O/e:f;O"
+Cer-Hex-sulf,SHexCer,lmsd,sphingo,lmsd n=12; purity=1.00; others: SwissLipids SulfoHexCer(83); MS-DIAL SHexCer(2327); LipidBlast SHexCer(2322); goslin=shorthand2020,LMSD SHexCer
+Cer-Hex10-HexNAc5,Hex(10)-HexNAc(5)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex2,Hex2Cer,lmsd,sphingo,lmsd n=46; purity=1.00; others: SwissLipids Hex2Cer(335); LipidBlast Hex2Cer(19503); goslin=shorthand2020,LMSD Hex2Cer (LacCer etc. merged)
+Cer-Hex2-HexNAc,Hex(2)-HexNAc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids GA2(420),
+Cer-Hex2-HexNAc-Fuc-NeuAc2,Hex(2)-HexNAc-Fuc-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex2-HexNAc-KDN,Hex(2)-HexNAc-KDN-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex2-HexNAc-NeuAc,Hex(2)-HexNAc-NeuAc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids GM2(420),
+Cer-Hex2-HexNAc-NeuAc2,Hex(2)-HexNAc-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GD2(420),
+Cer-Hex2-HexNAc-NeuAc3,Hex(2)-HexNAc-NeuAc(3)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GT2(420),
+Cer-Hex2-HexNAc-NeuGc,Hex(2)-HexNAc-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GM2(420),
+Cer-Hex2-HexNAc2,Hex(2)-HexNAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex2-KDN,Hex(2)-KDN-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex2-NeuAc,NeuAcHex2Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GM3(420); MS-DIAL GM3(2266); readback=FAIL class_unknown; goslin=shorthand2020,@alt_head=Hex(2)-NeuAc-Cer | GM3; LMSD NeuAcHex2Cer (n=8); the package reads Hex(2)-NeuAc-Cer and GM3 but not NeuAcHex2Cer
+Cer-Hex2-NeuAc2,NeuAc2Hex2Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GD3(420); readback=FAIL class_unknown; goslin=shorthand2020,@alt_head=Hex(2)-NeuAc(2)-Cer | GD3; LMSD NeuAc2Hex2Cer (n=8); the package reads Hex(2)-NeuAc(2)-Cer and GD3 but not NeuAc2Hex2Cer
+Cer-Hex2-NeuAc3,Hex(2)-NeuAc(3)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GT3(420),
+Cer-Hex2-NeuAc3-ac,,none,sphingo,no LMSD row; Ac-O-9-GT3 (SwissLipids name); LMSD has no abbreviation for O-acetyl gangliosides; composition head would drop the acetyl,
+Cer-Hex3,Hex3Cer,lmsd,sphingo,"lmsd n=8; purity=0.50; others: SwissLipids iGb3Cer(252),Gb3Cer(140); LipidBlast Hex3Cer(19670); goslin=shorthand2020","tie in LMSD (Hex3Cer 8 : Hex(3)-Cer 8); Hex3Cer chosen: LipidBlast Hex3Cer n=21222, same pattern as HexCer/Hex2Cer, parsed by Shorthand2020 | LMSD minority heads: Hex(3)-Cer(8) | Hex4 and larger sugar chains are written only in the Hex(n)-Cer style in LMSD"
+Cer-Hex3-Fuc,Hex(3)-Fuc-Cer,lmsd,sphingo,"lmsd n=8; purity=1.00; others: SwissLipids (Fuc)iGb3Cer(252),Fuc-iGb3Cer(252)",
+Cer-Hex3-HexNAc,Hex(3)-HexNAc-Cer,lmsd,sphingo,"lmsd n=48; purity=1.00; others: SwissLipids GA1(344),GlcNAcGb3Cer(252)",
+Cer-Hex3-HexNAc-Fuc,Hex(3)-HexNAc-Fuc-Cer,lmsd,sphingo,lmsd n=40; purity=1.00; others: SwissLipids Fuc-GA1(336),
+Cer-Hex3-HexNAc-Fuc-KDN,Hex(3)-HexNAc-Fuc-KDN-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex3-HexNAc-Fuc-NeuAc,Hex(3)-HexNAc-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=40; purity=1.00; others: SwissLipids Fuc-GM1(336),
+Cer-Hex3-HexNAc-Fuc-NeuAc2,Hex(3)-HexNAc-Fuc-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids Fuc-GD1b(420),
+Cer-Hex3-HexNAc-Fuc-NeuGc,Hex(3)-HexNAc-Fuc-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids Fuc-GM1(420),
+Cer-Hex3-HexNAc-Fuc2,Hex(3)-HexNAc-Fuc(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex3-HexNAc-KDN,Hex(3)-HexNAc-KDN-Cer,lmsd,sphingo,lmsd n=48; purity=1.00,
+Cer-Hex3-HexNAc-KDN2,Hex(3)-HexNAc-KDN(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex3-HexNAc-NeuAc,Hex(3)-HexNAc-NeuAc-Cer,lmsd,sphingo,"lmsd n=74; purity=1.00; others: SwissLipids GM1(924),GM1b(336)",
+Cer-Hex3-HexNAc-NeuAc-KDN,Hex(3)-HexNAc-NeuAc-KDN-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex3-HexNAc-NeuAc-NeuGc,Hex(3)-HexNAc-NeuAc-NeuGc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00; others: SwissLipids GD1a(840),
+Cer-Hex3-HexNAc-NeuAc2,Hex(3)-HexNAc-NeuAc(2)-Cer,lmsd,sphingo,"lmsd n=72; purity=1.00; others: SwissLipids GD1a(672),GD1(336)",
+Cer-Hex3-HexNAc-NeuAc2-NeuGc,Hex(3)-HexNAc-NeuAc(2)-NeuGc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids GT1b(420),
+Cer-Hex3-HexNAc-NeuAc2-ac,,none,sphingo,no LMSD row; Ac-O-9-GD1a (SwissLipids name); see Cer-Hex2-NeuAc3-ac,
+Cer-Hex3-HexNAc-NeuAc3,Hex(3)-HexNAc-NeuAc(3)-Cer,lmsd,sphingo,"lmsd n=56; purity=1.00; others: SwissLipids GT1b(756),GT1a(672)",
+Cer-Hex3-HexNAc-NeuAc3-ac,,none,sphingo,no LMSD row; Ac-O-9-GT1b (SwissLipids name); see Cer-Hex2-NeuAc3-ac,
+Cer-Hex3-HexNAc-NeuAc4,Hex(3)-HexNAc-NeuAc(4)-Cer,lmsd,sphingo,"lmsd n=40; purity=1.00; others: SwissLipids GQ1b(672),GQ1c(336)",
+Cer-Hex3-HexNAc-NeuAc5,Hex(3)-HexNAc-NeuAc(5)-Cer,lmsd,sphingo,"lmsd n=8; purity=1.00; others: SwissLipids GP1c(672),GP1(168)",
+Cer-Hex3-HexNAc-NeuGc,Hex(3)-HexNAc-NeuGc-Cer,lmsd,sphingo,"lmsd n=24; purity=1.00; others: SwissLipids GM1(420),GM1b(420)",
+Cer-Hex3-HexNAc-NeuGc-sulf,,none,sphingo,no LMSD row; SO3-GM1(NeuGc) (SwissLipids name); no LM abbreviation for sulfated gangliosides,
+Cer-Hex3-HexNAc-NeuGc2,Hex(3)-HexNAc-NeuGc(2)-Cer,lmsd,sphingo,"lmsd n=16; purity=1.00; others: SwissLipids GD1a(420),GD1c(420)",
+Cer-Hex3-HexNAc-sulf,,none,sphingo,"no LMSD row; SM1a/SM1b/SO3-Gb4Cer/SO3-iGb4Cer (SwissLipids names, 4 different names for one class); no LM abbreviation",
+Cer-Hex3-HexNAc-sulf2,,none,sphingo,no LMSD row; SB1a (SwissLipids name); no LM abbreviation,
+Cer-Hex3-HexNAc2,Hex(3)-HexNAc(2)-Cer,lmsd,sphingo,"lmsd n=104; purity=1.00; others: SwissLipids Para-Forssman(252),i-Forssman(252)",
+Cer-Hex3-HexNAc2-Fuc,Hex(3)-HexNAc(2)-Fuc-Cer,lmsd,sphingo,lmsd n=64; purity=1.00,
+Cer-Hex3-HexNAc2-Fuc-NeuAc,Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex3-HexNAc2-Fuc2,Hex(3)-HexNAc(2)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=32; purity=1.00,
+Cer-Hex3-HexNAc2-Fuc2-NeuAc,Hex(3)-HexNAc(2)-Fuc(2)-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex3-HexNAc2-NeuAc,Hex(3)-HexNAc(2)-NeuAc-Cer,lmsd,sphingo,"lmsd n=72; purity=1.00; others: SwissLipids GalNAc-GM1(420),GalNAc-GM1b(420)",
+Cer-Hex3-HexNAc2-NeuAc-NeuGc,Hex(3)-HexNAc(2)-NeuAc-NeuGc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids GalNAc-GD1a(840),
+Cer-Hex3-HexNAc2-NeuAc2,Hex(3)-HexNAc(2)-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GalNAc-GD1a(420),
+Cer-Hex3-HexNAc2-NeuGc,Hex(3)-HexNAc(2)-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GalNAc-GM1b(420),
+Cer-Hex3-HexNAc3,Hex(3)-HexNAc(3)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex3-HexNAc3-NeuAc,Hex(3)-HexNAc(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex3-NeuAc,Hex(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex4,Hex(4)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids GalGb3Cer(252),
+Cer-Hex4-Fuc,Hex(4)-Fuc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids FucGalGb3Cer(252),
+Cer-Hex4-HexNAc,Hex(4)-HexNAc-Cer,lmsd,sphingo,"lmsd n=88; purity=1.00; others: SwissLipids Gal-iGb4Cer(252),GalGb4Cer(252)",
+Cer-Hex4-HexNAc-Fuc,Hex(4)-HexNAc-Fuc-Cer,lmsd,sphingo,"lmsd n=48; purity=1.00; others: SwissLipids Gal(420),Globo-H(252)",
+Cer-Hex4-HexNAc-Fuc-NeuAc,Hex(4)-HexNAc-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids Fuc(504),
+Cer-Hex4-HexNAc-Fuc-NeuAc2,Hex(4)-HexNAc-Fuc-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids Gal(420),
+Cer-Hex4-HexNAc-Fuc2,Hex(4)-HexNAc-Fuc(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex4-HexNAc-NeuAc,Hex(4)-HexNAc-NeuAc-Cer,lmsd,sphingo,"lmsd n=64; purity=1.00; others: SwissLipids MSGG(252),NeuAcGal-iGb4Cer(252)",
+Cer-Hex4-HexNAc-NeuAc2,Hex(4)-HexNAc-NeuAc(2)-Cer,lmsd,sphingo,"lmsd n=32; purity=1.00; others: SwissLipids NeuAc(504),Gal-GD1b(420)",
+Cer-Hex4-HexNAc-NeuGc,Hex(4)-HexNAc-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids NeuGc-GalGb4Cer(252),
+Cer-Hex4-HexNAc-NeuGc2,Hex(4)-HexNAc-NeuGc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids NeuGcNeuGc-GalGb4Cer(252),
+Cer-Hex4-HexNAc-sulf,,none,sphingo,no LMSD row; SO3-GalGb4Cer / SO3-Gal-iGb4Cer (SwissLipids names); no LM abbreviation,
+Cer-Hex4-HexNAc2,Hex(4)-HexNAc(2)-Cer,lmsd,sphingo,"lmsd n=136; purity=1.00; others: SwissLipids GlcNAc-GalGb4Cer(252),NORint(252)",
+Cer-Hex4-HexNAc2-Fuc,Hex(4)-HexNAc(2)-Fuc-Cer,lmsd,sphingo,"lmsd n=128; purity=1.00; others: SwissLipids GalNAcGal(420),Globo-A(252)",
+Cer-Hex4-HexNAc2-Fuc-NeuAc,Hex(4)-HexNAc(2)-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=64; purity=1.00; others: SwissLipids Lex-GM1(420),
+Cer-Hex4-HexNAc2-Fuc2,Hex(4)-HexNAc(2)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=64; purity=1.00,
+Cer-Hex4-HexNAc2-Fuc2-NeuAc,Hex(4)-HexNAc(2)-Fuc(2)-NeuAc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex4-HexNAc2-Fuc3,Hex(4)-HexNAc(2)-Fuc(3)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex4-HexNAc2-NeuAc,Hex(4)-HexNAc(2)-NeuAc-Cer,lmsd,sphingo,lmsd n=80; purity=1.00,
+Cer-Hex4-HexNAc2-NeuAc2,Hex(4)-HexNAc(2)-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex4-HexNAc2-NeuGc,Hex(4)-HexNAc(2)-NeuGc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00; others: SwissLipids GalGalNAc-GM1b(420),
+Cer-Hex4-HexNAc2-NeuGc2,Hex(4)-HexNAc(2)-NeuGc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids NeuGc-LacNAc-GM1(420),
+Cer-Hex4-HexNAc3,Hex(4)-HexNAc(3)-Cer,lmsd,sphingo,lmsd n=48; purity=1.00; others: SwissLipids Branched-Forssman(252),
+Cer-Hex4-HexNAc3-Fuc,Hex(4)-HexNAc(3)-Fuc-Cer,lmsd,sphingo,lmsd n=40; purity=1.00; others: SwissLipids Fuc-Branched-Forssman(252),
+Cer-Hex4-HexNAc3-Fuc2,Hex(4)-HexNAc(3)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex4-HexNAc3-NeuAc,Hex(4)-HexNAc(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=40; purity=1.00,
+Cer-Hex4-HexNAc3-NeuGc,Hex(4)-HexNAc(3)-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex4-HexNAc4,Hex(4)-HexNAc(4)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex4-HexNAc4-Fuc,Hex(4)-HexNAc(4)-Fuc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex4-HexNAc4-NeuAc,Hex(4)-HexNAc(4)-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex5,Hex(5)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GalGalGb3Cer(252),
+Cer-Hex5-HexNAc,Hex(5)-HexNAc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc-Fuc,Hex(5)-HexNAc-Fuc-Cer,lmsd,sphingo,"lmsd n=8; purity=1.00; others: SwissLipids Fuc(252),Globo-B(252)",
+Cer-Hex5-HexNAc-NeuAc2,Hex(5)-HexNAc-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GalGal-GD1b(420),
+Cer-Hex5-HexNAc2,Hex(5)-HexNAc(2)-Cer,lmsd,sphingo,"lmsd n=16; purity=1.00; others: SwissLipids GalGlcNAc-GalGb4Cer(252),NOR2(252)",
+Cer-Hex5-HexNAc2-Fuc,Hex(5)-HexNAc(2)-Fuc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00; others: SwissLipids Globo-Lex-9(252),
+Cer-Hex5-HexNAc3,Hex(5)-HexNAc(3)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc,Hex(5)-HexNAc(3)-Fuc-Cer,lmsd,sphingo,lmsd n=64; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc-NeuAc,Hex(5)-HexNAc(3)-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc2,Hex(5)-HexNAc(3)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=48; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc2-NeuAc,Hex(5)-HexNAc(3)-Fuc(2)-NeuAc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc3,Hex(5)-HexNAc(3)-Fuc(3)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex5-HexNAc3-Fuc3-NeuAc,Hex(5)-HexNAc(3)-Fuc(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex5-HexNAc3-NeuAc,Hex(5)-HexNAc(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=40; purity=1.00,
+Cer-Hex5-HexNAc3-NeuAc2,Hex(5)-HexNAc(3)-NeuAc(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc3-NeuGc,Hex(5)-HexNAc(3)-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex5-HexNAc4,Hex(5)-HexNAc(4)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc4-Fuc,Hex(5)-HexNAc(4)-Fuc-Cer,lmsd,sphingo,lmsd n=64; purity=1.00,
+Cer-Hex5-HexNAc4-Fuc2,Hex(5)-HexNAc(4)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=40; purity=1.00,
+Cer-Hex5-HexNAc5,Hex(5)-HexNAc(5)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex5-HexNAc5-Fuc,Hex(5)-HexNAc(5)-Fuc-Cer,lmsd,sphingo,lmsd n=32; purity=1.00,
+Cer-Hex5-HexNAc5-Fuc2,Hex(5)-HexNAc(5)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex6,Hex(6)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00; others: SwissLipids GalGalGalGb3Cer(252),
+Cer-Hex6-HexNAc,Hex(6)-HexNAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex6-HexNAc3,Hex(6)-HexNAc(3)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex6-HexNAc3-Fuc-NeuAc,Hex(6)-HexNAc(3)-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex6-HexNAc3-Fuc2,Hex(6)-HexNAc(3)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex6-HexNAc3-NeuAc,Hex(6)-HexNAc(3)-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex6-HexNAc3-NeuGc,Hex(6)-HexNAc(3)-NeuGc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex6-HexNAc4,Hex(6)-HexNAc(4)-Cer,lmsd,sphingo,lmsd n=24; purity=1.00,
+Cer-Hex6-HexNAc4-Fuc,Hex(6)-HexNAc(4)-Fuc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex6-HexNAc4-Fuc-NeuAc,Hex(6)-HexNAc(4)-Fuc-NeuAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex7,Hex(7)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex7-HexNAc,Hex(7)-HexNAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex7-HexNAc3,Hex(7)-HexNAc(3)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex7-HexNAc3-Fuc,Hex(7)-HexNAc(3)-Fuc-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex7-HexNAc3-Fuc2,Hex(7)-HexNAc(3)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex7-HexNAc4,Hex(7)-HexNAc(4)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex8,Hex(8)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex8-HexNAc,Hex(8)-HexNAc-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex8-HexNAc4,Hex(8)-HexNAc(4)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex8-HexNAc4-Fuc2,Hex(8)-HexNAc(4)-Fuc(2)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Hex8-HexNAc5,Hex(8)-HexNAc(5)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex9-HexNAc5,Hex(9)-HexNAc(5)-Cer,lmsd,sphingo,lmsd n=16; purity=1.00,
+Cer-Hex9-HexNAc7-NeuAc4,Hex(9)-HexNAc(7)-NeuAc(4)-Cer,lmsd,sphingo,lmsd n=8; purity=1.00,
+Cer-Ins-phos,IPC,lmsd,sphingo,lmsd n=57; purity=1.00; others: SwissLipids IPC(82); LipidBlast PI-Cer(2170); goslin=shorthand2020,@alt_head=PI-Cer | LMSD IPC n=57; LipidBlast PI-Cer n=2170
+Cer-oacyl,ACer,lmsd,o_acyl,lmsd n=181; purity=1.00; others: LipidBlast Cer(80259); goslin=shorthand2020,LMSD total ACer C:DB;On (O counts the omega-O); 2020 chain level ACer(FA x:y) base/acyl;O (O-acyl FA in the head parentheses; the package does not read that form); LIPID+ L2/L3 does not mark the O-acyl chain
+Cer-oacyl2,ACer,lmsd,species_only,"lmsd n=2 (class from dataset reference label; ABBREVIATION is identical to Cer-oacyl rows, not separable by name); readback=FAIL reads_as:Cer-oacyl; goslin=shorthand2020",two O-acyl chains; ABBREVIATION identical to the Cer-oacyl rows
+Cer-phos,CerP,lmsd,sphingo,lmsd n=14; purity=1.00; others: SwissLipids CerP(84); LipidBlast CerP(155); goslin=shorthand2020,
+Cer-phos-etn,CerPE,lmsd,sphingo,lmsd n=97; purity=1.00; others: SwissLipids PE-Cer(733); LipidBlast PE-Cer(5086),@alt_head=PE-Cer | LMSD CerPE n=97; SwissLipids/LipidBlast PE-Cer n=5819; Shorthand2020 EPC; CerPE is not in the Shorthand2020 grammar
+CoA,CoA,lmsd,standard,lmsd n=349; purity=1.00; goslin=shorthand2020,
+DG,DG,lmsd,standard,lmsd n=534; purity=1.00; others: SwissLipids DG(3363); MS-DIAL DG(13204); goslin=shorthand2020,
+DG-Hex,MGDG,lmsd,standard,lmsd n=48; purity=0.98; others: SwissLipids MHDG(88); MS-DIAL MGDG(1829); goslin=shorthand2020,LMSD minority heads: HexDG(1)
+DG-Hex-ether,MGDG,inferred,standard,LMSD MGDG n=1 is labelled ether by the reference but written without O-; Shorthand2020 accepts MGDG O-; others: LipidBlast MGDG(5320); goslin=shorthand2020,
+DG-Hex-sulf-ether,SMGDG,inferred,standard,LipidBlast SMGDG n=5320; Shorthand2020 SMGDG (always ether class in vocab); others: LipidBlast SMGDG(5320); goslin=shorthand2020,
+DG-Hex2,DGDG,lmsd,standard,lmsd n=16; purity=1.00; others: SwissLipids DHDG(97); MS-DIAL DGDG(1835); goslin=shorthand2020,
+DG-Hex2-ether,DGDG,lmsd,standard,lmsd n=1; purity=1.00; others: LipidBlast DGDG(5320); goslin=shorthand2020,
+DG-HexA,GlcADG,lmsd,standard,lmsd n=4; purity=1.00; others: MS-DIAL DGGA(1326),@alt_head=DGGA | LMSD GlcADG n=4; MS-DIAL DGGA n=1326
+DG-HexA-oacyl,ADGGA,inferred,species_only,LipidBlast ADGGA n=10206 (no LMSD row); others: LipidBlast ADGGA(10206),"acyl on the sugar; LMSD GlcADG (LB/MS-DIAL DGGA) is the non-acylated DG-HexA; 0.3.0: acyl on the head group, no LIPID MAPS 2020 chain-level notation known -> species only"
+DG-ether,DG,lmsd,standard,lmsd n=26; purity=1.00; others: SwissLipids DG(2698); LipidBlast DG(4924); goslin=shorthand2020,
+DG-sq,SQDG,lmsd,standard,lmsd n=9; purity=1.00; others: MS-DIAL SQDG(1321); goslin=shorthand2020,
+DGCC,DGCC,lmsd,standard,lmsd n=3; purity=1.00; others: MS-DIAL DGCC(13858); goslin=lipidmaps,
+DGCC-lyso,LDGCC,inferred,standard,MS-DIAL LDGCC n=167 (no LMSD row); others: MS-DIAL LDGCC(167),
+DGTA,DGTA,lmsd,standard,lmsd n=3; purity=1.00,
+DGTS,DGTS,lmsd,standard,lmsd n=8; purity=1.00; others: MS-DIAL DGTS(1887),
+DGTS-lyso,MGTS,lmsd,standard,lmsd n=5; purity=1.00; others: MS-DIAL LDGTS(60),@alt_head=LDGTS | LMSD MGTS n=5; MS-DIAL LDGTS n=60
+FA,FA,lmsd,standard,lmsd n=6155; purity=1.00; others: MS-DIAL FA(87); goslin=shorthand2020,
+FA-Ala,NAAla,lmsd,standard,lmsd n=6; purity=1.00,
+FA-Arg,NAArg,lmsd,standard,lmsd n=1; purity=1.00,
+FA-Asn,NAASN,lmsd,standard,lmsd n=1; purity=1.00,"LMSD spelling NAASN (upper-case ASN, n=1); NAAsn would be the regular form"
+FA-GSH,,none,species_only,"no LMSD ABBREVIATION: LMSD names these only as compounds (leukotriene C / D / E and their metabolites, no class-level abbreviation); no other library or the 2020 shorthand has a class notation for the glutathione conjugates",package-side class spelling only; a head would be a guess
+FA-Gln,NAGln,lmsd,standard,lmsd n=11; purity=1.00,"LMSD NAGln 11, NAGlu 2 (the 2 NAGlu rows are labelled Gln by the reference: noise)"
+FA-Glu,NAGlu,lmsd,standard,lmsd n=9; purity=1.00,
+FA-Gly-oacyl,NAGly,inferred,species_only,"LipidBlast NAGly a/b (two chains) n=2773; LMSD NAGly (n=13) is the single-chain amide, a class outside the vocabulary; others: LipidBlast NAGly(2773); readback=FAIL class_not_in_vocab",@blank=readback_class_not_in_vocab | name collides with LM plain N-acyl glycine; chain-level notation unknown -> species only
+FA-GlySer-oacyl,NAGlySer,inferred,species_only,LipidBlast NAGlySer a/b (two chains) n=2773 (no LMSD row); others: LipidBlast NAGlySer(2773); readback=FAIL class_not_in_vocab,@blank=readback_class_not_in_vocab | chain-level notation unknown -> species only
+FA-His,NAHis,lmsd,standard,lmsd n=9; purity=1.00,
+FA-Lys,NALys,lmsd,standard,lmsd n=5; purity=1.00,
+FA-Met,NAMet,lmsd,standard,lmsd n=2; purity=1.00,
+FA-Orn-oacyl,NAOrn,inferred,species_only,"LipidBlast NAOrn a/b (two chains) n=2773; LMSD NAOrn n=1 is a single-chain ;O lyso-ornithine lipid, not this class; others: LipidBlast NAOrn(2773); readback=FAIL class_not_in_vocab",@blank=readback_class_not_in_vocab | name collides with LM plain N-acyl ornithine; chain-level notation unknown -> species only
+FA-Phe,NAPhe,lmsd,standard,lmsd n=4; purity=1.00,
+FA-Pro,NAPro,lmsd,standard,lmsd n=3; purity=1.00,
+FA-SCys,,none,species_only,"no LMSD ABBREVIATION: LMSD names these only as compounds (leukotriene C / D / E and their metabolites, no class-level abbreviation); no other library or the 2020 shorthand has a class notation for the S-cysteine conjugates",package-side class spelling only; a head would be a guess
+FA-SCysGly,,none,species_only,"no LMSD ABBREVIATION: LMSD names these only as compounds (leukotriene C / D / E and their metabolites, no class-level abbreviation); no other library or the 2020 shorthand has a class notation for the S-cysteinylglycine conjugates",package-side class spelling only; a head would be a guess
+FA-Ser,NASer,lmsd,standard,lmsd n=4; purity=1.00,
+FA-Tau,NAT,lmsd,standard,lmsd n=24; purity=1.00; goslin=shorthand2020,
+FA-Thr,NAThr,lmsd,standard,lmsd n=1; purity=1.00,
+FA-Trp,NATrp,lmsd,standard,lmsd n=3; purity=1.00,
+FA-Tyr,NATyr,lmsd,standard,lmsd n=5; purity=1.00,
+FA-Val,NAVal,lmsd,standard,lmsd n=3; purity=1.00,
+FA-Xle,NAXle,inferred,standard,LMSD has NAIle (n=3) and NALeu (n=3) but no row for the merged class; others: LMSD NAIle(3); LMSD NALeu(3),"NAXle = the LMSD NA<AA> head with the IUPAC symbol Xle (leucine or isoleucine): the class cannot tell the two apart, so neither NAIle nor NALeu is asserted; the NAXle alias reads it back"
+FA-amide,NA,lmsd,standard,lmsd n=194; purity=1.00; goslin=shorthand2020,
+FA-etn,NAE,lmsd,standard,lmsd n=70; purity=1.00; others: SwissLipids NAE(54); LipidBlast NAE(22); goslin=shorthand2020,
+FAHFA,FAHFA,lmsd,o_acyl,lmsd n=165; purity=1.00; others: LipidBlast FAHFA(3288); goslin=shorthand2020,2020 chain level: FAHFA x:y;O(FA u:v) (package does not read that form; it reads FAHFA a:b_c:d;O); LMSD total FAHFA C:DB;O
+FAL,FAL,lmsd,standard,lmsd n=273; purity=1.00; goslin=shorthand2020,
+FOH,FOH,lmsd,standard,lmsd n=496; purity=1.00; goslin=shorthand2020,
+MG,MG,lmsd,standard,lmsd n=29; purity=1.00; others: SwissLipids MG(82); MS-DIAL MG(31); goslin=shorthand2020,
+MG-Hex,MGMG,lmsd,standard,lmsd n=7; purity=1.00; goslin=shorthand2020,
+MG-Hex2,DGMG,lmsd,standard,lmsd n=6; purity=1.00; goslin=shorthand2020,
+MG-ether,MG,lmsd,standard,lmsd n=60; purity=1.00; others: SwissLipids MG(32); goslin=shorthand2020,
+MG-sq,LSQMG,lmsd,standard,lmsd n=6; purity=0.75,@alt_head=SQMG | LMSD LSQMG 6 : SQMG 2; the NAME of the LSQMG rows is SQMG(..); SQMG is the Shorthand2020 spelling
+MG-sq-ether,SQMG,lmsd,standard,lmsd n=1; purity=1.00; goslin=shorthand2020,LMSD SQMG with O- n=1 (the non-ether MG-sq majority is LSQMG; the pair is not spelled consistently)
+PA,PA,lmsd,standard,lmsd n=1004; purity=1.00; others: SwissLipids PA(6208); MS-DIAL PA(1128); goslin=shorthand2020,
+PA-Hex,Glc-GP,lmsd,standard,lmsd n=4; purity=1.00; goslin=shorthand2020,LMSD Glc-GP (3 sum-form rows + 1 one-chain row that the package also reads as a sum)
+PA-Hex-ac,6-Ac-Glc-GP,inferred,standard,LMSD NAME 6-Ac-Glc-GP(..) n=1 (ABBREVIATION empty); Shorthand2020 grammar lists 6-Ac-Glc-GP; goslin=shorthand2020,
+PA-Hex-lyso,Glc-GP,lmsd,standard,"lmsd n=1 (class from dataset reference label; ABBREVIATION is identical to PA-Hex rows, not separable by name); readback=FAIL reads_as:PA-Hex; goslin=shorthand2020","LMSD Glc-GP with one chain is a lyso name, identical in form to a one-chain sum of PA-Hex"
+PA-OEt,PEth,lmsd,standard,lmsd n=8; purity=1.00; others: LipidBlast PEtOH(1326),@alt_head=PEtOH | LMSD PEth n=8; LipidBlast PEtOH n=1326; Shorthand2020 PEt/PEtOH
+PA-OMe,PMeOH,inferred,standard,MS-DIAL PMeOH n=1326; Shorthand2020 PMeOH (no LMSD row); others: MS-DIAL PMeOH(1326); goslin=shorthand2020,MS-DIAL PMeOH; Shorthand2020 PMeOH
+PA-ether,PA,lmsd,standard,lmsd n=186; purity=1.00; others: SwissLipids PA(2832); goslin=shorthand2020,
+PA-ether-lyso,LPA,lmsd,standard,lmsd n=8; purity=1.00; others: SwissLipids LPA(29); goslin=shorthand2020,
+PA-lyso,LPA,lmsd,standard,lmsd n=40; purity=1.00; others: SwissLipids LPA(135); MS-DIAL LPA(21); goslin=shorthand2020,
+PA-phos,PPA,lmsd,standard,lmsd n=2; purity=1.00; goslin=shorthand2020,
+PC,PC,lmsd,standard,lmsd n=1411; purity=1.00; others: SwissLipids PC(6011); MS-DIAL PC(12574); LipidBlast PC(42); goslin=shorthand2020,
+PC-ether,PC,lmsd,standard,lmsd n=415; purity=1.00; others: SwissLipids PC(2757); MS-DIAL PC(4773); LipidBlast PC(105); goslin=shorthand2020,
+PC-ether-lyso,LPC,lmsd,standard,lmsd n=30; purity=1.00; others: SwissLipids LPC(24); MS-DIAL LPC(45); goslin=shorthand2020,
+PC-lyso,LPC,lmsd,standard,lmsd n=84; purity=1.00; others: SwissLipids LPC(115); MS-DIAL LPC(112); goslin=shorthand2020,
+PE,PE,lmsd,standard,lmsd n=1059; purity=1.00; others: SwissLipids PE(6190); MS-DIAL PE(12601); LipidBlast PE(42); goslin=shorthand2020,
+PE-Hex,Am-Hex-PE,lmsd,standard,lmsd n=17; purity=1.00,LMSD Am-Hex-PE (NAME Am-PE(..)); not in Shorthand2020
+PE-Hex-ether,Am-Hex-PE,lmsd,standard,lmsd n=19; purity=1.00,LMSD Am-Hex-PE with O- (n=19)
+PE-ether,PE,lmsd,standard,lmsd n=409; purity=1.00; others: SwissLipids PE(2825); MS-DIAL PE(4792); LipidBlast PE(105); goslin=shorthand2020,
+PE-ether-lyso,LPE,lmsd,standard,lmsd n=38; purity=1.00; others: SwissLipids LPE(29); MS-DIAL LPE(50); goslin=shorthand2020,
+PE-ether-nacyl,PE-N[FA],lmsd,n_acyl,"lmsd n=7 (class from dataset reference label; ABBREVIATION is identical to PE-nacyl rows, not separable by name); others: SwissLipids NAPE(41741)",@alt_head=NAPE | LMSD PE-N[FA] rows are ether only by structure (ABBREVIATION has no O-); renderer adds O- (PE-N[FA] O-C:DB) and 0.3.0 adds the alias row (alias/lmsd.csv) that makes the package read that form; 2020 chain level PE-N(FA x:y) O-a:b_c:d
+PE-ether-nacyl-lyso,LNAPE,inferred,n_acyl,SwissLipids NAPE with ether slot + 1 placeholder n=504; LipidBlast LNAPE (no ether version seen); others: SwissLipids NAPE(504),ether marked by renderer O- prefix; no source writes this combination | SwissLipids writes NAPE with an ether slot and a placeholder slot; no source spells an ether lyso NAPE head
+PE-lyso,LPE,lmsd,standard,lmsd n=79; purity=1.00; others: SwissLipids LPE(100); MS-DIAL LPE(114); goslin=shorthand2020,
+PE-me,PE-NMe,lmsd,standard,lmsd n=10; purity=1.00; goslin=shorthand2020,@alt_head=MMPE | LMSD PE-NMe; MMPE is the Shorthand2020 synonym
+PE-me2,PE-NMe2,lmsd,standard,lmsd n=9; purity=1.00; goslin=shorthand2020,@alt_head=DMPE | LMSD PE-NMe2; DMPE is the Shorthand2020 synonym
+PE-nacyl,PE-N[FA],lmsd,n_acyl,lmsd n=8; purity=0.80; others: SwissLipids NAPE(96361),"@alt_head=NAPE | LMSD PE-N[FA] n=8 (sums all 3 chains) vs NAPE n=2 (sums the 2 glycerol chains only); chain level in 2020: PE-N(FA x:y) a:b_c:d (N-acyl chain inside the head; the package does not read that form, it reads NAPE a:b_c:d_e:f); LIPID+ L2/L3 does not mark which chain is N-acyl"
+PE-nacyl-lyso,LNAPE,inferred,n_acyl,LipidBlast LNAPE n=3949 (no LMSD row); others: SwissLipids NAPE(1162); LipidBlast LNAPE(3949),LipidBlast LNAPE a:b/N-c:d; 2020 has no lyso-NAPE head (pygoslin lipid list: LPE-N); N-acyl chain not marked in LIPID+ labels
+PE-nacyl-lyso2,GP-NAE,inferred,standard,SwissLipids GP-NAE n=14; pygoslin lipid-list GP-NAE; others: SwissLipids GP-NAE(14),single N-acyl chain (GP-NAE)
+PG,PG,lmsd,standard,lmsd n=1012; purity=1.00; others: SwissLipids PG(6208); MS-DIAL PG(1190); LipidBlast PG(42); goslin=shorthand2020,
+PG-ether,PG,lmsd,standard,lmsd n=191; purity=1.00; others: SwissLipids PG(2832); LipidBlast PG(3084); goslin=shorthand2020,
+PG-ether-lyso,LPG,lmsd,standard,lmsd n=6; purity=1.00; others: SwissLipids LPG(30); LipidBlast LPG(50); goslin=shorthand2020,
+PG-lyso,LPG,lmsd,standard,lmsd n=31; purity=1.00; others: SwissLipids LPG(140); MS-DIAL LPG(21); goslin=shorthand2020,
+PG-phos,PGP,lmsd,standard,lmsd n=2; purity=1.00; others: SwissLipids PGP(6887); goslin=shorthand2020,
+PI,PI,lmsd,standard,lmsd n=1002; purity=1.00; others: SwissLipids PI(6209); MS-DIAL PI(1190); LipidBlast PI(42); goslin=shorthand2020,
+PI-Hex,PIM1,lmsd,standard,lmsd n=48; purity=1.00; others: LipidBlast Ac2PIM1(132); goslin=shorthand2020,
+PI-Hex-lyso,LPIM1,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-Hex2,PIM2,lmsd,standard,lmsd n=48; purity=1.00; others: LipidBlast Ac2PIM2(121); goslin=shorthand2020,
+PI-Hex2-lyso,LPIM2,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-Hex2-oacyl,Ac3PIM2,inferred,species_only,LipidBlast Ac3PIM2 n=1331 (no LMSD row); others: LipidBlast Ac3PIM2(1331),"0.3.0: acyl on the head group, no LIPID MAPS 2020 chain-level notation known -> species only"
+PI-Hex2-oacyl2,Ac4PIM2,inferred,species_only,LipidBlast Ac4PIM2 n=625 (no LMSD row); others: LipidBlast Ac4PIM2(625),"0.3.0: acyl on the head group, no LIPID MAPS 2020 chain-level notation known -> species only"
+PI-Hex3,PIM3,lmsd,standard,lmsd n=48; purity=1.00; goslin=shorthand2020,
+PI-Hex3-lyso,LPIM3,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-Hex4,PIM4,lmsd,standard,lmsd n=48; purity=1.00; goslin=shorthand2020,
+PI-Hex4-lyso,LPIM4,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-Hex5,PIM5,lmsd,standard,lmsd n=48; purity=1.00; goslin=shorthand2020,
+PI-Hex5-lyso,LPIM5,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-Hex6,PIM6,lmsd,standard,lmsd n=48; purity=1.00; goslin=shorthand2020,
+PI-Hex6-lyso,LPIM6,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+PI-ether,PI,lmsd,standard,lmsd n=186; purity=1.00; others: SwissLipids PI(2832); LipidBlast PI(3084); goslin=shorthand2020,
+PI-ether-lyso,LPI,lmsd,standard,lmsd n=6; purity=1.00; others: SwissLipids LPI(30); goslin=shorthand2020,
+PI-lyso,LPI,lmsd,standard,lmsd n=32; purity=1.00; others: SwissLipids LPI(140); MS-DIAL LPI(21); goslin=shorthand2020,
+PI-phos,PIP,lmsd,standard,lmsd n=4; purity=1.00; others: SwissLipids PIP(13775); goslin=shorthand2020,
+PI-phos2,PIP2,lmsd,standard,lmsd n=4; purity=1.00; others: SwissLipids PIP2(13775); goslin=shorthand2020,
+PI-phos3,PIP3,lmsd,standard,lmsd n=1; purity=1.00; others: SwissLipids PIP3(6888); goslin=shorthand2020,
+PS,PS,lmsd,standard,lmsd n=1002; purity=1.00; others: SwissLipids PS(6211); MS-DIAL PS(1127); LipidBlast PS(105); goslin=shorthand2020,
+PS-ether,PS,lmsd,standard,lmsd n=186; purity=1.00; others: SwissLipids PS(2988); LipidBlast PS(3084); goslin=shorthand2020,
+PS-ether-lyso,LPS,lmsd,standard,lmsd n=35; purity=1.00; others: SwissLipids LPS(36); goslin=shorthand2020,
+PS-lyso,LPS,lmsd,standard,lmsd n=31; purity=1.00; others: SwissLipids LPS(136); MS-DIAL LPS(21); goslin=shorthand2020,
+PS-nacyl,PS-NAc,lmsd,n_acyl,lmsd n=2; purity=1.00; goslin=lipidmaps,LMSD PS-NAc total excludes the N-acyl chain while LIPID+ L1 includes it -> total-level check fails for these 2 rows
+PS-nacyl-lyso,LNAPS,inferred,n_acyl,LipidBlast LNAPS n=4489 (no LMSD row); others: LipidBlast LNAPS(4489),LipidBlast LNAPS a:b/N-c:d
+PT,PT,lmsd,standard,lmsd n=3; purity=1.00; goslin=shorthand2020,
+PnC,PnC,inferred,standard,LMSD NAME PnC(..) n=1 (ABBREVIATION empty); Shorthand2020/pygoslin lipid-list PnC; goslin=shorthand2020,
+PnE,PnE,inferred,standard,LMSD NAME PnE(..) n=1 (ABBREVIATION empty); pygoslin lipid-list PnE; goslin=shorthand2020,
+SL,SL,inferred,sphingo,LipidBlast SL n=5828; Shorthand2020 SL = sulfonolipid (no LMSD ABBREVIATION); others: LipidBlast SL(5828); goslin=shorthand2020,sulfonolipid (Shorthand2020 SL); base first
+SM,SM,lmsd,sphingo,lmsd n=89; purity=1.00; others: SwissLipids SM(1260); MS-DIAL SM(18683); LipidBlast SM(600); goslin=shorthand2020,
+SM-lyso,LSM,lmsd,standard,lmsd n=3; purity=1.00; goslin=shorthand2020,
+SM-oacyl,ASM,inferred,species_only,LipidBlast compoundclass ASM n=10416 (spelled SM x:y;2O(FA a:b) in LB names); no LMSD row; others: LipidBlast SM(10416); readback=needs_allow_unverified_alias,@blank=readback_unverified_alias | acyl-SM; plain SM would collide with the SM class | LipidBlast writes SM x:y;2O(FA u:v); ASM is the LipidBlast / MS-DIAL class label; chain-level LM notation unknown
+SPB,SPB,lmsd,standard,lmsd n=43; purity=1.00; others: LipidBlast SPB(39); goslin=shorthand2020,
+SPB-phos,SPBP,lmsd,standard,lmsd n=8; purity=1.00; goslin=shorthand2020,
+ST,ST,lmsd,species_only,lmsd n=2461; purity=1.00; goslin=shorthand2020,sterol / bile-acid skeleton as one chain; LMSD ST C:DB;On; LM species-level only (typed OH/oxo not rendered)
+ST-Ala,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Ala @adj=O-1 | bile-acid alanine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Arg,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Arg @adj=O-1 | bile-acid arginine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Asn,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Asn @adj=O-1 | bile-acid asparagine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Asp,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Asp @adj=O-1 | bile-acid aspartic acid conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Cit,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Cit @adj=O-1 | bile-acid citrulline conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Cys,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Cys @adj=O-1 | bile-acid cysteine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Gln,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Gln @adj=O-1 | bile-acid glutamine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Glu,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Glu @adj=O-1 | bile-acid glutamic acid conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Gly,ST,lmsd,species_only,lmsd n=13; purity=1.00,"@suffix=;Gly @adj=O-1 | LMSD ST C:DB;On;Gly: LM O excludes the amide O (L1 O = LM O + 1, 13/13)"
+ST-Gly-sulf,,none,species_only,no LMSD row; LipidBlast spells ST C:DB;On;G;S; LMSD has no doubly conjugated ST; suffix order/spelling would be a guess,
+ST-Hex,ST,lmsd,species_only,lmsd n=67; purity=1.00; others: LipidBlast ST(5); goslin=shorthand2020,@suffix=;Hex | LMSD counts the sugar oxygens (ST C:DB;O6;Hex); LipidBlast does not (ST C:DB;O;Hex); package keeps the O as written
+ST-His,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;His @adj=O-1 | bile-acid histidine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Lys,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Lys @adj=O-1 | bile-acid lysine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Met,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Met @adj=O-1 | bile-acid methionine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Orn,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Orn @adj=O-1 | bile-acid ornithine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Phe,ST,lmsd,species_only,lmsd n=1; purity=1.00,"@suffix=;Phe @adj=O-1 | LMSD ST C:DB;On;Phe: LM O excludes the amide O (L1 O = LM O + 1, 1/1 row, same rule as ST-Gly / ST-Tau); the one LMSD row has a colon typo before the oxygen count"
+ST-Pro,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Pro @adj=O-1 | bile-acid proline conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Ser,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Ser @adj=O-1 | bile-acid serine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Tau,ST,lmsd,species_only,lmsd n=19; purity=1.00,"@suffix=;Tau @adj=O-1 | LMSD ST C:DB;On;Tau: LM O excludes the amide O (L1 O = LM O + 1, 19/19)"
+ST-Tau-sulf,,none,species_only,no LMSD row; LipidBlast spells ST C:DB;On;T;S; LMSD has no doubly conjugated ST; suffix order/spelling would be a guess,
+ST-Thr,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Thr @adj=O-1 | bile-acid threonine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Trp,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Trp @adj=O-1 | bile-acid tryptophan conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Tyr,ST,lmsd,species_only,lmsd n=1; purity=1.00,"@suffix=;Tyr @adj=O-1 | LMSD ST C:DB;On;Tyr: LM O excludes the amide O (L1 O = LM O + 1, 1/1 row, same rule as ST-Gly / ST-Tau); the one LMSD row has a colon typo before the oxygen count"
+ST-Val,ST,inferred,species_only,no LMSD row; the spectral-library names of the dataset (n>=7) use the same shape as the LMSD Phe / Tyr / Leu rows,@suffix=;Val @adj=O-1 | bile-acid valine conjugate named like the LMSD amino-acid conjugates; L1 O = LM O + 1 in every dataset row
+ST-Xle,ST,inferred,species_only,lmsd n=1 (spelled Leu; Ile has no row); the class merges both,"@suffix=;Xle @adj=O-1 | the LMSD suffix is the amino acid name, here the IUPAC symbol Xle (leucine or isoleucine) so neither is asserted; same rule as ST-Phe; the Xle suffix reads back"
+ST-oacyl,CE,lmsd,sterol_ester,lmsd n=55; purity=1.00; others: SwissLipids SE(53); MS-DIAL CE(114); LipidBlast SE(328); goslin=shorthand2020,"@alt_head=SE @adj=C-27,DB-1,O-1 | total: CE <acyl C:DB> (LMSD CE writes the acyl chain only; cholesterol assumed, adj holds 55/55); chain: input CE/ChE -> CE <acyl>, input SE or class-only -> SE <sterol>/<acyl>"
+ST-oacyl2,CE,lmsd,species_only,lmsd n=5; purity=1.00; readback=FAIL reads_as:ST-oacyl; goslin=shorthand2020,"LMSD CE n;O2 with n>=46 (5 rows, estolide-type); L1 offset not constant; species only"
+ST-sulf,ST,lmsd,species_only,lmsd n=57; purity=1.00; others: LipidBlast ST(9); goslin=shorthand2020,@suffix=;S | LMSD counts the sulfate oxygens (ST C:DB;O4;S); LipidBlast does not (ST C:DB;O;S); package keeps the O as written
+TG,TG,lmsd,standard,lmsd n=6890; purity=1.00; others: SwissLipids TG(59415); MS-DIAL TG(110681); goslin=shorthand2020,
+TG-ether,TG,lmsd,standard,lmsd n=1; purity=1.00; others: SwissLipids TG(45000); LipidBlast TG(10131); goslin=shorthand2020,
+TG-oacyl,TG,inferred,species_only,no LMSD row (the LMSD export has no TG estolide); LMSD writes an oxidised TG as the head TG with an oxygen count,LM total name = TG + L1 numbers (the esterified hydroxyl oxygen is the single ;O); chain level is not written (the ester position is not in L1-L3); reads back as TG (the same LM name serves a TG with one oxygen) -> inherently ambiguous like Cer-oacyl2
+TG-oacyl2,TG,inferred,species_only,no LMSD row; same reasoning as TG-oacyl,"LM total name = TG + L1 numbers (two ;O); reads back as TG, inherently ambiguous like TG-oacyl"
+VAE,VAE,inferred,standard,LipidBlast VAE n=59 (no LMSD row); others: LipidBlast VAE(59),
+WD,WD,lmsd,species_only,lmsd n=2; purity=1.00; goslin=shorthand2020,wax diester; L2/L3 empty in reference
+WE,WE,lmsd,standard,lmsd n=891; purity=0.63; goslin=shorthand2020,"@alt_head=SFE | LMSD WE 891 : SFE 519 (short fatty ester, both -> WE in the dataset); SFE reads back to WE; the dataset L1 DB is below the LM sum in ~40% of the WE/SFE rows (DB convention differs)"
+CoQ,CoQ,inferred,fixed,LMSD gives no ABBREVIATION for ubiquinones (PR02 all empty); MS-DIAL/LipidBlast/dataset name them CoQn,"@render=CoQ{n} (n=(C-9)/5, DB=n+2, O4) else CoQ C:DB;O4 | package reads CoQn and CoQ C:DB;O4"

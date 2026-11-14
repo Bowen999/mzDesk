@@ -1,0 +1,27 @@
+<svg viewBox="0 0 720 200" xmlns="http://www.w3.org/2000/svg">
+<title>The three steps of Lipid Fragment Explanation</title>
+<desc>The three steps of the Lipid Fragment Explanation workflow in order, with the engine or data each one uses. The name step runs only for a lipid short name; a SMILES or a drawing goes straight to the structure.</desc>
+<text class="fg-muted" x="60" y="22">Stage</text>
+<text class="fg-muted" x="272" y="22">Engine or data</text>
+<text class="fg-muted" x="424" y="22">What it does</text>
+<path class="fg-line" d="M34 56L34 148" stroke-width="2"/>
+<circle class="fg-box-accent" cx="34" cy="56" r="13" stroke-dasharray="4 3"/>
+<text class="fg-accent-text" x="34" y="61" text-anchor="middle">1</text>
+<text class="fg-title" x="60" y="61">Lipid name</text>
+<rect class="fg-box-soft" x="272" y="41" width="136" height="30" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="340" y="61" text-anchor="middle">LIPID+</text>
+<text class="fg-muted" x="424" y="61">LIPID+ and LIPID MAPS names</text>
+<circle class="fg-dot" cx="34" cy="102" r="13"/>
+<text class="fg-dot-text" x="34" y="107" text-anchor="middle">2</text>
+<text class="fg-title" x="60" y="107">Structure</text>
+<rect class="fg-box-soft" x="272" y="87" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="107" text-anchor="middle">LIPID+, RDKit</text>
+<text class="fg-muted" x="424" y="107">illustrative structure from the name</text>
+<circle class="fg-dot" cx="34" cy="148" r="13"/>
+<text class="fg-dot-text" x="34" y="153" text-anchor="middle">3</text>
+<text class="fg-title" x="60" y="153">Fragment explanation</text>
+<rect class="fg-box-soft" x="272" y="133" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="153" text-anchor="middle">MetFrag</text>
+<text class="fg-muted" x="424" y="153">explained peaks, tree depth 3</text>
+<text class="fg-muted" x="20" y="188">Dashed: runs only for a lipid short name.</text>
+</svg>

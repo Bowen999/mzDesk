@@ -1,0 +1,153 @@
+export type FieldCondition = { field: string; equals?: any; in?: any[]; empty?: boolean };
+export type Field = {
+  type: string; id?: string; label?: string; optional?: boolean; adduct?: boolean; mz?: boolean; multi?: boolean;
+  value?: any; step?: number | null; placeholder?: string | null; options?: string[]; min?: number; max?: number;
+  rows?: number; accept?: string; columns?: string[]; caption?: string | null; adducts?: Record<string, string[]>;
+  binary?: boolean; max_bytes?: number;
+  // form metadata (Spectrum pages; optional everywhere)
+  section?: string; section_collapsed?: boolean; form_order?: number; required?: boolean; required_when?: FieldCondition; visible_when?: FieldCondition;
+  header_fallback?: boolean; auto_label?: string; ion_modes?: string[]; allow_formula?: boolean; help?: Help;
+  checkboxes?: boolean;             // multiselect: a column of tick boxes instead of chips (several algorithms, with a long name each)
+  new_row?: boolean;                // starts a new row of the form grid
+  label_field?: boolean;           // structure: an optional label input inside the field names the compound on the result cards
+  modes?: string[];                 // structure: the input modes offered, in order (the first is the default); unset = Name / ID, Draw, SMILES / InChI
+  // internet use (spec.py): the frontend asks before running online while the sidebar switch is off
+  network?: boolean;               // checkbox: ticking it uses the internet
+  network_sources?: string[];      // spectrum: these input sources are fetched online
+  network_modes?: string[];        // structure: these input modes are resolved online
+  network_options?: string[];       // multiselect: these options use the internet
+  network_names?: boolean;          // textarea: a line that is not a SMILES / InChI is a name looked up online
+  // first-use downloads (local version, setup.ts)
+  needs?: string[];                 // checkbox: ticking it needs these components (ids of GET /api/local/status); a missing one is downloaded first
+};
+/** Help text for a "?" popover: one string, or a list shown as bullets. */
+export type Help = string | string[];
+export type Block = {
+  type: string; title?: string | null; columns?: string[]; caption?: string | null;
+  items?: { label: string; unit?: string; help?: Help }[]; label?: string; key?: string | null; id?: string | null;
+  help?: Help;              // any block: static "?" popover next to the title (runtime data.help is added to it)
+  style?: string;           // cards: "metric" = compact metric cards
+  row_help?: boolean;       // table / grouptable: trailing "?" column for per-row help
+  column_help?: Record<string, Help>;   // table: a small "?" after the named column heads
+  page_size?: number;       // opt-in pagination and preview-only filtering for large tables
+  compact?: boolean;        // long text can be expanded without losing the full value
+  collapsed?: boolean;      // notes: items live behind a "?" next to the title (or a "Details" disclosure without a title)
+  span?: "half" | "full";   // results grid on wide screens; default chosen by block type (Outputs.tsx blockLayout)
+};
+export type Module = {
+  id: string; title: string; cls: string; group: string; subgroup: string | null; live: boolean;
+  one_liner: string; inputs: Field[]; outputs: Block[]; example: Record<string, any> | null;
+  network?: string;          // what the page sends online; present only on pages that use the internet
+  based_on?: string[];       // what the page is built on ("MetFrag", "mzDesk"): the line at its foot
+};
+export type Stage = { id: number; title: string; modules: string[] };
+export type PipelineExample = { label: string; values: Record<string, any> };
+export type Pipeline = { id: string; title: string; one_liner: string; inputs: Field[]; stages: Stage[]; examples?: PipelineExample[]; based_on?: string[];
+  network?: string };        // what the workflow sends online whatever the inputs (Module.network); absent when only some inputs do
+export type Group = { id: string; title: string };
+/** hosted: the public website (MZDESK_HOSTED on the server), which has no "Internet search" switch. */
+export type Spec = { groups: Group[]; subgroups: Group[]; pipelines: Pipeline[]; modules: Module[]; version?: string; hosted?: boolean };
+
+/** 后端结果：按输出块 id 填数据（形状见 mzdesk/api/common.py）。 */
+/** Table cell: plain text, an image, or an object with text / badge, optional link (url, or href), optional structure
+ *  preview on hover (hover_svg: an SVG string), optional help. */
+export type Cell = string | number | null
+  | { img: string }
+  | { fragment: FragmentTarget; help?: Help }
+  | { text?: string; badge?: string; tone?: string; url?: string; href?: string; hover_svg?: string; help?: Help };
+/** Table row: a list of cells, or {cells, help} when the row has its own "?" (spec row_help=true). */
+export type Row = Cell[] | { cells: Cell[]; help?: Help };
+export type CardValue = string | { value: string; note?: string; help?: Help };
+/** portal tile / chips chip / reaction option: see the helpers in mzdesk/spec.py for the contracts. */
+export type Tile = { label: string; status: "yes" | "partial" | "no" | string; value?: string; chips?: string[]; help?: Help };
+export type StatusChip = { label: string; level: string; value?: string; help?: Help };
+export type RxStep = { from: string; reagent?: string; to: string; count?: number };
+export type RxOption = { label: string; steps: RxStep[]; formula?: string; mass?: string | number; heavy?: string | number; help?: Help; svg?: string; product_svg?: string };
+export type RowGroup = { title: string; meta?: string; help?: Help; rows: Row[] };
+/** color / ink / label: a peak drawn in its fragment's colour with its own two-line label (m/z, Δ ppm) in the fragment view (Figure.tsx); ink = the darker hue for text on a white page. */
+export type PeakCard = { mz: number; rel: number; on: boolean; kind: string; rows: [string, string][]; img?: string; color?: string; ink?: string; label?: string };
+/** Fragment view (mzdesk/ms2/fragment_view.py): a "View" cell names one structure; the table's `fragments` is the spectrum they share. */
+export type FragmentTarget = { smiles: string; adduct: string; name?: string };
+export type FragmentQuery = { peaks: [number, number][]; precursor_mz: number; tol_da: number };
+export type FragmentItem = {
+  color: string; mz: number; rel: number; ion_formula: string; calc_mz: number | null; ppm: number | null; nl: number | null;
+  placed: boolean; alternatives: number; svg?: string; img?: string;
+};
+export type FragmentView = {
+  name: string; smiles: string; formula: string; adduct: string; ion_formula: string; precursor_mz: number; theo_mz: number; positive: boolean;
+  peaks: number; explained: number; explained_fraction: number; coverage: { atoms: number; heavy: number; fraction: number };
+  overview: string; fragments: FragmentItem[];
+  figure: { plotly: { data: any[]; layout: any }; peaks: PeakCard[] }; notes: string[];
+  settings: { tol_da: number; tol_ppm: number; tree_depth: number; engine: string }; seconds: number;
+};
+export type FragmentJob = { status: "queued" | "running" | "done" | "error"; percent: number; stage: string; seconds: number; error: string | null; log: string;
+  result: FragmentView | null };
+/** Properties & groups (groupmap block): a functional group found, its sites and their pictures (mzdesk/platform_fit/functional_groups.py). */
+export type GroupSite = { atoms: string; svg: string };
+export type FoundGroup = { family: string; name: string; count: number; smarts: string; atoms: string; svg: string; all_svg?: string; sites: GroupSite[]; more?: number };
+/** Structure & formats: one card per compound (2D SVG + 3D molblock) and the formats of each compound. */
+export type CompareCompound = { label: string; formula?: string; svg?: string; mol3d?: string };
+export type FormatSet = { label: string; formats: Record<string, string> };
+export type BlockData = {
+  rows?: Row[]; values?: Record<string, CardValue>; text?: string; formats?: Record<string, string>; items?: string[];
+  files?: { name: string; content: string; mime?: string }[];
+  plotly?: { data: any[]; layout: any }; peaks?: PeakCard[]; svg?: string; img?: string; mol3d?: string;
+  help?: Help; count?: number | string;                       // any block: runtime "?" text; table / grouptable: count pill next to the title
+  fragments?: FragmentQuery;                                   // table: the spectrum behind its "View" (fragment) cells
+  columns?: string[];                                          // table: replaces the spec columns for this run (rows then have one cell per data column)
+  tiles?: Tile[]; chips?: StatusChip[]; options?: RxOption[]; groups?: RowGroup[];   // portal / chips / reaction (svg above) / grouptable
+  compounds?: CompareCompound[];                               // compare: one card per compound
+  found?: FoundGroup[];                                        // groupmap: functional groups found (svg above = the input structure)
+  sets?: FormatSet[];                                          // formats: one tab per compound (single compound = the old shape)
+};
+/** verdict: the one-line answer shown above the results (may use <b>); none for pages whose output is the answer. */
+export type RunResult = { status: "ok" | "placeholder"; outputs: Record<string, BlockData>; warnings: string[]; verdict?: string | null };
+
+/** ESI MS/MS Annotation (mzdesk/annotation/pipeline.py): one step of a running job, with the blocks it has produced (spec block + its data). */
+export type JobBlock = Block & { data: BlockData };
+export type JobStep = {
+  id: number; title: string; status: "queued" | "running" | "done" | "skipped" | "failed"; seconds: number; note: string; blocks: JobBlock[];
+  expected_s?: number;                  // typical seconds of this stage (spec stage(...)): its share of the progress bar and how fast a running stage fills
+};
+export type AnnotationAnswer = {
+  type: "single" | "group" | "formula_only" | "mass_only" | "none"; ids: string[]; layer: string; layer_label: string; level: string; level_label: string;
+  statement: string; top_id: string | null; isomer_verdict: string | null;
+};
+/** The CCS check of one candidate (mzdesk/annotation/ccs_step.py), present only when the form had an observed CCS. */
+export type CandidateCcs = {
+  verdict: string;                        // Consistent | Inconsistent | No reference | No structure | Not checked
+  source?: "measured" | "predicted" | null;
+  adduct?: string | null; observed?: number | null; reference?: number | null; delta_pct?: number | null; tolerance_pct?: number | null;
+  ref_label?: string | null;              // CCS type of the measured row ("DTCCS N2") or the model name
+  dataset?: string | null; n_refs?: number; in_domain?: boolean | null; note?: string;
+  flag?: string | null;                   // "CCS ≠ measured" | "CCS ≠ predicted": the ranking rule applied to this candidate
+  moved_from?: number | null;             // its rank before the rule moved it
+};
+export type AnnotationCandidate = {
+  id: string; rank: number | null; name: string; smiles: string | null; formula: string | null; adduct: string | null; layer: string; layer_label: string;
+  level: string | null; level_label: string; level_reason: string; final_score: number | null; base_score: number | null; hypothesis: boolean;
+  evidence?: { library?: { gate_passed?: boolean } };
+  detect: { omics?: string; ionizable?: string; adduct?: string } | null;
+  fragment_adduct?: string | null;     // MetFrag's spelling of the adduct; null / absent = no "View" button
+  ccs?: CandidateCcs | null;           // only with an observed CCS in the form
+  isomer: { verdict: string; role: string | null; challenger: boolean; explained_fraction: number | null } | null;
+};
+export type AnnotationResult = {
+  answer: AnnotationAnswer; candidates: AnnotationCandidate[]; warnings: string[];
+  steps: { id: number; title: string; status: string; seconds: number; note: string }[];
+  context: { precursor_mz: number; polarity: string; adduct: string; retained_adducts: string[]; omics: string; libraries: string[]; gate_passed: boolean };
+  isomer: { verdict: string; top_id?: string; group: string[]; challengers: { id: string; name: string; peaks: { mz: number; rel?: number }[] }[];
+    candidates?: { id: string; name: string; smiles: string; source: string; evaluated: boolean; explained_fraction: number | null }[];
+    isomers?: { id: string; distinguished: boolean | null; distinguishing_peaks: { mz: number }[] }[]; notes: string[] } | null;
+  visualization?: { query: BlockData | null; library: { figure: BlockData; library: string; accession: string; name: string; smiles?: string | null } | null } | null;
+  fragment_query?: FragmentQuery | null;
+};
+/** EI MS Annotation / Targeted Method (mzdesk/workflows/common.py): the generic result of every workflow except ESI MS/MS Annotation
+ *  (which has no `pipeline` key; see isWorkflowResult in pages/PipelinePage.tsx).
+ *  Every block has a unique id; facts are [label, value] pairs shown as a compact two-column list. */
+export type WorkflowAnswer = { statement: string; level: string | null; level_label: string | null; facts: [string, string][] };
+export type WorkflowResult = {
+  pipeline: string; answer: WorkflowAnswer; blocks: JobBlock[]; warnings: string[];
+  steps: { id: number; title: string; status: string; seconds: number; note: string }[];
+};
+export type Job = { status: "queued" | "running" | "done" | "error"; note: string; steps: JobStep[]; result: AnnotationResult | WorkflowResult | null; error: string | null };

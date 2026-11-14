@@ -1,0 +1,226 @@
+/* Docs (/docs): top bar, contents on the left, the page, "On this page" on the right. mzDesk tokens only (theme.css), so light and dark follow the app. */
+.docs { --docs-top-h: 56px; --docs-nav-w: 272px; min-height: 100vh; background: var(--bg); }
+
+/* ---------------------------------------------------------------- top bar */
+.docs-top {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px; height: var(--docs-top-h); padding: 0 20px 0 24px;
+  background: var(--topbar-bg); border-bottom: 1px solid var(--line); backdrop-filter: saturate(1.4) blur(8px); -webkit-backdrop-filter: saturate(1.4) blur(8px);
+}
+.docs-brand { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none; }
+.docs-brand:hover { color: var(--ink); }
+.docs-brand .logo { width: 24px; height: auto; }
+.docs-brand-name { font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.docs-brand-tag { padding: 2px 7px; color: var(--accent-ink); background: var(--accent-bg); border: 1px solid var(--accent-line); border-radius: 999px; font-size: 11.5px; font-weight: 500; }
+.docs-top-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.docs-back { padding: 6px 10px; color: var(--muted); border-radius: 8px; font-size: 13.5px; text-decoration: none; }
+.docs-back:hover { color: var(--ink); background: var(--hover); }
+.docs-menu { display: none; }
+.docs-backdrop { display: none; }
+
+/* ---------------------------------------------------------------- contents (left) */
+.docs-nav {
+  position: fixed; top: var(--docs-top-h); left: 0; bottom: 0; width: var(--docs-nav-w); padding: 22px 16px 40px 20px; overflow-y: auto;
+  background: var(--canvas); border-right: 1px solid var(--line); scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+}
+.docs-nav-section { margin-bottom: 22px; }
+.docs-nav-section + .docs-nav-section { padding-top: 18px; border-top: 1px solid var(--line); }
+.docs-nav-title { margin: 0 10px 6px; color: var(--ink); font-size: 13.5px; font-weight: 600; }
+.docs-link {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 32px; padding: 5px 10px;
+  color: var(--muted); background: none; border: 0; border-radius: 7px; font: inherit; font-size: 14px; line-height: 1.35; text-align: left; text-decoration: none; cursor: pointer;
+  transition: color .15s, background .15s;
+}
+.docs-link:hover { color: var(--ink); background: var(--hover); }
+.docs-link.active { color: var(--accent-ink); background: var(--accent-bg); font-weight: 500; }
+.docs-folder-title.has-active { color: var(--ink); }
+.docs-caret { width: 12px; color: var(--faint); font-size: 17px; line-height: 1; text-align: center; transition: transform .15s; }
+.docs-caret.open { transform: rotate(90deg); }
+.docs-folder-items { position: relative; margin: 1px 0 4px 10px; padding-left: 8px; }
+.docs-folder-items::before { content: ""; position: absolute; top: 4px; bottom: 4px; left: 0; width: 1px; background: var(--line-strong); }
+.docs-link.sub { font-size: 13.5px; }
+
+/* ---------------------------------------------------------------- page + "On this page" */
+.docs-main { margin-left: var(--docs-nav-w); }
+.docs-page { display: flex; justify-content: center; gap: 48px; max-width: 1180px; margin: 0 auto; padding: 44px clamp(16px, 4vw, 56px) 80px; }
+.docs-article { flex: 1; min-width: 0; max-width: 720px; animation: page-in .3s var(--ease-out) both; }
+.docs-eyebrow { margin-bottom: 10px; color: var(--accent); font-size: 13px; font-weight: 500; }
+.docs-article h1 { margin: 0 0 14px; color: var(--ink); font-size: 30px; font-weight: 600; letter-spacing: -.02em; line-height: 1.2; }
+.docs-article .doc-body h1 { margin-bottom: 14px; }
+.docs-article .doc-body h2 { margin-top: 36px; padding-top: 26px; font-size: 21px; }
+.docs-article .doc-body h3 { margin-top: 22px; font-size: 16px; }
+.docs-article .doc-body p, .docs-article .doc-body li { font-size: 15px; line-height: 1.75; }
+.docs-article :is(h2, h3)[id] { scroll-margin-top: calc(var(--docs-top-h) + 20px); }
+.docs-empty { margin: 4px 0 0; padding: 14px 16px; color: var(--muted); background: var(--canvas); border: 1px dashed var(--line-strong); border-radius: 10px; font-size: 14px; }
+.docs-open { margin: 22px 0 0; font-size: 14px; }
+.docs-open a { text-decoration: none; }
+.docs-open a:hover { text-decoration: underline; }
+
+.docs-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line); }
+.docs-pager-link { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; text-decoration: none; transition: border-color .15s; }
+.docs-pager-link:hover { border-color: var(--accent); }
+.docs-pager-link span { color: var(--muted); font-size: 12px; }
+.docs-pager-link b { color: var(--accent-ink); font-size: 14.5px; font-weight: 500; }
+.docs-pager-link.next { text-align: right; }
+
+.docs-toc { position: sticky; top: calc(var(--docs-top-h) + 32px); flex: none; align-self: flex-start; width: 210px; max-height: calc(100vh - var(--docs-top-h) - 64px); overflow-y: auto; }
+.docs-toc-title { margin-bottom: 8px; color: var(--ink); font-size: 13px; font-weight: 600; }
+.docs-toc-link { display: block; padding: 4px 0 4px 12px; color: var(--muted); border-left: 1px solid var(--line); font-size: 13px; line-height: 1.4; text-decoration: none; transition: color .15s, border-color .15s; }
+.docs-toc-link.sub { padding-left: 24px; }
+.docs-toc-link:hover { color: var(--ink); }
+.docs-toc-link.active { color: var(--accent-ink); border-left-color: var(--accent); }
+
+/* ---------------------------------------------------------------- page text: lists, links, code, tables, callouts, rules */
+.docs-article .doc-body a { text-underline-offset: 2px; }
+.docs-article .doc-body h4 { margin: 20px 0 6px; color: var(--ink); font-size: 14.5px; font-weight: 600; }
+.docs-article .doc-body ol { margin: 0 0 12px; padding-left: 22px; }
+.docs-article .doc-body li::marker { color: var(--muted); }
+.docs-article .doc-body li > :is(ul, ol) { margin: 6px 0 0; }
+.docs-article .doc-body code { font-size: .9em; }
+.docs-article .doc-body hr { margin: 32px 0; border: 0; border-top: 1px solid var(--line); }
+.docs-article .doc-body blockquote { margin: 16px 0; padding: 2px 0 2px 16px; color: var(--muted); border-left: 3px solid var(--line-strong); }
+.docs-article .doc-body blockquote > :last-child { margin-bottom: 0; }
+
+/* code block; the Copy button sits in its top right corner */
+.docs-article .doc-code { position: relative; margin: 16px 0; }
+.docs-article .doc-code pre {
+  margin: 0; padding: 13px 16px; overflow-x: auto; color: var(--ink); background: var(--canvas); border: 1px solid var(--line); border-radius: 10px;
+  font-size: 13px; line-height: 1.65; tab-size: 4; scrollbar-width: thin;
+}
+.docs-article .doc-code.has-copy pre { padding-right: 78px; }
+.docs-article .doc-code pre code { padding: 0; background: none; font-size: inherit; }
+.docs-article .doc-copy {
+  position: absolute; top: 8px; right: 8px; min-height: 26px; padding: 2px 10px; color: var(--muted); background: var(--panel); border: 1px solid var(--line-strong);
+  border-radius: 6px; font: inherit; font-size: 12px; cursor: pointer; transition: color .15s, border-color .15s;
+}
+.docs-article .doc-copy:hover { color: var(--ink); border-color: var(--line-hover); }
+.docs-article .doc-copy.done { color: var(--accent-ink); background: var(--accent-bg); border-color: var(--accent-line); }
+@media (pointer: coarse) { .docs-article .doc-copy { min-height: 32px; } }
+
+/* table: scrolls sideways inside its own frame when it is wider than the column */
+.docs-article .doc-table-wrap { margin: 18px 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; scrollbar-width: thin; }
+.docs-article .doc-body table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.55; }
+.docs-article .doc-body th, .docs-article .doc-body td { min-width: 84px; padding: 9px 14px; text-align: left; vertical-align: top; }
+.docs-article .doc-body th { color: var(--ink); background: var(--canvas); border-bottom: 1px solid var(--line-strong); font-weight: 600; white-space: nowrap; }
+.docs-article .doc-body td { color: var(--ink-2); }
+.docs-article .doc-body tbody tr + tr td { border-top: 1px solid var(--line); }
+.docs-article .doc-body td code { overflow-wrap: anywhere; }
+
+/* callouts: Note takes the theme accent, Warning the app's alert colour (design.css) and nothing else */
+.docs-article .doc-callout { margin: 18px 0; padding: 11px 16px; color: var(--ink-2); background: var(--accent-bg); border: 1px solid var(--accent-line); border-left: 3px solid var(--accent); border-radius: 8px; }
+.docs-article .doc-callout.warning { background: var(--alert-bg); border-color: var(--alert-line); border-left-color: var(--alert); }
+.docs-article .doc-callout > * { margin: 0; font-size: 14.5px; line-height: 1.65; }
+.docs-article .doc-callout > * + * { margin-top: 8px; }
+.docs-article .doc-callout ul, .docs-article .doc-callout ol { padding-left: 20px; }
+.docs-article .doc-callout-label { margin-right: 4px; color: var(--accent-ink); font-weight: 600; }
+.docs-article .doc-callout.warning .doc-callout-label { color: var(--alert-ink); }
+.docs-article .doc-callout code { background: var(--chip-bg); }
+
+/* ---------------------------------------------------------------- figures (mzdesk/docs/img/*.svg, drawn inline) */
+/* The SVG is designed at viewBox width 720 with 14-16 px text. In the article column (<= 720 px) it scales with the column; on narrow screens it keeps
+   --fig-min-w and scrolls sideways inside its own frame (never the page), so its text stays about 11 px or more. */
+.docs-article .doc-figure { --fig-min-w: 572px; margin: 24px 0 28px; }
+.doc-fig-scroll { overflow-x: auto; padding: 10px 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; scrollbar-width: thin; }
+.doc-fig-scroll > svg { display: block; width: 100%; max-width: 100%; height: auto; font-family: var(--sans); overflow: visible; }
+@media (max-width: 640px) { .doc-fig-scroll > svg { min-width: var(--fig-min-w); } }
+.docs-article .doc-figure figcaption { margin-top: 10px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+.doc-fig-skel { height: 220px; background: var(--skeleton); border: 1px solid var(--line); border-radius: 12px; animation: shimmer-pulse 1.2s ease-in-out infinite; }
+.doc-fig-skel > i { display: none; }
+.docs-article .doc-fig-missing { margin: 0; padding: 14px 16px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 12px; font-size: 14px; }
+
+/* Classes of the drawn figures. They read the theme tokens, so light, dark and the manual switch all apply without a second copy of the figure. */
+.fg-box { fill: var(--panel); stroke: var(--line-strong); stroke-width: 1.5; }
+.fg-box-soft { fill: var(--canvas); stroke: var(--line); stroke-width: 1.5; }
+.fg-box-accent { fill: var(--accent-bg); stroke: var(--accent-line); stroke-width: 1.5; }
+.fg-box-warn { fill: var(--alert-bg); stroke: var(--alert); stroke-width: 1.5; }          /* the alert colour: use sparingly */
+.fg-line { fill: none; stroke: var(--line-strong); stroke-width: 1.5; }
+.fg-arrow { fill: none; stroke: var(--muted); stroke-width: 1.75; stroke-linejoin: round; }
+.fg-head { fill: var(--muted); stroke: none; }                                             /* the arrow head: the <path> inside each SVG's own <marker> */
+.fg-arrow-accent { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-linejoin: round; }
+.fg-head-accent { fill: var(--accent); stroke: none; }
+.fg-text { fill: var(--ink); font-size: 15px; }
+.fg-small { fill: var(--ink-2); font-size: 14px; }
+.fg-muted { fill: var(--muted); font-size: 14px; }
+@supports (fill: color-mix(in srgb, red, blue)) { .fg-muted { fill: color-mix(in srgb, var(--muted) 78%, var(--ink)); } }      /* a little stronger: stays above 4.5:1 on the tinted boxes */
+.fg-title { fill: var(--ink); font-size: 16px; font-weight: 600; }
+.fg-accent-text { fill: var(--accent-ink); font-size: 15px; font-weight: 500; }
+.fg-mono { fill: var(--ink); font-family: var(--mono); font-size: 14px; }
+.fg-dot { fill: var(--accent); stroke: none; }                                             /* a numbered badge: .fg-dot behind .fg-dot-text */
+.fg-dot-text { fill: var(--bg); font-size: 14px; font-weight: 600; }
+/* icons of the illustrated figures (overview-scene.svg): the theme blue in three strengths, nothing else */
+.fg-fill-accent { fill: var(--accent); stroke: none; }
+.fg-fill-soft { fill: var(--accent-bg); stroke: none; }
+.fg-stroke-accent { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.fg-dash { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-dasharray: 5 5; }
+.fg-check { fill: none; stroke: var(--bg); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.fg-tile { fill: var(--ink-2); font-size: 13px; }
+
+/* Module groups: one hue per group, the same in every figure. The app's light theme maps its --ov-* hues to blue and grey (design.css),
+   so the figures carry their own muted palette, light and dark (the same selectors as theme.css: the manual switch and the OS setting).
+   Put a class on a <g>; its children read --g-*. Workflows are the solid theme blue (.fg-wf), so a workflow never looks like a module. */
+.docs {
+  --grp-teal-bg: #eaf6f4;   --grp-teal-line: #b7ddd6;   --grp-teal-ink: #0b6b5e;
+  --grp-green-bg: #eef6ec;  --grp-green-line: #c3dfbd;  --grp-green-ink: #2d6f2a;
+  --grp-violet-bg: #f3f0fb; --grp-violet-line: #d8cff0; --grp-violet-ink: #5b3fa6;
+  --grp-slate-bg: #f1f3f6;  --grp-slate-line: #dbe0e7;  --grp-slate-ink: #4f5664;
+  --grp-amber-bg: #fbf4e4;  --grp-amber-line: #ead6a2;  --grp-amber-ink: #85560a;
+}
+:root[data-theme="dark"] .docs {
+  --grp-teal-bg: rgba(45, 180, 160, .16);   --grp-teal-line: rgba(45, 180, 160, .45);   --grp-teal-ink: #8be3d4;
+  --grp-green-bg: rgba(110, 190, 100, .15); --grp-green-line: rgba(110, 190, 100, .42); --grp-green-ink: #b0e6a5;
+  --grp-violet-bg: rgba(160, 130, 240, .17); --grp-violet-line: rgba(160, 130, 240, .46); --grp-violet-ink: #d2c3fb;
+  --grp-slate-bg: rgba(255, 255, 255, .07); --grp-slate-line: rgba(255, 255, 255, .2);  --grp-slate-ink: #c3c8d3;
+  --grp-amber-bg: rgba(230, 170, 70, .15);  --grp-amber-line: rgba(230, 170, 70, .45);  --grp-amber-ink: #f5d08a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .docs {
+    --grp-teal-bg: rgba(45, 180, 160, .16);   --grp-teal-line: rgba(45, 180, 160, .45);   --grp-teal-ink: #8be3d4;
+    --grp-green-bg: rgba(110, 190, 100, .15); --grp-green-line: rgba(110, 190, 100, .42); --grp-green-ink: #b0e6a5;
+    --grp-violet-bg: rgba(160, 130, 240, .17); --grp-violet-line: rgba(160, 130, 240, .46); --grp-violet-ink: #d2c3fb;
+    --grp-slate-bg: rgba(255, 255, 255, .07); --grp-slate-line: rgba(255, 255, 255, .2);  --grp-slate-ink: #c3c8d3;
+    --grp-amber-bg: rgba(230, 170, 70, .15);  --grp-amber-line: rgba(230, 170, 70, .45);  --grp-amber-ink: #f5d08a;
+  }
+}
+.fg-g-compound { --g-bg: var(--grp-teal-bg);   --g-line: var(--grp-teal-line);   --g-ink: var(--grp-teal-ink); }
+.fg-g-detect   { --g-bg: var(--grp-green-bg);  --g-line: var(--grp-green-line);  --g-ink: var(--grp-green-ink); }
+.fg-g-ms1      { --g-bg: var(--grp-violet-bg); --g-line: var(--grp-violet-line); --g-ink: var(--grp-violet-ink); }
+.fg-g-spectrum { --g-bg: var(--accent-bg);     --g-line: var(--accent-line);     --g-ink: var(--accent-ink); }
+.fg-g-ortho    { --g-bg: var(--grp-slate-bg);  --g-line: var(--grp-slate-line);  --g-ink: var(--grp-slate-ink); }
+.fg-g-dataset  { --g-bg: var(--grp-amber-bg);  --g-line: var(--grp-amber-line);  --g-ink: var(--grp-amber-ink); }
+.fg-g-calc     { --g-bg: var(--canvas);        --g-line: var(--line-strong);     --g-ink: var(--ink-2); }
+.fg-gbox { fill: var(--g-bg); stroke: var(--g-line); stroke-width: 1.5; }
+.fg-gfill { fill: var(--g-ink); stroke: none; }
+.fg-gpat { fill: none; stroke: var(--g-ink); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .15; }
+.fg-gpat-f { fill: var(--g-ink); stroke: none; opacity: .13; }
+.fg-gbar { fill: var(--g-ink); stroke: none; opacity: .6; }
+.fg-gtext { fill: var(--g-ink); font-size: 14px; font-weight: 500; }
+.fg-gtitle { fill: var(--g-ink); font-size: 16px; font-weight: 600; }
+.fg-wf { fill: var(--accent); stroke: none; }
+.fg-wf-text { fill: var(--bg); font-size: 15px; font-weight: 600; }
+.fg-wf-sub { fill: var(--bg); font-size: 13px; opacity: .88; }
+.fg-wf-dot { fill: var(--bg); stroke: none; opacity: .9; }
+.fg-wf-line { fill: none; stroke: var(--bg); stroke-width: 1.5; opacity: .45; }
+
+/* ---------------------------------------------------------------- narrower screens */
+@media (max-width: 1199px) { .docs-toc { display: none; } }
+@media (max-width: 959px) {
+  .docs-top { padding: 0 16px; }
+  .docs-menu { display: inline-flex; flex-direction: column; justify-content: center; gap: 4px; width: 36px; height: 36px; margin-left: -8px; padding: 0 9px; background: none; border: 0; border-radius: 8px; cursor: pointer; }
+  .docs-menu:hover { background: var(--canvas); }
+  .docs-menu > span { display: block; height: 1.5px; background: var(--ink); border-radius: 1px; }
+  .docs-nav { top: 0; z-index: 40; width: min(300px, 86vw); transform: translateX(-100%); visibility: hidden; transition: transform .22s ease, visibility .22s; }
+  .docs.nav-open .docs-nav { transform: none; visibility: visible; box-shadow: var(--shadow-pop); }
+  .docs-backdrop { display: block; position: fixed; inset: 0; z-index: 30; background: rgba(22, 26, 35, .28); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .docs.nav-open .docs-backdrop { opacity: 1; pointer-events: auto; }
+  .docs-main { margin-left: 0; }
+  .docs-page { padding-top: 28px; }
+  .docs-article h1 { font-size: 26px; }
+}
+@media (max-width: 560px) {
+  .docs-back { font-size: 0; padding: 6px 8px; }
+  .docs-back::before { content: "← App"; font-size: 13.5px; }
+  .docs-pager { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .docs-article { animation: none; } .docs-nav { transition: none; } }
+
+/* the Docs entry in the app sidebar is a link drawn like the sidebar buttons */
+a.docs-entry, a.rail-btn { text-decoration: none; }

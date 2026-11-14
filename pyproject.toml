@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mzdesk"
+description = "mzDesk: one-stop small-molecule mass spectrometry workbench"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dynamic = ["version", "dependencies"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "httpx>=0.24"]   # httpx: FastAPI TestClient
+
+[project.scripts]
+mzdesk = "mzdesk.cli:main"
+
+[tool.setuptools]
+packages = { find = { include = ["mzdesk", "mzdesk.*"] } }
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "third_party_licenses/*.txt"]
+
+[tool.setuptools.package-data]
+mzdesk = ["lib/*.js", "lib/*.LICENSE.txt", "lib/*.jar", "lib/msfinder/*.ini", "lib/msfinder/*.cs", "lib/msfinder/win/*", "lib/frigid/*", "ms2/frigid_driver/*.py", "static/**/*", "docs/*.md", "docs/img/*.svg", "install/*", "data/**/*", "lipid_name_map/data/**/*"]
+
+[tool.setuptools.dynamic]
+version = { attr = "mzdesk.__version__" }
+dependencies = { file = ["requirements.txt"] }
+
+[tool.pytest.ini_options]
+markers = ["network: real PubChem/UniChem calls (set MZDESK_NETWORK_TESTS=1)",
+           "docker: real CFM-ID / MSRB runs in Docker (skipped when Docker or the image is missing)"]

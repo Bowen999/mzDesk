@@ -1,0 +1,44 @@
+{
+ "versions_original": {
+  "torch": "2.6.0",
+  "torch_geometric": "2.4.0",
+  "rdkit": "2024.09.6",
+  "python": "3.12.12",
+  "repo_commit": "4dc835219baad18c2e705274ac54d49597703966"
+ },
+ "molecules": 349,
+ "all_atoms": {
+  "atoms_compared": 1910,
+  "max_abs_diff_pka": 2.1457672119140625e-05
+ },
+ "same_graph": {
+  "site_sets_equal": "349 / 349",
+  "sites_compared": 1331,
+  "max_abs_diff_pka": 1.8596649169921875e-05
+ },
+ "pipeline": {
+  "compared": 332,
+  "site_sets_equal": 332,
+  "max_abs_diff_pka": 1.8596649169921875e-05,
+  "different_molecule": 17,
+  "different_molecule_list": [
+   "carnitine: original C[N+](C)(C)C[C@H](O)CC(=O)[O-] / mzdesk C[N+](C)(C)C[C@H](O)CC(=O)O",
+   "phosphatidylcholine PC 32:0: original CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC / mzdesk CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC",
+   "sodium acetate (salt): original CC(=O)[O-].[Na+] / mzdesk CC(=O)O",
+   "extra_008: original Cc1cc(OC[C@@H](O)CN2CCN(C(c3ccccc3)c3ccccc3)CC2)c2ccccc2n1.Cl.O / mzdesk Cc1cc(OC[C@@H](O)CN2CCN(C(c3ccccc3)c3ccccc3)CC2)c2ccccc2n1",
+   "extra_022: original Br.CCN[C@@H]1CCc2c(O)cccc2C1 / mzdesk CCN[C@@H]1CCc2c(O)cccc2C1",
+   "extra_086: original Cl.Cl.O=C1CCc2c(Oc3ccc4c(c3)C[C@H](NC(=O)c3cc(C(F)(F)F)cc(C5(O)CNC5)c3)CC4)ccnc2N1 / mzdesk O=C1CCc2c(Oc3ccc4c(c3)C[C@H](NC(=O)c3cc(C(F)(F)F)cc(C5(O)CNC5)c3)CC4)ccnc2N1",
+   "extra_101: original C[C@@H](CC[C@H](SCCCC(C)(C)O)c1cccc(/C=C/c2ccc3ccc(Cl)cc3n2)c1)CC(=O)[O-].[Na+] / mzdesk C[C@@H](CC[C@H](SCCCC(C)(C)O)c1cccc(/C=C/c2ccc3ccc(Cl)cc3n2)c1)CC(=O)O",
+   "extra_111: original COC(=O)c1cc2c3ccccc3[nH]c2c2cn(Cc3ccccc3)c[n+]12.[Cl-] / mzdesk COC(=O)c1cc2c3ccccc3[nH]c2c2cn(Cc3ccccc3)c[n+]12",
+   "extra_127: original CC(C)[C@@H](C[C@H](O)[C@@H](N)CN1CC(=O)N(c2ccccc2Cl)CC1(C)C)C(=O)N[C@H]1CC[C@H](O)CC1.O=C(O)/C=C/C(=O)O / mzdesk CC(C)[C@@H](C[C@H](O)[C@@H](N)CN1CC(=O)N(c2ccccc2Cl)CC1(C)C)C(=O)N[C@H]1CC[C@H](O)CC1",
+   "extra_141: original Cl.[H]/N=C(/N)c1ccc2[nH]c(-c3cc(C)c(-c4nc5cc(/C(N)=N\\[H])ccc5[nH]4)cc3C)nc2c1 / mzdesk [H]/N=C(/N)c1ccc2[nH]c(-c3cc(C)c(-c4nc5cc(/C(N)=N\\[H])ccc5[nH]4)cc3C)nc2c1",
+   "extra_144: original COc1ccc(NC(=O)N2CCN(c3ccc(C)cc3C)CC2)cc1N1CCN(C)CC1.O=C(O)/C=C/C(=O)O / mzdesk COc1ccc(NC(=O)N2CCN(c3ccc(C)cc3C)CC2)cc1N1CCN(C)CC1",
+   "extra_159: original Cl.Oc1ccc2c(c1)[C@]1(c3ccccc3)CCN(CC3CCC3)[C@H](C2)C1 / mzdesk Oc1ccc2c(c1)[C@]1(c3ccccc3)CCN(CC3CCC3)[C@H](C2)C1",
+   "extra_187: original [H]/N=c1\\[nH]c(=O)c2ncn(OC[C@H]3CO[P@@](=O)([O-])CO3)c2[nH]1.[Na+] / mzdesk [H]/N=c1\\[nH]c(=O)c2ncn(OC[C@H]3CO[P@@](=O)(O)CO3)c2[nH]1",
+   "extra_204: original O=C(O)C(F)(F)F.[H]/N=C(\\N)c1ccc(C2=NO[C@@H](CC(=O)NC[C@@H](NS(=O)(=O)c3ccccc3-c3ccccc3)C(=O)O)C2)cc1 / mzdesk [H]/N=C(\\N)c1ccc(C2=NO[C@@H](CC(=O)NC[C@@H](NS(=O)(=O)c3ccccc3-c3ccccc3)C(=O)O)C2)cc1",
+   "extra_253: original C[n+]1c2ccccc2cc2[nH]c3ccccc3c21.[I-] / mzdesk C[n+]1c2ccccc2cc2[nH]c3ccccc3c21",
+   "extra_264: original Cl.O=C1CCc2c(cccc2NC(=O)CN(Cc2ccccc2)Cc2ccccc2)N1 / mzdesk O=C1CCc2c(cccc2NC(=O)CN(Cc2ccccc2)Cc2ccccc2)N1",
+   "extra_298: original Cc1c(C)c2c(c(C)c1O)CC[C@@](C)(CC[S+](C)C)O2.Cc1ccc(S(=O)(=O)[O-])cc1 / mzdesk Cc1c(C)c2c(c(C)c1O)CC[C@@](C)(CC[S+](C)C)O2"
+  ]
+ }
+}

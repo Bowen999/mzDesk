@@ -1,0 +1,432 @@
+Name: Caffeine
+Synon: Caffeine synonym
+DB#: MSBNK-FIX-0001
+InChIKey: RYYVLZVUVIJVGH-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)N(C)C(=O)N2C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 195.0877
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 45
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 19
+56.0496 2
+69.0447 18
+83.0603 10
+97.0076 2
+97.0395 1
+109.0397 3
+110.0713 101
+111.0554 5
+112.0873 1
+122.0711 1
+123.0428 3
+135.0668 1
+136.0747 1
+138.0663 999
+151.0978 5
+156.0768 2
+180.0642 2
+181.0719 3
+195.0878 847
+
+Name: Caffeine
+Synon: Caffeine synonym
+DB#: MSBNK-FIX-0002
+InChIKey: RYYVLZVUVIJVGH-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)N(C)C(=O)N2C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 195.0877
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 20
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 5
+69.0447 20
+83.0604 30
+110.0713 400
+138.0662 999
+195.0877 300
+
+Name: Theobromine-like
+Synon: Theobromine-like synonym
+DB#: MSBNK-FIX-0003
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)NC(=O)N2C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 195.0880
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 5
+60.056 300
+94.04 150
+138.0662 60
+163.06 999
+195.088 200
+
+Name: Isobar 12 ppm away
+Synon: Isobar 12 ppm away synonym
+DB#: MSBNK-FIX-0004
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 195.0900
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 3
+110.0713 300
+138.0662 999
+195.09 100
+
+Name: Caffeine NH4 decoy
+Synon: Caffeine NH4 decoy synonym
+DB#: MSBNK-FIX-0005
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+NH4]+
+Spectrum_type: MS2
+PrecursorMZ: 195.0878
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 3
+110.0713 300
+138.0662 999
+195.0878 100
+
+Name: Caffeine odd notation
+Synon: Caffeine odd notation synonym
+DB#: MSBNK-FIX-0006
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: M+H
+Spectrum_type: MS2
+PrecursorMZ: 195.0876
+Instrument_type: LC-ESI-QTOF
+Instrument: Waters Xevo G2
+Ion_mode: POSITIVE
+Collision_energy: 15 eV
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 4
+83.0604 40
+110.0713 200
+138.0662 999
+195.0876 150
+
+Name: Caffeine negative decoy
+Synon: Caffeine negative decoy synonym
+DB#: MSBNK-FIX-0007
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M-H]-
+Spectrum_type: MS2
+PrecursorMZ: 195.0877
+Instrument_type: LC-ESI-QTOF
+Instrument: Waters Xevo G2
+Ion_mode: NEGATIVE
+Collision_energy: 15 eV
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 3
+110.0713 300
+138.0662 999
+195.0877 100
+
+Name: Caffeine no adduct
+Synon: Caffeine no adduct synonym
+DB#: MSBNK-FIX-0008
+InChI: InChI=1S/test
+SMILES: C
+Spectrum_type: MS2
+PrecursorMZ: 195.0877
+Instrument_type: LC-ESI-QTOF
+Instrument: Waters Xevo G2
+Ion_mode: POSITIVE
+Collision_energy: 25 eV
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 4
+69.0447 50
+110.0713 300
+138.0662 999
+195.0877 200
+
+Name: Far away
+Synon: Far away synonym
+DB#: MSBNK-FIX-0009
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+PrecursorMZ: 301.1410
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 3
+153.0182 999
+229.0495 300
+301.141 100
+
+Name: Negative far away
+Synon: Negative far away synonym
+DB#: MSBNK-FIX-0010
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M-H]-
+Spectrum_type: MS2
+PrecursorMZ: 179.0350
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: NEGATIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 2
+135.0451 999
+179.035 500
+
+Name: MS2 without precursor
+Synon: MS2 without precursor synonym
+DB#: MSBNK-FIX-0011
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+H]+
+Spectrum_type: MS2
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 2
+110.0713 300
+138.0662 999
+
+Name: MS1 scan
+Synon: MS1 scan synonym
+DB#: MSBNK-FIX-0012
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+H]+
+Spectrum_type: MS
+PrecursorMZ: 195.0877
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 2
+195.0877 999
+196.091 100
+
+Name: MS3 scan
+Synon: MS3 scan synonym
+DB#: MSBNK-FIX-0013
+InChI: InChI=1S/test
+SMILES: C
+Precursor_type: [M+H]+
+Spectrum_type: MS3
+PrecursorMZ: 195.0877/138.0662
+Instrument_type: LC-ESI-QFT
+Instrument: Q Exactive Orbitrap (Thermo Scientific)
+Ion_mode: POSITIVE
+Collision_energy: 30
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 1
+110.0713 999
+
+Name: Caffeine EI
+Synon: Caffeine EI synonym
+DB#: MSBNK-FIX-E001
+InChIKey: RYYVLZVUVIJVGH-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)N(C)C(=O)N2C
+Spectrum_type: MS
+Instrument_type: GC-EI-TOF
+Instrument: JEOL AccuTOF GCx
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 7
+55 25
+67 30
+82 150
+109 200
+137 100
+165 120
+194 999
+
+Name: Caffeine EI second
+Synon: Caffeine EI second synonym
+DB#: MSBNK-FIX-E002
+InChIKey: RYYVLZVUVIJVGH-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)N(C)C(=O)N2C
+Spectrum_type: MS
+PrecursorMZ: 194
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 6
+55 40
+67 50
+82 200
+109 250
+137 90
+194 999
+
+Name: Theophylline EI
+Synon: Theophylline EI synonym
+DB#: MSBNK-FIX-E003
+InChIKey: ZFXYFBGIUFBOJW-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: CN1C=NC2=C1C(=O)N(C)C(=O)N2C
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 5
+42 100
+69 50
+82 80
+110 60
+180 999
+
+Name: Toluene EI
+Synon: Toluene EI synonym
+DB#: MSBNK-FIX-E004
+InChIKey: YXFVVABEGXRONW-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: Cc1ccccc1
+Spectrum_type: MS
+Instrument_type: GC-EI-TOF
+Instrument: JEOL AccuTOF GCx
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 5
+39 100
+51 80
+65 100
+91 999
+92 700
+
+Name: Benzene EI
+Synon: Benzene EI synonym
+DB#: MSBNK-FIX-E005
+InChIKey: UHOVQNZJYSORNB-UHFFFAOYSA-N
+InChI: InChI=1S/test
+SMILES: c1ccccc1
+Spectrum_type: MS
+Instrument_type: GC-EI-TOF
+Instrument: JEOL AccuTOF GCx
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 4
+51 80
+52 100
+77 200
+78 999
+
+Name: Chemical ionisation spectrum
+Synon: Chemical ionisation spectrum synonym
+DB#: MSBNK-FIX-E006
+InChI: InChI=1S/test
+SMILES: C
+Spectrum_type: MS
+Instrument_type: CI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Formula: C8H10N4O2
+MW: 194
+ExactMass: 194.0804
+Comments: fixture
+Splash: splash10-test
+Num Peaks: 2
+195 999
+196 100

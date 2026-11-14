@@ -1,0 +1,544 @@
+{
+ "PC 16:0/18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H82NO8P",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PC 34:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H82NO8P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 34
+ },
+ "PC 18:1_16:0": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H82NO8P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "LPC 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@@H](O)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C26H52NO7P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PC-lyso 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@@H](O)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C26H52NO7P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PE 16:0_18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+  "formula": "C39H76NO8P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PS 18:0_18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC[C@H](N)C(=O)O",
+  "formula": "C42H80NO10P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PG 16:0_18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)OCC(O)CO",
+  "formula": "C40H77O10P",
+  "assumptions": [
+   "Head-group glycerol drawn without stereochemistry",
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "PI 38:4": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCCCC)COP(=O)(O)OC1C(O)C(O)C(O)C(O)C1O",
+  "formula": "C47H83O13P",
+  "assumptions": [
+   "Inositol drawn without stereochemistry",
+   "sn positions assumed"
+  ],
+  "db": 8,
+  "fg": 0,
+  "split": 38
+ },
+ "PA 34:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)(O)O",
+  "formula": "C37H71O8P",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 34
+ },
+ "PE P-18:0/20:4": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)O[C@H](CO/C=C\\CCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+  "formula": "C43H78NO7P",
+  "assumptions": [],
+  "db": 8,
+  "fg": 0,
+  "split": 0
+ },
+ "PE-ether 34:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)O[C@H](COCCCCCCCCCCCCCCCC)COP(=O)(O)OCCN",
+  "formula": "C39H76NO7P",
+  "assumptions": [
+   "Ether chain drawn as O-alkyl"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 34
+ },
+ "PC O-16:0/18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COCCCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H84NO7P",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "DG 16:0_18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@@H](CO)COC(=O)CCCCCCCCCCCCCCC",
+  "formula": "C37H70O5",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "MG 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@@H](O)CO",
+  "formula": "C21H40O4",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "TG 52:3": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)OC[C@@H](COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+  "formula": "C55H100O6",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 6,
+  "fg": 0,
+  "split": 52
+ },
+ "TG 16:0_18:1_18:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)OC[C@@H](COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+  "formula": "C55H100O6",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 6,
+  "fg": 0,
+  "split": 0
+ },
+ "TG-ether O-16:0_18:1_18:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)OC[C@@H](COCCCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+  "formula": "C55H102O5",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 6,
+  "fg": 0,
+  "split": 0
+ },
+ "CL 72:8": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)OC[C@H](COP(=O)(O)OCC(O)COP(=O)(O)OC[C@@H](COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCCCCCCCCCC)OC(=O)CCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCCC",
+  "formula": "C81H142O17P2",
+  "assumptions": [
+   "sn positions assumed"
+  ],
+  "db": 16,
+  "fg": 0,
+  "split": 72
+ },
+ "CL 18:2_18:2_18:2_18:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC(O)COP(=O)(O)OC[C@@H](COC(=O)CCCCCCC/C=C\\C/C=C\\CCCCC)OC(=O)CCCCCCC/C=C\\C/C=C\\CCCCC)OC(=O)CCCCCCC/C=C\\C/C=C\\CCCCC",
+  "formula": "C81H142O17P2",
+  "assumptions": [],
+  "db": 16,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer(d18:1/24:0)": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](CO)NC(=O)CCCCCCCCCCCCCCCCCCCCCCC",
+  "formula": "C42H83NO3",
+  "assumptions": [
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer 24:0_18:1;OH2": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](CO)NC(=O)CCCCCCCCCCCCCCCCCCCCCCC",
+  "formula": "C42H83NO3",
+  "assumptions": [
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer 42:1;O2": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](CO)NC(=O)CCCCCCCCCCCCCCCCCCCCCCC",
+  "formula": "C42H83NO3",
+  "assumptions": [
+   "Sphingoid base assumed d18:1, the rest as N-acyl chain",
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 39
+ },
+ "SM 34:1;O2": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](COP(=O)([O-])OCC[N+](C)(C)C)NC(=O)CCCCCCCCCCCCCCC",
+  "formula": "C39H79N2O6P",
+  "assumptions": [
+   "Sphingoid base assumed d18:1, the rest as N-acyl chain",
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 31
+ },
+ "SM d18:1/16:0": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](COP(=O)([O-])OCC[N+](C)(C)C)NC(=O)CCCCCCCCCCCCCCC",
+  "formula": "C39H79N2O6P",
+  "assumptions": [
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "SPB 18:1;OH2": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@@H](N)CO",
+  "formula": "C18H37NO2",
+  "assumptions": [
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "SPB 18:0;OH3": {
+  "smiles": "CCCCCCCCCCCCCC[C@@H](O)[C@@H](O)[C@@H](N)CO",
+  "formula": "C18H39NO3",
+  "assumptions": [
+   "Natural configuration at the sphingoid base"
+  ],
+  "db": 0,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer-Hex 18:1;OH2_24:0": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](CO[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O)NC(=O)CCCCCCCCCCCCCCCCCCCCCCC",
+  "formula": "C48H93NO8",
+  "assumptions": [
+   "Natural configuration at the sphingoid base",
+   "Hexose drawn as β-glucose"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer-Hex2 18:1;OH2_16:0": {
+  "smiles": "CCCCCCCCCCCCC/C=C/[C@@H](O)[C@H](COC1OC(CO)C(OC2OC(CO)C(O)C(O)C2O)C(O)C1O)NC(=O)CCCCCCCCCCCCCCC",
+  "formula": "C46H87NO13",
+  "assumptions": [
+   "Natural configuration at the sphingoid base",
+   "Sugars drawn without stereochemistry"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "FA 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O",
+  "formula": "C18H34O2",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "FA 20:4;OH": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCC(O)C(=O)O",
+  "formula": "C20H32O3",
+  "assumptions": [
+   "Group positions assumed"
+  ],
+  "db": 8,
+  "fg": 2,
+  "split": 0
+ },
+ "FA 20:5;Ep": {
+  "smiles": "CCC1OC1C/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)O",
+  "formula": "C20H30O3",
+  "assumptions": [
+   "Group positions assumed"
+  ],
+  "db": 8,
+  "fg": 3,
+  "split": 0
+ },
+ "FA 18:1;oxo": {
+  "smiles": "CCCCCCCCCCCCCCCCC(=O)C(=O)O",
+  "formula": "C18H34O3",
+  "assumptions": [
+   "Group positions assumed"
+  ],
+  "db": 0,
+  "fg": 2,
+  "split": 0
+ },
+ "FA 18:2;OOH": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCC(OO)C(=O)O",
+  "formula": "C18H32O4",
+  "assumptions": [
+   "Group positions assumed"
+  ],
+  "db": 4,
+  "fg": 2,
+  "split": 0
+ },
+ "FOH 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCCO",
+  "formula": "C18H36O",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "CAR 16:0": {
+  "smiles": "CCCCCCCCCCCCCCCC(=O)OC(CC(=O)[O-])C[N+](C)(C)C",
+  "formula": "C23H45NO4",
+  "assumptions": [],
+  "db": 0,
+  "fg": 0,
+  "split": 0
+ },
+ "FA-etn 20:4": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)NCCO",
+  "formula": "C22H37NO2",
+  "assumptions": [],
+  "db": 8,
+  "fg": 0,
+  "split": 0
+ },
+ "FA-amide 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(N)=O",
+  "formula": "C18H35NO",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "CE 18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)CCCC(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C45H78O2",
+  "assumptions": [
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "SE 27:1/18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)CCCC(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C45H78O2",
+  "assumptions": [
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "SE 29:2/18:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)/C=C/[C@@H](CC)C(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C47H78O2",
+  "assumptions": [
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 0
+ },
+ "FAHFA 16:0_18:0;OH": {
+  "smiles": "CCCCCCCCCCCCCCCC(=O)OC(CCCCCCCCC)CCCCCCCC(=O)O",
+  "formula": "C34H66O4",
+  "assumptions": [
+   "Group positions assumed",
+   "Ester position assumed at C9"
+  ],
+  "db": 0,
+  "fg": 1,
+  "split": 0
+ },
+ "PE P-36:3": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCC(=O)O[C@H](CO/C=C\\CCCCCC/C=C\\CCCCCCCC)COP(=O)(O)OCCN",
+  "formula": "C41H76NO7P",
+  "assumptions": [],
+  "db": 6,
+  "fg": 0,
+  "split": 36
+ },
+ "PC P-34:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](CO/C=C\\CCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H82NO7P",
+  "assumptions": [],
+  "db": 2,
+  "fg": 0,
+  "split": 34
+ },
+ "LPE P-16:0": {
+  "smiles": "CCCCCCCCCCCCCC/C=C\\OC[C@@H](O)COP(=O)(O)OCCN",
+  "formula": "C21H44NO6P",
+  "assumptions": [],
+  "db": 0,
+  "fg": 0,
+  "split": 0
+ },
+ "CE 28:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCCCCCCCCCCCC(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)CCCC(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C55H96O2",
+  "assumptions": [
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 0
+ },
+ "SE 28:2/28:2": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCCCCCCCCCCCCC(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)/C=C/C(C)C(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C56H96O2",
+  "assumptions": [
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 0
+ },
+ "CE 18:2;O": {
+  "smiles": "CCCCC/C=C\\C/C=C\\CCCCCCC(O)C(=O)O[C@H]1CC[C@@]2(C)C(=CC[C@H]3[C@@H]4CC[C@H]([C@H](C)CCCC(C)C)[C@@]4(C)CC[C@@H]32)C1",
+  "formula": "C45H76O3",
+  "assumptions": [
+   "Group positions assumed",
+   "Untyped O drawn as OH",
+   "Sterol skeleton from the carbon count (cholest-5-en-3-ol type)"
+  ],
+  "db": 4,
+  "fg": 2,
+  "split": 0
+ },
+ "CL 72:8;O4": {
+  "smiles": "CCCCC/C=C\\C/C=C\\C/C=C\\C/C=C\\CCCC(=O)O[C@H](COC(=O)C(O)C(O)C(O)/C=C\\C(O)/C=C\\C/C=C\\C/C=C\\CCCCC)COP(=O)(O)OCC(O)COP(=O)(O)OC[C@@H](COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCCCCCCCCCC",
+  "formula": "C81H142O21P2",
+  "assumptions": [
+   "Group positions assumed",
+   "Untyped O drawn as OH",
+   "sn positions assumed"
+  ],
+  "db": 16,
+  "fg": 8,
+  "split": 72
+ },
+ "FAHFA 36:1;O2": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCC(O)C(=O)OC(CCCCCCCCC)CCCCCCCC(=O)O",
+  "formula": "C36H68O5",
+  "assumptions": [
+   "Group positions assumed",
+   "Hydroxy fatty acid assumed to be the longer chain",
+   "Untyped O drawn as OH",
+   "Ester position assumed at C9"
+  ],
+  "db": 2,
+  "fg": 3,
+  "split": 36
+ },
+ "PG 18:1_18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@H](COP(=O)(O)OCC(O)CO)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+  "formula": "C42H79O10P",
+  "assumptions": [
+   "Head-group glycerol drawn without stereochemistry"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 0
+ },
+ "PC 18:1/16:0": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)O[C@H](COC(=O)CCCCCCCCCCCCCCC)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C42H82NO8P",
+  "assumptions": [
+   "sn order in the name is not used"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "LPC 0:0/18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@@H](O)COP(=O)([O-])OCC[N+](C)(C)C",
+  "formula": "C26H52NO7P",
+  "assumptions": [
+   "sn order in the name is not used"
+  ],
+  "db": 2,
+  "fg": 0,
+  "split": 0
+ },
+ "TG 18:1/16:0/18:1": {
+  "smiles": "CCCCCCCC/C=C\\CCCCCCCC(=O)OC[C@@H](COC(=O)CCCCCCCCCCCCCCC)OC(=O)CCCCCCC/C=C\\CCCCCCCC",
+  "formula": "C55H102O6",
+  "assumptions": [
+   "sn order in the name is not used"
+  ],
+  "db": 4,
+  "fg": 0,
+  "split": 0
+ },
+ "Cer 16:0_18:1;O": {
+  "error": "Unsupported"
+ },
+ "DG O-16:1": {
+  "error": "Unsupported"
+ },
+ "PC 4:1": {
+  "error": "Unsupported"
+ },
+ "FA 2:1": {
+  "error": "Unsupported"
+ }
+}

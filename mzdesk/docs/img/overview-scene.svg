@@ -1,0 +1,124 @@
+<svg viewBox="0 0 720 533" xmlns="http://www.w3.org/2000/svg">
+<title>What mzDesk does</title>
+<desc>On the left, what you give: a spectrum (MS/MS or EI, as text, a file or a USI), a compound (a name, a SMILES or a drawing) or an m/z value. In the middle, mzDesk: 28 modules in six groups plus the Calculator, each group in its own colour, and, below them, 3 workflows that run a fixed chain of steps (adduct, formula, library, structure, answer). On the right, what you get: an answer such as Caffeine, Level 2a, 1.00; ranked candidates; a method sheet; and the Session report. At the bottom, the two places it runs: mzdesk.com in a browser, with nothing to install, and the local version on your own computer, where your data stays.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<!-- drawn on a 760 x 600 grid, scaled to the 720-wide figure frame -->
+<g transform="scale(0.94737)">
+
+<!-- column heads: numbered badges -->
+<circle class="fg-dot" cx="28" cy="25" r="12"/><text class="fg-dot-text" x="28" y="25" dy=".35em" text-anchor="middle">1</text>
+<text class="fg-title" x="50" y="31">You give</text>
+<circle class="fg-dot" cx="258" cy="25" r="12"/><text class="fg-dot-text" x="258" y="25" dy=".35em" text-anchor="middle">2</text>
+<text class="fg-title" x="280" y="31">mzDesk runs it</text>
+<circle class="fg-dot" cx="566" cy="25" r="12"/><text class="fg-dot-text" x="566" y="25" dy=".35em" text-anchor="middle">3</text>
+<text class="fg-title" x="588" y="31">You get</text>
+
+<!-- 1. inputs -->
+<rect class="fg-box" x="16" y="52" width="190" height="92" rx="12"/>
+<circle class="fg-fill-soft" cx="52" cy="98" r="26"/>
+<path class="fg-stroke-accent" d="M36 110H68M40 110V96M46 110V84M52 110V100M58 110V90M64 110V104"/>
+<text class="fg-title" x="92" y="88">Spectrum</text>
+<text class="fg-muted" x="92" y="108">MS/MS or EI</text>
+<text class="fg-muted" x="92" y="126">text, file, USI</text>
+
+<rect class="fg-box" x="16" y="160" width="190" height="92" rx="12"/>
+<circle class="fg-fill-soft" cx="52" cy="206" r="26"/>
+<polygon class="fg-stroke-accent" points="62.1,199 62.1,213 50,220 37.9,213 37.9,199 50,192"/>
+<circle class="fg-stroke-accent" cx="50" cy="206" r="7"/>
+<path class="fg-stroke-accent" d="M62.1 199L70 194"/>
+<text class="fg-title" x="92" y="196">Compound</text>
+<text class="fg-muted" x="92" y="216">name or SMILES</text>
+<text class="fg-muted" x="92" y="234">or a drawing</text>
+
+<rect class="fg-box" x="16" y="268" width="190" height="92" rx="12"/>
+<circle class="fg-fill-soft" cx="52" cy="314" r="26"/>
+<text class="fg-accent-text" x="52" y="319" text-anchor="middle">m/z</text>
+<text class="fg-title" x="92" y="304">m/z value</text>
+<text class="fg-muted" x="92" y="324">from MS1</text>
+<text class="fg-mono" x="92" y="342">195.0877</text>
+
+<path class="fg-arrow" d="M206 98C228 98 226 192 244 194" marker-end="url(#ah)"/>
+<path class="fg-arrow" d="M206 206H244" marker-end="url(#ah)"/>
+<path class="fg-arrow" d="M206 314C228 314 226 220 244 218" marker-end="url(#ah)"/>
+
+<!-- 2. mzDesk -->
+<rect class="fg-box" x="246" y="52" width="268" height="308" rx="18"/>
+<text class="fg-title" x="264" y="80">28 modules</text>
+<g class="fg-g-compound"><rect class="fg-gbox" x="264" y="92" width="112" height="26" rx="8"/><text class="fg-gtext" x="320" y="105" dy=".35em" text-anchor="middle">Compound</text></g>
+<g class="fg-g-detect"><rect class="fg-gbox" x="384" y="92" width="112" height="26" rx="8"/><text class="fg-gtext" x="440" y="105" dy=".35em" text-anchor="middle">Detectability</text></g>
+<g class="fg-g-ms1"><rect class="fg-gbox" x="264" y="122" width="112" height="26" rx="8"/><text class="fg-gtext" x="320" y="135" dy=".35em" text-anchor="middle">MS1</text></g>
+<g class="fg-g-spectrum"><rect class="fg-gbox" x="384" y="122" width="112" height="26" rx="8"/><text class="fg-gtext" x="440" y="135" dy=".35em" text-anchor="middle">Spectrum</text></g>
+<g class="fg-g-ortho"><rect class="fg-gbox" x="264" y="152" width="112" height="26" rx="8"/><text class="fg-gtext" x="320" y="165" dy=".35em" text-anchor="middle">Orthogonal</text></g>
+<g class="fg-g-dataset"><rect class="fg-gbox" x="384" y="152" width="112" height="26" rx="8"/><text class="fg-gtext" x="440" y="165" dy=".35em" text-anchor="middle">Dataset Search</text></g>
+<g class="fg-g-calc"><rect class="fg-gbox" x="264" y="182" width="232" height="22" rx="8"/><text class="fg-gtext" x="380" y="193" dy=".35em" text-anchor="middle">+ Calculator</text></g>
+<path class="fg-line" d="M264 218H496"/>
+<text class="fg-title" x="264" y="244">3 workflows</text>
+<path class="fg-arrow-accent" d="M302 286H323M347 286H368M392 286H413M437 286H458"/>
+<circle class="fg-dot" cx="290" cy="286" r="12"/><path class="fg-check" d="M285 286L288.5 289.5L295.5 282.5"/>
+<circle class="fg-dot" cx="335" cy="286" r="12"/><path class="fg-check" d="M330 286L333.5 289.5L340.5 282.5"/>
+<circle class="fg-dot" cx="380" cy="286" r="12"/><path class="fg-check" d="M375 286L378.5 289.5L385.5 282.5"/>
+<circle class="fg-dot" cx="425" cy="286" r="12"/><path class="fg-check" d="M420 286L423.5 289.5L430.5 282.5"/>
+<circle class="fg-dot" cx="470" cy="286" r="12"/><path class="fg-check" d="M465 286L468.5 289.5L475.5 282.5"/>
+<text class="fg-muted" x="290" y="318" text-anchor="middle">adduct</text>
+<text class="fg-muted" x="335" y="264" text-anchor="middle">formula</text>
+<text class="fg-muted" x="380" y="318" text-anchor="middle">library</text>
+<text class="fg-muted" x="425" y="264" text-anchor="middle">structure</text>
+<text class="fg-muted" x="470" y="318" text-anchor="middle">answer</text>
+<text class="fg-small" x="380" y="346" text-anchor="middle">a fixed chain, one answer</text>
+
+<!-- 3. results -->
+<path class="fg-arrow-accent" d="M514 206C536 206 532 87 552 87" marker-end="url(#ahx)"/>
+<path class="fg-arrow-accent" d="M514 206C536 206 532 167 552 167" marker-end="url(#ahx)"/>
+<path class="fg-arrow-accent" d="M514 206C536 206 532 247 552 247" marker-end="url(#ahx)"/>
+<path class="fg-arrow-accent" d="M514 206C536 206 532 327 552 327" marker-end="url(#ahx)"/>
+
+<rect class="fg-box" x="554" y="52" width="190" height="70" rx="12"/>
+<text class="fg-title" x="570" y="80">Caffeine</text>
+<rect class="fg-box-accent" x="570" y="92" width="80" height="22" rx="11"/>
+<text class="fg-accent-text" x="610" y="108" text-anchor="middle">Level 2a</text>
+<text class="fg-mono" x="664" y="108">1.00</text>
+
+<rect class="fg-box" x="554" y="132" width="190" height="70" rx="12"/>
+<text class="fg-small" x="570" y="156">Ranked candidates</text>
+<rect class="fg-fill-accent" x="570" y="166" width="150" height="6" rx="3"/>
+<rect class="fg-fill-accent" x="570" y="177" width="108" height="6" rx="3" opacity="0.6"/>
+<rect class="fg-fill-accent" x="570" y="188" width="70" height="6" rx="3" opacity="0.3"/>
+
+<rect class="fg-box" x="554" y="212" width="190" height="70" rx="12"/>
+<rect class="fg-stroke-accent" x="568" y="227" width="26" height="40" rx="4"/>
+<rect class="fg-fill-accent" x="575" y="222" width="12" height="8" rx="2"/>
+<path class="fg-stroke-accent" d="M574 241H588M574 249H588M574 257H584"/>
+<text class="fg-title" x="606" y="244">Method sheet</text>
+<text class="fg-muted" x="606" y="264">column, ion, m/z</text>
+
+<rect class="fg-box" x="554" y="292" width="190" height="70" rx="12"/>
+<path class="fg-stroke-accent" d="M568 306H586L594 314V348H568Z"/>
+<path class="fg-stroke-accent" d="M586 306V314H594M574 326H588M574 334H588M574 342H582"/>
+<text class="fg-title" x="606" y="324">Session report</text>
+<text class="fg-muted" x="606" y="344">.html and .json</text>
+
+<g transform="translate(0 -38)">
+<!-- where it runs -->
+<circle class="fg-dot" cx="28" cy="446" r="12"/><text class="fg-dot-text" x="28" y="446" dy=".35em" text-anchor="middle">4</text>
+<text class="fg-title" x="50" y="452">Where it runs</text>
+
+<rect class="fg-box" x="16" y="470" width="356" height="114" rx="12"/>
+<rect class="fg-stroke-accent" x="36" y="496" width="80" height="58" rx="8"/>
+<path class="fg-stroke-accent" d="M36 510H116"/>
+<circle class="fg-fill-accent" cx="45" cy="503" r="2.2"/><circle class="fg-fill-accent" cx="52" cy="503" r="2.2"/><circle class="fg-fill-accent" cx="59" cy="503" r="2.2"/>
+<path class="fg-stroke-accent" d="M48 524H100M48 534H88M48 544H94" opacity="0.55"/>
+<text class="fg-title" x="136" y="512">mzdesk.com</text>
+<text class="fg-muted" x="136" y="534">Open it in a browser.</text>
+<text class="fg-muted" x="136" y="554">Nothing to install.</text>
+
+<rect class="fg-box" x="388" y="470" width="356" height="114" rx="12"/>
+<rect class="fg-stroke-accent" x="412" y="496" width="76" height="50" rx="5"/>
+<path class="fg-stroke-accent" d="M402 552H498L492 560H408Z"/>
+<path class="fg-stroke-accent" d="M444 518V513A6 6 0 0 1 456 513V518"/>
+<rect class="fg-fill-accent" x="440" y="518" width="20" height="15" rx="3"/>
+<text class="fg-title" x="516" y="512">Local version</text>
+<text class="fg-muted" x="516" y="534">Runs on your computer.</text>
+<text class="fg-muted" x="516" y="554">Your data stays there.</text>
+</g>
+</g>
+</svg>

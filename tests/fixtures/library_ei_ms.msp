@@ -1,0 +1,123 @@
+Name: LACTIC ACID-DI-TMS
+DB#: MSBNK-FIXGC-0001
+InChIKey: HXRGKEOWDNVHPA-UHFFFAOYSA-N
+SMILES: CC(O[Si](C)(C)C)C(=O)O[Si](C)(C)C
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI RMU-6M
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 8
+45 30
+73 999
+75 150
+117 600
+118 60
+147 90
+191 20
+219 40
+
+Name: Glycine
+DB#: MSBNK-FIXGC-0002
+InChIKey: DHMQDGOQFOQNFH-UHFFFAOYSA-N
+SMILES: NCC(O)=O
+Spectrum_type: MS
+Instrument_type: GC-EI-TOF
+Instrument: Pegasus III TOF-MS system, Leco
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 9
+73 999
+86 380
+100 210
+102 40
+147 300
+174 700
+175 140
+248 140
+276 45
+
+Name: UREA
+DB#: MSBNK-FIXGC-0003
+InChIKey: XSQUKJJJFZCRTK-UHFFFAOYSA-N
+SMILES: NC(N)=O
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 6
+17 25
+28 60
+30 80
+43 120
+44 999
+60 700
+
+Name: TRIMETHYLSILYL HEXANOATE
+DB#: MSBNK-FIXGC-0004
+InChIKey: CYXNJMDACJPPRR-UHFFFAOYSA-N
+SMILES: CCCCCC(=O)O[Si](C)(C)C
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 7
+43 120
+73 999
+75 400
+117 500
+129 200
+145 80
+173 100
+
+Name: HEXANOIC ACID
+DB#: MSBNK-FIXGC-0005
+InChIKey: FUZZWVXGSFPDMH-UHFFFAOYSA-N
+SMILES: CCCCCC(=O)O
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 5
+41 100
+43 150
+60 999
+87 100
+116 15
+
+Name: TOLUENE
+DB#: MSBNK-FIXGC-0006
+InChIKey: YXFVVABEGXRONW-UHFFFAOYSA-N
+SMILES: Cc1ccccc1
+Spectrum_type: MS
+Instrument_type: GC-EI-TOF
+Instrument: JEOL AccuTOF GCx
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 5
+39 100
+51 80
+65 100
+91 999
+92 700
+
+Name: UNKNOWN SILYL COMPOUND
+DB#: MSBNK-FIXGC-0007
+SMILES: 
+Spectrum_type: MS
+Instrument_type: EI-B
+Instrument: HITACHI M-80B
+Ion_mode: POSITIVE
+Comments: synthetic fixture spectrum for tests/test_workflow_ei_ms.py
+Num Peaks: 8
+45 30
+73 999
+75 140
+117 590
+118 70
+147 80
+191 25
+219 35

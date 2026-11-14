@@ -1,0 +1,84 @@
+/* Fragment view pop-up (components/FragmentDialog.tsx). Shares .dialog-overlay with the internet-off dialog (theme.css).
+   Colour only on the fragments (dots, halos, sticks); surfaces, text and lines stay neutral. */
+
+/* the "View" button, and the Fragments column frozen next to the (already frozen) first column of a wide table */
+.fv-open {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; color: var(--ink-2); background: var(--panel);
+  border: 1px solid var(--line-strong); border-radius: 99px; font: inherit; font-size: 12px; font-weight: 600; line-height: 1.4; cursor: pointer; white-space: nowrap;
+}
+.fv-open:hover { color: var(--ink); border-color: var(--ink-2); }
+.fv-open:focus-visible, .fv-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.table-wrap.wide .out-table th.col-frozen, .table-wrap.wide .out-table td.col-frozen { position: sticky; left: var(--col1-w, 0px); z-index: 2; box-shadow: 1px 0 0 var(--line); }
+.table-wrap.wide .out-table th.col-frozen { background: var(--canvas); }
+.table-wrap.wide .out-table td.col-frozen { background: var(--panel); }
+.table-wrap.wide.has-frozen2 .out-table th:first-child, .table-wrap.wide.has-frozen2 .out-table td:first-child { box-shadow: none; }
+
+/* pop-up frame */
+.fv-overlay { align-items: start; overflow-y: auto; padding: 4vh 20px; }
+.fv-card {
+  width: min(1120px, 100%); margin: 0 auto; color: var(--ink-2); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 16px;
+  box-shadow: var(--shadow-pop); animation: feedback-in .18s ease-out; outline: none;
+}
+.fv-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 16px; border-bottom: 1px solid var(--line); }
+.fv-head-text { flex: 1; min-width: 0; }
+.fv-kicker { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.fv-head h2 { margin: 3px 0 0; color: var(--ink); font-size: 20px; font-weight: 600; letter-spacing: -.015em; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-sub { margin-top: 3px; color: var(--muted); font: 12px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-close { flex: none; width: 32px; height: 32px; margin: -4px -8px 0 0; color: var(--muted); background: none; border: 0; border-radius: 8px; font-size: 24px; line-height: 1; cursor: pointer; }
+.fv-close:hover { color: var(--ink); background: var(--hover); }
+.fv-body { padding: 20px 24px 24px; }
+.fv-actions { margin-top: 14px; }
+.fv-formula sub, .fv-formula sup { font-size: .75em; }
+
+/* progress */
+.fv-progress { padding: 20px 0 10px; }
+.fv-progress-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 9px; color: var(--ink); font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.fv-bar { height: 5px; overflow: hidden; background: var(--accent-bg); border-radius: 5px; }
+.fv-bar > span { display: block; height: 100%; border-radius: inherit; transition: width .3s cubic-bezier(.2, .8, .2, 1); background: linear-gradient(90deg, var(--accent-line), var(--accent)); }
+
+/* summary strip: four facts in one bordered row */
+.fv-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.fv-fact { min-width: 0; padding: 13px 16px; }
+.fv-fact + .fv-fact { border-left: 1px solid var(--line); }
+.fv-fact-label { color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.fv-fact-value { margin-top: 3px; color: var(--ink); font-size: 21px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.fv-fact-note { margin-top: 2px; color: var(--faint); font-size: 11.5px; line-height: 1.35; }
+
+/* structure + spectrum */
+.fv-main { display: grid; grid-template-columns: minmax(260px, 400px) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.fv-main:not(:has(.fv-overview)) { grid-template-columns: 1fr; }
+.fv-overview, .fv-spectrum { display: flex; flex-direction: column; justify-content: center; min-width: 0; margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.fv-overview { padding: 14px 14px 10px; }
+.fv-overview-img { display: block; width: 100%; height: auto; }      /* SVG drawings are recoloured per theme, so no white backing */
+.fv-overview figcaption { margin-top: 6px; color: var(--muted); font-size: 11.5px; text-align: center; }
+.fv-spectrum { padding: 8px 8px 0; }
+.fv-spectrum .fig { padding: 0; background: none; border: 0; border-radius: 0; }      /* the panel is the frame */
+
+/* one card per fragment */
+.fv-frags { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 14px; }
+.fv-frag { padding: 12px 14px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.fv-frag header { display: flex; align-items: baseline; gap: 7px; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 1.3; }
+.fv-dot { flex: none; align-self: center; width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, .25); }
+.fv-frag-mz { margin-left: auto; color: var(--muted); font: 500 12px var(--mono); }
+.fv-frag-sub { margin: 3px 0 6px; color: var(--muted); font: 11.5px var(--mono); }
+.fv-frag-img { display: block; width: 100%; height: auto; border-radius: 6px; }
+.fv-frag-img.raster { max-height: 190px; object-fit: contain; background: var(--image-bg); }   /* PNG: white backing in every theme */
+.fv-frag-note { margin: 6px 0 0; color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.fv-frag-note.warn { color: var(--ov-amber-ink); }
+.fv-notes { margin: 18px 0 0; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.fv-notes li { margin-bottom: 3px; }
+
+@media (max-width: 860px) {
+  .fv-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fv-fact:nth-child(3) { border-left: 0; }
+  .fv-fact:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .fv-main { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .fv-overlay { padding: 0; }
+  .fv-card { min-height: 100dvh; border-radius: 0; border: 0; }
+  .fv-head, .fv-body { padding-left: 16px; padding-right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fv-card, .fv-bar > span { animation: none; transition: none; }
+}

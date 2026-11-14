@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 74.08 86.80"><style>.back{fill:#5b6070}.wall{fill:#d7dae1}.ceil{fill:#9aa0ad}.front{fill:#161a23}.side{fill:#ffffff}.top{fill:#2f4b86}.letter{fill:#161a23}.front,.side,.top{stroke:#161a23;stroke-width:2.4;stroke-linejoin:round}@media (prefers-color-scheme: dark){.front,.letter{fill:#e8eaf0}.side{fill:#181b21}.top{fill:#7b9cf0}.front,.side,.top{stroke:#e8eaf0}.back{fill:#3a3f4b}.wall{fill:#9198a6}.ceil{fill:#6c7381}}</style>
+<polygon class="back" points="23.88,36.80 30.81,40.80 30.81,64.00 23.88,60.00"/>
+<polygon class="wall" points="9.33,45.20 23.88,36.80 23.88,60.00 9.33,68.40"/>
+<polygon class="ceil" points="9.33,45.20 16.26,49.20 30.81,40.80 23.88,36.80"/>
+<polygon class="back" points="37.73,44.80 44.66,48.80 44.66,72.00 37.73,68.00"/>
+<polygon class="wall" points="23.18,53.20 37.73,44.80 37.73,68.00 23.18,76.40"/>
+<polygon class="ceil" points="23.18,53.20 30.11,57.20 44.66,48.80 37.73,44.80"/>
+<polygon class="front" points="2.40,22.40 37.04,42.40 37.04,84.40 30.11,80.40 30.11,57.20 23.18,53.20 23.18,76.40 16.26,72.40 16.26,49.20 9.33,45.20 9.33,68.40 2.40,64.40"/>
+<polygon class="side" points="37.04,42.40 71.68,22.40 71.68,64.40 37.04,84.40"/>
+<polygon class="top" points="37.04,2.40 71.68,22.40 37.04,42.40 2.40,22.40"/>
+<polygon class="letter" points="45.35,46.80 63.37,36.40 63.37,41.20 51.24,61.80 63.37,54.80 63.37,59.60 45.35,70.00 45.35,65.20 57.48,44.60 45.35,51.60"/>
+</svg>

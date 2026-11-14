@@ -1,0 +1,6150 @@
+{
+"source": "lipid_name_map 0.4.0, original package (benchmark/name_map), 2026-10-31",
+"version": "0.4.0",
+"results": [
+{
+"input": "PC 16:0/18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:1",
+"L2": "PC 18:1_16:0",
+"L3": "PC 18:1_16:0",
+"LM_species": "PC 34:1",
+"LM_molecular": "PC 16:0_18:1",
+"flags": []
+},
+{
+"input": "PC 34:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PC",
+"L1": "PC 34:1",
+"L2": "",
+"L3": "",
+"LM_species": "PC 34:1",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "LPC 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-lyso",
+"L1": "PC-lyso 18:1",
+"L2": "PC-lyso 18:1",
+"L3": "PC-lyso 18:1",
+"LM_species": "LPC 18:1",
+"LM_molecular": "LPC 18:1",
+"flags": []
+},
+{
+"input": "PE P-18:0/20:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-ether",
+"L1": "PE-ether 38:5",
+"L2": "PE-ether 20:4_18:1",
+"L3": "PE-ether 20:4_O-18:1;P",
+"LM_species": "PE O-38:5",
+"LM_molecular": "PE P-18:0_20:4",
+"flags": [
+"P_db_plus1"
+]
+},
+{
+"input": "Cer(d18:1/24:0)",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 42:1;O2",
+"L2": "Cer 24:0_18:1;(O2)",
+"L3": "Cer 24:0_18:1;OH2",
+"LM_species": "Cer 42:1;O2",
+"LM_molecular": "Cer 18:1;O2/24:0",
+"flags": []
+},
+{
+"input": "Cer 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 42:1;O2",
+"L2": "Cer 24:0_18:1;(O2)",
+"L3": "Cer 24:0_18:1;OH2",
+"LM_species": "Cer 42:1;O2",
+"LM_molecular": "Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "SM 34:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "SM",
+"L1": "SM 34:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "SM 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "TG 52:3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "TG",
+"L1": "TG 52:3",
+"L2": "",
+"L3": "",
+"LM_species": "TG 52:3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CE 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-oacyl",
+"L1": "ST-oacyl 45:2;O",
+"L2": "ST-oacyl 27:1_18:1;(O)",
+"L3": "ST-oacyl 27:1;OH_18:1",
+"LM_species": "CE 18:1",
+"LM_molecular": "CE 18:1",
+"flags": [
+"alias_inferred",
+"class_implied_OH",
+"implied_O",
+"implied_sterol_chain"
+]
+},
+{
+"input": "SE 27:1/18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-oacyl",
+"L1": "ST-oacyl 45:2;O",
+"L2": "ST-oacyl 27:1_18:1;(O)",
+"L3": "ST-oacyl 27:1;OH_18:1",
+"LM_species": "SE 27:1/18:1",
+"LM_molecular": "SE 27:1/18:1",
+"flags": [
+"class_implied_OH",
+"implied_O"
+]
+},
+{
+"input": "FA 20:4;OH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA",
+"L1": "FA 20:4;O",
+"L2": "FA 20:4;(O)",
+"L3": "FA 20:4;OH",
+"LM_species": "FA 20:4;O",
+"LM_molecular": "FA 20:4;O",
+"flags": []
+},
+{
+"input": "ST 27:1;O",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST",
+"L1": "ST 27:1;O",
+"L2": "ST 27:1;(O)",
+"L3": "",
+"LM_species": "ST 27:1;O",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Phosphatidylcholine",
+"status": "rejected",
+"reason": "no_chain",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "palmitic acid",
+"status": "rejected",
+"reason": "no_chain",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PE-P 18:0_16:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE-ether",
+"L1": "PE-ether 34:2",
+"L2": "",
+"L3": "",
+"LM_species": "PE O-34:2",
+"LM_molecular": "",
+"flags": [
+"P_db_plus1",
+"p_landing_ambiguous"
+]
+},
+{
+"input": "PE O-18:0_16:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-ether",
+"L1": "PE-ether 34:1",
+"L2": "PE-ether 18:0_16:1",
+"L3": "PE-ether O-18:0_16:1",
+"LM_species": "PE O-34:1",
+"LM_molecular": "PE O-18:0_16:1",
+"flags": []
+},
+{
+"input": "Cer 18:1;O2/24:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 42:1;O2",
+"L2": "Cer 24:0_18:1;(O2)",
+"L3": "Cer 24:0_18:1;OH2",
+"LM_species": "Cer 42:1;O2",
+"LM_molecular": "Cer 18:1;O2/24:0",
+"flags": [
+"oxygen_assumed_OH"
+]
+},
+{
+"input": "Cer 18:1;O2_24:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 42:1;O2",
+"L2": "Cer 24:0_18:1;(O2)",
+"L3": "Cer 24:0_18:1;OH2",
+"LM_species": "Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"harmonized_name_oxygen_placement",
+"oxygen_assumed_OH"
+]
+},
+{
+"input": "HexCer d18:1/24:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex",
+"L1": "Cer-Hex 42:1;O2",
+"L2": "Cer-Hex 24:0_18:1;(O2)",
+"L3": "Cer-Hex 24:0_18:1;OH2",
+"LM_species": "HexCer 42:1;O2",
+"LM_molecular": "HexCer 18:1;O2/24:0",
+"flags": []
+},
+{
+"input": "TG(16:0/18:1/18:2)",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "TG",
+"L1": "TG 52:3",
+"L2": "TG 18:2_18:1_16:0",
+"L3": "TG 18:2_18:1_16:0",
+"LM_species": "TG 52:3",
+"LM_molecular": "TG 16:0_18:1_18:2",
+"flags": []
+},
+{
+"input": "FA 20:4;O2",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "FA",
+"L1": "FA 20:4;O2",
+"L2": "FA 20:4;(O2)",
+"L3": "",
+"LM_species": "FA 20:4;O2",
+"LM_molecular": "FA 20:4;O2",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "MGDG 16:0_18:3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-Hex",
+"L1": "DG-Hex 34:3",
+"L2": "DG-Hex 18:3_16:0",
+"L3": "DG-Hex 18:3_16:0",
+"LM_species": "MGDG 34:3",
+"LM_molecular": "MGDG 16:0_18:3",
+"flags": []
+},
+{
+"input": "CoQ9",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CoQ",
+"L1": "CoQ 54:11;O4",
+"L2": "CoQ 54:11;O4",
+"L3": "CoQ 54:11;O4",
+"LM_species": "CoQ9",
+"LM_molecular": "CoQ9",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "CoQ6",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CoQ",
+"L1": "CoQ 39:8;O4",
+"L2": "CoQ 39:8;O4",
+"L3": "CoQ 39:8;O4",
+"LM_species": "CoQ6",
+"LM_molecular": "CoQ6",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "PC 16:0/18:1 [M+H]+",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:1",
+"L2": "PC 18:1_16:0",
+"L3": "PC 18:1_16:0",
+"LM_species": "PC 34:1",
+"LM_molecular": "PC 16:0_18:1",
+"flags": [
+"adduct_stripped"
+]
+},
+{
+"input": "TG(16:0_18:1_18:2)+NH4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "TG",
+"L1": "TG 52:3",
+"L2": "TG 18:2_18:1_16:0",
+"L3": "TG 18:2_18:1_16:0",
+"LM_species": "TG 52:3",
+"LM_molecular": "TG 16:0_18:1_18:2",
+"flags": [
+"adduct_stripped"
+]
+},
+{
+"input": "LysoPC(18:1)",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-lyso",
+"L1": "PC-lyso 18:1",
+"L2": "PC-lyso 18:1",
+"L3": "PC-lyso 18:1",
+"LM_species": "LPC 18:1",
+"LM_molecular": "LPC 18:1",
+"flags": [
+"alias_inferred"
+]
+},
+{
+"input": "LysoPE 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-lyso",
+"L1": "PE-lyso 18:1",
+"L2": "PE-lyso 18:1",
+"L3": "PE-lyso 18:1",
+"LM_species": "LPE 18:1",
+"LM_molecular": "LPE 18:1",
+"flags": [
+"alias_inferred"
+]
+},
+{
+"input": "ChE 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-oacyl",
+"L1": "ST-oacyl 45:2;O",
+"L2": "ST-oacyl 27:1_18:1;(O)",
+"L3": "ST-oacyl 27:1;OH_18:1",
+"LM_species": "CE 18:1",
+"LM_molecular": "CE 18:1",
+"flags": [
+"alias_inferred",
+"class_implied_OH",
+"implied_O",
+"implied_sterol_chain"
+]
+},
+{
+"input": "FFA 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA",
+"L1": "FA 18:1",
+"L2": "FA 18:1",
+"L3": "FA 18:1",
+"LM_species": "FA 18:1",
+"LM_molecular": "FA 18:1",
+"flags": [
+"alias_inferred"
+]
+},
+{
+"input": "SPH 18:1;O2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 18:1;O2",
+"L2": "SPB 18:1;(O2)",
+"L3": "SPB 18:1;OH2",
+"LM_species": "SPB 18:1;O2",
+"LM_molecular": "SPB 18:1;O2",
+"flags": [
+"alias_inferred",
+"oxygen_assumed_OH"
+]
+},
+{
+"input": "SM(30:1)+H",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "SM",
+"L1": "SM 30:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "SM 30:1;O2",
+"LM_molecular": "",
+"flags": [
+"adduct_stripped",
+"base_oxygen_assumed",
+"sum_only"
+]
+},
+{
+"input": "SPB 18:0 [M+H]+",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 18:0;O2",
+"L2": "SPB 18:0;(O2)",
+"L3": "SPB 18:0;OH2",
+"LM_species": "SPB 18:0;O2",
+"LM_molecular": "SPB 18:0;O2",
+"flags": [
+"adduct_stripped",
+"base_oxygen_assumed"
+]
+},
+{
+"input": "PE-ether 22:6_20:1;P",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-ether",
+"L1": "PE-ether 42:7",
+"L2": "PE-ether 22:6_20:1",
+"L3": "PE-ether 22:6_O-20:1;P",
+"LM_species": "PE O-42:7",
+"LM_molecular": "PE P-20:0_22:6",
+"flags": [
+"ether_prefix_inferred_from_P"
+]
+},
+{
+"input": "OxPC(16:0_18:1(Ke))+H",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:2;O",
+"L2": "PC 18:2_16:0;(O)",
+"L3": "PC 18:2;oxo_16:0",
+"LM_species": "PC 34:2;O",
+"LM_molecular": "PC 16:0_18:2;O",
+"flags": [
+"adduct_stripped",
+"ox_prefix_ignored"
+]
+},
+{
+"input": "ST 24:1;O4;Phe",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Phe",
+"L1": "ST-Phe 24:1;O5",
+"L2": "ST-Phe 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Phe",
+"LM_molecular": "",
+"flags": [
+"implied_O",
+"oxygen_untyped"
+]
+},
+{
+"input": "NAIle 16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Xle",
+"L1": "FA-Xle 16:0",
+"L2": "FA-Xle 16:0",
+"L3": "FA-Xle 16:0",
+"LM_species": "NAXle 16:0",
+"LM_molecular": "NAXle 16:0",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "TG 16:0;5O(FA 16:0)/16:0/16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "TG-oacyl",
+"L1": "TG-oacyl 64:0;O",
+"L2": "TG-oacyl 16:0_16:0_16:0_16:0;(O)",
+"L3": "TG-oacyl 16:0;OH_16:0_16:0_16:0",
+"LM_species": "TG 64:0;O",
+"LM_molecular": "",
+"flags": [
+"class_implied_OH",
+"ester_position_read",
+"lm_head_inferred"
+]
+},
+{
+"input": "PC(16:0/18:1)-d7",
+"status": "unsupported",
+"reason": "isotope_label",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "lysoPC 18:1",
+"status": "unsupported",
+"reason": "class_unknown",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC-d7 16:0/18:1",
+"status": "unsupported",
+"reason": "isotope_label",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 16:0/18:1(9Z)",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:1",
+"L2": "PC 18:1_16:0",
+"L3": "PC 18:1_16:0",
+"LM_species": "PC 34:1",
+"LM_molecular": "PC 16:0_18:1",
+"flags": []
+},
+{
+"input": "FA 18:1(11Z)",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA",
+"L1": "FA 18:1",
+"L2": "FA 18:1",
+"L3": "FA 18:1",
+"LM_species": "FA 18:1",
+"LM_molecular": "FA 18:1",
+"flags": []
+},
+{
+"input": "FA 18:1;9OH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA",
+"L1": "FA 18:1;O",
+"L2": "FA 18:1;(O)",
+"L3": "FA 18:1;OH",
+"LM_species": "FA 18:1;O",
+"LM_molecular": "FA 18:1;O",
+"flags": []
+},
+{
+"input": "CL 72:8",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "CL",
+"L1": "CL 72:8",
+"L2": "",
+"L3": "",
+"LM_species": "CL 72:8",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CL 18:2_18:2_18:2_18:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CL",
+"L1": "CL 72:8",
+"L2": "CL 18:2_18:2_18:2_18:2",
+"L3": "CL 18:2_18:2_18:2_18:2",
+"LM_species": "CL 72:8",
+"LM_molecular": "CL 18:2_18:2_18:2_18:2",
+"flags": []
+},
+{
+"input": "PG 16:0_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PG",
+"L1": "PG 34:1",
+"L2": "PG 18:1_16:0",
+"L3": "PG 18:1_16:0",
+"LM_species": "PG 34:1",
+"LM_molecular": "PG 16:0_18:1",
+"flags": []
+},
+{
+"input": "PI 38:4",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI",
+"L1": "PI 38:4",
+"L2": "",
+"L3": "",
+"LM_species": "PI 38:4",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PS 18:0_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PS",
+"L1": "PS 36:1",
+"L2": "PS 18:1_18:0",
+"L3": "PS 18:1_18:0",
+"LM_species": "PS 36:1",
+"LM_molecular": "PS 18:0_18:1",
+"flags": []
+},
+{
+"input": "PA 34:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PA",
+"L1": "PA 34:1",
+"L2": "",
+"L3": "",
+"LM_species": "PA 34:1",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "DG 16:0_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG",
+"L1": "DG 34:1",
+"L2": "DG 18:1_16:0",
+"L3": "DG 18:1_16:0",
+"LM_species": "DG 34:1",
+"LM_molecular": "DG 16:0_18:1",
+"flags": []
+},
+{
+"input": "MG 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "MG",
+"L1": "MG 18:1",
+"L2": "MG 18:1",
+"L3": "MG 18:1",
+"LM_species": "MG 18:1",
+"LM_molecular": "MG 18:1",
+"flags": []
+},
+{
+"input": "TG-ether O-16:0_18:1_18:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "TG-ether",
+"L1": "TG-ether 52:3",
+"L2": "TG-ether 18:2_18:1_16:0",
+"L3": "TG-ether 18:2_18:1_O-16:0",
+"LM_species": "TG O-52:3",
+"LM_molecular": "TG O-16:0_18:1_18:2",
+"flags": []
+},
+{
+"input": "SPB 18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 18:1;O2",
+"L2": "SPB 18:1;(O2)",
+"L3": "SPB 18:1;OH2",
+"LM_species": "SPB 18:1;O2",
+"LM_molecular": "SPB 18:1;O2",
+"flags": []
+},
+{
+"input": "SPB 18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 18:0;O3",
+"L2": "SPB 18:0;(O3)",
+"L3": "SPB 18:0;OH3",
+"LM_species": "SPB 18:0;O3",
+"LM_molecular": "SPB 18:0;O3",
+"flags": []
+},
+{
+"input": "Cer 18:0;OH3_24:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 42:0;O3",
+"L2": "Cer 24:0_18:0;(O3)",
+"L3": "Cer 24:0_18:0;OH3",
+"LM_species": "Cer 42:0;O3",
+"LM_molecular": "Cer 18:0;O3/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "FAHFA 16:0_18:0;OH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FAHFA",
+"L1": "FAHFA 34:0;O",
+"L2": "FAHFA 18:0_16:0;(O)",
+"L3": "FAHFA 18:0;OH_16:0",
+"LM_species": "FAHFA 34:0;O",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "FOH 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FOH",
+"L1": "FOH 18:1",
+"L2": "FOH 18:1",
+"L3": "FOH 18:1",
+"LM_species": "FOH 18:1",
+"LM_molecular": "FOH 18:1",
+"flags": []
+},
+{
+"input": "CAR 16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CAR",
+"L1": "CAR 16:0",
+"L2": "CAR 16:0",
+"L3": "CAR 16:0",
+"LM_species": "CAR 16:0",
+"LM_molecular": "CAR 16:0",
+"flags": []
+},
+{
+"input": "FA-etn 20:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-etn",
+"L1": "FA-etn 20:4",
+"L2": "FA-etn 20:4",
+"L3": "FA-etn 20:4",
+"LM_species": "NAE 20:4",
+"LM_molecular": "NAE 20:4",
+"flags": []
+},
+{
+"input": "FA 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA",
+"L1": "FA 18:1",
+"L2": "FA 18:1",
+"L3": "FA 18:1",
+"LM_species": "FA 18:1",
+"LM_molecular": "FA 18:1",
+"flags": []
+},
+{
+"input": "PC 16:0_18:1;OH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:1;O",
+"L2": "PC 18:1_16:0;(O)",
+"L3": "PC 18:1;OH_16:0",
+"LM_species": "PC 34:1;O",
+"LM_molecular": "PC 16:0_18:1;O",
+"flags": []
+},
+{
+"input": "Stearamide",
+"status": "rejected",
+"reason": "no_chain",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC",
+"status": "rejected",
+"reason": "class_only",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "16:0_16:0",
+"status": "rejected",
+"reason": "bare_chain",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 16:017:0",
+"status": "rejected",
+"reason": "glued_tokens",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC(16:0",
+"status": "rejected",
+"reason": "unbalanced_parens",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 16:0/18:1)",
+"status": "rejected",
+"reason": "unbalanced_parens",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "LMGP01010001",
+"status": "rejected",
+"reason": "id_or_number",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "12345",
+"status": "rejected",
+"reason": "id_or_number",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 16:0/18:1;;OH",
+"status": "rejected",
+"reason": "malformed",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer d18:1",
+"status": "rejected",
+"reason": "single_token_base",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC O-16:0/18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-ether",
+"L1": "PC-ether 34:1",
+"L2": "PC-ether 18:1_16:0",
+"L3": "PC-ether 18:1_O-16:0",
+"LM_species": "PC O-34:1",
+"LM_molecular": "PC O-16:0_18:1",
+"flags": []
+},
+{
+"input": "PE O-16:1p/20:4",
+"status": "rejected",
+"reason": "multi_ether",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "BA 24:1",
+"status": "unsupported",
+"reason": "class_not_in_vocab",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PEG 400",
+"status": "rejected",
+"reason": "no_chain",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 18:18:1",
+"status": "rejected",
+"reason": "glued_tokens",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PC 16:0/18:1/20:4/22:6",
+"status": "rejected",
+"reason": "chain_count",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "",
+"status": "rejected",
+"reason": "empty",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": " ",
+"status": "rejected",
+"reason": "empty",
+"level": 0,
+"class_full": "",
+"L1": "",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "   PC 16:0/18:1  ",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC",
+"L1": "PC 34:1",
+"L2": "PC 18:1_16:0",
+"L3": "PC 18:1_16:0",
+"LM_species": "PC 34:1",
+"LM_molecular": "PC 16:0_18:1",
+"flags": []
+},
+{
+"input": "DG-Hex2-ether 50:6",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DG-Hex2-ether",
+"L1": "DG-Hex2-ether 50:6",
+"L2": "",
+"L3": "",
+"LM_species": "DGDG O-50:6",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-KDN2 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-KDN2",
+"L1": "Cer-Hex3-HexNAc-KDN2 42:1;O2",
+"L2": "Cer-Hex3-HexNAc-KDN2 24:0_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc-KDN2 24:0_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc-KDN(2)-Cer 42:1;O2",
+"LM_molecular": "Hex(3)-HexNAc-KDN(2)-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "DGCC 22:4_19:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DGCC",
+"L1": "DGCC 41:4",
+"L2": "DGCC 22:4_19:0",
+"L3": "DGCC 22:4_19:0",
+"LM_species": "DGCC 41:4",
+"LM_molecular": "DGCC 19:0_22:4",
+"flags": []
+},
+{
+"input": "SPB-phos 17:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "SPB-phos",
+"L1": "SPB-phos 17:0;O2",
+"L2": "SPB-phos 17:0;(O2)",
+"L3": "",
+"LM_species": "SPBP 17:0;O2",
+"LM_molecular": "SPBP 17:0;O2",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc2 28:0_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-NeuAc2",
+"L1": "Cer-Hex2-NeuAc2 46:0;O2",
+"L2": "Cer-Hex2-NeuAc2 28:0_18:0;(O2)",
+"L3": "Cer-Hex2-NeuAc2 28:0_18:0;OH2",
+"LM_species": "NeuAc2Hex2Cer 46:0;O2",
+"LM_molecular": "NeuAc2Hex2Cer 18:0;O2/28:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PS-nacyl 52:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PS-nacyl",
+"L1": "PS-nacyl 52:1",
+"L2": "",
+"L3": "",
+"LM_species": "PS-NAc 52:1",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc5-Fuc2 36:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc5-Fuc2",
+"L1": "Cer-Hex5-HexNAc5-Fuc2 36:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(5)-Fuc(2)-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-Thr 24:1;OH2;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Thr",
+"L1": "ST-Thr 24:1;O4",
+"L2": "ST-Thr 24:1;(O4)",
+"L3": "ST-Thr 24:1;OH2;COOH",
+"LM_species": "ST 24:1;O3;Thr",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc 26:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex6-HexNAc",
+"L1": "Cer-Hex6-HexNAc 44:1;O2",
+"L2": "Cer-Hex6-HexNAc 26:0_18:1;(O2)",
+"L3": "Cer-Hex6-HexNAc 26:0_18:1;OH2",
+"LM_species": "Hex(6)-HexNAc-Cer 44:1;O2",
+"LM_molecular": "Hex(6)-HexNAc-Cer 18:1;O2/26:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuAc 50:0;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc-NeuAc",
+"L1": "Cer-Hex2-HexNAc-NeuAc 50:0;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuAc-Cer 50:0;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc3-NeuGc 40:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex6-HexNAc3-NeuGc",
+"L1": "Cer-Hex6-HexNAc3-NeuGc 40:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(3)-NeuGc-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuGc 24:1_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3-NeuGc",
+"L1": "Cer-Hex5-HexNAc3-NeuGc 42:2;O2",
+"L2": "Cer-Hex5-HexNAc3-NeuGc 24:1_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc3-NeuGc 24:1_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc(3)-NeuGc-Cer 42:2;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-NeuGc-Cer 18:1;O2/24:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc-Fuc 30:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc-Fuc",
+"L1": "Cer-Hex5-HexNAc-Fuc 48:1;O2",
+"L2": "Cer-Hex5-HexNAc-Fuc 30:0_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc-Fuc 30:0_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc-Fuc-Cer 48:1;O2",
+"LM_molecular": "Hex(5)-HexNAc-Fuc-Cer 18:1;O2/30:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuGc 28:5_20:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuGc",
+"L1": "Cer-Hex4-HexNAc2-NeuGc 48:6;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuGc 28:5_20:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuGc 28:5_20:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuGc-Cer 48:6;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuGc-Cer 20:1;O2/28:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PE 84:12",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE",
+"L1": "PE 84:12",
+"L2": "",
+"L3": "",
+"LM_species": "PE 84:12",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE-ether-nacyl 22:3_18:1_O-13:1;P",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-ether-nacyl",
+"L1": "PE-ether-nacyl 53:5",
+"L2": "PE-ether-nacyl 22:3_18:1_13:1",
+"L3": "PE-ether-nacyl 22:3_18:1_O-13:1;P",
+"LM_species": "PE-N[FA] O-53:5",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuAc3 58:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc-NeuAc3",
+"L1": "Cer-Hex2-HexNAc-NeuAc3 58:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuAc(3)-Cer 58:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuAc2 26:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuAc2",
+"L1": "Cer-Hex4-HexNAc2-NeuAc2 44:1;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuAc2 26:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuAc2 26:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuAc(2)-Cer 44:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuAc(2)-Cer 18:1;O2/26:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex7 40:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex7",
+"L1": "Cer-Hex7 40:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(7)-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex-sulf 29:0;OH2_20:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex-sulf",
+"L1": "Cer-Hex-sulf 49:2;O2",
+"L2": "Cer-Hex-sulf 29:0_20:2;(O2)",
+"L3": "Cer-Hex-sulf 29:0;OH2_20:2",
+"LM_species": "SHexCer 49:2;O2",
+"LM_molecular": "SHexCer 29:0;O2/20:2",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "DG-Hex 14:0_13:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-Hex",
+"L1": "DG-Hex 27:1",
+"L2": "DG-Hex 14:0_13:1",
+"L3": "DG-Hex 14:0_13:1",
+"LM_species": "MGDG 27:1",
+"LM_molecular": "MGDG 13:1_14:0",
+"flags": []
+},
+{
+"input": "Cer-Hex2-HexNAc-Fuc-NeuAc2 42:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc-Fuc-NeuAc2",
+"L1": "Cer-Hex2-HexNAc-Fuc-NeuAc2 42:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-Fuc-NeuAc(2)-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PA-ether O-30:0_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-ether",
+"L1": "PA-ether 46:0",
+"L2": "PA-ether 30:0_16:0",
+"L3": "PA-ether O-30:0_16:0",
+"LM_species": "PA O-46:0",
+"LM_molecular": "PA O-30:0_16:0",
+"flags": []
+},
+{
+"input": "PC-lyso 42:7",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-lyso",
+"L1": "PC-lyso 42:7",
+"L2": "PC-lyso 42:7",
+"L3": "PC-lyso 42:7",
+"LM_species": "LPC 42:7",
+"LM_molecular": "LPC 42:7",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuGc 20:5_18:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuGc 38:5;O3",
+"L2": "Cer-Hex3-HexNAc-NeuGc 20:5_18:0;(O3)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuGc-Cer 38:5;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc-NeuAc 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-Fuc-NeuAc 40:1;O2",
+"L2": "Cer-Hex3-HexNAc2-Fuc-NeuAc 22:0_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2-Fuc-NeuAc 22:0_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer 40:1;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PS-lyso 19:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PS-lyso",
+"L1": "PS-lyso 19:0",
+"L2": "PS-lyso 19:0",
+"L3": "PS-lyso 19:0",
+"LM_species": "LPS 19:0",
+"LM_molecular": "LPS 19:0",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc 50:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-Fuc",
+"L1": "Cer-Hex3-HexNAc-Fuc 50:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-Cer 50:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc3 20:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex7-HexNAc3",
+"L1": "Cer-Hex7-HexNAc3 38:1;O2",
+"L2": "Cer-Hex7-HexNAc3 20:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(7)-HexNAc(3)-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5",
+"L1": "Cer-Hex5 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuAc2 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3-NeuAc2",
+"L1": "Cer-Hex5-HexNAc3-NeuAc2 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-NeuAc(2)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-oacyl2 30:1;OH_27:1;OH_16:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-oacyl2",
+"L1": "ST-oacyl2 73:3;O2",
+"L2": "ST-oacyl2 30:1_27:1_16:1;(O2)",
+"L3": "ST-oacyl2 30:1;OH_27:1;OH_16:1",
+"LM_species": "CE 73:3;O2",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PI 58:12",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI",
+"L1": "PI 58:12",
+"L2": "",
+"L3": "",
+"LM_species": "PI 58:12",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CL 74:7",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "CL",
+"L1": "CL 74:7",
+"L2": "",
+"L3": "",
+"LM_species": "CL 74:7",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PA-OMe 27:0_15:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-OMe",
+"L1": "PA-OMe 42:1",
+"L2": "PA-OMe 27:0_15:1",
+"L3": "PA-OMe 27:0_15:1",
+"LM_species": "PMeOH 42:1",
+"LM_molecular": "PMeOH 15:1_27:0",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "PA-OEt 22:0_12:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-OEt",
+"L1": "PA-OEt 34:0",
+"L2": "PA-OEt 22:0_12:0",
+"L3": "PA-OEt 22:0_12:0",
+"LM_species": "PEth 34:0",
+"LM_molecular": "PEth 12:0_22:0",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc2 18:1_4:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc2",
+"L1": "Cer-Hex5-HexNAc2 22:1;O2",
+"L2": "Cer-Hex5-HexNAc2 18:1_4:0;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(2)-Cer 22:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 18:0_17:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-NeuAc2-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 35:0;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 18:0_17:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuAc(2)-NeuGc-Cer 35:0;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FA-Lys 14:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Lys",
+"L1": "FA-Lys 14:2",
+"L2": "FA-Lys 14:2",
+"L3": "FA-Lys 14:2",
+"LM_species": "NALys 14:2",
+"LM_molecular": "NALys 14:2",
+"flags": []
+},
+{
+"input": "PC 70:12",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PC",
+"L1": "PC 70:12",
+"L2": "",
+"L3": "",
+"LM_species": "PC 70:12",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-sulf2 18:1_16:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-sulf2",
+"L1": "Cer-Hex3-HexNAc-sulf2 34:2;O2",
+"L2": "Cer-Hex3-HexNAc-sulf2 18:1_16:1;(O2)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex6 44:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex6",
+"L1": "Cer-Hex6 44:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(6)-Cer 44:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PG-lyso 28:6",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PG-lyso",
+"L1": "PG-lyso 28:6",
+"L2": "PG-lyso 28:6",
+"L3": "PG-lyso 28:6",
+"LM_species": "LPG 28:6",
+"LM_molecular": "LPG 28:6",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuGc 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3-NeuGc",
+"L1": "Cer-Hex5-HexNAc3-NeuGc 42:1;O2",
+"L2": "Cer-Hex5-HexNAc3-NeuGc 24:0_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc3-NeuGc 24:0_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc(3)-NeuGc-Cer 42:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-NeuGc-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex-sulf 38:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex-sulf",
+"L1": "Cer-Hex-sulf 38:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "SHexCer 38:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "DG-Hex 19:0_16:3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-Hex",
+"L1": "DG-Hex 35:3",
+"L2": "DG-Hex 19:0_16:3",
+"L3": "DG-Hex 19:0_16:3",
+"LM_species": "MGDG 35:3",
+"LM_molecular": "MGDG 16:3_19:0",
+"flags": []
+},
+{
+"input": "FA-Val 18:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Val",
+"L1": "FA-Val 18:2",
+"L2": "FA-Val 18:2",
+"L3": "FA-Val 18:2",
+"LM_species": "NAVal 18:2",
+"LM_molecular": "NAVal 18:2",
+"flags": []
+},
+{
+"input": "Cer-Hex6-HexNAc4-Fuc-NeuAc 42:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex6-HexNAc4-Fuc-NeuAc",
+"L1": "Cer-Hex6-HexNAc4-Fuc-NeuAc 42:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(4)-Fuc-NeuAc-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE 20:0_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE",
+"L1": "PE 36:0",
+"L2": "PE 20:0_16:0",
+"L3": "PE 20:0_16:0",
+"LM_species": "PE 36:0",
+"LM_molecular": "PE 16:0_20:0",
+"flags": []
+},
+{
+"input": "DGTA 40:5",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DGTA",
+"L1": "DGTA 40:5",
+"L2": "",
+"L3": "",
+"LM_species": "DGTA 40:5",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc3-ac 20:1_20:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuAc3-ac",
+"L1": "Cer-Hex3-HexNAc-NeuAc3-ac 40:1;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc3-ac 20:1_20:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-NeuAc3-ac 20:1_20:0;OH2",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "SPB 17:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 17:1;O2",
+"L2": "SPB 17:1;(O2)",
+"L3": "SPB 17:1;OH2",
+"LM_species": "SPB 17:1;O2",
+"LM_molecular": "SPB 17:1;O2",
+"flags": []
+},
+{
+"input": "Cer-Hex10-HexNAc5 24:1_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex10-HexNAc5",
+"L1": "Cer-Hex10-HexNAc5 42:2;O2",
+"L2": "Cer-Hex10-HexNAc5 24:1_18:1;(O2)",
+"L3": "Cer-Hex10-HexNAc5 24:1_18:1;OH2",
+"LM_species": "Hex(10)-HexNAc(5)-Cer 42:2;O2",
+"LM_molecular": "Hex(10)-HexNAc(5)-Cer 18:1;O2/24:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc3 38:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex7-HexNAc3",
+"L1": "Cer-Hex7-HexNAc3 38:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(7)-HexNAc(3)-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex6 26:5_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex6",
+"L1": "Cer-Hex6 44:5;O2",
+"L2": "Cer-Hex6 26:5_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(6)-Cer 44:5;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "SPB 25:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "SPB",
+"L1": "SPB 25:0;O3",
+"L2": "SPB 25:0;(O3)",
+"L3": "",
+"LM_species": "SPB 25:0;O3",
+"LM_molecular": "SPB 25:0;O3",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex2 55:8;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2",
+"L1": "Cer-Hex2 55:8;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex2Cer 55:8;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CL-lyso2 38:6",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "CL-lyso2",
+"L1": "CL-lyso2 38:6",
+"L2": "",
+"L3": "",
+"LM_species": "DLCL 38:6",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer 26:3;OH2_14:1;OH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 40:4;O3",
+"L2": "Cer 26:3_14:1;(O3)",
+"L3": "Cer 26:3;OH2_14:1;OH",
+"LM_species": "Cer 40:4;O3",
+"LM_molecular": "Cer 26:3;O2/14:1;O",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-NeuAc2 26:0_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-Fuc-NeuAc2",
+"L1": "Cer-Hex3-HexNAc-Fuc-NeuAc2 46:1;O2",
+"L2": "Cer-Hex3-HexNAc-Fuc-NeuAc2 26:0_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-NeuAc(2)-Cer 46:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc4 24:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc4",
+"L1": "Cer-Hex5-HexNAc4 42:2;O2",
+"L2": "Cer-Hex5-HexNAc4 24:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(4)-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "TG-oacyl 64:0;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "TG-oacyl",
+"L1": "TG-oacyl 64:0;O",
+"L2": "",
+"L3": "",
+"LM_species": "TG 64:0;O",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuAc2 32:6_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-NeuAc2",
+"L1": "Cer-Hex3-HexNAc2-NeuAc2 50:7;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuAc2 32:6_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2-NeuAc2 32:6_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-NeuAc(2)-Cer 50:7;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-NeuAc(2)-Cer 18:1;O2/32:6",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "VAE 22:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "VAE",
+"L1": "VAE 22:2",
+"L2": "VAE 22:2",
+"L3": "VAE 22:2",
+"LM_species": "VAE 22:2",
+"LM_molecular": "VAE 22:2",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "ST-Tau 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Tau",
+"L1": "ST-Tau 24:1;O4",
+"L2": "ST-Tau 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;Tau",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FAHFA 30:6;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "FAHFA",
+"L1": "FAHFA 30:6;O",
+"L2": "",
+"L3": "",
+"LM_species": "FAHFA 30:6;O",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex-sulf 18:2_15:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex-sulf",
+"L1": "Cer-Hex-sulf 33:3;O2",
+"L2": "Cer-Hex-sulf 18:2_15:1;(O2)",
+"L3": "Cer-Hex-sulf 18:2_15:1;OH2",
+"LM_species": "SHexCer 33:3;O2",
+"LM_molecular": "SHexCer 15:1;O2/18:2",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "SM 33:0;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "SM",
+"L1": "SM 33:0;O2",
+"L2": "",
+"L3": "",
+"LM_species": "SM 33:0;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex 35:0_19:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex",
+"L1": "Cer-Hex 54:0;O3",
+"L2": "Cer-Hex 35:0_19:0;(O3)",
+"L3": "",
+"LM_species": "HexCer 54:0;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Cys 24:1;OH2;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Cys",
+"L1": "ST-Cys 24:1;O4",
+"L2": "ST-Cys 24:1;(O4)",
+"L3": "ST-Cys 24:1;OH2;COOH",
+"LM_species": "ST 24:1;O3;Cys",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "ST-Cit 24:1;(O5)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Cit",
+"L1": "ST-Cit 24:1;O5",
+"L2": "ST-Cit 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Cit",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-Hex5 18:1_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex5",
+"L1": "PI-Hex5 36:2",
+"L2": "PI-Hex5 18:1_18:1",
+"L3": "PI-Hex5 18:1_18:1",
+"LM_species": "PIM5 36:2",
+"LM_molecular": "PIM5 18:1_18:1",
+"flags": []
+},
+{
+"input": "PC-ether O-24:4_9:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-ether",
+"L1": "PC-ether 33:4",
+"L2": "PC-ether 24:4_9:0",
+"L3": "PC-ether O-24:4_9:0",
+"LM_species": "PC O-33:4",
+"LM_molecular": "PC O-24:4_9:0",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc2 26:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-Fuc2",
+"L1": "Cer-Hex3-HexNAc-Fuc2 44:2;O2",
+"L2": "Cer-Hex3-HexNAc-Fuc2 26:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc(2)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-KDN 18:1_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-KDN",
+"L1": "Cer-Hex3-HexNAc-KDN 36:1;O2",
+"L2": "Cer-Hex3-HexNAc-KDN 18:1_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-KDN-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "SM-oacyl 18:1_18:1_17:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "SM-oacyl",
+"L1": "SM-oacyl 53:2;O2",
+"L2": "SM-oacyl 18:1_18:1_17:0;(O2)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex-oacyl 64:6;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex-oacyl",
+"L1": "Cer-Hex-oacyl 64:6;O3",
+"L2": "",
+"L3": "",
+"LM_species": "AHexCer 64:6;O3",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "DG-ether 28:1_O-23:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-ether",
+"L1": "DG-ether 51:1",
+"L2": "DG-ether 28:1_23:0",
+"L3": "DG-ether 28:1_O-23:0",
+"LM_species": "DG O-51:1",
+"LM_molecular": "DG O-23:0_28:1",
+"flags": []
+},
+{
+"input": "ST-Asp 24:1;OH2;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Asp",
+"L1": "ST-Asp 24:1;O4",
+"L2": "ST-Asp 24:1;(O4)",
+"L3": "ST-Asp 24:1;OH2;COOH",
+"LM_species": "ST 24:1;O3;Asp",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "ST-Gly 24:2;O5",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Gly",
+"L1": "ST-Gly 24:2;O5",
+"L2": "ST-Gly 24:2;(O5)",
+"L3": "",
+"LM_species": "ST 24:2;O4;Gly",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Orn 24:1;O5",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Orn",
+"L1": "ST-Orn 24:1;O5",
+"L2": "ST-Orn 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Orn",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex9-HexNAc7-NeuAc4 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex9-HexNAc7-NeuAc4",
+"L1": "Cer-Hex9-HexNAc7-NeuAc4 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(9)-HexNAc(7)-NeuAc(4)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-Fuc 30:5_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc-Fuc",
+"L1": "Cer-Hex4-HexNAc-Fuc 50:6;O2",
+"L2": "Cer-Hex4-HexNAc-Fuc 30:5_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-Fuc-Cer 50:6;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-Hex6 19:1_16:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex6",
+"L1": "PI-Hex6 35:3",
+"L2": "PI-Hex6 19:1_16:2",
+"L3": "PI-Hex6 19:1_16:2",
+"LM_species": "PIM6 35:3",
+"LM_molecular": "PIM6 16:2_19:1",
+"flags": []
+},
+{
+"input": "Cer-Hex8-HexNAc4-Fuc2 42:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex8-HexNAc4-Fuc2",
+"L1": "Cer-Hex8-HexNAc4-Fuc2 42:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(8)-HexNAc(4)-Fuc(2)-Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3 18:1;OH2_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3",
+"L1": "Cer-Hex5-HexNAc3 34:1;O2",
+"L2": "Cer-Hex5-HexNAc3 18:1_16:0;(O2)",
+"L3": "Cer-Hex5-HexNAc3 18:1;OH2_16:0",
+"LM_species": "Hex(5)-HexNAc(3)-Cer 34:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-Cer 18:1;O2/16:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PE 36:0",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE",
+"L1": "PE 36:0",
+"L2": "",
+"L3": "",
+"LM_species": "PE 36:0",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc2-NeuAc 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2-Fuc2-NeuAc",
+"L1": "Cer-Hex4-HexNAc2-Fuc2-NeuAc 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(2)-NeuAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CPA 16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CPA",
+"L1": "CPA 16:0",
+"L2": "CPA 16:0",
+"L3": "CPA 16:0",
+"LM_species": "CPA 16:0",
+"LM_molecular": "CPA 16:0",
+"flags": []
+},
+{
+"input": "Cer-Hex8-HexNAc4-Fuc2 44:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex8-HexNAc4-Fuc2",
+"L1": "Cer-Hex8-HexNAc4-Fuc2 44:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(8)-HexNAc(4)-Fuc(2)-Cer 44:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc4 36:4_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-NeuAc4",
+"L1": "Cer-Hex3-HexNAc-NeuAc4 54:4;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc4 36:4_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuAc(4)-Cer 54:4;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Hex 28:2;O",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Hex",
+"L1": "ST-Hex 28:2;O",
+"L2": "ST-Hex 28:2;(O)",
+"L3": "",
+"LM_species": "ST 28:2;O;Hex",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FA-Met 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Met",
+"L1": "FA-Met 18:1",
+"L2": "FA-Met 18:1",
+"L3": "FA-Met 18:1",
+"LM_species": "NAMet 18:1",
+"LM_molecular": "NAMet 18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc-NeuAc2 35:0;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc-NeuAc2",
+"L1": "Cer-Hex4-HexNAc-NeuAc2 35:0;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-NeuAc(2)-Cer 35:0;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PS-ether-lyso O-15:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PS-ether-lyso",
+"L1": "PS-ether-lyso 15:0",
+"L2": "PS-ether-lyso 15:0",
+"L3": "PS-ether-lyso O-15:0",
+"LM_species": "LPS O-15:0",
+"LM_molecular": "LPS O-15:0",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc2-NeuAc 34:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3-Fuc2-NeuAc",
+"L1": "Cer-Hex5-HexNAc3-Fuc2-NeuAc 34:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc(2)-NeuAc-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc5-Fuc2 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc5-Fuc2",
+"L1": "Cer-Hex5-HexNAc5-Fuc2 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(5)-Fuc(2)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "DG-Hex2-ether 52:3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DG-Hex2-ether",
+"L1": "DG-Hex2-ether 52:3",
+"L2": "",
+"L3": "",
+"LM_species": "DGDG O-52:3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc3 42:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3-Fuc3",
+"L1": "Cer-Hex5-HexNAc3-Fuc3 42:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc(3)-Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc3 24:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2-Fuc3",
+"L1": "Cer-Hex4-HexNAc2-Fuc3 42:1;O2",
+"L2": "Cer-Hex4-HexNAc2-Fuc3 24:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(3)-Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Arg 24:2;O4",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Arg",
+"L1": "ST-Arg 24:2;O4",
+"L2": "ST-Arg 24:2;(O4)",
+"L3": "",
+"LM_species": "ST 24:2;O3;Arg",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-phos 40:3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI-phos",
+"L1": "PI-phos 40:3",
+"L2": "",
+"L3": "",
+"LM_species": "PIP 40:3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex8 18:1;OH2_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex8",
+"L1": "Cer-Hex8 34:1;O2",
+"L2": "Cer-Hex8 18:1_16:0;(O2)",
+"L3": "Cer-Hex8 18:1;OH2_16:0",
+"LM_species": "Hex(8)-Cer 34:1;O2",
+"LM_molecular": "Hex(8)-Cer 18:1;O2/16:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2 20:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2",
+"L1": "Cer-Hex4-HexNAc2 38:1;O2",
+"L2": "Cer-Hex4-HexNAc2 20:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc 18:1;OH2_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3-Fuc",
+"L1": "Cer-Hex5-HexNAc3-Fuc 36:1;O2",
+"L2": "Cer-Hex5-HexNAc3-Fuc 18:1_18:0;(O2)",
+"L3": "Cer-Hex5-HexNAc3-Fuc 18:1;OH2_18:0",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc-Cer 36:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-Fuc-Cer 18:1;O2/18:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc3-ac 30:5_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-NeuAc3-ac",
+"L1": "Cer-Hex2-NeuAc3-ac 48:6;O2",
+"L2": "Cer-Hex2-NeuAc3-ac 30:5_18:1;(O2)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "DG-Hex-ether 26:5_O-14:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-Hex-ether",
+"L1": "DG-Hex-ether 40:6",
+"L2": "DG-Hex-ether 26:5_14:1",
+"L3": "DG-Hex-ether 26:5_O-14:1",
+"LM_species": "MGDG O-40:6",
+"LM_molecular": "MGDG O-14:1_26:5",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex6-HexNAc",
+"L1": "Cer-Hex6-HexNAc 42:1;O2",
+"L2": "Cer-Hex6-HexNAc 24:0_18:1;(O2)",
+"L3": "Cer-Hex6-HexNAc 24:0_18:1;OH2",
+"LM_species": "Hex(6)-HexNAc-Cer 42:1;O2",
+"LM_molecular": "Hex(6)-HexNAc-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuAc2 18:1_16:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc3-NeuAc2",
+"L1": "Cer-Hex5-HexNAc3-NeuAc2 34:1;O2",
+"L2": "Cer-Hex5-HexNAc3-NeuAc2 18:1_16:0;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-NeuAc(2)-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "DGTA 22:4_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DGTA",
+"L1": "DGTA 40:5",
+"L2": "DGTA 22:4_18:1",
+"L3": "DGTA 22:4_18:1",
+"LM_species": "DGTA 40:5",
+"LM_molecular": "DGTA 18:1_22:4",
+"flags": []
+},
+{
+"input": "Cer-Hex2-NeuAc 19:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-NeuAc",
+"L1": "Cer-Hex2-NeuAc 37:2;O2",
+"L2": "Cer-Hex2-NeuAc 19:1_18:1;(O2)",
+"L3": "",
+"LM_species": "NeuAcHex2Cer 37:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-oacyl2 92:3;O4",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-oacyl2",
+"L1": "Cer-oacyl2 92:3;O4",
+"L2": "",
+"L3": "",
+"LM_species": "ACer 92:3;O4",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc4 26:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex6-HexNAc4",
+"L1": "Cer-Hex6-HexNAc4 44:2;O2",
+"L2": "Cer-Hex6-HexNAc4 26:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(4)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "SM-oacyl 18:1;OH2_18:1_17:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SM-oacyl",
+"L1": "SM-oacyl 53:2;O2",
+"L2": "SM-oacyl 18:1_18:1_17:0;(O2)",
+"L3": "SM-oacyl 18:1;OH2_18:1_17:0",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PG-ether 18:4_17:2",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "PG-ether",
+"L1": "PG-ether 35:6",
+"L2": "PG-ether 18:4_17:2",
+"L3": "",
+"LM_species": "PG O-35:6",
+"LM_molecular": "",
+"flags": [
+"ether_chain_unknown"
+]
+},
+{
+"input": "As-PL 36:0",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "As-PL",
+"L1": "As-PL 36:0",
+"L2": "",
+"L3": "",
+"LM_species": "As-PL 36:0",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuGc2 22:1_20:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuGc2",
+"L1": "Cer-Hex4-HexNAc2-NeuGc2 42:1;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuGc2 22:1_20:0;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuGc2 22:1_20:0;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 42:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 20:0;O2/22:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc4-Fuc 18:1_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex6-HexNAc4-Fuc",
+"L1": "Cer-Hex6-HexNAc4-Fuc 36:1;O2",
+"L2": "Cer-Hex6-HexNAc4-Fuc 18:1_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(4)-Fuc-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex10-HexNAc5 18:1_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex10-HexNAc5",
+"L1": "Cer-Hex10-HexNAc5 36:1;O2",
+"L2": "Cer-Hex10-HexNAc5 18:1_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(10)-HexNAc(5)-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuGc 20:1_4:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc2-NeuGc",
+"L1": "Cer-Hex3-HexNAc2-NeuGc 24:1;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuGc 20:1_4:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-NeuGc-Cer 24:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-Hex-lyso 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex-lyso",
+"L1": "PI-Hex-lyso 18:1",
+"L2": "PI-Hex-lyso 18:1",
+"L3": "PI-Hex-lyso 18:1",
+"LM_species": "LPIM1 18:1",
+"LM_molecular": "LPIM1 18:1",
+"flags": []
+},
+{
+"input": "ST-Tau-sulf 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Tau-sulf",
+"L1": "ST-Tau-sulf 24:1;O4",
+"L2": "ST-Tau-sulf 24:1;(O4)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-Fuc2 18:1;OH2_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc-Fuc2",
+"L1": "Cer-Hex4-HexNAc-Fuc2 34:1;O2",
+"L2": "Cer-Hex4-HexNAc-Fuc2 18:1_16:0;(O2)",
+"L3": "Cer-Hex4-HexNAc-Fuc2 18:1;OH2_16:0",
+"LM_species": "Hex(4)-HexNAc-Fuc(2)-Cer 34:1;O2",
+"LM_molecular": "Hex(4)-HexNAc-Fuc(2)-Cer 18:1;O2/16:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-oacyl2 32:0;OH_18:2_18:0;OH4_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-oacyl2",
+"L1": "Cer-oacyl2 86:2;O5",
+"L2": "Cer-oacyl2 32:0_18:2_18:0_18:0;(O5)",
+"L3": "Cer-oacyl2 32:0;OH_18:2_18:0;OH4_18:0",
+"LM_species": "ACer 86:2;O5",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "PA-ether 18:2_18:1",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "PA-ether",
+"L1": "PA-ether 36:3",
+"L2": "PA-ether 18:2_18:1",
+"L3": "",
+"LM_species": "PA O-36:3",
+"LM_molecular": "",
+"flags": [
+"ether_chain_unknown"
+]
+},
+{
+"input": "Cer-Hex 54:0;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex",
+"L1": "Cer-Hex 54:0;O3",
+"L2": "",
+"L3": "",
+"LM_species": "HexCer 54:0;O3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc3 37:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-NeuAc3",
+"L1": "Cer-Hex2-NeuAc3 37:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-NeuAc(3)-Cer 37:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc2-Fuc 33:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc2-Fuc",
+"L1": "Cer-Hex5-HexNAc2-Fuc 33:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(2)-Fuc-Cer 33:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-Fuc2 18:1;OH2_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc-Fuc2",
+"L1": "Cer-Hex4-HexNAc-Fuc2 36:1;O2",
+"L2": "Cer-Hex4-HexNAc-Fuc2 18:1_18:0;(O2)",
+"L3": "Cer-Hex4-HexNAc-Fuc2 18:1;OH2_18:0",
+"LM_species": "Hex(4)-HexNAc-Fuc(2)-Cer 36:1;O2",
+"LM_molecular": "Hex(4)-HexNAc-Fuc(2)-Cer 18:1;O2/18:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex9-HexNAc5 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex9-HexNAc5",
+"L1": "Cer-Hex9-HexNAc5 40:1;O2",
+"L2": "Cer-Hex9-HexNAc5 22:0_18:1;(O2)",
+"L3": "Cer-Hex9-HexNAc5 22:0_18:1;OH2",
+"LM_species": "Hex(9)-HexNAc(5)-Cer 40:1;O2",
+"LM_molecular": "Hex(9)-HexNAc(5)-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PI-Hex6 19:2_16:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex6",
+"L1": "PI-Hex6 35:3",
+"L2": "PI-Hex6 19:2_16:1",
+"L3": "PI-Hex6 19:2_16:1",
+"LM_species": "PIM6 35:3",
+"LM_molecular": "PIM6 16:1_19:2",
+"flags": []
+},
+{
+"input": "ST-His 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-His",
+"L1": "ST-His 24:1;O4",
+"L2": "ST-His 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;His",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuAc2 21:0_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-NeuAc2",
+"L1": "Cer-Hex3-HexNAc2-NeuAc2 39:0;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuAc2 21:0_18:0;(O2)",
+"L3": "Cer-Hex3-HexNAc2-NeuAc2 21:0_18:0;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-NeuAc(2)-Cer 39:0;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-NeuAc(2)-Cer 18:0;O2/21:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc2 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-Fuc2",
+"L1": "Cer-Hex4-HexNAc2-Fuc2 38:1;O2",
+"L2": "Cer-Hex4-HexNAc2-Fuc2 20:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-Fuc2 20:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(2)-Cer 38:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-Fuc(2)-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc2 38:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2-Fuc2",
+"L1": "Cer-Hex4-HexNAc2-Fuc2 38:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(2)-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2 44:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2",
+"L1": "Cer-Hex4-HexNAc2 44:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Cer 44:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-sulf 21:0_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-sulf",
+"L1": "Cer-Hex3-HexNAc-sulf 39:0;O2",
+"L2": "Cer-Hex3-HexNAc-sulf 21:0_18:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-sulf 21:0_18:0;OH2",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex7-HexNAc3-Fuc 20:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex7-HexNAc3-Fuc",
+"L1": "Cer-Hex7-HexNAc3-Fuc 38:1;O2",
+"L2": "Cer-Hex7-HexNAc3-Fuc 20:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(7)-HexNAc(3)-Fuc-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-NeuAc 18:1_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-NeuAc",
+"L1": "Cer-Hex3-NeuAc 36:1;O2",
+"L2": "Cer-Hex3-NeuAc 18:1_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-NeuAc-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3 42:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3",
+"L1": "Cer-Hex5-HexNAc3 42:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc3-NeuAc 42:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc3-NeuAc",
+"L1": "Cer-Hex4-HexNAc3-NeuAc 42:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(3)-NeuAc-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-Fuc-NeuAc 52:4;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc-Fuc-NeuAc",
+"L1": "Cer-Hex4-HexNAc-Fuc-NeuAc 52:4;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-Fuc-NeuAc-Cer 52:4;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2 32:5_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2",
+"L1": "Cer-Hex3-HexNAc2 50:5;O3",
+"L2": "Cer-Hex3-HexNAc2 32:5_18:0;(O3)",
+"L3": "Cer-Hex3-HexNAc2 32:5_18:0;OH3",
+"LM_species": "Hex(3)-HexNAc(2)-Cer 50:5;O3",
+"LM_molecular": "Hex(3)-HexNAc(2)-Cer 18:0;O3/32:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuGc 48:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc-NeuGc",
+"L1": "Cer-Hex2-HexNAc-NeuGc 48:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuGc-Cer 48:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-NeuAc2 18:1;OH2_17:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-Fuc-NeuAc2",
+"L1": "Cer-Hex3-HexNAc-Fuc-NeuAc2 35:1;O2",
+"L2": "Cer-Hex3-HexNAc-Fuc-NeuAc2 18:1_17:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-Fuc-NeuAc2 18:1;OH2_17:0",
+"LM_species": "Hex(3)-HexNAc-Fuc-NeuAc(2)-Cer 35:1;O2",
+"LM_molecular": "Hex(3)-HexNAc-Fuc-NeuAc(2)-Cer 18:1;O2/17:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "ST-Gly 24:1;OH3;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Gly",
+"L1": "ST-Gly 24:1;O5",
+"L2": "ST-Gly 24:1;(O5)",
+"L3": "ST-Gly 24:1;OH3;COOH",
+"LM_species": "ST 24:1;O4;Gly",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc4 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc4",
+"L1": "Cer-Hex4-HexNAc4 40:1;O2",
+"L2": "Cer-Hex4-HexNAc4 22:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc4 22:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(4)-Cer 40:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(4)-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc2 19:0_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-NeuAc2",
+"L1": "Cer-Hex2-NeuAc2 37:0;O3",
+"L2": "Cer-Hex2-NeuAc2 19:0_18:0;(O3)",
+"L3": "Cer-Hex2-NeuAc2 19:0_18:0;OH3",
+"LM_species": "NeuAc2Hex2Cer 37:0;O3",
+"LM_molecular": "NeuAc2Hex2Cer 18:0;O3/19:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2 26:4_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2",
+"L1": "Cer-Hex4-HexNAc2 44:5;O2",
+"L2": "Cer-Hex4-HexNAc2 26:4_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Cer 44:5;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc3 38:5_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuAc3",
+"L1": "Cer-Hex3-HexNAc-NeuAc3 56:5;O3",
+"L2": "Cer-Hex3-HexNAc-NeuAc3 38:5_18:0;(O3)",
+"L3": "Cer-Hex3-HexNAc-NeuAc3 38:5_18:0;OH3",
+"LM_species": "Hex(3)-HexNAc-NeuAc(3)-Cer 56:5;O3",
+"LM_molecular": "Hex(3)-HexNAc-NeuAc(3)-Cer 18:0;O3/38:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "As-PL 20:0_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "As-PL",
+"L1": "As-PL 36:0",
+"L2": "As-PL 20:0_16:0",
+"L3": "As-PL 20:0_16:0",
+"LM_species": "As-PL 36:0",
+"LM_molecular": "As-PL 16:0_20:0",
+"flags": []
+},
+{
+"input": "MG 18:3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "MG",
+"L1": "MG 18:3",
+"L2": "MG 18:3",
+"L3": "MG 18:3",
+"LM_species": "MG 18:3",
+"LM_molecular": "MG 18:3",
+"flags": []
+},
+{
+"input": "Cer-Hex-oacyl 30:3_20:3_16:1;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex-oacyl",
+"L1": "Cer-Hex-oacyl 66:7;O3",
+"L2": "Cer-Hex-oacyl 30:3_20:3_16:1;(O3)",
+"L3": "",
+"LM_species": "AHexCer 66:7;O3",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuGc2 18:0;OH3_16:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuGc2",
+"L1": "Cer-Hex4-HexNAc2-NeuGc2 34:1;O3",
+"L2": "Cer-Hex4-HexNAc2-NeuGc2 18:0_16:1;(O3)",
+"L3": "Cer-Hex4-HexNAc2-NeuGc2 18:0;OH3_16:1",
+"LM_species": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 34:1;O3",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 18:0;O3/16:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc4-NeuAc 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc4-NeuAc",
+"L1": "Cer-Hex4-HexNAc4-NeuAc 40:1;O2",
+"L2": "Cer-Hex4-HexNAc4-NeuAc 22:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc4-NeuAc 22:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(4)-NeuAc-Cer 40:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(4)-NeuAc-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-KDN 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-HexNAc-KDN",
+"L1": "Cer-Hex2-HexNAc-KDN 38:1;O2",
+"L2": "Cer-Hex2-HexNAc-KDN 20:0_18:1;(O2)",
+"L3": "Cer-Hex2-HexNAc-KDN 20:0_18:1;OH2",
+"LM_species": "Hex(2)-HexNAc-KDN-Cer 38:1;O2",
+"LM_molecular": "Hex(2)-HexNAc-KDN-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "DGTS 29:2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DGTS",
+"L1": "DGTS 29:2",
+"L2": "",
+"L3": "",
+"LM_species": "DGTS 29:2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-NeuAc 18:0_10:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc-NeuAc",
+"L1": "Cer-Hex4-HexNAc-NeuAc 28:0;O2",
+"L2": "Cer-Hex4-HexNAc-NeuAc 18:0_10:0;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-NeuAc-Cer 28:0;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3 29:1_20:3;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3",
+"L1": "Cer-Hex3 49:4;O2",
+"L2": "Cer-Hex3 29:1_20:3;(O2)",
+"L3": "",
+"LM_species": "Hex3Cer 49:4;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc5-Fuc2 18:1_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc5-Fuc2",
+"L1": "Cer-Hex5-HexNAc5-Fuc2 36:1;O2",
+"L2": "Cer-Hex5-HexNAc5-Fuc2 18:1_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(5)-Fuc(2)-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc2 24:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2-Fuc2",
+"L1": "Cer-Hex4-HexNAc2-Fuc2 42:2;O2",
+"L2": "Cer-Hex4-HexNAc2-Fuc2 24:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(2)-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc3-Fuc-NeuAc 42:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex6-HexNAc3-Fuc-NeuAc",
+"L1": "Cer-Hex6-HexNAc3-Fuc-NeuAc 42:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(3)-Fuc-NeuAc-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc4-Fuc2 18:1_16:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc4-Fuc2",
+"L1": "Cer-Hex5-HexNAc4-Fuc2 34:1;O2",
+"L2": "Cer-Hex5-HexNAc4-Fuc2 18:1_16:0;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(4)-Fuc(2)-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuAc-NeuGc 26:6_20:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-NeuAc-NeuGc",
+"L1": "Cer-Hex3-HexNAc2-NeuAc-NeuGc 46:6;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuAc-NeuGc 26:6_20:0;(O2)",
+"L3": "Cer-Hex3-HexNAc2-NeuAc-NeuGc 26:6_20:0;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-NeuAc-NeuGc-Cer 46:6;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-NeuAc-NeuGc-Cer 20:0;O2/26:6",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "ST-Orn 24:1;OH3;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Orn",
+"L1": "ST-Orn 24:1;O5",
+"L2": "ST-Orn 24:1;(O5)",
+"L3": "ST-Orn 24:1;OH3;COOH",
+"LM_species": "ST 24:1;O4;Orn",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc2 24:4_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-NeuAc2",
+"L1": "Cer-Hex2-NeuAc2 42:4;O3",
+"L2": "Cer-Hex2-NeuAc2 24:4_18:0;(O3)",
+"L3": "Cer-Hex2-NeuAc2 24:4_18:0;OH3",
+"LM_species": "NeuAc2Hex2Cer 42:4;O3",
+"LM_molecular": "NeuAc2Hex2Cer 18:0;O3/24:4",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3 29:1;OH2_20:3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3",
+"L1": "Cer-Hex3 49:4;O2",
+"L2": "Cer-Hex3 29:1_20:3;(O2)",
+"L3": "Cer-Hex3 29:1;OH2_20:3",
+"LM_species": "Hex3Cer 49:4;O2",
+"LM_molecular": "Hex3Cer 29:1;O2/20:3",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc4-Fuc 36:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex6-HexNAc4-Fuc",
+"L1": "Cer-Hex6-HexNAc4-Fuc 36:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(4)-Fuc-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-Gly 24:2;OH2;oxo;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Gly",
+"L1": "ST-Gly 24:2;O5",
+"L2": "ST-Gly 24:2;(O5)",
+"L3": "ST-Gly 24:2;OH2;oxo;COOH",
+"LM_species": "ST 24:2;O4;Gly",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "DGTA 30:0",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DGTA",
+"L1": "DGTA 30:0",
+"L2": "",
+"L3": "",
+"LM_species": "DGTA 30:0",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "TG-oacyl2 84:0;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "TG-oacyl2",
+"L1": "TG-oacyl2 84:0;O2",
+"L2": "",
+"L3": "",
+"LM_species": "TG 84:0;O2",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "ST-Val 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Val",
+"L1": "ST-Val 24:1;O4",
+"L2": "ST-Val 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;Val",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc3 22:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc3-Fuc3",
+"L1": "Cer-Hex5-HexNAc3-Fuc3 40:1;O2",
+"L2": "Cer-Hex5-HexNAc3-Fuc3 22:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc(3)-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc-NeuAc 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc2-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-Fuc-NeuAc 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc3 18:0;OH2_15:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuAc3",
+"L1": "Cer-Hex3-HexNAc-NeuAc3 33:0;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc3 18:0_15:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-NeuAc3 18:0;OH2_15:0",
+"LM_species": "Hex(3)-HexNAc-NeuAc(3)-Cer 33:0;O2",
+"LM_molecular": "Hex(3)-HexNAc-NeuAc(3)-Cer 18:0;O2/15:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PA-phos 18:1_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-phos",
+"L1": "PA-phos 34:1",
+"L2": "PA-phos 18:1_16:0",
+"L3": "PA-phos 18:1_16:0",
+"LM_species": "PPA 34:1",
+"LM_molecular": "PPA 16:0_18:1",
+"flags": []
+},
+{
+"input": "PnC 18:1_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PnC",
+"L1": "PnC 34:1",
+"L2": "PnC 18:1_16:0",
+"L3": "PnC 18:1_16:0",
+"LM_species": "PnC 34:1",
+"LM_molecular": "PnC 16:0_18:1",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "ST-Ser 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Ser",
+"L1": "ST-Ser 24:1;O4",
+"L2": "ST-Ser 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;Ser",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "PA-ether-lyso O-20:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-ether-lyso",
+"L1": "PA-ether-lyso 20:0",
+"L2": "PA-ether-lyso 20:0",
+"L3": "PA-ether-lyso O-20:0",
+"LM_species": "LPA O-20:0",
+"LM_molecular": "LPA O-20:0",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc4 20:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc4",
+"L1": "Cer-Hex5-HexNAc4 38:1;O2",
+"L2": "Cer-Hex5-HexNAc4 20:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(4)-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuGc 28:5_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2-NeuGc",
+"L1": "Cer-Hex4-HexNAc2-NeuGc 48:6;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuGc 28:5_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-NeuGc-Cer 48:6;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PA-OMe 19:1_13:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-OMe",
+"L1": "PA-OMe 32:1",
+"L2": "PA-OMe 19:1_13:0",
+"L3": "PA-OMe 19:1_13:0",
+"LM_species": "PMeOH 32:1",
+"LM_molecular": "PMeOH 13:0_19:1",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "FA-Trp 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Trp",
+"L1": "FA-Trp 18:1",
+"L2": "FA-Trp 18:1",
+"L3": "FA-Trp 18:1",
+"LM_species": "NATrp 18:1",
+"LM_molecular": "NATrp 18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc2 32:5_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2",
+"L1": "Cer-Hex3-HexNAc2 50:6;O2",
+"L2": "Cer-Hex3-HexNAc2 32:5_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2 32:5_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-Cer 50:6;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-Cer 18:1;O2/32:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc3-NeuAc 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc3-NeuAc",
+"L1": "Cer-Hex3-HexNAc3-NeuAc 38:1;O2",
+"L2": "Cer-Hex3-HexNAc3-NeuAc 20:0_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc3-NeuAc 20:0_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(3)-NeuAc-Cer 38:1;O2",
+"LM_molecular": "Hex(3)-HexNAc(3)-NeuAc-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "CDP-DAG 36:5_24:6",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CDP-DAG",
+"L1": "CDP-DAG 60:11",
+"L2": "CDP-DAG 36:5_24:6",
+"L3": "CDP-DAG 36:5_24:6",
+"LM_species": "CDP-DG 60:11",
+"LM_molecular": "CDP-DG 24:6_36:5",
+"flags": []
+},
+{
+"input": "PC-ether-lyso O-18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PC-ether-lyso",
+"L1": "PC-ether-lyso 18:1",
+"L2": "PC-ether-lyso 18:1",
+"L3": "PC-ether-lyso O-18:1",
+"LM_species": "LPC O-18:1",
+"LM_molecular": "LPC O-18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc3-NeuAc 26:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc3-NeuAc",
+"L1": "Cer-Hex4-HexNAc3-NeuAc 44:2;O2",
+"L2": "Cer-Hex4-HexNAc3-NeuAc 26:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(3)-NeuAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2 21:0_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2",
+"L1": "Cer-Hex4-HexNAc2 39:0;O2",
+"L2": "Cer-Hex4-HexNAc2 21:0_18:0;(O2)",
+"L3": "Cer-Hex4-HexNAc2 21:0_18:0;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-Cer 39:0;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-Cer 18:0;O2/21:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "FA-His 11:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-His",
+"L1": "FA-His 11:1",
+"L2": "FA-His 11:1",
+"L3": "FA-His 11:1",
+"LM_species": "NAHis 11:1",
+"LM_molecular": "NAHis 11:1",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc3 40:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2-Fuc3",
+"L1": "Cer-Hex4-HexNAc2-Fuc3 40:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(3)-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuGc 30:5_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-HexNAc-NeuGc",
+"L1": "Cer-Hex2-HexNAc-NeuGc 48:5;O2",
+"L2": "Cer-Hex2-HexNAc-NeuGc 30:5_18:0;(O2)",
+"L3": "Cer-Hex2-HexNAc-NeuGc 30:5_18:0;OH2",
+"LM_species": "Hex(2)-HexNAc-NeuGc-Cer 48:5;O2",
+"LM_molecular": "Hex(2)-HexNAc-NeuGc-Cer 18:0;O2/30:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-phos-etn 18:1_3:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-phos-etn",
+"L1": "Cer-phos-etn 21:1;O2",
+"L2": "Cer-phos-etn 18:1_3:0;(O2)",
+"L3": "",
+"LM_species": "CerPE 21:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex8 26:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex8",
+"L1": "Cer-Hex8 44:1;O2",
+"L2": "Cer-Hex8 26:0_18:1;(O2)",
+"L3": "Cer-Hex8 26:0_18:1;OH2",
+"LM_species": "Hex(8)-Cer 44:1;O2",
+"LM_molecular": "Hex(8)-Cer 18:1;O2/26:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex7-HexNAc",
+"L1": "Cer-Hex7-HexNAc 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(7)-HexNAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PG-ether-lyso 18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PG-ether-lyso",
+"L1": "PG-ether-lyso 18:1",
+"L2": "PG-ether-lyso 18:1",
+"L3": "PG-ether-lyso O-18:1",
+"LM_species": "LPG O-18:1",
+"LM_molecular": "LPG O-18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc-Fuc 48:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc-Fuc",
+"L1": "Cer-Hex5-HexNAc-Fuc 48:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc-Fuc-Cer 48:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-NeuGc 20:1_18:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc-NeuGc",
+"L1": "Cer-Hex4-HexNAc-NeuGc 38:1;O3",
+"L2": "Cer-Hex4-HexNAc-NeuGc 20:1_18:0;(O3)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-NeuGc-Cer 38:1;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-KDN 18:1;OH2_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-HexNAc-KDN",
+"L1": "Cer-Hex2-HexNAc-KDN 36:1;O2",
+"L2": "Cer-Hex2-HexNAc-KDN 18:1_18:0;(O2)",
+"L3": "Cer-Hex2-HexNAc-KDN 18:1;OH2_18:0",
+"LM_species": "Hex(2)-HexNAc-KDN-Cer 36:1;O2",
+"LM_molecular": "Hex(2)-HexNAc-KDN-Cer 18:1;O2/18:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PE-ether-nacyl 18:0_18:0_13:0",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "PE-ether-nacyl",
+"L1": "PE-ether-nacyl 49:0",
+"L2": "PE-ether-nacyl 18:0_18:0_13:0",
+"L3": "",
+"LM_species": "PE-N[FA] O-49:0",
+"LM_molecular": "",
+"flags": [
+"ether_chain_unknown"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc-NeuGc 40:6;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-NeuAc-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuAc-NeuGc 40:6;O3",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuAc-NeuGc-Cer 40:6;O3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc3 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex6-HexNAc3",
+"L1": "Cer-Hex6-HexNAc3 40:1;O2",
+"L2": "Cer-Hex6-HexNAc3 22:0_18:1;(O2)",
+"L3": "Cer-Hex6-HexNAc3 22:0_18:1;OH2",
+"LM_species": "Hex(6)-HexNAc(3)-Cer 40:1;O2",
+"LM_molecular": "Hex(6)-HexNAc(3)-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-oacyl2 30:0_24:0_20:1_18:2;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-oacyl2",
+"L1": "Cer-oacyl2 92:3;O4",
+"L2": "Cer-oacyl2 30:0_24:0_20:1_18:2;(O4)",
+"L3": "",
+"LM_species": "ACer 92:3;O4",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc4-Fuc 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc4-Fuc",
+"L1": "Cer-Hex4-HexNAc4-Fuc 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(4)-Fuc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-Fuc 18:1_14:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-Fuc",
+"L1": "Cer-Hex4-Fuc 32:1;O2",
+"L2": "Cer-Hex4-Fuc 18:1_14:0;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-Fuc-Cer 32:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-sulf 18:0_17:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-sulf",
+"L1": "Cer-Hex3-HexNAc-sulf 35:0;O2",
+"L2": "Cer-Hex3-HexNAc-sulf 18:0_17:0;(O2)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuGc-sulf 42:3;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-NeuGc-sulf",
+"L1": "Cer-Hex3-HexNAc-NeuGc-sulf 42:3;O2",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-Orn 24:1;(O4)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Orn",
+"L1": "ST-Orn 24:1;O4",
+"L2": "ST-Orn 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;Orn",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2 50:6;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc2",
+"L1": "Cer-Hex3-HexNAc2 50:6;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-Cer 50:6;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex10-HexNAc5 26:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex10-HexNAc5",
+"L1": "Cer-Hex10-HexNAc5 44:1;O2",
+"L2": "Cer-Hex10-HexNAc5 26:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(10)-HexNAc(5)-Cer 44:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex-oacyl 22:6_22:5_17:1;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex-oacyl",
+"L1": "Cer-Hex-oacyl 61:12;O3",
+"L2": "Cer-Hex-oacyl 22:6_22:5_17:1;(O3)",
+"L3": "",
+"LM_species": "AHexCer 61:12;O3",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Tau 24:1;OH4;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Tau",
+"L1": "ST-Tau 24:1;O6",
+"L2": "ST-Tau 24:1;(O6)",
+"L3": "ST-Tau 24:1;OH4;COOH",
+"LM_species": "ST 24:1;O5;Tau",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "SPB 25:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB",
+"L1": "SPB 25:0;O3",
+"L2": "SPB 25:0;(O3)",
+"L3": "SPB 25:0;OH3",
+"LM_species": "SPB 25:0;O3",
+"LM_molecular": "SPB 25:0;O3",
+"flags": []
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc2 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3-Fuc2",
+"L1": "Cer-Hex5-HexNAc3-Fuc2 42:1;O2",
+"L2": "Cer-Hex5-HexNAc3-Fuc2 24:0_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc3-Fuc2 24:0_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc(2)-Cer 42:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-Fuc(2)-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuAc 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuAc",
+"L1": "Cer-Hex4-HexNAc2-NeuAc 42:1;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuAc 24:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuAc 24:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuAc-Cer 42:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuAc-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc 52:6;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc",
+"L1": "Cer-Hex2-HexNAc 52:6;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-Cer 52:6;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-oacyl2 79:3;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "ST-oacyl2",
+"L1": "ST-oacyl2 79:3;O2",
+"L2": "",
+"L3": "",
+"LM_species": "CE 79:3;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc 20:4_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc2-Fuc",
+"L1": "Cer-Hex4-HexNAc2-Fuc 38:4;O2",
+"L2": "Cer-Hex4-HexNAc2-Fuc 20:4_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc-Cer 38:4;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PA 24:4_19:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA",
+"L1": "PA 43:4",
+"L2": "PA 24:4_19:0",
+"L3": "PA 24:4_19:0",
+"LM_species": "PA 43:4",
+"LM_molecular": "PA 19:0_24:4",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc2-NeuAc 42:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc2-Fuc2-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-Fuc2-NeuAc 42:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc(2)-NeuAc-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc3 46:6;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc3",
+"L1": "Cer-Hex4-HexNAc3 46:6;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(3)-Cer 46:6;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex8-HexNAc4 36:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex8-HexNAc4",
+"L1": "Cer-Hex8-HexNAc4 36:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(8)-HexNAc(4)-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc-NeuAc 42:7;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2-Fuc-NeuAc",
+"L1": "Cer-Hex4-HexNAc2-Fuc-NeuAc 42:7;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc-NeuAc-Cer 42:7;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-phos 24:0_19:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-phos",
+"L1": "Cer-phos 43:0;O2",
+"L2": "Cer-phos 24:0_19:0;(O2)",
+"L3": "Cer-phos 24:0_19:0;OH2",
+"LM_species": "CerP 43:0;O2",
+"LM_molecular": "CerP 19:0;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PI-Hex2 18:1_17:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex2",
+"L1": "PI-Hex2 35:2",
+"L2": "PI-Hex2 18:1_17:1",
+"L3": "PI-Hex2 18:1_17:1",
+"LM_species": "PIM2 35:2",
+"LM_molecular": "PIM2 17:1_18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc-NeuGc2 20:4_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc-NeuGc2",
+"L1": "Cer-Hex4-HexNAc-NeuGc2 38:4;O3",
+"L2": "Cer-Hex4-HexNAc-NeuGc2 20:4_18:0;(O3)",
+"L3": "Cer-Hex4-HexNAc-NeuGc2 20:4_18:0;OH3",
+"LM_species": "Hex(4)-HexNAc-NeuGc(2)-Cer 38:4;O3",
+"LM_molecular": "Hex(4)-HexNAc-NeuGc(2)-Cer 18:0;O3/20:4",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "CL-lyso 22:5_20:3_18:3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CL-lyso",
+"L1": "CL-lyso 60:11",
+"L2": "CL-lyso 22:5_20:3_18:3",
+"L3": "CL-lyso 22:5_20:3_18:3",
+"LM_species": "MLCL 60:11",
+"LM_molecular": "MLCL 18:3_20:3_22:5",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc 40:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3-Fuc",
+"L1": "Cer-Hex5-HexNAc3-Fuc 40:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5 18:0;OH3_17:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5",
+"L1": "Cer-Hex5 35:0;O3",
+"L2": "Cer-Hex5 18:0_17:0;(O3)",
+"L3": "Cer-Hex5 18:0;OH3_17:0",
+"LM_species": "Hex(5)-Cer 35:0;O3",
+"LM_molecular": "Hex(5)-Cer 18:0;O3/17:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 28:5_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-NeuAc2-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 46:6;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc2-NeuGc 28:5_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuAc(2)-NeuGc-Cer 46:6;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex-oacyl 61:12;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex-oacyl",
+"L1": "Cer-Hex-oacyl 61:12;O3",
+"L2": "",
+"L3": "",
+"LM_species": "AHexCer 61:12;O3",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "PI-Hex2-oacyl 18:2_18:0_15:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex2-oacyl",
+"L1": "PI-Hex2-oacyl 51:2",
+"L2": "PI-Hex2-oacyl 18:2_18:0_15:0",
+"L3": "PI-Hex2-oacyl 18:2_18:0_15:0",
+"LM_species": "Ac3PIM2 51:2",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuGc 24:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc3-NeuGc",
+"L1": "Cer-Hex5-HexNAc3-NeuGc 42:2;O2",
+"L2": "Cer-Hex5-HexNAc3-NeuGc 24:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-NeuGc-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuGc-sulf 20:4_18:0;OH3",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuGc-sulf",
+"L1": "Cer-Hex3-HexNAc-NeuGc-sulf 38:4;O3",
+"L2": "Cer-Hex3-HexNAc-NeuGc-sulf 20:4_18:0;(O3)",
+"L3": "Cer-Hex3-HexNAc-NeuGc-sulf 20:4_18:0;OH3",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "MG-ether 16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "MG-ether",
+"L1": "MG-ether 16:0",
+"L2": "MG-ether 16:0",
+"L3": "MG-ether O-16:0",
+"LM_species": "MG O-16:0",
+"LM_molecular": "MG O-16:0",
+"flags": []
+},
+{
+"input": "Cer-Hex8-HexNAc4-Fuc2 18:1_16:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex8-HexNAc4-Fuc2",
+"L1": "Cer-Hex8-HexNAc4-Fuc2 34:1;O2",
+"L2": "Cer-Hex8-HexNAc4-Fuc2 18:1_16:0;(O2)",
+"L3": "",
+"LM_species": "Hex(8)-HexNAc(4)-Fuc(2)-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex-Ins2-phos2 26:0_20:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex-Ins2-phos2",
+"L1": "Cer-Hex-Ins2-phos2 46:0;O3",
+"L2": "Cer-Hex-Ins2-phos2 26:0_20:0;(O3)",
+"L3": "",
+"LM_species": "M(IP)2C 46:0;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FA-SCys 20:5;OH;oxo",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-SCys",
+"L1": "FA-SCys 20:5;O2",
+"L2": "FA-SCys 20:5;(O2)",
+"L3": "FA-SCys 20:5;OH;oxo",
+"LM_species": "",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-KDN 18:1;OH2_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-Fuc-KDN",
+"L1": "Cer-Hex3-HexNAc-Fuc-KDN 34:1;O2",
+"L2": "Cer-Hex3-HexNAc-Fuc-KDN 18:1_16:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-Fuc-KDN 18:1;OH2_16:0",
+"LM_species": "Hex(3)-HexNAc-Fuc-KDN-Cer 34:1;O2",
+"LM_molecular": "Hex(3)-HexNAc-Fuc-KDN-Cer 18:1;O2/16:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc-NeuAc 26:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc3-Fuc-NeuAc",
+"L1": "Cer-Hex5-HexNAc3-Fuc-NeuAc 44:2;O2",
+"L2": "Cer-Hex5-HexNAc3-Fuc-NeuAc 26:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc-NeuAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-KDN2 26:1_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-KDN2",
+"L1": "Cer-Hex3-HexNAc-KDN2 44:2;O2",
+"L2": "Cer-Hex3-HexNAc-KDN2 26:1_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc-KDN2 26:1_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc-KDN(2)-Cer 44:2;O2",
+"LM_molecular": "Hex(3)-HexNAc-KDN(2)-Cer 18:1;O2/26:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "FA-SCysGly 20:5;(O)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "FA-SCysGly",
+"L1": "FA-SCysGly 20:5;O",
+"L2": "FA-SCysGly 20:5;(O)",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "CoA 16:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "CoA",
+"L1": "CoA 16:2",
+"L2": "CoA 16:2",
+"L3": "CoA 16:2",
+"LM_species": "CoA 16:2",
+"LM_molecular": "CoA 16:2",
+"flags": []
+},
+{
+"input": "FA-Glu 20:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Glu",
+"L1": "FA-Glu 20:4",
+"L2": "FA-Glu 20:4",
+"L3": "FA-Glu 20:4",
+"LM_species": "NAGlu 20:4",
+"LM_molecular": "NAGlu 20:4",
+"flags": []
+},
+{
+"input": "Cer-Hex6-HexNAc3-Fuc-NeuAc 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex6-HexNAc3-Fuc-NeuAc",
+"L1": "Cer-Hex6-HexNAc3-Fuc-NeuAc 40:1;O2",
+"L2": "Cer-Hex6-HexNAc3-Fuc-NeuAc 22:0_18:1;(O2)",
+"L3": "Cer-Hex6-HexNAc3-Fuc-NeuAc 22:0_18:1;OH2",
+"LM_species": "Hex(6)-HexNAc(3)-Fuc-NeuAc-Cer 40:1;O2",
+"LM_molecular": "Hex(6)-HexNAc(3)-Fuc-NeuAc-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc4-Fuc2 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc4-Fuc2",
+"L1": "Cer-Hex5-HexNAc4-Fuc2 38:1;O2",
+"L2": "Cer-Hex5-HexNAc4-Fuc2 20:0_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc4-Fuc2 20:0_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc(4)-Fuc(2)-Cer 38:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(4)-Fuc(2)-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc-NeuAc 18:1_16:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc2-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-Fuc-NeuAc 34:1;O2",
+"L2": "Cer-Hex3-HexNAc2-Fuc-NeuAc 18:1_16:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuGc 22:2_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc2-NeuGc",
+"L1": "Cer-Hex3-HexNAc2-NeuGc 42:3;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuGc 22:2_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-NeuGc-Cer 42:3;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuGc 56:5;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuGc 56:5;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuGc-Cer 56:5;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex7 26:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex7",
+"L1": "Cer-Hex7 44:1;O2",
+"L2": "Cer-Hex7 26:0_18:1;(O2)",
+"L3": "Cer-Hex7 26:0_18:1;OH2",
+"LM_species": "Hex(7)-Cer 44:1;O2",
+"LM_molecular": "Hex(7)-Cer 18:1;O2/26:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PA-ether 46:0",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PA-ether",
+"L1": "PA-ether 46:0",
+"L2": "",
+"L3": "",
+"LM_species": "PA O-46:0",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "FAHFA 22:2;OH_20:2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FAHFA",
+"L1": "FAHFA 42:4;O",
+"L2": "FAHFA 22:2_20:2;(O)",
+"L3": "FAHFA 22:2;OH_20:2",
+"LM_species": "FAHFA 42:4;O",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-NeuAc 34:1;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc-Fuc-NeuAc 34:1;O3",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-NeuAc-Cer 34:1;O3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "WE 39:5;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "WE",
+"L1": "WE 39:5;O",
+"L2": "",
+"L3": "",
+"LM_species": "WE 39:5;O",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "CL-lyso 60:11",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "CL-lyso",
+"L1": "CL-lyso 60:11",
+"L2": "",
+"L3": "",
+"LM_species": "MLCL 60:11",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "ST-Tau 24:2;OH;oxo;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Tau",
+"L1": "ST-Tau 24:2;O4",
+"L2": "ST-Tau 24:2;(O4)",
+"L3": "ST-Tau 24:2;OH;oxo;COOH",
+"LM_species": "ST 24:2;O3;Tau",
+"LM_molecular": "",
+"flags": []
+},
+{
+"input": "Cer-Hex2-NeuAc 28:1;OH2_22:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-NeuAc",
+"L1": "Cer-Hex2-NeuAc 50:2;O2",
+"L2": "Cer-Hex2-NeuAc 28:1_22:1;(O2)",
+"L3": "Cer-Hex2-NeuAc 28:1;OH2_22:1",
+"LM_species": "NeuAcHex2Cer 50:2;O2",
+"LM_molecular": "NeuAcHex2Cer 28:1;O2/22:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc-NeuAc 22:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc2-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-Fuc-NeuAc 40:1;O2",
+"L2": "Cer-Hex3-HexNAc2-Fuc-NeuAc 22:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc-NeuAc-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-phos3 22:1_20:5",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-phos3",
+"L1": "PI-phos3 42:6",
+"L2": "PI-phos3 22:1_20:5",
+"L3": "PI-phos3 22:1_20:5",
+"LM_species": "PIP3 42:6",
+"LM_molecular": "PIP3 20:5_22:1",
+"flags": []
+},
+{
+"input": "Cer-oacyl2 32:0_18:2_18:0_18:0;(O5)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-oacyl2",
+"L1": "Cer-oacyl2 86:2;O5",
+"L2": "Cer-oacyl2 32:0_18:2_18:0_18:0;(O5)",
+"L3": "",
+"LM_species": "ACer 86:2;O5",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Val 24:1;O4",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Val",
+"L1": "ST-Val 24:1;O4",
+"L2": "ST-Val 24:1;(O4)",
+"L3": "",
+"LM_species": "ST 24:1;O3;Val",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuAc2 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuAc2",
+"L1": "Cer-Hex4-HexNAc2-NeuAc2 38:1;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuAc2 20:0_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuAc2 20:0_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuAc(2)-Cer 38:1;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuAc(2)-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc3-Fuc 18:1;OH2_16:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex7-HexNAc3-Fuc",
+"L1": "Cer-Hex7-HexNAc3-Fuc 34:1;O2",
+"L2": "Cer-Hex7-HexNAc3-Fuc 18:1_16:0;(O2)",
+"L3": "Cer-Hex7-HexNAc3-Fuc 18:1;OH2_16:0",
+"LM_species": "Hex(7)-HexNAc(3)-Fuc-Cer 34:1;O2",
+"LM_molecular": "Hex(7)-HexNAc(3)-Fuc-Cer 18:1;O2/16:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuAc2 18:2_18:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc2-NeuAc2",
+"L1": "Cer-Hex3-HexNAc2-NeuAc2 36:2;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuAc2 18:2_18:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(2)-NeuAc(2)-Cer 36:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuAc3 38:4_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-HexNAc-NeuAc3",
+"L1": "Cer-Hex2-HexNAc-NeuAc3 58:5;O2",
+"L2": "Cer-Hex2-HexNAc-NeuAc3 38:4_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuAc(3)-Cer 58:5;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PE-nacyl-lyso 38:4",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE-nacyl-lyso",
+"L1": "PE-nacyl-lyso 38:4",
+"L2": "",
+"L3": "",
+"LM_species": "LNAPE 38:4",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex 40:6_19:3;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex",
+"L1": "Cer-Hex 59:9;O2",
+"L2": "Cer-Hex 40:6_19:3;(O2)",
+"L3": "",
+"LM_species": "HexCer 59:9;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex6-HexNAc3 24:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex6-HexNAc3",
+"L1": "Cer-Hex6-HexNAc3 42:2;O2",
+"L2": "Cer-Hex6-HexNAc3 24:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(6)-HexNAc(3)-Cer 42:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PI-Hex2-oacyl 50:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI-Hex2-oacyl",
+"L1": "PI-Hex2-oacyl 50:1",
+"L2": "",
+"L3": "",
+"LM_species": "Ac3PIM2 50:1",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "PS-ether 31:3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PS-ether",
+"L1": "PS-ether 31:3",
+"L2": "",
+"L3": "",
+"LM_species": "PS O-31:3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE-nacyl-lyso 34:2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE-nacyl-lyso",
+"L1": "PE-nacyl-lyso 34:2",
+"L2": "",
+"L3": "",
+"LM_species": "LNAPE 34:2",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex8-HexNAc5 26:1_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex8-HexNAc5",
+"L1": "Cer-Hex8-HexNAc5 44:2;O2",
+"L2": "Cer-Hex8-HexNAc5 26:1_18:1;(O2)",
+"L3": "Cer-Hex8-HexNAc5 26:1_18:1;OH2",
+"LM_species": "Hex(8)-HexNAc(5)-Cer 44:2;O2",
+"LM_molecular": "Hex(8)-HexNAc(5)-Cer 18:1;O2/26:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-KDN 42:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-Fuc-KDN",
+"L1": "Cer-Hex3-HexNAc-Fuc-KDN 42:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-KDN-Cer 42:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-Asn 24:1;O5",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Asn",
+"L1": "ST-Asn 24:1;O5",
+"L2": "ST-Asn 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Asn",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "PG-ether 44:8",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PG-ether",
+"L1": "PG-ether 44:8",
+"L2": "",
+"L3": "",
+"LM_species": "PG O-44:8",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "DGCC 38:6_15:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DGCC",
+"L1": "DGCC 53:6",
+"L2": "DGCC 38:6_15:0",
+"L3": "DGCC 38:6_15:0",
+"LM_species": "DGCC 53:6",
+"LM_molecular": "DGCC 15:0_38:6",
+"flags": []
+},
+{
+"input": "PI-Hex2-oacyl2 71:2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI-Hex2-oacyl2",
+"L1": "PI-Hex2-oacyl2 71:2",
+"L2": "",
+"L3": "",
+"LM_species": "Ac4PIM2 71:2",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc-KDN 34:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-NeuAc-KDN",
+"L1": "Cer-Hex3-HexNAc-NeuAc-KDN 34:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuAc-KDN-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4 28:5_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4",
+"L1": "Cer-Hex4 46:6;O2",
+"L2": "Cer-Hex4 28:5_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(4)-Cer 46:6;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc-NeuGc2 26:0_18:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex4-HexNAc-NeuGc2",
+"L1": "Cer-Hex4-HexNAc-NeuGc2 44:0;O3",
+"L2": "Cer-Hex4-HexNAc-NeuGc2 26:0_18:0;(O3)",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc-NeuGc(2)-Cer 44:0;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FAHFA 27:3;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "FAHFA",
+"L1": "FAHFA 27:3;O",
+"L2": "",
+"L3": "",
+"LM_species": "FAHFA 27:3;O",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2 31:0_21:3;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2",
+"L1": "Cer-Hex2 52:3;O2",
+"L2": "Cer-Hex2 31:0_21:3;(O2)",
+"L3": "Cer-Hex2 31:0_21:3;OH2",
+"LM_species": "Hex2Cer 52:3;O2",
+"LM_molecular": "Hex2Cer 21:3;O2/31:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex-oacyl 24:5_22:0;OH_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex-oacyl",
+"L1": "Cer-Hex-oacyl 64:6;O3",
+"L2": "Cer-Hex-oacyl 24:5_22:0_18:1;(O3)",
+"L3": "Cer-Hex-oacyl 24:5_22:0;OH_18:1;OH2",
+"LM_species": "AHexCer 64:6;O3",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Ins-phos 30:3;O3",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Ins-phos",
+"L1": "Cer-Ins-phos 30:3;O3",
+"L2": "",
+"L3": "",
+"LM_species": "IPC 30:3;O3",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc3 36:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc3",
+"L1": "Cer-Hex3-HexNAc3 36:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc(3)-Cer 36:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-Met 24:1;OH2;COOH",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "ST-Met",
+"L1": "ST-Met 24:1;O4",
+"L2": "ST-Met 24:1;(O4)",
+"L3": "ST-Met 24:1;OH2;COOH",
+"LM_species": "ST 24:1;O3;Met",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "DG-HexA 41:4",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "DG-HexA",
+"L1": "DG-HexA 41:4",
+"L2": "",
+"L3": "",
+"LM_species": "GlcADG 41:4",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex7-HexNAc",
+"L1": "Cer-Hex7-HexNAc 40:1;O2",
+"L2": "Cer-Hex7-HexNAc 22:0_18:1;(O2)",
+"L3": "Cer-Hex7-HexNAc 22:0_18:1;OH2",
+"LM_species": "Hex(7)-HexNAc-Cer 40:1;O2",
+"LM_molecular": "Hex(7)-HexNAc-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuAc2 44:6;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex2-HexNAc-NeuAc2",
+"L1": "Cer-Hex2-HexNAc-NeuAc2 44:6;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuAc(2)-Cer 44:6;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuGc 20:1;OH2_13:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex2-HexNAc-NeuGc",
+"L1": "Cer-Hex2-HexNAc-NeuGc 33:1;O2",
+"L2": "Cer-Hex2-HexNAc-NeuGc 20:1_13:0;(O2)",
+"L3": "Cer-Hex2-HexNAc-NeuGc 20:1;OH2_13:0",
+"LM_species": "Hex(2)-HexNAc-NeuGc-Cer 33:1;O2",
+"LM_molecular": "Hex(2)-HexNAc-NeuGc-Cer 20:1;O2/13:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PI-ether 50:2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI-ether",
+"L1": "PI-ether 50:2",
+"L2": "",
+"L3": "",
+"LM_species": "PI O-50:2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "ST-sulf 24:1;(O5)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-sulf",
+"L1": "ST-sulf 24:1;O5",
+"L2": "ST-sulf 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O5;S",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "SL 42:3;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "SL",
+"L1": "SL 42:3;O",
+"L2": "",
+"L3": "",
+"LM_species": "SL 42:3;O",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "PA 42:4",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PA",
+"L1": "PA 42:4",
+"L2": "",
+"L3": "",
+"LM_species": "PA 42:4",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PT 18:1_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PT",
+"L1": "PT 36:2",
+"L2": "PT 18:1_18:1",
+"L3": "PT 18:1_18:1",
+"LM_species": "PT 36:2",
+"LM_molecular": "PT 18:1_18:1",
+"flags": []
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc 24:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-Fuc",
+"L1": "Cer-Hex3-HexNAc2-Fuc 42:1;O2",
+"L2": "Cer-Hex3-HexNAc2-Fuc 24:0_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2-Fuc 24:0_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc-Cer 42:1;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-Fuc-Cer 18:1;O2/24:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex7-HexNAc3 26:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex7-HexNAc3",
+"L1": "Cer-Hex7-HexNAc3 44:1;O2",
+"L2": "Cer-Hex7-HexNAc3 26:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(7)-HexNAc(3)-Cer 44:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc3-NeuAc 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex5-HexNAc3-Fuc3-NeuAc",
+"L1": "Cer-Hex5-HexNAc3-Fuc3-NeuAc 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc(3)-NeuAc-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE-me2 24:0",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE-me2",
+"L1": "PE-me2 24:0",
+"L2": "",
+"L3": "",
+"LM_species": "PE-NMe2 24:0",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc3 26:0_20:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-NeuAc3",
+"L1": "Cer-Hex2-NeuAc3 46:1;O2",
+"L2": "Cer-Hex2-NeuAc3 26:0_20:1;(O2)",
+"L3": "",
+"LM_species": "Hex(2)-NeuAc(3)-Cer 46:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "PE-nacyl-lyso2 20:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-nacyl-lyso2",
+"L1": "PE-nacyl-lyso2 20:4",
+"L2": "PE-nacyl-lyso2 20:4",
+"L3": "PE-nacyl-lyso2 20:4",
+"LM_species": "GP-NAE 20:4",
+"LM_molecular": "GP-NAE 20:4",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer 24:0;OH_23:3;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer",
+"L1": "Cer 47:3;O3",
+"L2": "Cer 24:0_23:3;(O3)",
+"L3": "Cer 24:0;OH_23:3;OH2",
+"LM_species": "Cer 47:3;O3",
+"LM_molecular": "Cer 23:3;O2/24:0;O",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "PE-ether-nacyl-lyso 32:1",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PE-ether-nacyl-lyso",
+"L1": "PE-ether-nacyl-lyso 32:1",
+"L2": "",
+"L3": "",
+"LM_species": "LNAPE O-32:1",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc2 26:1_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-HexNAc2",
+"L1": "Cer-Hex2-HexNAc2 44:2;O2",
+"L2": "Cer-Hex2-HexNAc2 26:1_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc(2)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "TG-oacyl 18:1_16:0_16:0_16:0;(O)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "TG-oacyl",
+"L1": "TG-oacyl 66:1;O",
+"L2": "TG-oacyl 18:1_16:0_16:0_16:0;(O)",
+"L3": "",
+"LM_species": "TG 66:1;O",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "ST-Gly 24:1;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Gly",
+"L1": "ST-Gly 24:1;O3",
+"L2": "ST-Gly 24:1;(O3)",
+"L3": "",
+"LM_species": "ST 24:1;O2;Gly",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-NeuAc2 35:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex3-HexNAc-Fuc-NeuAc2",
+"L1": "Cer-Hex3-HexNAc-Fuc-NeuAc2 35:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-NeuAc(2)-Cer 35:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE-ether-nacyl-lyso 26:1_8:0",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "PE-ether-nacyl-lyso",
+"L1": "PE-ether-nacyl-lyso 34:1",
+"L2": "PE-ether-nacyl-lyso 26:1_8:0",
+"L3": "",
+"LM_species": "LNAPE O-34:1",
+"LM_molecular": "",
+"flags": [
+"ether_chain_unknown",
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc4-Fuc 38:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc4-Fuc",
+"L1": "Cer-Hex4-HexNAc4-Fuc 38:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(4)-Fuc-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PG-ether 26:3_O-18:5",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PG-ether",
+"L1": "PG-ether 44:8",
+"L2": "PG-ether 26:3_18:5",
+"L3": "PG-ether 26:3_O-18:5",
+"LM_species": "PG O-44:8",
+"LM_molecular": "PG O-18:5_26:3",
+"flags": []
+},
+{
+"input": "PA-Hex-ac 20:0_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PA-Hex-ac",
+"L1": "PA-Hex-ac 38:0",
+"L2": "PA-Hex-ac 20:0_18:0",
+"L3": "PA-Hex-ac 20:0_18:0",
+"LM_species": "6-Ac-Glc-GP 38:0",
+"LM_molecular": "6-Ac-Glc-GP 18:0_20:0",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "PG-lyso 13:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PG-lyso",
+"L1": "PG-lyso 13:0",
+"L2": "PG-lyso 13:0",
+"L3": "PG-lyso 13:0",
+"LM_species": "LPG 13:0",
+"LM_molecular": "LPG 13:0",
+"flags": []
+},
+{
+"input": "PI-ether 52:9",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "PI-ether",
+"L1": "PI-ether 52:9",
+"L2": "",
+"L3": "",
+"LM_species": "PI O-52:9",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-Fuc 22:0_18:1;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex5-HexNAc3-Fuc",
+"L1": "Cer-Hex5-HexNAc3-Fuc 40:1;O2",
+"L2": "Cer-Hex5-HexNAc3-Fuc 22:0_18:1;(O2)",
+"L3": "",
+"LM_species": "Hex(5)-HexNAc(3)-Fuc-Cer 40:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex8-HexNAc4 44:2;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex8-HexNAc4",
+"L1": "Cer-Hex8-HexNAc4 44:2;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(8)-HexNAc(4)-Cer 44:2;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-NeuAc 20:1;OH2_18:1",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-NeuAc",
+"L1": "Cer-Hex3-HexNAc2-NeuAc 38:2;O2",
+"L2": "Cer-Hex3-HexNAc2-NeuAc 20:1_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2-NeuAc 20:1;OH2_18:1",
+"LM_species": "Hex(3)-HexNAc(2)-NeuAc-Cer 38:2;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-NeuAc-Cer 20:1;O2/18:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc2-Fuc2 22:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc2-Fuc2",
+"L1": "Cer-Hex3-HexNAc2-Fuc2 40:1;O2",
+"L2": "Cer-Hex3-HexNAc2-Fuc2 22:0_18:1;(O2)",
+"L3": "Cer-Hex3-HexNAc2-Fuc2 22:0_18:1;OH2",
+"LM_species": "Hex(3)-HexNAc(2)-Fuc(2)-Cer 40:1;O2",
+"LM_molecular": "Hex(3)-HexNAc(2)-Fuc(2)-Cer 18:1;O2/22:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc 26:1_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-Fuc",
+"L1": "Cer-Hex4-HexNAc2-Fuc 44:2;O2",
+"L2": "Cer-Hex4-HexNAc2-Fuc 26:1_18:1;(O2)",
+"L3": "Cer-Hex4-HexNAc2-Fuc 26:1_18:1;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc-Cer 44:2;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-Fuc-Cer 18:1;O2/26:1",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "DG-Hex2-ether 27:0_O-24:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "DG-Hex2-ether",
+"L1": "DG-Hex2-ether 51:4",
+"L2": "DG-Hex2-ether 27:0_24:4",
+"L3": "DG-Hex2-ether 27:0_O-24:4",
+"LM_species": "DGDG O-51:4",
+"LM_molecular": "DGDG O-24:4_27:0",
+"flags": []
+},
+{
+"input": "PI-Hex3-lyso 18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PI-Hex3-lyso",
+"L1": "PI-Hex3-lyso 18:0",
+"L2": "PI-Hex3-lyso 18:0",
+"L3": "PI-Hex3-lyso 18:0",
+"LM_species": "LPIM3 18:0",
+"LM_molecular": "LPIM3 18:0",
+"flags": []
+},
+{
+"input": "Cer-Hex4-HexNAc-Fuc-NeuAc2 18:1;OH2_10:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc-Fuc-NeuAc2",
+"L1": "Cer-Hex4-HexNAc-Fuc-NeuAc2 28:1;O2",
+"L2": "Cer-Hex4-HexNAc-Fuc-NeuAc2 18:1_10:0;(O2)",
+"L3": "Cer-Hex4-HexNAc-Fuc-NeuAc2 18:1;OH2_10:0",
+"LM_species": "Hex(4)-HexNAc-Fuc-NeuAc(2)-Cer 28:1;O2",
+"LM_molecular": "Hex(4)-HexNAc-Fuc-NeuAc(2)-Cer 18:1;O2/10:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc 18:4_18:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-Fuc",
+"L1": "Cer-Hex3-HexNAc-Fuc 36:4;O3",
+"L2": "Cer-Hex3-HexNAc-Fuc 18:4_18:0;(O3)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Fuc-Cer 36:4;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex2-HexNAc-NeuGc 22:5_18:0;(O3)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-HexNAc-NeuGc",
+"L1": "Cer-Hex2-HexNAc-NeuGc 40:5;O3",
+"L2": "Cer-Hex2-HexNAc-NeuGc 22:5_18:0;(O3)",
+"L3": "",
+"LM_species": "Hex(2)-HexNAc-NeuGc-Cer 40:5;O3",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc 18:1_16:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc",
+"L1": "Cer-Hex3-HexNAc 34:1;O2",
+"L2": "Cer-Hex3-HexNAc 18:1_16:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-Cer 34:1;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "FA-GlySer-oacyl 46:0;O",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "FA-GlySer-oacyl",
+"L1": "FA-GlySer-oacyl 46:0;O",
+"L2": "",
+"L3": "",
+"LM_species": "",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex5-HexNAc3-NeuAc 20:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex5-HexNAc3-NeuAc",
+"L1": "Cer-Hex5-HexNAc3-NeuAc 38:1;O2",
+"L2": "Cer-Hex5-HexNAc3-NeuAc 20:0_18:1;(O2)",
+"L3": "Cer-Hex5-HexNAc3-NeuAc 20:0_18:1;OH2",
+"LM_species": "Hex(5)-HexNAc(3)-NeuAc-Cer 38:1;O2",
+"LM_molecular": "Hex(5)-HexNAc(3)-NeuAc-Cer 18:1;O2/20:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-NeuGc2 20:4_18:0;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-HexNAc2-NeuGc2",
+"L1": "Cer-Hex4-HexNAc2-NeuGc2 38:4;O2",
+"L2": "Cer-Hex4-HexNAc2-NeuGc2 20:4_18:0;(O2)",
+"L3": "Cer-Hex4-HexNAc2-NeuGc2 20:4_18:0;OH2",
+"LM_species": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 38:4;O2",
+"LM_molecular": "Hex(4)-HexNAc(2)-NeuGc(2)-Cer 18:0;O2/20:4",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-Fuc-NeuAc 18:1;OH2_18:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-Fuc-NeuAc",
+"L1": "Cer-Hex3-HexNAc-Fuc-NeuAc 36:1;O2",
+"L2": "Cer-Hex3-HexNAc-Fuc-NeuAc 18:1_18:0;(O2)",
+"L3": "Cer-Hex3-HexNAc-Fuc-NeuAc 18:1;OH2_18:0",
+"LM_species": "Hex(3)-HexNAc-Fuc-NeuAc-Cer 36:1;O2",
+"LM_molecular": "Hex(3)-HexNAc-Fuc-NeuAc-Cer 18:1;O2/18:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc3 28:5_20:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuAc3",
+"L1": "Cer-Hex3-HexNAc-NeuAc3 48:6;O2",
+"L2": "Cer-Hex3-HexNAc-NeuAc3 28:5_20:1;(O2)",
+"L3": "Cer-Hex3-HexNAc-NeuAc3 28:5_20:1;OH2",
+"LM_species": "Hex(3)-HexNAc-NeuAc(3)-Cer 48:6;O2",
+"LM_molecular": "Hex(3)-HexNAc-NeuAc(3)-Cer 20:1;O2/28:5",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "ST-Gly 24:1;(O5)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Gly",
+"L1": "ST-Gly 24:1;O5",
+"L2": "ST-Gly 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Gly",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex4-HexNAc2-Fuc2-NeuAc 38:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-HexNAc2-Fuc2-NeuAc",
+"L1": "Cer-Hex4-HexNAc2-Fuc2-NeuAc 38:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-HexNAc(2)-Fuc(2)-NeuAc-Cer 38:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "PE-me 20:0_20:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "PE-me",
+"L1": "PE-me 40:0",
+"L2": "PE-me 20:0_20:0",
+"L3": "PE-me 20:0_20:0",
+"LM_species": "PE-NMe 40:0",
+"LM_molecular": "PE-NMe 20:0_20:0",
+"flags": []
+},
+{
+"input": "ST-Trp 24:1;O5",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "ST-Trp",
+"L1": "ST-Trp 24:1;O5",
+"L2": "ST-Trp 24:1;(O5)",
+"L3": "",
+"LM_species": "ST 24:1;O4;Trp",
+"LM_molecular": "",
+"flags": [
+"lm_head_inferred",
+"oxygen_untyped"
+]
+},
+{
+"input": "FA-Xle 20:4",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "FA-Xle",
+"L1": "FA-Xle 20:4",
+"L2": "FA-Xle 20:4",
+"L3": "FA-Xle 20:4",
+"LM_species": "NAXle 20:4",
+"LM_molecular": "NAXle 20:4",
+"flags": [
+"lm_head_inferred"
+]
+},
+{
+"input": "Cer-Hex4-Fuc 46:1;O2",
+"status": "ok",
+"reason": "",
+"level": 1,
+"class_full": "Cer-Hex4-Fuc",
+"L1": "Cer-Hex4-Fuc 46:1;O2",
+"L2": "",
+"L3": "",
+"LM_species": "Hex(4)-Fuc-Cer 46:1;O2",
+"LM_molecular": "",
+"flags": [
+"sum_only"
+]
+},
+{
+"input": "Cer-Hex4-Fuc 28:0_18:1;OH2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex4-Fuc",
+"L1": "Cer-Hex4-Fuc 46:1;O2",
+"L2": "Cer-Hex4-Fuc 28:0_18:1;(O2)",
+"L3": "Cer-Hex4-Fuc 28:0_18:1;OH2",
+"LM_species": "Hex(4)-Fuc-Cer 46:1;O2",
+"LM_molecular": "Hex(4)-Fuc-Cer 18:1;O2/28:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "SPB-phos 17:0;O2",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "SPB-phos",
+"L1": "SPB-phos 17:0;O2",
+"L2": "SPB-phos 17:0;(O2)",
+"L3": "SPB-phos 17:0;OH2",
+"LM_species": "SPBP 17:0;O2",
+"LM_molecular": "SPBP 17:0;O2",
+"flags": [
+"oxygen_assumed_OH"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuAc4 18:0;OH3_14:0",
+"status": "ok",
+"reason": "",
+"level": 3,
+"class_full": "Cer-Hex3-HexNAc-NeuAc4",
+"L1": "Cer-Hex3-HexNAc-NeuAc4 32:0;O3",
+"L2": "Cer-Hex3-HexNAc-NeuAc4 18:0_14:0;(O3)",
+"L3": "Cer-Hex3-HexNAc-NeuAc4 18:0;OH3_14:0",
+"LM_species": "Hex(3)-HexNAc-NeuAc(4)-Cer 32:0;O3",
+"LM_molecular": "Hex(3)-HexNAc-NeuAc(4)-Cer 18:0;O3/14:0",
+"flags": [
+"sphingo_base_inferred"
+]
+},
+{
+"input": "Cer-Hex2-NeuAc 30:0_20:2;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex2-NeuAc",
+"L1": "Cer-Hex2-NeuAc 50:2;O2",
+"L2": "Cer-Hex2-NeuAc 30:0_20:2;(O2)",
+"L3": "",
+"LM_species": "NeuAcHex2Cer 50:2;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+},
+{
+"input": "Cer-Hex3-HexNAc-NeuGc 36:6_20:0;(O2)",
+"status": "ok",
+"reason": "",
+"level": 2,
+"class_full": "Cer-Hex3-HexNAc-NeuGc",
+"L1": "Cer-Hex3-HexNAc-NeuGc 56:6;O2",
+"L2": "Cer-Hex3-HexNAc-NeuGc 36:6_20:0;(O2)",
+"L3": "",
+"LM_species": "Hex(3)-HexNAc-NeuGc-Cer 56:6;O2",
+"LM_molecular": "",
+"flags": [
+"oxygen_untyped"
+]
+}
+]
+}

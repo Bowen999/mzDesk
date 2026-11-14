@@ -1,0 +1,51 @@
+/* Workflow progress: one compact, flat block (current stage + percentage, one bar, an optional note). 2D on purpose: no shadows, no highlights,
+   no vertical gradients, no shimmer. The fill is a left-to-right shift between two close, low-saturation tones of the accent (~9% lightness spread)
+   over a single-colour track; stopped and failed runs are single flat colours. */
+.wf-progress {
+  --wf-from: #5c8bd6; --wf-to: #3262d2;                                /* fill: soft blue -> accent */
+  --wf-track: #e8ecf4;
+  --wf-stop: #b0b5bf;                                                  /* tracking stopped / status unknown: muted grey */
+  --wf-err: var(--alert);                                              /* job failed: the alert colour (design.css) */
+  margin: 20px 0; padding: 14px 18px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-sm);
+}
+:root[data-theme="dark"] .wf-progress {
+  --wf-from: #6282cb; --wf-to: #7b97e0;
+  --wf-track: rgba(255, 255, 255, .08);
+  --wf-stop: #5c6169;
+  --wf-err: var(--alert);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .wf-progress {
+    --wf-from: #6282cb; --wf-to: #7b97e0;
+    --wf-track: rgba(255, 255, 255, .08);
+    --wf-stop: #5c6169;
+    --wf-err: var(--alert);
+  }
+}
+
+.wf-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 9px; }
+.wf-progress-stage { min-width: 0; overflow: hidden; color: var(--ink); font-size: 13.5px; font-weight: 600; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.wf-progress-percent { flex: none; color: var(--ink-2); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wf-progress.is-stopped .wf-progress-stage, .wf-progress.is-stopped .wf-progress-percent { color: var(--muted); }
+
+.wf-progress-bar { position: relative; height: 8px; overflow: hidden; background: var(--wf-track); border-radius: 8px; }
+.wf-progress-bar > span {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, var(--wf-from), var(--wf-to));
+  transition: width .5s cubic-bezier(.25, .6, .35, 1);
+}
+.wf-progress.is-stopped .wf-progress-bar > span { background: var(--wf-stop); }
+.wf-progress.is-error .wf-progress-bar > span { background: var(--wf-err); }
+.wf-progress.is-error .wf-progress-stage { color: var(--ov-red-ink); }
+
+/* running, but the server sent no usable stage data: no percentage, a quiet sliding segment */
+.wf-progress-bar.is-indeterminate > span { position: absolute; width: 30%; background: var(--wf-to); transition: none; animation: wf-progress-indeterminate 1.6s ease-in-out infinite; }
+.wf-progress.is-stopped .wf-progress-bar.is-indeterminate > span { left: 35%; animation: none; }
+@keyframes wf-progress-indeterminate { from { transform: translateX(-100%); } to { transform: translateX(335%); } }
+
+.wf-progress-note { margin: 8px 0 0; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 700px) { .wf-progress { padding: 12px 14px 14px; } .wf-progress-stage { font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) {
+  .wf-progress-bar > span { transition: none; }
+  .wf-progress-bar.is-indeterminate > span { animation: none; left: 35%; }
+}
