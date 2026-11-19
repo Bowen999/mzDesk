@@ -1,0 +1,4 @@
+# M3 (commonname.py): names that start with one of these prefixes (case-insensitive) are rejected up front with the given code.
+# Only for product / mixture names that have no grammar-level signature. Keep this list tiny and evidence-backed.
+prefix,code,evidence
+SPLASH,common_name,"SYNTHESIS 3.5: SPLASH_* internal-standard mixture names (boundary_cases B76 SPLASH_Cholesterol(d7))"

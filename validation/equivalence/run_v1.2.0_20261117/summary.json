@@ -1,0 +1,479 @@
+{
+ "question": "Do BUDDY, the library search, MS-FINDER and FRIGID give the same result inside mzDesk (Force merge, every step run) as when run directly on the recorded inputs and settings?",
+ "mzdesk_version": "1.2.0",
+ "commit": "e6937d81e071f526c73c4b48f7a54d00c93b845c",
+ "scripts": {
+  "run_equivalence.py": "daf0dc1f6482452026a46cd97147c176632c637d3fc09ad5a562f32c790ad267",
+  "msfinder_equivalence.py": "d65909fd9f24bfb60cdb94b611d5afa2bf30a837b6f23f47518c4dea950476af"
+ },
+ "cases_expected": 100,
+ "cases_finished": 100,
+ "cases_missing_or_failed": 0,
+ "cases_identical": {
+  "k": 89,
+  "n": 100,
+  "rate": 0.89,
+  "ci95": [
+   0.8136853697209698,
+   0.9374586804477487
+  ],
+  "text": "89/100 = 89.0%  (95% CI 81.4-93.7%)"
+ },
+ "tool_level": {
+  "buddy": {
+   "all": {
+    "k": 296,
+    "n": 296,
+    "rate": 1.0,
+    "ci95": [
+     0.9871879018788587,
+     1.0
+    ],
+    "text": "296/296 = 100.0%  (95% CI 98.7-100.0%)"
+   },
+   "without_time_limited": {
+    "k": 296,
+    "n": 296,
+    "rate": 1.0,
+    "ci95": [
+     0.9871879018788587,
+     1.0
+    ],
+    "text": "296/296 = 100.0%  (95% CI 98.7-100.0%)"
+   },
+   "time_limited": {
+    "k": 0,
+    "n": 0,
+    "rate": null,
+    "ci95": null,
+    "text": "n/a (0)"
+   }
+  },
+  "library": {
+   "all": {
+    "k": 100,
+    "n": 100,
+    "rate": 1.0,
+    "ci95": [
+     0.9630051925239981,
+     0.9999999999999999
+    ],
+    "text": "100/100 = 100.0%  (95% CI 96.3-100.0%)"
+   },
+   "without_time_limited": {
+    "k": 100,
+    "n": 100,
+    "rate": 1.0,
+    "ci95": [
+     0.9630051925239981,
+     0.9999999999999999
+    ],
+    "text": "100/100 = 100.0%  (95% CI 96.3-100.0%)"
+   },
+   "time_limited": {
+    "k": 0,
+    "n": 0,
+    "rate": null,
+    "ci95": null,
+    "text": "n/a (0)"
+   }
+  },
+  "msfinder": {
+   "all": {
+    "k": 100,
+    "n": 106,
+    "rate": 0.9433962264150944,
+    "ci95": [
+     0.8819750370792868,
+     0.9738027374615065
+    ],
+    "text": "100/106 = 94.3%  (95% CI 88.2-97.4%)"
+   },
+   "without_time_limited": {
+    "k": 93,
+    "n": 93,
+    "rate": 1.0,
+    "ci95": [
+     0.9603310973796383,
+     0.9999999999999999
+    ],
+    "text": "93/93 = 100.0%  (95% CI 96.0-100.0%)"
+   },
+   "time_limited": {
+    "k": 7,
+    "n": 13,
+    "rate": 0.5384615384615384,
+    "ci95": [
+     0.2914343243183205,
+     0.7679424569851186
+    ],
+    "text": "7/13 = 53.8%  (95% CI 29.1-76.8%)"
+   }
+  },
+  "frigid": {
+   "all": {
+    "k": 79,
+    "n": 79,
+    "rate": 1.0,
+    "ci95": [
+     0.9536271631644004,
+     1.0
+    ],
+    "text": "79/79 = 100.0%  (95% CI 95.4-100.0%)"
+   },
+   "without_time_limited": {
+    "k": 79,
+    "n": 79,
+    "rate": 1.0,
+    "ci95": [
+     0.9536271631644004,
+     1.0
+    ],
+    "text": "79/79 = 100.0%  (95% CI 95.4-100.0%)"
+   },
+   "time_limited": {
+    "k": 0,
+    "n": 0,
+    "rate": null,
+    "ci95": null,
+    "text": "n/a (0)"
+   }
+  }
+ },
+ "layer_level": {
+  "buddy": {
+   "k": 632,
+   "n": 632,
+   "rate": 1.0,
+   "ci95": [
+    0.9939582436883652,
+    1.0
+   ],
+   "text": "632/632 = 100.0%  (95% CI 99.4-100.0%)"
+  },
+  "library": {
+   "k": 123,
+   "n": 136,
+   "rate": 0.9044117647058824,
+   "ci95": [
+    0.8433188415060294,
+    0.9432854307563016
+   ],
+   "text": "123/136 = 90.4%  (95% CI 84.3-94.3%)"
+  },
+  "msfinder": {
+   "k": 840,
+   "n": 848,
+   "rate": 0.9905660377358491,
+   "ci95": [
+    0.9814952815367176,
+    0.9952121250985065
+   ],
+   "text": "840/848 = 99.1%  (95% CI 98.1-99.5%)"
+  },
+  "frigid": {
+   "k": 185,
+   "n": 185,
+   "rate": 1.0,
+   "ci95": [
+    0.9796570247233661,
+    1.0
+   ],
+   "text": "185/185 = 100.0%  (95% CI 98.0-100.0%)"
+  }
+ },
+ "library_spectra": {
+  "k": 670,
+  "n": 673,
+  "rate": 0.9955423476968797,
+  "ci95": [
+   0.9869766327314193,
+   0.9984828898511169
+  ],
+  "text": "670/673 = 99.6%  (95% CI 98.7-99.8%)"
+ },
+ "library_identical_scores_1e-6": {
+  "k": 95,
+  "n": 100,
+  "rate": 0.95,
+  "ci95": [
+   0.8882480347279118,
+   0.9784566385436864
+  ],
+  "text": "95/100 = 95.0%  (95% CI 88.8-97.8%)"
+ },
+ "library_max_best_score_diff": 0.05002635717391968,
+ "library_direct_spectra_not_returned_by_mzdesk": 201,
+ "library_calls_truncated": 0,
+ "frigid_devices": [
+  "cpu"
+ ],
+ "burden": {
+  "tools": {
+   "4": 49,
+   "3": 51
+  },
+  "tool_runs": {
+   "median": 6.0,
+   "min": 4,
+   "max": 9,
+   "text": "6 (4-9)"
+  },
+  "files_written": {
+   "median": 7.0,
+   "min": 2,
+   "max": 14,
+   "text": "7 (2-14)"
+  },
+  "parameters_set": {
+   "median": 63.0,
+   "min": 30,
+   "max": 110,
+   "text": "63 (30-110)"
+  },
+  "handoffs": {
+   "median": 6.0,
+   "min": 1,
+   "max": 12,
+   "text": "6 (1-12)"
+  }
+ },
+ "differences": [
+  {
+   "id": 28,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "structure files differ: only mzDesk [], only direct ['f0/C30H50O']"
+  },
+  {
+   "id": 29,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "structure files differ: only mzDesk [], only direct ['f0/C25H41NO7', 'f1/C25H38O7']"
+  },
+  {
+   "id": 34,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "f0/C20H32O4: 100 vs 100 structures; best mzDesk [('VNYSSYRCGWBHLG', 7.4401), ('JNUUNUQHXIOFDA', 7.4156), ('BFWYTORDSFIVKP', 7.2548)] vs direct [('VNYSSYRCGWBHLG', 7.4401), ('JNUUNUQHXIOFDA', 7.4156), ('BFWYTORDSFIVKP', 7.2548)]"
+  },
+  {
+   "id": 55,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "f1/C45H82NO8P: 44 vs 45 structures; best mzDesk [('HNFSZKRUPTYBOQ', 6.9752), ('MIPOZDXFSKBSGM', 6.887), ('QCPNXDHEZUMTLB', 6.8821)] vs direct [('HNFSZKRUPTYBOQ', 6.9752), ('MIPOZDXFSKBSGM', 6.887), ('QCPNXDHEZUMTLB', 6.8821)]"
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "structure files differ: only mzDesk ['f0/C41H78NO9P'], only direct []"
+  },
+  {
+   "id": 80,
+   "tool": "msfinder",
+   "where": "msfinder/00",
+   "time_limited": true,
+   "first_difference": "f0/C20H32O3: 90 vs 83 structures; best mzDesk [('KGIJOOYOSFUGPC', 8.2071), ('JSFATNQSLKRBCI', 8.1392), ('DBWQSCSXHFNTMO', 8.0372)] vs direct [('KGIJOOYOSFUGPC', 8.2071), ('JSFATNQSLKRBCI', 8.1392), ('DBWQSCSXHFNTMO', 8.0372)]"
+  }
+ ],
+ "layer_missing": [
+  {
+   "id": 12,
+   "tool": "library",
+   "key": "OVYWMEWYEJLIER",
+   "name": "6-Quinolinol",
+   "accession": "MSBNK-UFZ-UA006901",
+   "library": "MassBank",
+   "score": 0.7818882465362549,
+   "direct_best": 0.7819173336029053
+  },
+  {
+   "id": 15,
+   "tool": "library",
+   "key": "OYTCZOJKXCTBHG",
+   "name": "Terbutylazine-2-hydroxy",
+   "accession": "MSBNK-Athens_Univ-AU208101",
+   "library": "MassBank",
+   "score": 0.7356382012367249,
+   "direct_best": 0.7357413172721863
+  },
+  {
+   "id": 34,
+   "tool": "msfinder",
+   "ik14": "OCBYZNFGCPOXBL",
+   "formula": "C20H32O4",
+   "score": 7.1679
+  },
+  {
+   "id": 55,
+   "tool": "library",
+   "key": "GNFCRQUJTIOSKP",
+   "name": "PC(16:0e/15-HEPE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00059",
+   "library": "MassBank",
+   "score": 0.8571553230285645,
+   "direct_best": 0.8571568727493286
+  },
+  {
+   "id": 55,
+   "tool": "library",
+   "key": "ZZJKMJVUYDVCML",
+   "name": "PC(16:0e/11,12-EpETE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00052",
+   "library": "MassBank",
+   "score": 0.8560906648635864,
+   "direct_best": 0.8561700582504272
+  },
+  {
+   "id": 55,
+   "tool": "library",
+   "key": "CQJMWSXXCWAWCC",
+   "name": "PC(16:0e/12-HEPE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00053",
+   "library": "MassBank",
+   "score": 0.8545243144035339,
+   "direct_best": 0.8546419739723206
+  },
+  {
+   "id": 55,
+   "tool": "library",
+   "key": "XHSGENKPTPNVDI",
+   "name": "PC(16:0e/14,15-EpETE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00057",
+   "library": "MassBank",
+   "score": 0.8298897743225098,
+   "direct_best": 0.8299345970153809
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "WDDLFSKLSXYHHM",
+   "formula": "C41H78NO9P",
+   "score": 5.7026
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "BUUGGEDZLZQROW",
+   "formula": "C41H78NO9P",
+   "score": 5.7011
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "FQCCOAVFQZPNLG",
+   "formula": "C41H78NO9P",
+   "score": 5.7011
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "QTCAOKZUEKULAU",
+   "formula": "C41H78NO9P",
+   "score": 5.7006
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "SRFZSYZQMWQOSN",
+   "formula": "C41H78NO9P",
+   "score": 5.6991
+  },
+  {
+   "id": 63,
+   "tool": "msfinder",
+   "ik14": "UKNPYJPNCNPRBE",
+   "formula": "C41H78NO9P",
+   "score": 5.6991
+  },
+  {
+   "id": 66,
+   "tool": "library",
+   "key": "UPFGBRNWZOZZLF",
+   "name": "PC(16:0e/8,9-EET)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00071",
+   "library": "MassBank",
+   "score": 0.8672707080841064,
+   "direct_best": 0.8672817349433899
+  },
+  {
+   "id": 66,
+   "tool": "library",
+   "key": "NMKCCEHYPWXWLG",
+   "name": "PC(16:0e/14,15-EET)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00056",
+   "library": "MassBank",
+   "score": 0.7649375796318054,
+   "direct_best": 0.7649428248405457
+  },
+  {
+   "id": 66,
+   "tool": "library",
+   "key": "QZDFJRZZGKPADY",
+   "name": "PC(16:0e/15-HETE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00060",
+   "library": "MassBank",
+   "score": 0.7334724068641663,
+   "direct_best": 0.7834987640380859
+  },
+  {
+   "id": 66,
+   "tool": "library",
+   "key": "BXWZXPGVAXFAJU",
+   "name": "PC(16:0e/20-HETE)",
+   "accession": "MSBNK-RIKEN_IMS-LQA00067",
+   "library": "MassBank",
+   "score": 0.7069441080093384,
+   "direct_best": 0.707267165184021
+  },
+  {
+   "id": 79,
+   "tool": "library",
+   "key": "WJJMNDUMQPNECX",
+   "name": "Massbank:LU090153 2,6-Pyridinedicarboxylic acid M-H",
+   "accession": "CCMSLIB00005766680",
+   "library": "GNPS",
+   "score": 0.9221497178077698,
+   "direct_best": 0.9987831115722656
+  },
+  {
+   "id": 79,
+   "tool": "library",
+   "key": "GJAWHXHKYYXBSV",
+   "name": "Massbank:LU093053 2,3-Pyridinedicarboxylic acid|Quinolinic acid M-H",
+   "accession": "CCMSLIB00005760333",
+   "library": "GNPS",
+   "score": 0.9221497178077698,
+   "direct_best": 0.9987831115722656
+  },
+  {
+   "id": 80,
+   "tool": "msfinder",
+   "ik14": "FVXUUVSFGPLNBJ",
+   "formula": "C20H32O3",
+   "score": 7.5327
+  },
+  {
+   "id": 82,
+   "tool": "library",
+   "key": "XWBWIAOWSABHFI",
+   "name": "Cer[NS] d38:1",
+   "accession": "MSBNK-RIKEN_IMS-LQB00425",
+   "library": "MassBank",
+   "score": 0.8654600381851196,
+   "direct_best": 0.8657946586608887
+  }
+ ],
+ "seconds_per_case": {
+  "median": 106.5,
+  "min": 34,
+  "max": 596,
+  "text": "106.5 (34-596)"
+ }
+}

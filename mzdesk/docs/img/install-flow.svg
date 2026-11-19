@@ -1,0 +1,54 @@
+<svg viewBox="0 0 720 376" xmlns="http://www.w3.org/2000/svg">
+<title>Install and first use</title>
+<desc>Install with one command, about 1.6 GB for Python and the core. Typing mzdesk opens the browser. The first run of MS/MS Annotation downloads the libraries and MS-FINDER by itself. Larger engines (CFM-ID, FRIGID, NEIMS) ask before they download. An update notice appears when a new version exists.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<path class="fg-line" d="M38 50L38 330" stroke-width="2"/>
+<circle class="fg-dot" cx="38" cy="50" r="15"/>
+<text class="fg-dot-text" x="38" y="55" text-anchor="middle">1</text>
+<text class="fg-title" x="70" y="47">Run the install command</text>
+<text class="fg-muted" x="70" y="67">one command, in a terminal</text>
+<rect class="fg-box" x="350" y="24" width="110" height="52" rx="8"/>
+<text class="fg-text" x="405" y="47" text-anchor="middle">macOS / Linux</text>
+<text class="fg-muted" x="405" y="65" text-anchor="middle">install.sh</text>
+<rect class="fg-box" x="470" y="24" width="110" height="52" rx="8"/>
+<text class="fg-text" x="525" y="47" text-anchor="middle">Windows</text>
+<text class="fg-muted" x="525" y="65" text-anchor="middle">install.ps1</text>
+<rect class="fg-box" x="590" y="24" width="110" height="52" rx="8"/>
+<text class="fg-text" x="645" y="47" text-anchor="middle">Python + core</text>
+<text class="fg-muted" x="645" y="65" text-anchor="middle">about 1.6 GB</text>
+<circle class="fg-dot" cx="38" cy="120" r="15"/>
+<text class="fg-dot-text" x="38" y="125" text-anchor="middle">2</text>
+<text class="fg-title" x="70" y="117">Start mzDesk</text>
+<text class="fg-muted" x="70" y="137">opens in your browser</text>
+<rect class="fg-box" x="350" y="94" width="170" height="52" rx="8"/>
+<text class="fg-mono" x="435" y="125" text-anchor="middle">mzdesk</text>
+<circle class="fg-dot" cx="38" cy="190" r="15"/>
+<text class="fg-dot-text" x="38" y="195" text-anchor="middle">3</text>
+<text class="fg-title" x="70" y="187">Use MS/MS Annotation</text>
+<text class="fg-muted" x="70" y="207">downloads on its own</text>
+<rect class="fg-box" x="350" y="164" width="150" height="52" rx="8"/>
+<text class="fg-text" x="425" y="187" text-anchor="middle">Libraries</text>
+<text class="fg-muted" x="425" y="205" text-anchor="middle">about 2.3 GB</text>
+<rect class="fg-box" x="510" y="164" width="150" height="52" rx="8"/>
+<text class="fg-text" x="585" y="187" text-anchor="middle">MS-FINDER</text>
+<text class="fg-muted" x="585" y="205" text-anchor="middle">about 0.5 GB</text>
+<circle class="fg-box-accent" cx="38" cy="260" r="15" stroke-dasharray="4 3"/>
+<text class="fg-accent-text" x="38" y="265" text-anchor="middle">4</text>
+<text class="fg-title" x="70" y="257">Use a larger engine</text>
+<text class="fg-muted" x="70" y="277">asks before it downloads</text>
+<rect class="fg-box-soft" x="350" y="234" width="110" height="52" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="405" y="257" text-anchor="middle">CFM-ID</text>
+<text class="fg-muted" x="405" y="275" text-anchor="middle">about 0.2 GB</text>
+<rect class="fg-box-soft" x="470" y="234" width="110" height="52" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="525" y="257" text-anchor="middle">FRIGID</text>
+<text class="fg-muted" x="525" y="275" text-anchor="middle">about 3 GB</text>
+<rect class="fg-box-soft" x="590" y="234" width="110" height="52" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="645" y="257" text-anchor="middle">NEIMS</text>
+<text class="fg-muted" x="645" y="275" text-anchor="middle">about 1 GB</text>
+<circle class="fg-dot" cx="38" cy="330" r="15"/>
+<text class="fg-dot-text" x="38" y="335" text-anchor="middle">5</text>
+<text class="fg-title" x="70" y="327">Update</text>
+<text class="fg-muted" x="70" y="347">a notice shows a new version</text>
+<rect class="fg-box" x="350" y="304" width="170" height="52" rx="8"/>
+<text class="fg-mono" x="435" y="335" text-anchor="middle">mzdesk update</text>
+</svg>

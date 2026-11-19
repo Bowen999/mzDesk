@@ -1,0 +1,13 @@
+{
+ "precursor_mz": 285.0405,
+ "adduct": "[M-H]-",
+ "formulas": [
+  "C15H10O6",
+  "C8H10N6O4S",
+  "C7H16N2O6P2",
+  "C9H11N4O5P",
+  "C7H14N2O8S"
+ ],
+ "tol_ppm": 5.0,
+ "tol_da": 0.01
+}

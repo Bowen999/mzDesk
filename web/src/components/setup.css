@@ -1,0 +1,108 @@
+/* First-use downloads (components/SetupDialog.tsx) and the update notice (components/UpdateNotice.tsx).
+   The card shares .dialog-overlay / .dialog-card / .dialog-actions with the internet-off dialog (theme.css). Only theme tokens: the one blue
+   (--accent*) for downloads and progress, the one alert colour (--alert*) for "cannot" and "failed". */
+
+/* ---------------------------------------------------------------- dialog */
+.setup-card { width: min(480px, 100%); outline: 0; }
+.setup-card.is-info .dialog-badge { color: var(--accent-ink); background: var(--accent-bg); border-color: var(--accent-line); }
+.setup-card .dialog-note { margin-top: 0; color: var(--muted); }
+.setup-card .dialog-note + .dialog-note { margin-top: -4px; }
+
+/* confirm + blocked: what will be downloaded / what is in the way */
+.setup-list { margin: 0 0 12px; padding: 0; list-style: none; border: 1px solid var(--line); border-radius: 10px; }
+.setup-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; row-gap: 4px; align-items: baseline; padding: 12px 16px; }
+.setup-list > li + li { border-top: 1px solid var(--line); }
+.setup-name { min-width: 0; color: var(--ink); font-size: 13.5px; font-weight: 500; line-height: 1.45; overflow-wrap: anywhere; }
+.setup-size { flex: none; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.setup-why { grid-column: 1 / -1; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.setup-why.setup-message { color: var(--ink-2); font-size: 13px; }
+.setup-link { grid-column: 1 / -1; min-width: 0; font-size: 12.5px; overflow-wrap: anywhere; }
+
+/* progress: the overall bar (bar, percent, clock), then one row per component */
+.setup-bar-row { display: flex; align-items: center; gap: 8px; margin: 16px 0 12px; }
+.setup-bar { position: relative; flex: 1 1 auto; height: 8px; overflow: hidden; background: var(--accent-bg); border-radius: 8px; box-shadow: inset 0 0 0 1px var(--accent-line); }
+.setup-bar > span { position: relative; display: block; height: 100%; overflow: hidden; background: var(--accent); border-radius: inherit; transition: width .5s cubic-bezier(.25, .6, .35, 1); }
+/* a soft sheen runs along the filled part only while it works; the last phase (finishing) stands still, full */
+.setup-bar > span::after {
+  content: ""; position: absolute; inset: 0; opacity: .38; background: linear-gradient(90deg, transparent, var(--bg), transparent);
+  transform: translateX(-100%); animation: setup-sheen 1.8s ease-in-out infinite;
+}
+.setup-bar-row.is-finishing .setup-bar > span::after { animation: none; opacity: 0; }
+.setup-pct { flex: none; min-width: 36px; color: var(--ink); font-size: 12.5px; font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.setup-bar-row.is-finishing .setup-pct { color: var(--accent-ink); }
+.setup-clock { flex: none; min-width: 36px; color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; }
+.setup-rows { margin: 0 0 12px; padding: 0; list-style: none; }
+.setup-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 8px 0; }
+.setup-row + .setup-row { border-top: 1px solid var(--line); }
+.setup-row > .setup-mark { grid-column: 1; grid-row: 1; }
+.setup-row > .setup-name { grid-column: 2; grid-row: 1; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
+.setup-row > .setup-word { grid-column: 3; grid-row: 1; }
+.setup-row .setup-size { font-weight: 400; }
+.setup-word { color: var(--muted); font-size: 12.5px; white-space: nowrap; }
+.setup-row.is-waiting .setup-name { color: var(--muted); font-weight: 400; }
+.setup-row.is-done .setup-name { font-weight: 400; }
+.setup-row.is-error .setup-name { color: var(--alert-ink); }
+.setup-row.is-error .setup-word, .setup-row.is-error .setup-detail { color: var(--alert-ink); }
+
+/* the running row has four lines: name, step (+ "412 of 2,300 MB"), a thin bar for the file, the last log line */
+.setup-row.is-running > .setup-name { grid-column: 2 / -1; }
+.setup-row.is-running > .setup-word { grid-column: 2; grid-row: 2; min-width: 0; margin-top: 2px; overflow: hidden; color: var(--accent-ink); text-overflow: ellipsis; }
+.setup-transfer { grid-column: 3; grid-row: 2; margin-top: 2px; color: var(--ink-2); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.setup-file { grid-column: 2 / -1; grid-row: 3; height: 4px; margin-top: 8px; overflow: hidden; background: var(--accent-bg); border-radius: 4px; box-shadow: inset 0 0 0 1px var(--accent-line); }
+.setup-file > span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .5s cubic-bezier(.25, .6, .35, 1); }
+.setup-detail {
+  grid-column: 2 / -1; grid-row: 4; margin-top: 4px; overflow: hidden; color: var(--muted); font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.setup-row.is-error > .setup-detail { grid-row: 2; margin-top: 2px; }
+.setup-mark { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 700; line-height: 1; }
+.setup-row.is-waiting .setup-mark { border: 1.5px solid var(--line-strong); }
+.setup-row.is-running .setup-mark { border: 2px solid var(--accent-line); border-top-color: var(--accent); animation: setup-spin .8s linear infinite; }
+.setup-row.is-done .setup-mark { color: var(--accent-ink); background: var(--accent-bg); }
+.setup-row.is-error .setup-mark { color: var(--bg); background: var(--alert); }
+@keyframes setup-spin { to { transform: rotate(360deg); } }
+@keyframes setup-sheen { to { transform: translateX(100%); } }
+
+/* error: the log tail stays short and scrolls */
+.setup-log { margin: 0 0 4px; }
+.setup-log summary { color: var(--muted); font-size: 12.5px; cursor: pointer; }
+.setup-log .code { max-height: 180px; margin: 8px 0 0; font-size: 11.5px; line-height: 1.55; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.setup-card .alert { margin-bottom: 12px; overflow-wrap: anywhere; }
+
+@media (max-width: 560px) {
+  .setup-card { width: 100%; }
+  .setup-card .dialog-actions { flex-direction: column-reverse; }
+  .setup-card .dialog-actions .btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .setup-row.is-running .setup-mark { animation: none; border-color: var(--accent); }
+  .setup-bar > span, .setup-file > span { transition: none; }
+  .setup-bar > span::after { animation: none; opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- update notice: a quiet item in the sidebar footer + a popover */
+.update-entry .internet-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.update-icon { position: relative; display: inline-grid; place-items: center; flex: none; }
+.update-dot {
+  position: absolute; top: -2px; right: -3px; width: 7px; height: 7px; background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--canvas);
+}
+.sidebar-blue .update-dot { background: var(--on-side); box-shadow: 0 0 0 2px var(--side-bg); }
+.update-entry[aria-expanded="true"], .rail-btn.update-rail[aria-expanded="true"] { color: var(--accent-ink); background: var(--accent-bg); }
+.sidebar-blue .sidebar .update-entry[aria-expanded="true"], .sidebar-blue .sidebar .rail-btn.update-rail[aria-expanded="true"] { color: var(--on-side); background: var(--on-side-hover); }
+
+/* portalled to <body> like the language list: it wears the page theme, not the blue of the sidebar */
+.update-pop {
+  position: fixed; z-index: 1000; width: min(300px, calc(100vw - 16px)); padding: 14px 14px 10px; overflow-y: auto; overscroll-behavior: contain;
+  color: var(--ink-2); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: var(--shadow-pop);
+  font-family: var(--sans); font-size: 13px; line-height: 1.5;
+}
+.update-pop p { margin: 0; }
+.update-title { color: var(--ink); font-size: 14px; font-weight: 600; line-height: 1.4; }
+.update-notes { display: inline-block; margin-top: 2px; font-size: 13px; }
+.update-pop .update-hint { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.update-cmd { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 5px 5px 5px 10px; background: var(--canvas); border: 1px solid var(--line); border-radius: 8px; }
+.update-cmd code { flex: 1 1 auto; min-width: 0; overflow-x: auto; color: var(--ink); font-size: 12.5px; white-space: nowrap; user-select: all; }
+.update-cmd .copy { flex: none; margin-left: 0; }
+.update-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+.update-actions .btn { min-height: 30px; padding: 4px 10px; font-size: 12.5px; }

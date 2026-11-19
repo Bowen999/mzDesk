@@ -1,0 +1,29 @@
+<svg viewBox="0 0 720 352" xmlns="http://www.w3.org/2000/svg">
+<title>Evidence levels in the answer</title>
+<desc>The five levels the answer can carry, from the best evidence to the weakest: Level 2a, Level 3, Hypothesis, Level 4 and Level 5.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<text class="fg-muted" x="20" y="24">Best evidence</text>
+<rect class="fg-box-accent" x="70" y="40" width="630" height="50" rx="10"/>
+<text class="fg-title" x="88" y="71">Level 2a</text>
+<text class="fg-text" x="210" y="62">Probable structure</text>
+<text class="fg-small" x="210" y="81">A library spectrum passed the Level-2 gate</text>
+<rect class="fg-box-soft" x="70" y="98" width="630" height="50" rx="10"/>
+<text class="fg-title" x="88" y="129">Level 3</text>
+<text class="fg-text" x="210" y="120">Tentative candidate</text>
+<text class="fg-small" x="210" y="139">An MS-FINDER structure, or a library hit that failed the gate</text>
+<rect class="fg-box-warn" x="70" y="156" width="630" height="50" rx="10"/>
+<text class="fg-title" x="88" y="187">Hypothesis</text>
+<text class="fg-text" x="210" y="178">Structure hypothesis</text>
+<text class="fg-small" x="210" y="197">A FRIGID structure: the formula is its only evidence</text>
+<rect class="fg-box-soft" x="70" y="214" width="630" height="50" rx="10"/>
+<text class="fg-title" x="88" y="245">Level 4</text>
+<text class="fg-text" x="210" y="236">Molecular formula only</text>
+<text class="fg-small" x="210" y="255">A formula was found, no structure was proposed</text>
+<rect class="fg-box-soft" x="70" y="272" width="630" height="50" rx="10"/>
+<text class="fg-title" x="88" y="303">Level 5</text>
+<text class="fg-text" x="210" y="294">Exact mass only</text>
+<text class="fg-small" x="210" y="313">Only the precursor m/z is available</text>
+<path class="fg-arrow" d="M34 40L34 330" marker-end="url(#ah)"/>
+<text class="fg-muted" x="20" y="346">Weakest</text>
+<text class="fg-muted" x="700" y="346" text-anchor="end">After Schymanski et al. (2014)</text>
+</svg>

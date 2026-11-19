@@ -1,0 +1,71 @@
+class_full,nucleus,mod,family,nchain,ether,lyso,implied_O,implied_mode,slash_role,oxy_policy,pnnl_O,notes
+As-PL,As-PL,,gpl,2,0,0,0,none,none,typed_only,,"arsenic phospholipid, LM total-level names only (level 1); ref n=16 (LM)"
+BMP,BMP,,gpl,2,0,0,0,none,none,typed_only,,"bis(monoacylglycero)phosphate, 2 chains; SwissLipids writes 4 slots (two placeholders) and lists BMP and LBPA as aliases; reversed alias order is the same molecule; ref n=4755 (LM/MSD/SL)"
+BMP-oacyl,BMP,oacyl,gpl,3,0,0,0,none,none,typed_only,,"HBMP (LipidBlast) / SLBPA (LM), 3 chains; the extra acyl sits on a glycerol OH, so L1 carries no extra O (reference sum_O is 0); ref n=10208 (LM/LB)"
+CDP-DAG,CDP-DAG,,gpl,2,0,0,0,none,none,typed_only,,"CDP-diacylglycerol, 2 chains; CDP-DG (LM source column spelling) is an unverified alias; ref n=6889 (SL)"
+CL,CL,,gpl,4,0,0,0,none,none,typed_only,,"cardiolipin, 4 chains (4 slots); SwissLipids writes CL (a/b/c/d); 34.6% of the SwissLipids rows are label noise (bucket B3: two mistyped chain tokens), so check CL against non-B3 rows only; ref n=92266 (LM/LB/SL)"
+CL-lyso,CL,lyso,gpl,3,0,1,0,none,none,typed_only,,"MLCL, 3 chains = CL with exactly one placeholder slot in any position; heads MLCL (verified) and CL + one placeholder (inferred); ref n=19194 (LB/SL)"
+CL-lyso2,CL,lyso2,gpl,2,0,1,0,none,none,typed_only,,"DLCL, 2 chains = CL with two placeholder slots; heads DLCL (verified) and CL + two placeholders (inferred); ref n=835 (LB/SL)"
+CPA,CPA,,gpl,1,0,0,0,none,none,typed_only,,"family=gpl: cyclic phosphatidic acid; cyclic phosphatidic acid, 1 chain (LM total-level names; the single chain is the label chain); ref n=4 (LM)"
+PA,PA,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=8337 (LM/MSD/SL)"
+PA-Hex,PA,Hex,gpl,2,0,0,0,none,none,typed_only,,"Glc-GP (LM); one-chain names are ambiguous between sum and lyso (reference Glc-GP lyso row is label noise from structure), default sum; ref n=3 (LM)"
+PA-Hex-ac,PA,Hex-ac,gpl,2,0,0,0,none,none,typed_only,,"6-Ac-Glc-GP (LM), 2 chains; ref n=1 (LM)"
+PA-Hex-lyso,PA,Hex-lyso,gpl,1,0,1,0,none,none,typed_only,,only reachable from the PA-Hex-lyso spelling or source=pnnl (single-chain Glc-GP is read as a sum by default); ref n=1 (LM)
+PA-OEt,PA,OEt,gpl,2,0,0,0,none,none,typed_only,,"PEtOH / PEth, phosphatidylethanol (the ethanol O belongs to the class); ref n=1328 (LM/LB)"
+PA-OMe,PA,OMe,gpl,2,0,0,0,none,none,typed_only,,"PMeOH, phosphatidylmethanol; benchmark truth pool still has the stale spelling PA-me; ref n=1326 (MSD)"
+PA-ether,PA,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=3018 (LM/SL)
+PA-ether-lyso,PA,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=37 (LM/SL)
+PA-lyso,PA,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=194 (LM/MSD/SL)
+PA-phos,PA,phos,gpl,2,0,0,0,none,none,typed_only,,"PPA, pyrophosphatidic acid (LM, 2 rows); ref n=2 (LM)"
+PC,PC,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=20111 (LM/LB/MSD/Riken/SL)"
+PC-ether,PC,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=8027 (LM/LB/MSD/Riken/SL)
+PC-ether-lyso,PC,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=98 (LM/MSD/SL)
+PC-lyso,PC,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=304 (LM/MSD/SL)
+PE,PE,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=19944 (LM/LB/MSD/Riken/SL)"
+PE-Hex,PE,Hex,gpl,2,0,0,0,none,none,typed_only,,"Am-Hex-PE (LM), 2 chains; Am-Hex-LPE has no vocabulary class (rejected); ref n=17 (LM)"
+PE-Hex-ether,PE,Hex-ether,gpl,2,1,0,0,none,none,typed_only,,"Am-Hex-PE with an ether mark (LM), 2 chains; ref n=16 (LM)"
+PE-ether,PE,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=8101 (LM/LB/MSD/Riken/SL)
+PE-ether-lyso,PE,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=117 (LM/MSD/SL)
+PE-ether-nacyl,PE,ether-nacyl,gpl,3,1,0,0,none,none,typed_only,,"NAPE with an ether mark, 3 chains; SwissLipids puts the ether mark on the first slot only; ref n=41748 (LM/SL)"
+PE-ether-nacyl-lyso,PE,ether-nacyl-lyso,gpl,2,1,1,0,none,none,typed_only,,NAPE with an ether first slot and one placeholder slot (reference: SwissLipids only); ref n=504 (SL)
+PE-lyso,PE,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=292 (LM/MSD/SL)
+PE-me,PE,me,gpl,2,0,0,0,none,none,typed_only,,"PE-NMe (LM) / MMPE (LipidIN, LipidMatch; inferred); ref n=9 (LM)"
+PE-me2,PE,me2,gpl,2,0,0,0,none,none,typed_only,,"PE-NMe2 (LM) / DMPE (LipidIN, LipidMatch; inferred); ref n=8 (LM)"
+PE-nacyl,PE,nacyl,gpl,3,0,0,0,none,none,typed_only,,"NAPE, 3 chains; the third SwissLipids slot is the N-acyl chain (amide O belongs to the class: reference sum_O is 0); LM PE-N[FA] is total-level and its reference label is structure-derived (7 of 8 rows ether-nacyl); ref n=96362 (LM/SL)"
+PE-nacyl-lyso,PE,nacyl-lyso,gpl,2,0,1,0,none,none,typed_only,,"LNAPE (LB, MS-DIAL, LipidIN) = NAPE with one placeholder slot; N- marks the N-acyl chain and is dropped in the label; ref n=5111 (LB/SL)"
+PE-nacyl-lyso2,PE,nacyl-lyso2,gpl,1,0,1,0,none,none,typed_only,,family=gpl by nucleus PE: listed in fam_fa+fam_gpl censuses; lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=14 (SL)
+PG,PG,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=8459 (LM/LB/MSD/Riken/SL)"
+PG-ether,PG,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=6107 (LM/LB/SL)
+PG-ether-lyso,PG,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=86 (LM/LB/SL)
+PG-lyso,PG,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=192 (LM/MSD/SL)
+PG-phos,PG,phos,gpl,2,0,0,0,none,none,typed_only,,PGP (the extra phosphate O belongs to the class: reference sum_O is 0); ref n=6889 (LM/SL)
+PI,PI,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=8500 (LM/LB/MSD/Riken/SL)"
+PI-Hex,PI,Hex,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=168 (LM/LB)"
+PI-Hex-lyso,PI,Hex-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-Hex2,PI,Hex2,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=157 (LM/LB)"
+PI-Hex2-lyso,PI,Hex2-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-Hex2-oacyl,PI,Hex2-oacyl,gpl,3,0,0,0,none,none,typed_only,,"Ac3PIM2 (LipidBlast), 3 chains; only PIM2 has oacyl variants in the vocabulary; ref n=1331 (LB)"
+PI-Hex2-oacyl2,PI,Hex2-oacyl2,gpl,4,0,0,0,none,none,typed_only,,"Ac4PIM2 (LipidBlast), 4 chains; (methyl) chain spellings are rejected (C count unknown; the reference deleted them); ref n=625 (LB)"
+PI-Hex3,PI,Hex3,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=48 (LM)"
+PI-Hex3-lyso,PI,Hex3-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-Hex4,PI,Hex4,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=48 (LM)"
+PI-Hex4-lyso,PI,Hex4-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-Hex5,PI,Hex5,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=48 (LM)"
+PI-Hex5-lyso,PI,Hex5-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-Hex6,PI,Hex6,gpl,2,0,0,0,none,none,typed_only,,"PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=48 (LM)"
+PI-Hex6-lyso,PI,Hex6-lyso,gpl,1,0,1,0,none,none,typed_only,,"lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); PIM / LPIM family (LM, LipidBlast Ac2PIMn); ref n=8 (LM)"
+PI-ether,PI,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=6109 (LM/LB/Riken/SL)
+PI-ether-lyso,PI,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=36 (LM/SL)
+PI-lyso,PI,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=193 (LM/MSD/SL)
+PI-phos,PI,phos,gpl,2,0,0,0,none,none,typed_only,,PIP (phosphate O belongs to the class); ref n=13778 (LM/SL)
+PI-phos2,PI,phos2,gpl,2,0,0,0,none,none,typed_only,,PIP2; ref n=13778 (LM/SL)
+PI-phos3,PI,phos3,gpl,2,0,0,0,none,none,typed_only,,PIP3; ref n=6889 (LM/SL)
+PS,PS,,gpl,2,0,0,0,none,none,typed_only,,"plain class, 2 chains; ref n=8453 (LM/LB/MSD/Riken/SL)"
+PS-ether,PS,ether,gpl,2,1,0,0,none,none,typed_only,,ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=6102 (LM/LB/SL)
+PS-ether-lyso,PS,ether-lyso,gpl,1,1,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ether class: an O-/P-/e chain mark or a -O/-P/Plasmanyl-/Plasmenyl- head; P adds one DB (plasmenyl); ref n=65 (LM/SL)
+PS-lyso,PS,lyso,gpl,1,0,1,0,none,none,typed_only,,lyso: one chain; LPx = Px(placeholder/x) = Px(x/placeholder); ref n=188 (LM/MSD/SL)
+PS-nacyl,PS,nacyl,gpl,3,0,0,0,none,none,typed_only,,"PS-NAc (LM, 2 rows): the name total excludes the N-acyl chain but the reference L1 includes it (label noise, name cannot tell); ref n=2 (LM)"
+PS-nacyl-lyso,PS,nacyl-lyso,gpl,2,0,1,0,none,none,typed_only,,"LNAPS (LipidBlast, MS-DIAL, LipidIN), 2 chains; N- marks the N-acyl chain; ref n=4489 (LB)"
+PT,PT,,gpl,2,0,0,0,none,none,typed_only,,"phosphatidylthreonine, LM total-level names only (level 1); ref n=3 (LM)"
+PnC,PnC,,gpl,2,0,0,0,none,none,typed_only,,LM total-level names only (level 1); ref n=1 (LM)
+PnE,PnE,,gpl,2,0,0,0,none,none,typed_only,,LM total-level names only (level 1); ref n=1 (LM)

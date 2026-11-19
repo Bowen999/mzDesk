@@ -1,0 +1,178 @@
+Isomer check and evidence levels on CASMI 2022 (mzDesk v0.5.3, config 'full' = default gated workflow)
+Run: benchmark/casmi2022/mzdesk_v0.5.3_20261102; code fingerprint ['00915a8016b84728']; settings.local_isomers = False; fragment tol (run) 0.01 Da
+Step-7 fragment tolerance recorded in the replay notes: {'0.01': 388} (challenges)
+CI: Wilson 95 %. Top-1 at the worst rank of ties unless marked 'best'.
+
+== Self-checks ==
+n = 500 (expect 500): PASS
+Top-1 (worst) = 89 (paper 89): PASS; Top-10 (worst) = 159 (paper 159): PASS; Top-1 (best) = 95
+replay vs scores.json, answer type: PASS
+replay vs scores.json, level: PASS
+replay vs scores.json, top structure: PASS
+replay vs scores.json, top in its answer: PASS
+replay vs scores.json, single has 1 member: PASS
+replay vs scores.json, group = step-7 group: PASS
+replay vs scores.json, group has one formula: PASS
+replay vs scores.json, answer level = top level: PASS
+replay vs scores.json, replay rank of truth within [best, worst]: PASS
+replay vs scores.json, Top-1 correct => truth in answer: PASS
+Challenge 376 (Fig. 2d: truth at rank 1 plus 3 isomers not separated): FAIL; this run: group of 3 ['IFBHRQDFSNCLOZ', 'KUWPCJHYPSUOFW', 'VCCMGHVCRFMITI'], truth IFBHRQDFSNCLOZ at worst rank 1; Relative to the 4 candidates considered (the top candidate and 3 isomers).
+  Fig. 2 source run (paper/figures/figure_2/challenge376_job.json): group of 4 ['IFBHRQDFSNCLOZ', 'KUWPCJHYPSUOFW', 'LRAYZXVBPSCDCZ', 'VCCMGHVCRFMITI'], step-7 settings {'tol_da': 0.02, 'tol_ppm': 10.0, 'min_peak_pct': 1.0, 'min_distinguishing_pct': 5.0}
+
+== 1-2. Answer types (n = 500) ==
+type             n      %  Top-1 (worst rank)                 Top-1 (best rank)                  truth in answer
+single         130  26.0%    51/130   39.2 % [31.3,  47.8]      51/130   39.2 % [31.3,  47.8]      51/130   39.2 % [31.3,  47.8]
+group          351  70.2%    38/351   10.8 % [ 8.0,  14.5]      44/351   12.5 % [ 9.5,  16.4]      77/351   21.9 % [17.9,  26.6]
+formula_only    13   2.6%     0/13     0.0 % [ 0.0,  22.8]       0/13     0.0 % [ 0.0,  22.8]       0/13     0.0 % [ 0.0,  22.8]
+mass_only        6   1.2%     0/6      0.0 % [ 0.0,  39.0]       0/6      0.0 % [ 0.0,  39.0]       0/6      0.0 % [ 0.0,  39.0]
+all            500 100.0%    89/500   17.8 % [14.7,  21.4]      95/500   19.0 % [15.8,  22.7]     128/500   25.6 % [22.0,  29.6]
+
+Step-7 verdict behind each answer type:
+  single        verdict=insufficient       step 7 skipped  n=  93  Top-1   48/93    51.6 % [41.6,  61.5]
+  single        verdict=single             step 7 done     n=  37  Top-1    3/37     8.1 % [ 2.8,  21.3]
+  group         verdict=indistinguishable  step 7 done     n= 351  Top-1   38/351   10.8 % [ 8.0,  14.5]
+  formula_only  verdict=None               step 7 skipped  n=  13  Top-1    0/13     0.0 % [ 0.0,  22.8]
+  mass_only     verdict=None               step 7 skipped  n=   6  Top-1    0/6      0.0 % [ 0.0,  39.0]
+  why 'insufficient' (no comparison made):
+     88  No isomer to compare with: no other candidate has the formula X
+      2  The top candidate (...)
+      2  No fragment peak of at least 1 % of the base peak (...)
+      1  MS-FINDER cannot use the adduct [M+H-2H2O]+.
+
+== 3. Group answers ==
+n groups = 351; size (structures, top included): median 7, IQR 3-9, range 2-10
+  size distribution: 2: 47, 3: 50, 4: 25, 5: 22, 6: 24, 7: 28, 8: 27, 9: 41, 10: 87
+  groups where some same-formula isomers were not compared (10-candidate cap): 83
+Groups that contain the true structure:   77/351   21.9 % [17.9,  26.6]
+  of which the true structure is the top (worst rank 1): 38; elsewhere in the group: 39
+Top-1 wrong (all answer types): 411; true structure inside the reported group:   39/411    9.5 % [ 7.0,  12.7]
+  among group answers with Top-1 wrong:   39/313   12.5 % [ 9.3,  16.6]
+  of these, true structure tied with the top at rank 1 (best 1, worst > 1): 4
+  size of these 39 groups: median 8, range 2-10
+Group answers without the true structure, where it is:
+   256  not among the candidates
+    13  isomer of the top, outside the answer
+     5  candidate with another formula than the top
+
+== Isomer check: does the verdict match the truth? (structure answers, n = 481) ==
+verdict                 n  top = truth (worst rank 1)         truth in answer
+single                 37     3/37     8.1 % [ 2.8,  21.3]       3/37     8.1 % [ 2.8,  21.3]
+insufficient           93    48/93    51.6 % [41.6,  61.5]      48/93    51.6 % [41.6,  61.5]
+indistinguishable     351    38/351   10.8 % [ 8.0,  14.5]      77/351   21.9 % [17.9,  26.6]
+Top is not the truth, truth is a same-formula candidate (an isomer of the top): 55
+  kept in the answer (check could not separate it from the top): 38
+  left out of the answer: 17 -> [6, 24, 54, 100, 124, 218, 237, 289, 314, 325, 407, 413, 435, 442, 449, 454, 456]
+    compared and separated from the top (position in the step-7 list <= candidates considered): 16 [6, 54, 100, 124, 218, 237, 289, 314, 325, 407, 413, 435, 442, 449, 454, 456] (in single answers: [6, 237, 314])
+    beyond the 10-candidate cap, not compared: 0 []
+    no comparison made (step 7 skipped): 1 [24]
+    6: single, verdict single, truth rank 8, position in step-7 list 7, candidates considered 8, not compared (cap) 0; step 7: Fragment peaks tell the top-1 apart from every isomer compared. Another isomer explains peaks the top-1 cannot.
+    24: single, verdict insufficient, truth rank 6, position in step-7 list 6, candidates considered None, not compared (cap) 0; step 7: The top candidate (C8H8O5, [M-H]- m/z 183.0299) does not match the precursor m/z 181.0130 within 10 ppm.
+    54: group, verdict indistinguishable, truth rank 5, position in step-7 list 5, candidates considered 10, not compared (cap) 4; step 7: 2 structures cannot be separated by the spectrum.
+    100: group, verdict indistinguishable, truth rank 10, position in step-7 list 10, candidates considered 10, not compared (cap) 0; step 7: 3 structures cannot be separated by the spectrum.
+    124: group, verdict indistinguishable, truth rank 3, position in step-7 list 3, candidates considered 10, not compared (cap) 0; step 7: 2 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    218: group, verdict indistinguishable, truth rank 6, position in step-7 list 4, candidates considered 6, not compared (cap) 0; step 7: 3 structures cannot be separated by the spectrum.
+    237: single, verdict single, truth rank 2, position in step-7 list 2, candidates considered 10, not compared (cap) 1; step 7: Fragment peaks tell the top-1 apart from every isomer compared. Another isomer explains peaks the top-1 cannot.
+    289: group, verdict indistinguishable, truth rank 4, position in step-7 list 4, candidates considered 10, not compared (cap) 0; step 7: 2 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    314: single, verdict single, truth rank 3, position in step-7 list 3, candidates considered 7, not compared (cap) 0; step 7: Fragment peaks tell the top-1 apart from every isomer compared. Another isomer explains peaks the top-1 cannot.
+    325: group, verdict indistinguishable, truth rank 2, position in step-7 list 2, candidates considered 4, not compared (cap) 0; step 7: 2 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    407: group, verdict indistinguishable, truth rank 4, position in step-7 list 4, candidates considered 10, not compared (cap) 0; step 7: 4 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    413: group, verdict indistinguishable, truth rank 5, position in step-7 list 5, candidates considered 8, not compared (cap) 0; step 7: 2 structures cannot be separated by the spectrum.
+    435: group, verdict indistinguishable, truth rank 6, position in step-7 list 6, candidates considered 10, not compared (cap) 0; step 7: 3 structures cannot be separated by the spectrum.
+    442: group, verdict indistinguishable, truth rank 10, position in step-7 list 10, candidates considered 10, not compared (cap) 1; step 7: 3 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    449: group, verdict indistinguishable, truth rank 5, position in step-7 list 5, candidates considered 10, not compared (cap) 0; step 7: 6 structures cannot be separated by the spectrum.
+    454: group, verdict indistinguishable, truth rank 5, position in step-7 list 5, candidates considered 10, not compared (cap) 2; step 7: 3 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+    456: group, verdict indistinguishable, truth rank 10, position in step-7 list 10, candidates considered 10, not compared (cap) 1; step 7: 2 structures cannot be separated by the spectrum. Another isomer explains peaks the top-1 cannot.
+Top is the truth (worst rank 1, n = 89), verdict: insufficient 48, indistinguishable 38, single 3
+Verdict 'single' (n = 37), where the truth is: correct 3; not among the candidates 27, candidate with another formula than the top 4, isomer of the top, outside the answer 3
+Verdict 'single' with 'another isomer explains peaks the top-1 cannot': 21; in group answers: 102
+Single answers, where the truth is when it is not the answer:
+    65  not among the candidates
+    10  candidate with another formula than the top
+     4  isomer of the top, outside the answer
+
+== 4. Answer-level accuracy ==
+Truth is the single answer or inside the group answer:  128/500   25.6 % [22.0,  29.6]
+Top-1 (worst rank):   89/500   17.8 % [14.7,  21.4]; difference +39
+  single answers correct: 51; group answers containing the truth: 77
+
+== 5. Evidence level of the answer (n = 500) ==
+level     n  Top-1 (worst rank)                 Top-1 (best rank)                  truth in answer
+2a       66    40/66    60.6 % [48.5,  71.5]      40/66    60.6 % [48.5,  71.5]      43/66    65.2 % [53.1,  75.5]
+3       394    48/394   12.2 % [ 9.3,  15.8]      54/394   13.7 % [10.7,  17.5]      81/394   20.6 % [16.9,  24.8]
+H        21     1/21     4.8 % [ 0.8,  22.7]       1/21     4.8 % [ 0.8,  22.7]       4/21    19.0 % [ 7.7,  40.0]
+4        13     0/13     0.0 % [ 0.0,  22.8]       0/13     0.0 % [ 0.0,  22.8]       0/13     0.0 % [ 0.0,  22.8]
+5         6     0/6      0.0 % [ 0.0,  39.0]       0/6      0.0 % [ 0.0,  39.0]       0/6      0.0 % [ 0.0,  39.0]
+Top-1 accuracy non-increasing along 2a > 3 > H > 4 > 5: True (2a 60.6 %, 3 12.2 %, H 4.8 %, 4 0.0 %, 5 0.0 %)
+Level x answer type (n, Top-1 worst):
+  2a  single 53 (36); group 13 (4)
+  3   single 70 (14); group 324 (34)
+  H   single 7 (1); group 14 (0)
+  4   formula_only 13 (0)
+  5   mass_only 6 (0)
+Level 2a, top layer: library 66
+Level 2a with Top-1 wrong (n = 26): truth in answer 3; tied at rank 1 0; otherwise not among the candidates 23
+  of the 26, top has the true formula (a library isomer of the truth): 25
+
+== 6. By polarity ==
+-- positive (n = 304); Top-1   65/304   21.4 % [17.1,  26.3]; answer-level   91/304   29.9 % [25.1,  35.3]
+   type single        n=  91  Top-1   43/91    47.3 % [37.3,  57.4]    in answer   43/91    47.3 % [37.3,  57.4]
+   type group         n= 204  Top-1   22/204   10.8 % [ 7.2,  15.8]    in answer   48/204   23.5 % [18.2,  29.8]
+   type formula_only  n=   4  Top-1    0/4      0.0 % [ 0.0,  49.0]    in answer    0/4      0.0 % [ 0.0,  49.0]
+   type mass_only     n=   5  Top-1    0/5      0.0 % [ 0.0,  43.4]    in answer    0/5      0.0 % [ 0.0,  43.4]
+   level 2a           n=  54  Top-1   37/54    68.5 % [55.3,  79.3]
+   level 3            n= 220  Top-1   27/220   12.3 % [ 8.6,  17.3]
+   level H            n=  21  Top-1    1/21     4.8 % [ 0.8,  22.7]
+   level 4            n=   4  Top-1    0/4      0.0 % [ 0.0,  49.0]
+   level 5            n=   5  Top-1    0/5      0.0 % [ 0.0,  43.4]
+-- negative (n = 196); Top-1   24/196   12.2 % [ 8.4,  17.6]; answer-level   37/196   18.9 % [14.0,  24.9]
+   type single        n=  39  Top-1    8/39    20.5 % [10.8,  35.5]    in answer    8/39    20.5 % [10.8,  35.5]
+   type group         n= 147  Top-1   16/147   10.9 % [ 6.8,  16.9]    in answer   29/147   19.7 % [14.1,  26.9]
+   type formula_only  n=   9  Top-1    0/9      0.0 % [ 0.0,  29.9]    in answer    0/9      0.0 % [ 0.0,  29.9]
+   type mass_only     n=   1  Top-1    0/1      0.0 % [ 0.0,  79.3]    in answer    0/1      0.0 % [ 0.0,  79.3]
+   level 2a           n=  12  Top-1    3/12    25.0 % [ 8.9,  53.2]
+   level 3            n= 174  Top-1   21/174   12.1 % [ 8.0,  17.7]
+   level H            n=   0  Top-1    0/0      n/a
+   level 4            n=   9  Top-1    0/9      0.0 % [ 0.0,  29.9]
+   level 5            n=   1  Top-1    0/1      0.0 % [ 0.0,  79.3]
+
+== Formula-only answers: rank of the true formula in the listed formulas ==
+  29: 3/15, 62: -/5, 90: -/5, 97: -/5, 179: -/5, 224: -/5, 239: -/5, 242: -/10, 275: 3/15, 337: -/10, 380: 2/10, 385: -/10, 425: 3/15
+
+== Spot checks (fields as read) ==
+-- challenge 376 (Fig. 2c, d)
+   scores.json: truth_ik14=IFBHRQDFSNCLOZ polarity=negative answer_type=group level=3 top=IFBHRQDFSNCLOZ best=1 worst=1 ties=0
+   replay: answer.type=group answer.ids=['c1', 'c2', 'c3'] isomer_verdict=indistinguishable isomer.group=['c1', 'c2', 'c3']
+   members (id rank ik14 formula layer level): c1 1 IFBHRQDFSNCLOZ* C12H15NO8 library 3; c2 2 KUWPCJHYPSUOFW C12H15NO8 msfinder 3; c3 3 VCCMGHVCRFMITI C12H15NO8 msfinder 3
+   truth in candidates: ('c1', 1, 'C12H15NO8', 'library'); truth in answer: True
+   step 7: done: 3 structures cannot be separated by the spectrum.
+   note: Relative to the 4 candidates considered (the top candidate and 3 isomers).
+   note: 28 of 93 peaks considered (≥ 1 % of the base peak, no precursor or isotope peaks); distinguishing peaks need ≥ 5 %.
+   note: MS-FINDER 3.73: fragments within 0.01 Da, tree depth 2; formula search from the theoretical m/z 346.0780.
+-- challenge 86 (single answer, separated from every isomer, correct)
+   scores.json: truth_ik14=FHYQIQMSODIFCP polarity=negative answer_type=single level=3 top=FHYQIQMSODIFCP best=1 worst=1 ties=0
+   replay: answer.type=single answer.ids=['c2'] isomer_verdict=single isomer.group=['c2']
+   members (id rank ik14 formula layer level): c2 1 FHYQIQMSODIFCP* C20H20O7 msfinder 3
+   truth in candidates: ('c2', 1, 'C20H20O7', 'msfinder'); truth in answer: True
+   step 7: done: Fragment peaks tell the top-1 apart from every isomer compared. Another isomer explains peaks the top-1 cannot.
+   note: Relative to the 6 candidates considered (the top candidate and 5 isomers).
+   note: 100 of 100 peaks considered (≥ 1 % of the base peak, no precursor or isotope peaks); distinguishing peaks need ≥ 5 %.
+   note: MS-FINDER 3.73: fragments within 0.01 Da, tree depth 2; formula search from the theoretical m/z 371.1136.
+-- challenge 1 (group answer, truth inside but not at the top)
+   scores.json: truth_ik14=ZUDBDCBPZHGAEL polarity=negative answer_type=group level=3 top=BRPLOVMHAFXVOQ best=6 worst=6 ties=0
+   replay: answer.type=group answer.ids=['c1', 'c2', 'c6'] isomer_verdict=indistinguishable isomer.group=['c1', 'c2', 'c6']
+   members (id rank ik14 formula layer level): c1 1 BRPLOVMHAFXVOQ C25H38O9 msfinder 3; c2 2 FZWWJIXYNHHIJI C25H38O9 msfinder 3; c6 6 ZUDBDCBPZHGAEL* C25H38O9 msfinder 3
+   truth in candidates: ('c6', 6, 'C25H38O9', 'msfinder'); truth in answer: True
+   step 7: done: 3 structures cannot be separated by the spectrum.
+   note: Relative to the 8 candidates considered (the top candidate and 7 isomers).
+   note: 39 of 39 peaks considered (≥ 1 % of the base peak, no precursor or isotope peaks); distinguishing peaks need ≥ 5 %.
+   note: MS-FINDER 3.73: fragments within 0.01 Da, tree depth 2; formula search from the theoretical m/z 517.2210.
+-- challenge 2 (group answer, truth not inside)
+   scores.json: truth_ik14=ZKCHQVRAXCCTLE polarity=negative answer_type=group level=3 top=GSZLUEQWCUVBFT best=None worst=None ties=0
+   replay: answer.type=group answer.ids=['c3', 'c2'] isomer_verdict=indistinguishable isomer.group=['c3', 'c2']
+   members (id rank ik14 formula layer level): c3 1 GSZLUEQWCUVBFT C46H74O18 msfinder 3; c2 3 YNYCMZUNOUODED C46H74O18 msfinder 3
+   truth in candidates: None; truth in answer: False
+   step 7: done: 2 structures cannot be separated by the spectrum.
+   note: Relative to the 9 candidates considered (the top candidate and 8 isomers).
+   note: 56 of 56 peaks considered (≥ 1 % of the base peak, no precursor or isotope peaks); distinguishing peaks need ≥ 5 %.
+   note: MS-FINDER 3.73: fragments within 0.01 Da, tree depth 2; formula search from the theoretical m/z 959.4857.
+

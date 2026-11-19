@@ -1,0 +1,3 @@
+File path	File name	Title	MS1 count	MSMS count	Precursor mz	Precursor type	Formula	Theoretical mass	Mass error	Formula score	Databases
+/tmp/mzdesk-test/in/caffeine.msp	caffeine	Caffeine	0	27	195.0877	[M+H]+	C8H10N4O2	194.08037556	-4.8E-05	4.407	HMDB,KNApSAcK,ChEBI,DrugBank,SMPDB,T3DB,FooDB,STOFF,BMDB,Urine,Saliva,Feces,CSF,Serum,PubChem,PlantCyc,UNPD,BLEXP,NPA,COCONUT,MINE
+/tmp/mzdesk-test/in/caffeine.msp	caffeine	Caffeine	0	27	195.0877	[M+H]+	C8H18OS2	194.079907196	-0.0005164	3.102	HMDB,FooDB,UNPD,COCONUT

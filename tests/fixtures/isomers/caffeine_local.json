@@ -1,0 +1,1110 @@
+{
+ "source": "Real MS-FINDER 3.73 run (2026-10-28) of the Alternative explanations example: caffeine, MassBank MSBNK-LCSB-LU119905 (CC BY 4.0, spec.CAFFEINE_MSFINDER_MS2), [M+H]+, 0.01 Da, local structure databases on; structures of C8H10N4O2 only",
+ "explain_candidates": {
+  "adduct": "[M+H]+",
+  "structures": [
+   {
+    "name": "Caffeine",
+    "inchikey": "RYYVLZVUVIJVGH-UHFFFAOYSA-N",
+    "smiles": "O=C1C2=C(N=CN2C)N(C(=O)N1C)C",
+    "score": 8.1604,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNC(=O)NC",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=CC=1NC=NC1NC",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC1=C(N=CN1C)NC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1C2=C(N=CN2C)N(C(=O)N1C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "cyclo(gly-his)",
+    "inchikey": "FYFJTCMGWLBLPG-UHFFFAOYSA-N",
+    "smiles": "O=C1NC(C(=O)NC1)CC2=CN=CN2",
+    "score": 7.4862,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=C(N)C",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N1=CNC(=C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N1=CNC(=C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNCC(=O)N",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=C(NC)C(N)C",
+      "ppm": 0.6
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CNC(=C1)CCN",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC(N)CC(=C)N",
+      "ppm": 0.38
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CNC(=C1)CCN",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC(N)CC(=C)N",
+      "ppm": 0.82
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C(N)C(N)CC(=C)N",
+      "ppm": 0.09
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC(N)CC1=CN=CN1",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1NC(C(=O)NC1)CC2=CN=CN2",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "1,3,9-Trimethylxanthin (Isocoffein)",
+    "inchikey": "LPHGQDQBBGAPDZ-UHFFFAOYSA-N",
+    "smiles": "O=C1C=2N=CN(C2N(C(=O)N1C)C)C",
+    "score": 7.3271,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CN(C(=O)N)C",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC=1N=CNC1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N=1C=C(NC)N(C1)C",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC=1N=CN(C1)C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N=1C=C(NC)N(C1)C",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC=1N=CN(C1)C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C(NC)C=1N=CNC1",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=C(NC)C=1N=CN(C1)C",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1C=2N=CN(C2N(C(=O)N1C)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "UNPD32360",
+    "inchikey": "ATTWHHINMNPETB-UHFFFAOYSA-N",
+    "smiles": "O=C1N=C(OC)N(C=2N=CN(C12)C)C",
+    "score": 7.2769,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CN=C(OC)N",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=CC=1NC=NC1NC",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC1=C(N=CN1C)NC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1N=C(OC)N(C=2N=CN(C12)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "1,4-dimethyl-1H,4H,5H,6H,7H,8H-imidazo[4,5-e][1,4]diazepine-5,8-dione",
+    "inchikey": "UFQDANCKMBZYRC-UHFFFAOYSA-N",
+    "smiles": "O=C1NCC(=O)N(C=2N=CN(C12)C)C",
+    "score": 7.2418,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNCC(=O)N",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C(N)C1=CN=CN1C",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC1=C(N=CN1C)NC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1NCC(=O)N(C=2N=CN(C12)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "1,3,8-trimethyl-2,3,6,7-tetrahydro-1H-purine-2,6-dione",
+    "inchikey": "WZBKGWBHAPBSBF-UHFFFAOYSA-N",
+    "smiles": "O=C1C=2NC(=NC2N(C(=O)N1C)C)C",
+    "score": 7.1445,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CNC1C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CNC1C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNC(=O)NC",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N=1C(=CNC1C)NC",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC1=CN=C(N1)C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N=1C(=CNC1C)NC",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC1=CN=C(N1)C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C(N)C1=CN=C(N1)C",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=C(NC)C1=CN=C(N1)C",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1C=2NC(=NC2N(C(=O)N1C)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "Enprofylline",
+    "inchikey": "SIQPXVQCUCHWDI-UHFFFAOYSA-N",
+    "smiles": "O=C1NC(=O)N(C=2N=CNC12)CCC",
+    "score": 7.0905,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "NCCC",
+      "ppm": 0.46
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNC(=O)NC",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CNC=C1NCC",
+      "ppm": 0.74
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CNC=C1NCC",
+      "ppm": 0.63
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=CC=1NC=NC1NC",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC=1NC=NC1NCC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1NC(=O)N(C=2N=CNC12)CCC",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "UNPD53854",
+    "inchikey": "XWJJHUXHXCANGE-UHFFFAOYSA-N",
+    "smiles": "O=C1C2=C(N=CN1C)N(C(=O)N2C)C",
+    "score": 7.0884,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "C=C(N)NC",
+      "ppm": 1.81
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "C(=CNC)NC",
+      "ppm": 0.28
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "C(=CNC)NC",
+      "ppm": 0.88
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=C1C=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N(=C)C(=CNC)NC",
+      "ppm": 0.69
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=C1C=CN=CN1C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N(=C)C(=CNC)NC",
+      "ppm": 0.68
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=C1C=CN=CN1C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C1C=C(N=CN1C)N",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=C1C=C(N=CN1C)NC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1C2=C(N=CN1C)N(C(=O)N2C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "UNPD100701",
+    "inchikey": "NWCPBHZYJHWSEL-UHFFFAOYSA-N",
+    "smiles": "O=C1N=CN(C2=C1N(C(=O)N2C)C)C",
+    "score": 7.0243,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "C(=CNC)NC",
+      "ppm": 0.28
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "C(=CNC)NC",
+      "ppm": 0.88
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=C1N=CNC=C1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N=CN(C(=C)NC)C",
+      "ppm": 0.69
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=C1N=CN(C=C1)C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "C(NC)=C(NC)NC",
+      "ppm": 0.66
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=C1N=CN(C=C1)C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C1N=CN(C(N)=C1)C",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=C1N=CN(C(=C1)NC)C",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1N=CN(C2=C1N(C(=O)N2C)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "N-(6-acetamidopyrimidin-4-yl)acetamide",
+    "inchikey": "PTEMGJSNACOECE-UHFFFAOYSA-N",
+    "smiles": "O=C(NC1=NC=NC(=C1)NC(=O)C)C",
+    "score": 6.9276,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "N(=C)C=C",
+      "ppm": 0.45
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N(=C)C(=C)N",
+      "ppm": 1.84
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=NC=CC1",
+      "ppm": 0.27
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=C(NC(=N)C)C",
+      "ppm": 0.66
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=C(NC(N=C)=C)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=C(NC(N=C)=C)C",
+      "ppm": 0.77
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=CNC=1N=CN=CC1",
+      "ppm": 0.08
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=C(NC=1N=CN=CC1)C",
+      "ppm": 0.07
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C(NC1=NC=NC(=C1)NC(=O)C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "\"2-N,2-N-diaminobenzene-1,2-dicarboxamide\"",
+    "inchikey": "NXRWTABLMIUFPW-UHFFFAOYSA-N",
+    "smiles": "O=C(N)C=1C=CC=CC1C(=O)N(N)N",
+    "score": 5.9806,
+    "fragments": [
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C(N)C=1C=CC=CC1C(=O)N(N)N",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "N''-(4-methyl-2-nitrophenyl)guanidine",
+    "inchikey": "YRXORSPXDUYKBI-UHFFFAOYSA-N",
+    "smiles": "O=[N+]([O-])C1=CC(=CC=C1N=C(N)N)C",
+    "score": 5.9598,
+    "fragments": [
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=[N+]([O-])C1=CC(=CC=C1N=C(N)N)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "4,6-bis[(hydroxyimino)methyl]benzene-1,3-diamine",
+    "inchikey": "RJURIDPZDCLOCZ-UHFFFAOYSA-N",
+    "smiles": "ON=CC=1C=C(C=NO)C(N)=CC1N",
+    "score": 5.8935,
+    "fragments": [
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "ON=CC=1C=C(C=NO)C(N)=CC1N",
+      "ppm": 0.23
+     }
+    ],
+    "id": null,
+    "formula": "C8H10N4O2"
+   },
+   {
+    "name": "mzdesk_candidate_0",
+    "inchikey": "RYYVLZVUVIJVGH-UHFFFAOYSA-N",
+    "smiles": "O=C1C2=C(N=CN2C)N(C(=O)N1C)C",
+    "score": 8.1604,
+    "fragments": [
+     {
+      "mz": 56.0495,
+      "intensity": 88.0881,
+      "formula": "C3H6N",
+      "smiles": "C=CNC",
+      "ppm": 0.42
+     },
+     {
+      "mz": 69.0446,
+      "intensity": 320.3203,
+      "formula": "C3H5N2",
+      "smiles": "N=1C=CNC1",
+      "ppm": 1.76
+     },
+     {
+      "mz": 81.0447,
+      "intensity": 38.038,
+      "formula": "C4H5N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.33
+     },
+     {
+      "mz": 83.0603,
+      "intensity": 316.3163,
+      "formula": "C4H7N2",
+      "smiles": "N=1C=CN(C1)C",
+      "ppm": 0.93
+     },
+     {
+      "mz": 97.0075,
+      "intensity": 27.027,
+      "formula": "C3HN2O2",
+      "smiles": "O=CNC(=O)NC",
+      "ppm": 43.74
+     },
+     {
+      "mz": 97.0397,
+      "intensity": 21.021,
+      "formula": "C4H5N2O",
+      "smiles": "O=CC1=CN=CN1",
+      "ppm": 0.61
+     },
+     {
+      "mz": 108.0557,
+      "intensity": 14.014,
+      "formula": "C5H6N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.74
+     },
+     {
+      "mz": 109.0396,
+      "intensity": 90.0901,
+      "formula": "C5H5N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.35
+     },
+     {
+      "mz": 110.0712,
+      "intensity": 590.5906,
+      "formula": "C5H8N3",
+      "smiles": "N1=CN(C=C1NC)C",
+      "ppm": 0.63
+     },
+     {
+      "mz": 111.0552,
+      "intensity": 39.039,
+      "formula": "C5H7N2O",
+      "smiles": "O=CC1=CN=CN1C",
+      "ppm": 0.79
+     },
+     {
+      "mz": 123.0427,
+      "intensity": 144.1441,
+      "formula": "C5H5N3O",
+      "smiles": "O=C(N)C1=CN=CN1C",
+      "ppm": 0.13
+     },
+     {
+      "mz": 138.0662,
+      "intensity": 1000.0,
+      "formula": "C6H8N3O",
+      "smiles": "O=CC1=C(N=CN1C)NC",
+      "ppm": 0.14
+     },
+     {
+      "mz": 195.0876,
+      "intensity": 58.0581,
+      "formula": "C8H11N4O2",
+      "smiles": "O=C1C2=C(N=CN2C)N(C(=O)N1C)C",
+      "ppm": 0.23
+     }
+    ],
+    "id": "compound",
+    "formula": "C8H10N4O2"
+   }
+  ],
+  "formulas": [
+   {
+    "formula": "C8H10N4O2",
+    "neutral_mass": 194.08037556,
+    "mass_error_da": 2e-06,
+    "score": 4.408
+   },
+   {
+    "formula": "C8H18OS2",
+    "neutral_mass": 194.079907196,
+    "mass_error_da": -0.0004664,
+    "score": 3.124
+   }
+  ],
+  "seconds": 8.681184583110735,
+  "peak_rss_mb": 2172.828125,
+  "log": ""
+ }
+}

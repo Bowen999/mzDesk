@@ -1,0 +1,10 @@
+{
+ "commit": "e6937d81e071f526c73c4b48f7a54d00c93b845c",
+ "subject": "mzDesk 1.2.0: Force merge and one Score in MS/MS Annotation",
+ "frozen_at": "2026-11-17T16:23:46",
+ "uncommitted_changes_left_out": null,
+ "scripts": {
+  "run_equivalence.py": "daf0dc1f6482452026a46cd97147c176632c637d3fc09ad5a562f32c790ad267",
+  "msfinder_equivalence.py": "d65909fd9f24bfb60cdb94b611d5afa2bf30a837b6f23f47518c4dea950476af"
+ }
+}

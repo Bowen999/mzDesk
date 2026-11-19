@@ -1,0 +1,6 @@
+MassBank 2026.03: 113030 MS/MS spectra, 6543 with unknown adduct
+GNPS 2026-03-29: 889918 MS/MS spectra, 3318 with unknown adduct
+All: 1002948 MS/MS spectra, 993087 with a known adduct
+Not [M+H]+ or [M-H]-, among known: 27.3 %
+Not [M+H]+ or [M-H]-, lower bound over all: 27.0 %
+Most common: [M+H]+ 529425, [M-H]- 192582, [M+Na]+ 143712, [M+HCOO]- 38271, [M+NH4]+ 27674, [M+Cl]- 16432, [M+H-H2O]+ 16239, [M+K]+ 7923, [M]+ 5969, [M+H-2H2O]+ 2640

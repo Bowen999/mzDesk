@@ -1,0 +1,222 @@
+{
+ "question": "Does MS-FINDER give the same result inside mzDesk as when run on its own (same install, same query and parameter files)?",
+ "mzdesk_version": "0.5.6",
+ "commit": "c32f8f2941d81384709083918b74caff63caeaf3",
+ "cases_expected": 100,
+ "cases_finished": 100,
+ "cases_without_msfinder_run": 0,
+ "cases_missing_or_failed": 0,
+ "runs": {
+  "all": {
+   "k": 94,
+   "n": 101,
+   "rate": 0.9306930693069307,
+   "ci95": [
+    0.8637981716867019,
+    0.9660251045700511
+   ],
+   "text": "94/101 = 93.1%  (95% CI 86.4-96.6%)"
+  },
+  "without_time_limited": {
+   "k": 87,
+   "n": 87,
+   "rate": 1.0,
+   "ci95": [
+    0.957711004649852,
+    1.0
+   ],
+   "text": "87/87 = 100.0%  (95% CI 95.8-100.0%)"
+  },
+  "time_limited": {
+   "k": 7,
+   "n": 14,
+   "rate": 0.5,
+   "ci95": [
+    0.2679886791947528,
+    0.7320113208052472
+   ],
+   "text": "7/14 = 50.0%  (95% CI 26.8-73.2%)"
+  },
+  "byte_identical_all": {
+   "k": 94,
+   "n": 101,
+   "rate": 0.9306930693069307,
+   "ci95": [
+    0.8637981716867019,
+    0.9660251045700511
+   ],
+   "text": "94/101 = 93.1%  (95% CI 86.4-96.6%)"
+  },
+  "formula_table_identical": {
+   "k": 101,
+   "n": 101,
+   "rate": 1.0,
+   "ci95": [
+    0.9633580563440465,
+    0.9999999999999998
+   ],
+   "text": "101/101 = 100.0%  (95% CI 96.3-100.0%)"
+  },
+  "structure_files_identical": {
+   "k": 94,
+   "n": 101,
+   "rate": 0.9306930693069307,
+   "ci95": [
+    0.8637981716867019,
+    0.9660251045700511
+   ],
+   "text": "94/101 = 93.1%  (95% CI 86.4-96.6%)"
+  }
+ },
+ "cases": {
+  "all_runs_identical": {
+   "k": 93,
+   "n": 100,
+   "rate": 0.93,
+   "ci95": [
+    0.8625032899347025,
+    0.965681175635936
+   ],
+   "text": "93/100 = 93.0%  (95% CI 86.3-96.6%)"
+  },
+  "all_runs_identical_without_time_limited": {
+   "k": 86,
+   "n": 86,
+   "rate": 1.0,
+   "ci95": [
+    0.9572402984808819,
+    1.0
+   ],
+   "text": "86/86 = 100.0%  (95% CI 95.7-100.0%)"
+  },
+  "layer_fully_reproduced": {
+   "k": 98,
+   "n": 100,
+   "rate": 0.98,
+   "ci95": [
+    0.9299868370580063,
+    0.9944981477650318
+   ],
+   "text": "98/100 = 98.0%  (95% CI 93.0-99.4%)"
+  }
+ },
+ "layer_candidates": {
+  "k": 845,
+  "n": 848,
+  "rate": 0.9964622641509434,
+  "ci95": [
+   0.9896505197410386,
+   0.9987961586085514
+  ],
+  "text": "845/848 = 99.6%  (95% CI 99.0-99.9%)"
+ },
+ "differences": [
+  {
+   "id": 28,
+   "accession": "MSBNK-mFam-MC02_000298",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C30H50O"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f0/C30H50O: 92 vs 92 structures; best mzDesk [('CAHGCLMLTWQZNJ', 8.3394), ('GGGUGZHBAOMSFJ', 8.0565), ('FSLPMRQHCOLESF', 7.9886)] vs direct [('CAHGCLMLTWQZNJ', 8.3394), ('GGGUGZHBAOMSFJ', 8.0565), ('FSLPMRQHCOLESF', 7.9886)]"
+  },
+  {
+   "id": 29,
+   "accession": "MSBNK-RIKEN-PR300383",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C25H41NO7",
+    "f1/C25H38O7"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f1/C25H38O7: 45 vs 46 structures; best mzDesk [('LYTPVRMVQVQYGM', 5.1583), ('QRWBFJVOYWUREI', 5.1037), ('WWPCIPLSEBENOX', 5.1037)] vs direct [('LYTPVRMVQVQYGM', 5.1583), ('QRWBFJVOYWUREI', 5.1037), ('WWPCIPLSEBENOX', 5.1037)]"
+  },
+  {
+   "id": 34,
+   "accession": "MSBNK-mFam-MC02_000328",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C20H32O4"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f0/C20H32O4: 100 vs 100 structures; best mzDesk [('VNYSSYRCGWBHLG', 7.4401), ('JNUUNUQHXIOFDA', 7.4156), ('BFWYTORDSFIVKP', 7.2548)] vs direct [('VNYSSYRCGWBHLG', 7.4401), ('JNUUNUQHXIOFDA', 7.4156), ('BFWYTORDSFIVKP', 7.2548)]"
+  },
+  {
+   "id": 55,
+   "accession": "MSBNK-RIKEN_IMS-LQA00063",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C46H84NO10P",
+    "f1/C45H82NO8P"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f1/C45H82NO8P: 45 vs 46 structures; best mzDesk [('HNFSZKRUPTYBOQ', 6.9752), ('MIPOZDXFSKBSGM', 6.887), ('QCPNXDHEZUMTLB', 6.8821)] vs direct [('HNFSZKRUPTYBOQ', 6.9752), ('MIPOZDXFSKBSGM', 6.887), ('QCPNXDHEZUMTLB', 6.8821)]"
+  },
+  {
+   "id": 63,
+   "accession": "MSBNK-RIKEN_IMS-LQA00244",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C41H78NO9P"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f0/C41H78NO9P: 63 vs 61 structures; best mzDesk [('BUUGGEDZLZQROW', 5.7011), ('FQCCOAVFQZPNLG', 5.7011), ('QTCAOKZUEKULAU', 5.7006)] vs direct [('WDDLFSKLSXYHHM', 5.7026), ('BUUGGEDZLZQROW', 5.7011), ('FQCCOAVFQZPNLG', 5.7011)]"
+  },
+  {
+   "id": 80,
+   "accession": "MSBNK-ISAS_Dortmund-IA000006",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C20H32O3"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f0/C20H32O3: 100 vs 100 structures; best mzDesk [('KGIJOOYOSFUGPC', 8.2071), ('NLUNAYAEIJYXRB', 8.1737), ('JSFATNQSLKRBCI', 8.1392)] vs direct [('KGIJOOYOSFUGPC', 8.2071), ('NLUNAYAEIJYXRB', 8.1737), ('JSFATNQSLKRBCI', 8.1392)]"
+  },
+  {
+   "id": 88,
+   "accession": "MSBNK-RIKEN_IMS-LQB00089",
+   "dir": "runs/00",
+   "time_limited": true,
+   "searches_at_limit": [
+    "f0/C44H80NO10P",
+    "f1/C43H78NO8P"
+   ],
+   "status_mzdesk": "ok",
+   "status_direct": "ok",
+   "first_difference": "f1/C43H78NO8P: 50 vs 48 structures; best mzDesk [('ANRKEHNWXKCXDB', 7.2855), ('SQGZFCFLUVPOSZ', 7.1646), ('MQXKQCUGNLVKIN', 7.1568)] vs direct [('ANRKEHNWXKCXDB', 7.2855), ('SQGZFCFLUVPOSZ', 7.1646), ('MQXKQCUGNLVKIN', 7.1568)]"
+  }
+ ],
+ "layer_missing": [
+  {
+   "id": 28,
+   "ik14": "MLVSYGCURCOSKP",
+   "formula": "C30H50O",
+   "score": 7.9384
+  },
+  {
+   "id": 28,
+   "ik14": "LPZCCMIISIBREI",
+   "formula": "C30H50O",
+   "score": 7.8851
+  },
+  {
+   "id": 88,
+   "ik14": "ZSWHHKKYMMYPPD",
+   "formula": "C43H78NO8P",
+   "score": 7.1437
+  }
+ ]
+}

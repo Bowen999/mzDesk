@@ -1,0 +1,62 @@
+diff --git a/src/dlm/sampler.py b/src/dlm/sampler.py
+index f53e2a9..6a30b59 100644
+--- a/src/dlm/sampler.py
++++ b/src/dlm/sampler.py
+@@ -48,6 +48,18 @@ from dlm.model import DLM
+ 
+ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+ 
++
++def _default_device() -> torch.device:
++    """cuda -> mps -> cpu. Override with env FRIGID_DEVICE=cpu|mps|cuda (local macOS patch)."""
++    forced = os.environ.get('FRIGID_DEVICE')
++    if forced:
++        return torch.device(forced)
++    if torch.cuda.is_available():
++        return torch.device('cuda')
++    if torch.backends.mps.is_available():
++        return torch.device('mps')
++    return torch.device('cpu')
++
+ # Element pattern for formula parsing
+ ELEMENT_PATTERN = re.compile(r'([A-Z][a-z]?)(\d*)')
+ 
+@@ -88,7 +100,7 @@ def load_model_from_path(path, config_overrides: Optional[Dict[str, Any]] = None
+     Returns:
+         Loaded DLM model
+     """
+-    target_device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
++    target_device = _default_device()
+     
+     # Load checkpoint to inspect/modify hyperparameters if needed
+     if config_overrides:
+diff --git a/src/dlm/utils/spec2mol.py b/src/dlm/utils/spec2mol.py
+index 7cc8849..f59a048 100644
+--- a/src/dlm/utils/spec2mol.py
++++ b/src/dlm/utils/spec2mol.py
+@@ -39,6 +39,7 @@ import torch.nn as nn
+ from mist.models import SpectraEncoderGrowing
+ from mist.models.scaled import ScaledMIST
+ from dlm.model import DLM
++from dlm.sampler import _default_device
+ 
+ # Suppress RDKit warnings
+ warnings.filterwarnings('ignore')
+@@ -318,7 +319,7 @@ class Spec2MolModel(nn.Module):
+         """
+         super().__init__()
+         
+-        self.device = device or (torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu'))
++        self.device = device or _default_device()
+         
+         self.encoder = encoder.to(self.device)
+         self.encoder.eval()
+@@ -359,7 +360,7 @@ class Spec2MolModel(nn.Module):
+             Initialized Spec2MolModel instance
+         """
+         if device is None:
+-            device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
++            device = _default_device()
+ 
+         if not os.path.exists(checkpoint_path):
+             raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")

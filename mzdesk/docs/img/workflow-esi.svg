@@ -1,0 +1,58 @@
+<svg viewBox="0 0 720 442" xmlns="http://www.w3.org/2000/svg">
+<title>The eight stages of MS/MS Annotation</title>
+<desc>The eight stages of the MS/MS Annotation workflow in order, with the engine or data each one uses. Stages 4 and 5 run only when the library search does not decide: MS-FINDER structures when no library hit passes the Level-2 gate, FRIGID structures only if MS-FINDER is not enough.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<text class="fg-muted" x="60" y="22">Stage</text>
+<text class="fg-muted" x="272" y="22">Engine or data</text>
+<text class="fg-muted" x="424" y="22">What it does</text>
+<path class="fg-line" d="M34 56L34 378" stroke-width="2"/>
+<circle class="fg-dot" cx="34" cy="56" r="13"/>
+<text class="fg-dot-text" x="34" y="61" text-anchor="middle">1</text>
+<text class="fg-title" x="60" y="61">Adduct</text>
+<rect class="fg-box-soft" x="272" y="41" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="61" text-anchor="middle">BUDDY</text>
+<text class="fg-muted" x="424" y="61">ranks the possible adducts</text>
+<circle class="fg-dot" cx="34" cy="102" r="13"/>
+<text class="fg-dot-text" x="34" y="107" text-anchor="middle">2</text>
+<text class="fg-title" x="60" y="107">Formula</text>
+<rect class="fg-box-soft" x="272" y="87" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="107" text-anchor="middle">BUDDY</text>
+<text class="fg-muted" x="424" y="107">formulas for the best adducts</text>
+<circle class="fg-dot" cx="34" cy="148" r="13"/>
+<text class="fg-dot-text" x="34" y="153" text-anchor="middle">3</text>
+<text class="fg-title" x="60" y="153">Library search</text>
+<rect class="fg-box-soft" x="272" y="133" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="153" text-anchor="middle">MassBank, GNPS</text>
+<text class="fg-muted" x="424" y="153">hits must pass the Level-2 gate</text>
+<circle class="fg-box-accent" cx="34" cy="194" r="13" stroke-dasharray="4 3"/>
+<text class="fg-accent-text" x="34" y="199" text-anchor="middle">4</text>
+<text class="fg-title" x="60" y="199">MS-FINDER structures</text>
+<rect class="fg-box-soft" x="272" y="179" width="136" height="30" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="340" y="199" text-anchor="middle">MS-FINDER</text>
+<text class="fg-muted" x="424" y="199">only if no hit passes the gate</text>
+<circle class="fg-box-accent" cx="34" cy="240" r="13" stroke-dasharray="4 3"/>
+<text class="fg-accent-text" x="34" y="245" text-anchor="middle">5</text>
+<text class="fg-title" x="60" y="245">FRIGID structures</text>
+<rect class="fg-box-soft" x="272" y="225" width="136" height="30" rx="8" stroke-dasharray="5 4"/>
+<text class="fg-text" x="340" y="245" text-anchor="middle">FRIGID</text>
+<text class="fg-muted" x="424" y="245">only if MS-FINDER is not enough</text>
+<circle class="fg-dot" cx="34" cy="286" r="13"/>
+<text class="fg-dot-text" x="34" y="291" text-anchor="middle">6</text>
+<text class="fg-title" x="60" y="291">Merge and re-rank</text>
+<rect class="fg-box-soft" x="272" y="271" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="291" text-anchor="middle">mzDesk</text>
+<text class="fg-muted" x="424" y="291">one ranked list of candidates</text>
+<circle class="fg-dot" cx="34" cy="332" r="13"/>
+<text class="fg-dot-text" x="34" y="337" text-anchor="middle">7</text>
+<text class="fg-title" x="60" y="337">Isomer check</text>
+<rect class="fg-box-soft" x="272" y="317" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="337" text-anchor="middle">MS-FINDER</text>
+<text class="fg-muted" x="424" y="337">top candidate against its isomers</text>
+<circle class="fg-dot" cx="34" cy="378" r="13"/>
+<text class="fg-dot-text" x="34" y="383" text-anchor="middle">8</text>
+<text class="fg-title" x="60" y="383">Answer</text>
+<rect class="fg-box-soft" x="272" y="363" width="136" height="30" rx="8"/>
+<text class="fg-text" x="340" y="383" text-anchor="middle">mzDesk</text>
+<text class="fg-muted" x="424" y="383">one answer with its level</text>
+<text class="fg-muted" x="20" y="430">Dashed: runs only when needed.</text>
+</svg>

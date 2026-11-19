@@ -1,0 +1,415 @@
+name: Installer
+
+# build: the release the local version is installed from (the wheel, its .sha256 and version.json), built from this checkout with the frontend and
+#   the MetFrag jar, then checked: the pages, the docs, the install scripts, the jar and the data are in it; tests, benchmarks, caches and secrets are not.
+# install: the real installer on Linux x64, macOS Intel, macOS Apple silicon and Windows, against that release served on 127.0.0.1
+#   (`curl .../install.sh | sh`, `irm .../install.ps1 | iex`), then the installed mzdesk: its version, the app started headless (/api/health,
+#   /api/spec), one ESI MS/MS Annotation through the API (the caffeine example without a library, Force merge on; MS-FINDER and FRIGID are not
+#   installed, the run must still give an answer), and the installer run a second time the way `mzdesk update` runs it.
+# No server is contacted except the package indexes (PyPI, PyTorch CPU), astral.sh (uv, when the runner has none) and GitHub (the MetFrag jar).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["mzdesk/install/**", "pyproject.toml", ".github/workflows/installer.yml"]
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash     # with pipefail (the implicit default has none): `curl ... | sh` fails when curl fails
+
+concurrency:
+  group: installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Version (mzdesk/__init__.py)
+        id: version
+        run: |
+          VERSION=$(sed -n 's/^__version__ = "\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\)".*/\1/p' mzdesk/__init__.py)
+          [ -n "$VERSION" ] || { echo "cannot read __version__ (X.Y.Z) from mzdesk/__init__.py"; exit 1; }
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "mzDesk $VERSION"
+      - name: Frontend (web -> mzdesk/static)
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+          test -f ../mzdesk/static/index.html
+      - name: MetFrag jar (the same download and SHA-256 check as dev_setup.py)
+        run: |
+          python dev_setup.py --no-pip --no-web --skip all
+          ls -l mzdesk/lib/MetFragCommandLine-*.jar
+      - name: Build the wheel (from a copy of the tree, as for a release)
+        run: |
+          python -m pip install build setuptools wheel
+          WORK="$RUNNER_TEMP/wheel"
+          mkdir -p "$WORK/src" "$WORK/out"
+          rsync -a --exclude '__pycache__' --exclude '*.pyc' --exclude '.DS_Store' --exclude 'redu_cache/' \
+            mzdesk pyproject.toml requirements.txt LICENSE THIRD_PARTY_NOTICES.md third_party_licenses "$WORK/src/"
+          python -m build --wheel --no-isolation --outdir "$WORK/out" "$WORK/src"
+          ls -l "$WORK/out"
+      - name: Check the wheel (what must be in it, what must not)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          WHEEL="$RUNNER_TEMP/wheel/out/mzdesk-$VERSION-py3-none-any.whl"
+          # shellcheck disable=SC2012  # the build folder holds the wheel only
+          [ "$(ls "$RUNNER_TEMP/wheel/out" | wc -l | tr -d ' ')" = 1 ] && [ -f "$WHEEL" ] || { echo "expected only $(basename "$WHEEL")"; exit 1; }
+          python - "$WHEEL" "$VERSION" <<'PY'
+          import fnmatch, sys, zipfile
+
+          path, version = sys.argv[1], sys.argv[2]
+          z = zipfile.ZipFile(path)
+          files = {i.filename: i for i in z.infolist() if not i.filename.endswith("/")}
+          names = sorted(files)
+          errors, notes = [], []
+
+          def has(pattern):
+              return any(fnmatch.fnmatchcase(n, pattern) for n in names)
+
+          # must be there: the app, the built pages, the jar, the install scripts, the docs and their figures, the data, the licences
+          need = ["mzdesk/__init__.py", "mzdesk/api/app.py", "mzdesk/api/release.py", "mzdesk/static/index.html", "mzdesk/static/assets/*.js",
+                  "mzdesk/lib/MetFragCommandLine-*.jar", "mzdesk/install/install.sh", "mzdesk/install/install.ps1", "mzdesk/docs/*.md",
+                  "mzdesk/docs/img/*.svg", "mzdesk/data/*", "mzdesk/gnps/data/domain_masst.tsv.gz", "mzdesk/lib/msfinder/mzdesk_msfinder.ini",
+                  "mzdesk/lib/msfinder/ThreadStaticPatch.cs", "mzdesk/lib/3Dmol-min.js.LICENSE.txt", "*.dist-info/*THIRD_PARTY_NOTICES.md",
+                  "*.dist-info/*third_party_licenses/LGPL-2.1-or-later.txt"]
+          errors += [f"missing in the wheel: {p}" for p in need if not has(p)]
+          meta = next((n for n in names if n.endswith(".dist-info/METADATA")), None)
+          text = z.read(meta).decode("utf-8") if meta else ""
+          if f"\nVersion: {version}\n" not in text:
+              errors.append(f"METADATA does not say Version: {version}")
+          if "\nRequires-Dist: jdk4py" not in text:
+              errors.append("METADATA does not require jdk4py (requirements.txt)")
+          if "mzdesk/static/index.html" in files and b"STUB frontend" in z.read("mzdesk/static/index.html"):
+              errors.append("mzdesk/static/index.html is a stub page")
+
+          # must not be there: anything outside the package, development folders, secrets, caches, databases
+          bad_parts = {"benchmark", "tests", "node_modules", ".git", "__pycache__", "paper", "research_inputs", "deploy", "validation"}
+          bad_names = [".env", ".env.*", "*.pem", "*.key", "id_rsa*", "*.sqlite", "*.sqlite-*", "*.db", "*.pyc", ".ds_store", "*.log", "*secret*",
+                       "*password*", "*.egg-info"]
+          for n in names:
+              parts = n.split("/")
+              if parts[0] != "mzdesk" and not parts[0].endswith(".dist-info"):
+                  errors.append(f"outside the package: {n}")
+              elif bad_parts & set(parts) or any(fnmatch.fnmatchcase(parts[-1].lower(), p) for p in bad_names):
+                  errors.append(f"does not belong in a release: {n}")
+          if has("mzdesk/gnps/redu_cache/*"):
+              errors.append("the Pan-ReDU snapshot mzdesk/gnps/redu_cache/ is in the wheel (no redistribution licence)")
+
+          total = sum(i.file_size for i in files.values())
+          for n, i in sorted(files.items(), key=lambda kv: -kv[1].file_size):
+              if i.file_size > 3_000_000 and not fnmatch.fnmatchcase(n, "mzdesk/lib/MetFragCommandLine-*.jar"):
+                  notes.append(f"large file ({i.file_size / 1e6:.1f} MB): {n}")
+          groups = {}
+          for n, i in files.items():
+              key = "/".join(n.split("/")[:2]) if n.startswith("mzdesk/") else n.split("/")[0]
+              count, size = groups.get(key, (0, 0))
+              groups[key] = (count + 1, size + i.file_size)
+          print(f"{len(files)} files, {total / 1e6:.1f} MB unpacked")
+          for key, (count, size) in sorted(groups.items(), key=lambda kv: -kv[1][1])[:10]:
+              print(f"  {size / 1e6:8.1f} MB  {count:5d} files  {key}")
+          for n in notes:
+              print(f"  NOTE: {n}")
+          for e in errors:
+              print(f"::error::{e}")
+          sys.exit(1 if errors else 0)
+          PY
+      - name: Release folder (version.json, the wheel and its .sha256 under download/, the install scripts from the wheel)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          WHEEL="mzdesk-$VERSION-py3-none-any.whl"
+          OUT="$RUNNER_TEMP/release"
+          mkdir -p "$OUT/download"
+          cp "$RUNNER_TEMP/wheel/out/$WHEEL" "$OUT/download/$WHEEL"
+          SHA=$(sha256sum "$OUT/download/$WHEEL" | cut -d ' ' -f 1)
+          SIZE=$(wc -c < "$OUT/download/$WHEEL" | tr -d ' ')
+          echo "$SHA  $WHEEL" > "$OUT/download/$WHEEL.sha256"
+          cat > "$OUT/version.json" <<EOF
+          {
+            "version": "$VERSION",
+            "released": "$(date -u +%Y-%m-%d)",
+            "wheel": "$WHEEL",
+            "sha256": "$SHA",
+            "size": $SIZE,
+            "python": ">=3.10",
+            "notes": "https://mzdesk.com/docs/changelog"
+          }
+          EOF
+          # the scripts users download are the ones in the wheel
+          unzip -p "$OUT/download/$WHEEL" mzdesk/install/install.sh > "$OUT/install.sh"
+          unzip -p "$OUT/download/$WHEEL" mzdesk/install/install.ps1 > "$OUT/install.ps1"
+          python -c 'import json, sys; json.load(open(sys.argv[1]))' "$OUT/version.json"
+          cat "$OUT/version.json"
+          find "$OUT" -type f -exec ls -l {} +
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: ${{ runner.temp }}/release
+          if-no-files-found: error
+          retention-days: 7
+
+  install:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      EXPECTED_VERSION: ${{ needs.build.outputs.version }}
+      PYTHONUNBUFFERED: "1"
+      PYTHONUTF8: "1"
+    steps:
+      # only for the test steps below (shell: python); the installer brings its own Python through uv
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: ${{ runner.temp }}/release
+      - name: Serve the release on 127.0.0.1 (python -m http.server, a free port)
+        shell: python
+        run: |
+          import os, socket, subprocess, sys, time, urllib.request
+
+          temp = os.environ["RUNNER_TEMP"]
+          with socket.socket() as s:
+              s.bind(("127.0.0.1", 0))
+              port = s.getsockname()[1]
+          log = open(os.path.join(temp, "http.log"), "wb")
+          extra = ({"creationflags": subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt"
+                   else {"start_new_session": True})
+          # stays up for the later steps (the runner ends it with the job)
+          subprocess.Popen([sys.executable, "-m", "http.server", str(port), "--bind", "127.0.0.1", "--directory", os.path.join(temp, "release")],
+                           stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, **extra)
+          base = f"http://127.0.0.1:{port}"
+          for _ in range(60):
+              try:
+                  with urllib.request.urlopen(base + "/version.json", timeout=2) as r:
+                      print(r.read().decode())
+                  break
+              except OSError:
+                  time.sleep(0.5)
+          else:
+              sys.exit(f"the release server on {base} did not answer")
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write(f"MZDESK_BASE_URL={base}\n")
+          print(f"serving the release on {base}")
+
+      - name: Install (curl .../install.sh | sh)
+        if: runner.os != 'Windows'
+        run: |
+          echo "uv on the PATH before: $(command -v uv || echo none)"
+          curl -fsSL "$MZDESK_BASE_URL/install.sh" | sh
+      - name: Install (irm .../install.ps1 | iex, Windows PowerShell 5.1)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          Write-Host "PowerShell $($PSVersionTable.PSVersion); uv on the PATH before: $((Get-Command uv -ErrorAction SilentlyContinue).Source)"
+          $global:LASTEXITCODE = 0
+          irm "$env:MZDESK_BASE_URL/install.ps1" | iex
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::install.ps1 failed"; exit 1 }
+
+      - name: The installed mzdesk (launcher, version, PATH)
+        if: runner.os != 'Windows'
+        run: |
+          test -x "$HOME/.mzdesk/venv/bin/python"
+          test -x "$HOME/.mzdesk/bin/mzdesk"
+          got=$("$HOME/.mzdesk/bin/mzdesk" version)
+          echo "$got"
+          [ "$got" = "mzDesk $EXPECTED_VERSION" ] || { echo "::error::expected mzDesk $EXPECTED_VERSION, got: $got"; exit 1; }
+          # on the PATH: a link in ~/.local/bin (when that is on the PATH) or one line in the shell profile (grep says 2 for the profiles that do not exist)
+          found=$(grep -l '.mzdesk/bin' "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.config/fish/config.fish" 2>/dev/null || true)
+          if [ -L "$HOME/.local/bin/mzdesk" ]; then echo "linked from ~/.local/bin"
+          elif [ -n "$found" ]; then echo "PATH line in: $found"
+          else
+            echo "::error::the installer put mzdesk neither into ~/.local/bin nor into a shell profile"; exit 1
+          fi
+      - name: The installed mzdesk (launcher, version, PATH)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $py = "$HOME\.mzdesk\venv\Scripts\python.exe"
+          $cmd = "$HOME\.mzdesk\bin\mzdesk.cmd"
+          if (-not (Test-Path -LiteralPath $py)) { Write-Host "::error::$py is missing"; exit 1 }
+          if (-not (Test-Path -LiteralPath $cmd)) { Write-Host "::error::$cmd is missing"; exit 1 }
+          $got = (& $cmd version | Out-String).Trim()
+          Write-Host $got
+          if ($got -ne "mzDesk $env:EXPECTED_VERSION") { Write-Host "::error::expected mzDesk $env:EXPECTED_VERSION, got: $got"; exit 1 }
+          $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+          if (@($userPath -split ';') -notcontains "$HOME\.mzdesk\bin") { Write-Host "::error::$HOME\.mzdesk\bin is not on the user PATH: $userPath"; exit 1 }
+          Write-Host "user PATH has $HOME\.mzdesk\bin"
+
+      - name: The app, headless (health, spec, one MS/MS Annotation through the API)
+        shell: python
+        timeout-minutes: 15
+        run: |
+          import json, os, socket, subprocess, sys, time, urllib.request
+
+          expected = os.environ["EXPECTED_VERSION"]
+          home = os.path.expanduser("~")
+          py = os.path.join(home, ".mzdesk", "venv", "Scripts", "python.exe") if os.name == "nt" else os.path.join(home, ".mzdesk", "venv", "bin", "python")
+          with socket.socket() as s:
+              s.bind(("127.0.0.1", 0))
+              port = s.getsockname()[1]
+          base = f"http://127.0.0.1:{port}"
+          log_path = os.path.join(os.environ["RUNNER_TEMP"], "app.log")
+          env = {k: v for k, v in os.environ.items() if k != "MZDESK_ANNOTATION_FORCE_MERGE"}   # the local default: Force merge on
+          server = subprocess.Popen([py, "-m", "mzdesk", "--port", str(port)], stdin=subprocess.DEVNULL, stdout=open(log_path, "wb"),
+                                    stderr=subprocess.STDOUT, env=env)
+          problems = []
+
+          def get(path, timeout=30):
+              with urllib.request.urlopen(base + path, timeout=timeout) as r:
+                  return r.read()
+
+          def post(path, body):
+              req = urllib.request.Request(base + path, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+              with urllib.request.urlopen(req, timeout=60) as r:
+                  return json.loads(r.read())
+
+          try:
+              t0 = time.time()
+              while True:
+                  if server.poll() is not None:
+                      sys.exit(f"the app ended with exit code {server.returncode} before it answered")
+                  try:
+                      health = json.loads(get("/api/health", 5))
+                      break
+                  except OSError:
+                      if time.time() - t0 > 300:
+                          sys.exit("the app did not answer /api/health within 5 minutes")
+                      time.sleep(1)
+              print(f"/api/health {health} after {time.time() - t0:.1f} s")
+              if health.get("status") != "ok":
+                  problems.append(f"/api/health says {health}")
+
+              spec = json.loads(get("/api/spec"))
+              print(f"/api/spec version {spec.get('version')}, hosted {spec.get('hosted')}")
+              if spec.get("version") != expected:
+                  problems.append(f"/api/spec version is {spec.get('version')}, expected {expected}")
+              pipe = next((p for p in spec.get("pipelines", []) if p["id"] == "esi_ms2_annotation"), None)
+              if pipe is None:
+                  sys.exit("/api/spec has no esi_ms2_annotation pipeline")
+              field = next((f for f in pipe["inputs"] if f.get("id") == "force_merge"), None)
+              print(f"force_merge field: {field}")
+              if not field or field.get("value") is not True:
+                  problems.append("Force merge is not ticked in the esi_ms2_annotation form")
+              page = get("/").decode("utf-8", "replace")
+              if "<script" not in page or "STUB frontend" in page:
+                  problems.append("/ does not serve the built frontend")
+
+              # the caffeine example without a library; Force merge set explicitly (MS-FINDER and FRIGID are not installed here)
+              example = next(e for e in pipe["examples"] if e["values"].get("libraries") == [])
+              form = {**example["values"], "libraries": [], "force_merge": True}
+              print(f"example: {example['label']}; run_frigid {form.get('run_frigid')}, force_merge {form['force_merge']}")
+              job = post("/api/pipelines/esi_ms2_annotation/run", form)
+              print(f"job {job}")
+              t0 = time.time()
+              seen = None
+              while True:
+                  state = json.loads(get(f"/api/pipelines/jobs/{job['job_id']}"))
+                  now = [(s["id"], s["status"]) for s in state["steps"]]
+                  if now != seen:
+                      print(f"{time.time() - t0:6.1f} s  {state['status']}  " + " ".join(f"{i}:{st}" for i, st in now))
+                      seen = now
+                  if state["status"] in ("done", "error"):
+                      break
+                  if time.time() - t0 > 600:
+                      sys.exit("the annotation did not finish within 10 minutes")
+                  time.sleep(3)
+              if state["status"] != "done":
+                  sys.exit(f"the annotation ended with an error: {state.get('error')}")
+              result = state["result"] or {}
+              for s in result.get("steps", []):
+                  print(f"  step {s['id']} {s['title']}: {s['status']} ({s.get('seconds')} s) {s.get('note') or ''}")
+              for w in result.get("warnings", []):
+                  print(f"  warning: {w}")
+              answer = result.get("answer") or {}
+              print(f"answer: type {answer.get('type')}, level {answer.get('level_label')}: {answer.get('statement')}")
+              for c in result.get("candidates", [])[:5]:
+                  print(f"  candidate: {json.dumps({k: c.get(k) for k in ('rank', 'formula', 'adduct', 'smiles', 'level', 'base_score', 'final_score')})}")
+              if not answer.get("type") or not answer.get("statement"):
+                  problems.append("the result has no answer")
+              steps = {s["id"]: s for s in result.get("steps", [])}
+              for n in (1, 2):                          # BUDDY (adduct and formula) needs no component
+                  if steps.get(n, {}).get("status") != "done":
+                      problems.append(f"step {n} ({steps.get(n, {}).get('title')}) is {steps.get(n, {}).get('status')}: {steps.get(n, {}).get('note')}")
+              if result.get("context", {}).get("libraries"):
+                  problems.append(f"the run used libraries {result['context']['libraries']}, expected none")
+          finally:
+              server.terminate()
+              try:
+                  server.wait(30)
+              except subprocess.TimeoutExpired:
+                  server.kill()
+          for p in problems:
+              print(f"::error::{p}")
+          sys.exit(1 if problems else 0)
+
+      - name: Update path (mzdesk update --check, then the installer again as `mzdesk update` runs it)
+        if: runner.os != 'Windows'
+        run: |
+          check=$("$HOME/.mzdesk/bin/mzdesk" update --check)
+          echo "$check"
+          case $check in *"latest $EXPECTED_VERSION"*"up to date"*) ;; *) echo "::error::update --check: $check"; exit 1 ;; esac
+          # cli.run_installer downloads $MZDESK_BASE_URL/install.sh and runs it with MZDESK_UPDATING=1 (what `mzdesk update` does for a newer version)
+          out=$("$HOME/.mzdesk/venv/bin/python" -c 'import sys; from mzdesk.cli import run_installer; sys.exit(run_installer(sys.argv[1]))' "$MZDESK_BASE_URL" 2>&1) || { echo "$out"; echo "::error::the second install failed"; exit 1; }
+          echo "$out"
+          case $out in *"Using the Python environment"*) ;; *) echo "::error::the second install did not keep the Python environment"; exit 1 ;; esac
+          case $out in *"Updated to $EXPECTED_VERSION"*) ;; *) echo "::error::the second install did not end with: Updated to $EXPECTED_VERSION"; exit 1 ;; esac
+          got=$("$HOME/.mzdesk/bin/mzdesk" version)
+          [ "$got" = "mzDesk $EXPECTED_VERSION" ] || { echo "::error::after the second install: $got"; exit 1; }
+          echo "$got"
+      - name: Update path (mzdesk update --check, then install.ps1 again with MZDESK_UPDATING=1)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $cmd = "$HOME\.mzdesk\bin\mzdesk.cmd"
+          $check = (& $cmd update --check | Out-String).Trim()
+          Write-Host $check
+          if ($check -notlike "*latest $env:EXPECTED_VERSION*up to date*") { Write-Host "::error::update --check: $check"; exit 1 }
+          # `mzdesk update` on Windows starts install.ps1 in a new console window and ends; here it runs in this window instead
+          $env:MZDESK_UPDATING = '1'
+          $global:LASTEXITCODE = 0
+          $out = & { irm "$env:MZDESK_BASE_URL/install.ps1" | iex } *>&1 | Out-String     # Write-Host goes to the information stream
+          Write-Host $out
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::the second install failed"; exit 1 }
+          if ($out -notlike "*Using the Python environment*") { Write-Host "::error::the second install did not keep the Python environment"; exit 1 }
+          if ($out -notlike "*Updated to $env:EXPECTED_VERSION*") { Write-Host "::error::the second install did not end with: Updated to $env:EXPECTED_VERSION"; exit 1 }
+          $got = (& $cmd version | Out-String).Trim()
+          if ($got -ne "mzDesk $env:EXPECTED_VERSION") { Write-Host "::error::after the second install: $got"; exit 1 }
+          Write-Host $got
+
+      - name: Logs (release server, app)
+        if: ${{ always() }}
+        shell: python
+        run: |
+          import os
+          for name in ("http.log", "app.log"):
+              path = os.path.join(os.environ["RUNNER_TEMP"], name)
+              if os.path.exists(path):
+                  lines = open(path, encoding="utf-8", errors="replace").read().splitlines()
+                  print(f"---- {name} (last 80 of {len(lines)} lines)")
+                  print("\n".join(lines[-80:]))

@@ -1,0 +1,10 @@
+{
+ "precursor_mz": 195.0877,
+ "adduct": "[M+H]+",
+ "formulas": [
+  "C8H10N4O2",
+  "C8H18OS2"
+ ],
+ "tol_ppm": 5.0,
+ "tol_da": 0.01
+}

@@ -1,0 +1,124 @@
+kind,key,class_full,status,evidence,note
+comp,Hex,Cer-Hex,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex-NeuAc,Cer-Hex-NeuAc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex10-HexNAc5,Cer-Hex10-HexNAc5,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2,Cer-Hex2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-HexNAc,Cer-Hex2-HexNAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-HexNAc-Fuc-NeuAc2,Cer-Hex2-HexNAc-Fuc-NeuAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-HexNAc-KDN,Cer-Hex2-HexNAc-KDN,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-HexNAc-NeuAc,Cer-Hex2-HexNAc-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-HexNAc-NeuAc2,Cer-Hex2-HexNAc-NeuAc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-HexNAc-NeuAc3,Cer-Hex2-HexNAc-NeuAc3,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-HexNAc-NeuGc,Cer-Hex2-HexNAc-NeuGc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-HexNAc2,Cer-Hex2-HexNAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-KDN,Cer-Hex2-KDN,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex2-NeuAc,Cer-Hex2-NeuAc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-NeuAc2,Cer-Hex2-NeuAc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex2-NeuAc3,Cer-Hex2-NeuAc3,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3,Cer-Hex3,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-Fuc,Cer-Hex3-Fuc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc,Cer-Hex3-HexNAc,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex3-HexNAc-Fuc,Cer-Hex3-HexNAc-Fuc,verified,LIPID MAPS composition names in reference n=40,
+comp,Hex3-HexNAc-Fuc-KDN,Cer-Hex3-HexNAc-Fuc-KDN,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc-Fuc-NeuAc,Cer-Hex3-HexNAc-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=40,
+comp,Hex3-HexNAc-Fuc-NeuAc2,Cer-Hex3-HexNAc-Fuc-NeuAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc-Fuc-NeuGc,Cer-Hex3-HexNAc-Fuc-NeuGc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc-Fuc2,Cer-Hex3-HexNAc-Fuc2,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex3-HexNAc-KDN,Cer-Hex3-HexNAc-KDN,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex3-HexNAc-KDN2,Cer-Hex3-HexNAc-KDN2,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex3-HexNAc-NeuAc,Cer-Hex3-HexNAc-NeuAc,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex3-HexNAc-NeuAc-KDN,Cer-Hex3-HexNAc-NeuAc-KDN,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex3-HexNAc-NeuAc-NeuGc,Cer-Hex3-HexNAc-NeuAc-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc-NeuAc2,Cer-Hex3-HexNAc-NeuAc2,verified,LIPID MAPS composition names in reference n=40,
+comp,Hex3-HexNAc-NeuAc2-NeuGc,Cer-Hex3-HexNAc-NeuAc2-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc-NeuAc3,Cer-Hex3-HexNAc-NeuAc3,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex3-HexNAc-NeuAc4,Cer-Hex3-HexNAc-NeuAc4,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex3-HexNAc-NeuAc5,Cer-Hex3-HexNAc-NeuAc5,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc-NeuGc,Cer-Hex3-HexNAc-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc-NeuGc2,Cer-Hex3-HexNAc-NeuGc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc2,Cer-Hex3-HexNAc2,verified,LIPID MAPS composition names in reference n=56,
+comp,Hex3-HexNAc2-Fuc,Cer-Hex3-HexNAc2-Fuc,verified,LIPID MAPS composition names in reference n=56,
+comp,Hex3-HexNAc2-Fuc-NeuAc,Cer-Hex3-HexNAc2-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex3-HexNAc2-Fuc2,Cer-Hex3-HexNAc2-Fuc2,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex3-HexNAc2-Fuc2-NeuAc,Cer-Hex3-HexNAc2-Fuc2-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex3-HexNAc2-NeuAc,Cer-Hex3-HexNAc2-NeuAc,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex3-HexNAc2-NeuAc-NeuGc,Cer-Hex3-HexNAc2-NeuAc-NeuGc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc2-NeuAc2,Cer-Hex3-HexNAc2-NeuAc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc2-NeuGc,Cer-Hex3-HexNAc2-NeuGc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex3-HexNAc3,Cer-Hex3-HexNAc3,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex3-HexNAc3-NeuAc,Cer-Hex3-HexNAc3-NeuAc,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex3-NeuAc,Cer-Hex3-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4,Cer-Hex4,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-Fuc,Cer-Hex4-Fuc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-HexNAc,Cer-Hex4-HexNAc,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex4-HexNAc-Fuc,Cer-Hex4-HexNAc-Fuc,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex4-HexNAc-Fuc-NeuAc,Cer-Hex4-HexNAc-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc-Fuc-NeuAc2,Cer-Hex4-HexNAc-Fuc-NeuAc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-HexNAc-Fuc2,Cer-Hex4-HexNAc-Fuc2,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex4-HexNAc-NeuAc,Cer-Hex4-HexNAc-NeuAc,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex4-HexNAc-NeuAc2,Cer-Hex4-HexNAc-NeuAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc-NeuGc,Cer-Hex4-HexNAc-NeuGc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-HexNAc-NeuGc2,Cer-Hex4-HexNAc-NeuGc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-HexNAc2,Cer-Hex4-HexNAc2,verified,LIPID MAPS composition names in reference n=112,
+comp,Hex4-HexNAc2-Fuc,Cer-Hex4-HexNAc2-Fuc,verified,LIPID MAPS composition names in reference n=112,
+comp,Hex4-HexNAc2-Fuc-NeuAc,Cer-Hex4-HexNAc2-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=56,
+comp,Hex4-HexNAc2-Fuc2,Cer-Hex4-HexNAc2-Fuc2,verified,LIPID MAPS composition names in reference n=64,
+comp,Hex4-HexNAc2-Fuc2-NeuAc,Cer-Hex4-HexNAc2-Fuc2-NeuAc,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex4-HexNAc2-Fuc3,Cer-Hex4-HexNAc2-Fuc3,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex4-HexNAc2-NeuAc,Cer-Hex4-HexNAc2-NeuAc,verified,LIPID MAPS composition names in reference n=72,
+comp,Hex4-HexNAc2-NeuAc2,Cer-Hex4-HexNAc2-NeuAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc2-NeuGc,Cer-Hex4-HexNAc2-NeuGc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex4-HexNAc2-NeuGc2,Cer-Hex4-HexNAc2-NeuGc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex4-HexNAc3,Cer-Hex4-HexNAc3,verified,LIPID MAPS composition names in reference n=40,
+comp,Hex4-HexNAc3-Fuc,Cer-Hex4-HexNAc3-Fuc,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex4-HexNAc3-Fuc2,Cer-Hex4-HexNAc3-Fuc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc3-NeuAc,Cer-Hex4-HexNAc3-NeuAc,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex4-HexNAc3-NeuGc,Cer-Hex4-HexNAc3-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc4,Cer-Hex4-HexNAc4,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex4-HexNAc4-Fuc,Cer-Hex4-HexNAc4-Fuc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex4-HexNAc4-NeuAc,Cer-Hex4-HexNAc4-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5,Cer-Hex5,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex5-HexNAc,Cer-Hex5-HexNAc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc-Fuc,Cer-Hex5-HexNAc-Fuc,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex5-HexNAc-NeuAc2,Cer-Hex5-HexNAc-NeuAc2,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex5-HexNAc2,Cer-Hex5-HexNAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc2-Fuc,Cer-Hex5-HexNAc2-Fuc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc3,Cer-Hex5-HexNAc3,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc3-Fuc,Cer-Hex5-HexNAc3-Fuc,verified,LIPID MAPS composition names in reference n=64,
+comp,Hex5-HexNAc3-Fuc-NeuAc,Cer-Hex5-HexNAc3-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc3-Fuc2,Cer-Hex5-HexNAc3-Fuc2,verified,LIPID MAPS composition names in reference n=48,
+comp,Hex5-HexNAc3-Fuc2-NeuAc,Cer-Hex5-HexNAc3-Fuc2-NeuAc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc3-Fuc3,Cer-Hex5-HexNAc3-Fuc3,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc3-Fuc3-NeuAc,Cer-Hex5-HexNAc3-Fuc3-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc3-NeuAc,Cer-Hex5-HexNAc3-NeuAc,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex5-HexNAc3-NeuAc2,Cer-Hex5-HexNAc3-NeuAc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc3-NeuGc,Cer-Hex5-HexNAc3-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex5-HexNAc4,Cer-Hex5-HexNAc4,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc4-Fuc,Cer-Hex5-HexNAc4-Fuc,verified,LIPID MAPS composition names in reference n=64,
+comp,Hex5-HexNAc4-Fuc2,Cer-Hex5-HexNAc4-Fuc2,verified,LIPID MAPS composition names in reference n=40,
+comp,Hex5-HexNAc5,Cer-Hex5-HexNAc5,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex5-HexNAc5-Fuc,Cer-Hex5-HexNAc5-Fuc,verified,LIPID MAPS composition names in reference n=32,
+comp,Hex5-HexNAc5-Fuc2,Cer-Hex5-HexNAc5-Fuc2,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex6,Cer-Hex6,inferred,vocabulary class; composition string not seen in reference names,built by the composition rule only
+comp,Hex6-HexNAc,Cer-Hex6-HexNAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex6-HexNAc3,Cer-Hex6-HexNAc3,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex6-HexNAc3-Fuc-NeuAc,Cer-Hex6-HexNAc3-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex6-HexNAc3-Fuc2,Cer-Hex6-HexNAc3-Fuc2,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex6-HexNAc3-NeuAc,Cer-Hex6-HexNAc3-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex6-HexNAc3-NeuGc,Cer-Hex6-HexNAc3-NeuGc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex6-HexNAc4,Cer-Hex6-HexNAc4,verified,LIPID MAPS composition names in reference n=24,
+comp,Hex6-HexNAc4-Fuc,Cer-Hex6-HexNAc4-Fuc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex6-HexNAc4-Fuc-NeuAc,Cer-Hex6-HexNAc4-Fuc-NeuAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex7,Cer-Hex7,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex7-HexNAc,Cer-Hex7-HexNAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex7-HexNAc3,Cer-Hex7-HexNAc3,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex7-HexNAc3-Fuc,Cer-Hex7-HexNAc3-Fuc,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex7-HexNAc3-Fuc2,Cer-Hex7-HexNAc3-Fuc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex7-HexNAc4,Cer-Hex7-HexNAc4,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex8,Cer-Hex8,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex8-HexNAc,Cer-Hex8-HexNAc,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex8-HexNAc4,Cer-Hex8-HexNAc4,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex8-HexNAc4-Fuc2,Cer-Hex8-HexNAc4-Fuc2,verified,LIPID MAPS composition names in reference n=8,
+comp,Hex8-HexNAc5,Cer-Hex8-HexNAc5,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex9-HexNAc5,Cer-Hex9-HexNAc5,verified,LIPID MAPS composition names in reference n=16,
+comp,Hex9-HexNAc7-NeuAc4,Cer-Hex9-HexNAc7-NeuAc4,verified,LIPID MAPS composition names in reference n=8,

@@ -1,0 +1,140 @@
+{
+ "source": "MassBank MSBNK-LCSB-LU087906 (CC BY 4.0), [M+H]+; the engine's predict() result of a real Quick run, 2026-10-28",
+ "input": {
+  "precursor_mz": 292.1002,
+  "adduct": "[M+H]+",
+  "formula": "C15H17NO3S",
+  "name": "3-((Ethylphenylamino)methyl)benzenesulfonic acid",
+  "peaks": [
+   [
+    50.0151,
+    0.0010010009864345193
+   ],
+   [
+    51.023,
+    0.0020020019728690386
+   ],
+   [
+    53.0386,
+    0.01901901885867119
+   ],
+   [
+    77.0384,
+    0.011011010967195034
+   ],
+   [
+    78.0464,
+    0.006006006151437759
+   ],
+   [
+    79.0542,
+    0.06406406313180923
+   ],
+   [
+    90.0464,
+    0.004004003945738077
+   ],
+   [
+    91.0543,
+    0.0010010009864345193
+   ],
+   [
+    93.0574,
+    0.0020020019728690386
+   ],
+   [
+    95.0492,
+    0.061061061918735504
+   ],
+   [
+    103.054,
+    0.0010010009864345193
+   ],
+   [
+    104.0495,
+    0.0020020019728690386
+   ],
+   [
+    105.0448,
+    0.024024024605751038
+   ],
+   [
+    106.0651,
+    1.0
+   ],
+   [
+    118.0651,
+    0.0020020019728690386
+   ],
+   [
+    120.0808,
+    0.014014014042913914
+   ],
+   [
+    121.0886,
+    0.01001000963151455
+   ],
+   [
+    165.07,
+    0.0030030030757188797
+   ],
+   [
+    171.011,
+    0.004004003945738077
+   ],
+   [
+    180.0808,
+    0.005005004815757275
+   ],
+   [
+    181.0888,
+    0.0010010009864345193
+   ]
+  ]
+ },
+ "result": {
+  "formula": "C15H17NO3S",
+  "adduct": "[M+H]+",
+  "driver_adduct": "[M+H]+",
+  "mode": "quick",
+  "seed": 42,
+  "candidates": [
+   {
+    "rank": 1,
+    "smiles": "CCN(Cc1cccc(S(=O)(=O)O)c1)c1ccccc1",
+    "formula": "C15H17NO3S",
+    "score": 1.0,
+    "inchikey_2d": "BQGRVFPPZJPWPB"
+   },
+   {
+    "rank": 2,
+    "smiles": "CCN(Cc1ccccc1)c1cccc(S(=O)(=O)O)c1",
+    "formula": "C15H17NO3S",
+    "score": 0.842105,
+    "inchikey_2d": "KVBANSJOXDHNIW"
+   }
+  ],
+  "dropped": {
+   "not_formula_match": 12,
+   "isotope": 0,
+   "radical": 0,
+   "charged": 0,
+   "duplicate": 0
+  },
+  "n_raw": 14,
+  "n_samples": 16,
+  "n_valid": 16,
+  "n_formula_matched": 4,
+  "n_unique_matched": 2,
+  "n_peaks_assigned": 21,
+  "device": "cpu",
+  "device_requested": "auto",
+  "device_reason": "auto: cpu because swap free 720 MB <= 1024 MB",
+  "seconds": 37.220895332982764,
+  "driver_seconds": 35.927,
+  "peak_footprint_mb": 4524.8,
+  "peak_rss_mb": 3041.0,
+  "warnings": [],
+  "length_model": true
+ }
+}

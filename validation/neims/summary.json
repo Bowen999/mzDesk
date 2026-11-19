@@ -1,0 +1,55 @@
+{
+  "original": {
+    "python": "3.6.15",
+    "rdkit": "2019.03.4",
+    "tensorflow": "1.13.2",
+    "numpy": "1.16.6"
+  },
+  "host": {
+    "rdkit": "2024.09.6",
+    "numpy": "1.26.4"
+  },
+  "named_molecules": {
+    "molecules": 35,
+    "fingerprints_equal": 35,
+    "model_mass_equal": 35,
+    "max_abs_diff_999_scale_fp_equal": 0.00128173828125,
+    "max_abs_diff_999_scale_all": 0.00128173828125,
+    "max_abs_diff_999_scale_with_original_fp": 0.00128173828125,
+    "sdf_peak_text_identical": 35,
+    "display_peak_lists_identical": 35,
+    "display_peak_lists_identical_fp_equal": 35,
+    "display_peaks_only_in_one_list_fp_equal": 0,
+    "display_max_rel_diff_percent_points_fp_equal": 0.0
+  },
+  "extra_test_set_molecules": {
+    "molecules": 300,
+    "fingerprints_equal": 299,
+    "model_mass_equal": 300,
+    "max_abs_diff_999_scale_fp_equal": 0.00164794921875,
+    "max_abs_diff_999_scale_all": 234.85629272460938,
+    "max_abs_diff_999_scale_with_original_fp": 0.00164794921875,
+    "sdf_peak_text_identical": 297,
+    "display_peak_lists_identical": 297,
+    "display_peak_lists_identical_fp_equal": 297,
+    "display_peaks_only_in_one_list_fp_equal": 0,
+    "display_max_rel_diff_percent_points_fp_equal": 0.1
+  },
+  "fingerprint_only": {
+    "molecules": 20000,
+    "different": 10,
+    "smiles": [
+      "C1C2C[Rh]12345(CC3C4)I[Rh]1234(CC1C2)(CC3C4)I5",
+      "c1ccc2c(c1)-c1ccc3c4ccc5c6c(cc7ccc8cc-2c1c3c8c7c64)-c1ccccc1-5",
+      "Oc1cc2nc(-c3ccccc3)cc3cc(-c4ccccc4)oc(n1)c32",
+      "N#Cc1cnc2c(Br)ccc3nc(CBr)nc1-n-3-2",
+      "COc1cccc2c3ssc4c5ccccc5c5ssc(c12)c5c43",
+      "COc1ccc2[nH]c3c([N+](=O)[O-])ccc4c3c(nn4CCCN(C)C)c2c1",
+      "CCn1nc(C)c2ccc(OC)c3cccc1c32",
+      "Cc1nnc2n1-c1nonc1-n1c(C)nnc1-2",
+      "c1cc2ccc3ccc4cccc5oc(c1)c2c3c45",
+      "c1ccc2c3nc4ccccc4c4nc5ccccc5c(nc2c1)-n-3-4"
+    ]
+  },
+  "min_rel_percent": 0.1
+}

@@ -1,0 +1,13 @@
+# M3 (commonname.py) whitelist: lowercase-heavy words that are legal inside a shorthand.
+# The long-form test ("6 or more consecutive lowercase letters") ignores these words (whole-word, case-sensitive match).
+# scope: head = class position only; tail = chain part only; both = either.
+word,scope,evidence
+Forssman,head,"ref/SwissLipids glycolipid heads Branched-Forssman Para-Forssman i-Forssman Fuc-Branched-Forssman"
+Branched,head,"ref/SwissLipids head Branched-Forssman"
+Plasmenyl,head,"LipidMatch class prefix Plasmenyl-PE / Plasmenyl-PC / Plasmenyl-LPE (tool_class_tokens.csv)"
+Plasmanyl,head,"LipidMatch class prefix Plasmanyl-PE / Plasmanyl-PC / Plasmanyl-LPE (tool_class_tokens.csv)"
+plasmenyl,head,"LipidMatch lower-case prefix plasmenyl-TG (tool_class_tokens.csv)"
+plasmanyl,head,"LipidMatch lower-case prefix plasmanyl-TG (tool_class_tokens.csv)"
+anteiso,both,"branched-chain marker (anteiso-<C:DB> chain prefix); also a chain prefix in the lexer"
+methyl,both,"branch note (methyl) and the methyl- chain prefix of Ac3PIM2 names (boundary_cases B79)"
+plasmalogen,head,"old v26 class names PC-plasmalogen / PE-plasmalogen kept as input aliases (SYNTHESIS 3.2 step 4; gt_pool in_house has 4 such names)"

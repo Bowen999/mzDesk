@@ -1,0 +1,108 @@
+<svg viewBox="0 0 720 636" xmlns="http://www.w3.org/2000/svg">
+<title>28 modules and 4 workflows</title>
+<desc>The 28 modules of mzDesk as one bar and six cards, each group in its own colour: Compound (4), Detectability (7), MS1 (2), Spectrum (10), Orthogonal (1), Dataset Search (3) and the Calculator. Below, in solid blue, the 4 workflows: MS/MS Annotation (8 steps), EI MS Annotation (9 steps), Targeted Method (9 steps) and Lipid Fragment Explanation (3 steps).</desc>
+<defs><clipPath id="cl-compound"><rect x="12" y="62" width="224" height="146" rx="10"/></clipPath><clipPath id="cl-ms1"><rect x="12" y="220" width="224" height="98" rx="10"/></clipPath><clipPath id="cl-ortho"><rect x="12" y="330" width="224" height="84" rx="10"/></clipPath><clipPath id="cl-detect"><rect x="248" y="62" width="224" height="218" rx="10"/></clipPath><clipPath id="cl-dataset"><rect x="248" y="292" width="224" height="122" rx="10"/></clipPath><clipPath id="cl-spectrum"><rect x="484" y="62" width="224" height="290" rx="10"/></clipPath></defs>
+<text class="fg-title" x="12" y="22">28 modules</text>
+<text class="fg-muted" x="708" y="22" text-anchor="end">six groups and the Calculator</text>
+<g class="fg-g-compound"><rect class="fg-gbar" x="12.0" y="34" width="96.9" height="10" rx="5"/></g>
+<g class="fg-g-detect"><rect class="fg-gbar" x="111.9" y="34" width="169.5" height="10" rx="5"/></g>
+<g class="fg-g-ms1"><rect class="fg-gbar" x="284.4" y="34" width="48.4" height="10" rx="5"/></g>
+<g class="fg-g-spectrum"><rect class="fg-gbar" x="335.8" y="34" width="242.1" height="10" rx="5"/></g>
+<g class="fg-g-ortho"><rect class="fg-gbar" x="580.9" y="34" width="24.2" height="10" rx="5"/></g>
+<g class="fg-g-dataset"><rect class="fg-gbar" x="608.1" y="34" width="72.6" height="10" rx="5"/></g>
+<g class="fg-g-calc"><rect class="fg-gbar" x="683.8" y="34" width="24.2" height="10" rx="5"/></g>
+<g class="fg-g-compound"><rect class="fg-gbox" x="12" y="62" width="224" height="146" rx="10"/><g clip-path="url(#cl-compound)"><g transform="translate(236 208) scale(.62) translate(-236 -208)"><path class="fg-gpat" d="M224.0 165.2L208.4 145.7"/><path class="fg-gpat" d="M206.0 134.4L212.6 110.3"/><path class="fg-gpat" d="M211.3 112.3L190.4 98.6"/><path class="fg-gpat" d="M213.9 108.3L193.0 94.6"/><path class="fg-gpat" d="M181.2 97.1L161.7 112.7"/><path class="fg-gpat" d="M163.9 111.8L175.1 141.3"/><path class="fg-gpat" d="M159.5 113.5L170.6 143.0"/><path class="fg-gpat" d="M172.8 142.2L152.9 166.5"/><path class="fg-gpat" d="M155.1 165.7L164.0 189.1"/><path class="fg-gpat" d="M150.6 167.4L159.5 190.8"/><path class="fg-gpat" d="M152.9 166.5L128.2 162.5"/><path class="fg-gpat" d="M117.7 166.5L101.9 185.8"/><path class="fg-gpat" d="M119.5 155.4L110.7 132.0"/><path class="fg-gpat" d="M110.3 134.4L85.6 130.3"/><path class="fg-gpat" d="M111.0 129.6L86.4 125.6"/><path class="fg-gpat" d="M110.7 132.0L126.5 112.6"/><path class="fg-gpat" d="M128.3 101.5L119.5 78.1"/><path class="fg-gpat" d="M172.8 142.2L197.8 141.0"/><path class="fg-gpat" d="M137.0 108.7L161.7 112.7"/><text class="fg-gpat-f" x="204.3" y="140.7" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">N</text><text class="fg-gpat-f" x="186.3" y="93.0" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">N</text><text class="fg-gpat-f" x="164.0" y="196.0" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">O</text><text class="fg-gpat-f" x="121.8" y="161.5" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">N</text><text class="fg-gpat-f" x="79.6" y="126.9" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">O</text><text class="fg-gpat-f" x="130.6" y="107.6" dy=".35em" text-anchor="middle" font-size="13" font-weight="600">N</text></g></g>
+<text class="fg-gtitle" x="28" y="86">Compound</text><text class="fg-gtext" x="220" y="86" text-anchor="end">4</text></g>
+<path class="fg-line" d="M24 96H224"/>
+<text class="fg-small" x="28" y="118">Identity</text>
+<text class="fg-small" x="28" y="142">Structure &amp; Formats</text>
+<text class="fg-small" x="28" y="166">Properties &amp; Groups</text>
+<text class="fg-small" x="28" y="190">Lipid Short Name</text>
+<g class="fg-g-ms1"><rect class="fg-gbox" x="12" y="220" width="224" height="98" rx="10"/><g clip-path="url(#cl-ms1)"><g transform="translate(236 318) scale(.62) translate(-236 -318)"><rect class="fg-gpat-f" x="156" y="264" width="9" height="46" rx="2"/><rect class="fg-gpat-f" x="174" y="276" width="9" height="34" rx="2"/><rect class="fg-gpat-f" x="192" y="290" width="9" height="20" rx="2"/><rect class="fg-gpat-f" x="210" y="300" width="9" height="10" rx="2"/></g></g>
+<text class="fg-gtitle" x="28" y="244">MS1</text><text class="fg-gtext" x="220" y="244" text-anchor="end">2</text></g>
+<path class="fg-line" d="M24 254H224"/>
+<text class="fg-small" x="28" y="276">Mass Search</text>
+<text class="fg-small" x="28" y="300">Theoretical</text>
+<g class="fg-g-ortho"><rect class="fg-gbox" x="12" y="330" width="224" height="84" rx="10"/><g clip-path="url(#cl-ortho)"><g transform="translate(236 414) scale(.62) translate(-236 -414)"><circle class="fg-gpat-f" cx="218" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="218" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="218" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="204" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="190" cy="372" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="400" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="386" r="2.6"/><circle class="fg-gpat-f" cx="176" cy="372" r="2.6"/></g></g>
+<text class="fg-gtitle" x="28" y="354">Orthogonal</text><text class="fg-gtext" x="220" y="354" text-anchor="end">1</text></g>
+<path class="fg-line" d="M24 364H224"/>
+<text class="fg-small" x="28" y="386">CCS</text>
+<g class="fg-g-detect"><rect class="fg-gbox" x="248" y="62" width="224" height="218" rx="10"/><g clip-path="url(#cl-detect)"><g transform="translate(472 280) scale(.62) translate(-472 -280)"><path class="fg-gpat" d="M438 280A34 34 0 0 1 472 246"/><path class="fg-gpat" d="M416 280A56 56 0 0 1 472 224"/><path class="fg-gpat" d="M394 280A78 78 0 0 1 472 202"/><path class="fg-gpat" d="M372 280A100 100 0 0 1 472 180"/></g></g>
+<text class="fg-gtitle" x="264" y="86">Detectability</text><text class="fg-gtext" x="456" y="86" text-anchor="end">7</text></g>
+<path class="fg-line" d="M260 96H460"/>
+<text class="fg-small" x="264" y="118">Platform</text>
+<text class="fg-small" x="264" y="142">Separation</text>
+<text class="fg-small" x="264" y="166">Ionization</text>
+<text class="fg-small" x="264" y="190">Adducts</text>
+<text class="fg-small" x="264" y="214">Non-MS Detection</text>
+<text class="fg-small" x="264" y="238">Derivatization</text>
+<text class="fg-small" x="264" y="262">Known Methods</text>
+<g class="fg-g-dataset"><rect class="fg-gbox" x="248" y="292" width="224" height="122" rx="10"/><g clip-path="url(#cl-dataset)"><g transform="translate(472 414) scale(.62) translate(-472 -414)"><path class="fg-gpat" d="M446 392L410 374"/><path class="fg-gpat" d="M410 374L432 348"/><path class="fg-gpat" d="M446 392L432 348"/><path class="fg-gpat" d="M410 374L380 390"/><path class="fg-gpat" d="M410 374L386 344"/><path class="fg-gpat" d="M432 348L386 344"/><circle class="fg-gpat-f" cx="446" cy="392" r="4.5"/><circle class="fg-gpat-f" cx="410" cy="374" r="4.5"/><circle class="fg-gpat-f" cx="432" cy="348" r="4.5"/><circle class="fg-gpat-f" cx="380" cy="390" r="4.5"/><circle class="fg-gpat-f" cx="386" cy="344" r="4.5"/></g></g>
+<text class="fg-gtitle" x="264" y="316">Dataset Search</text><text class="fg-gtext" x="456" y="316" text-anchor="end">3</text></g>
+<path class="fg-line" d="M260 326H460"/>
+<text class="fg-small" x="264" y="348">Spectrum in Which Set</text>
+<text class="fg-small" x="264" y="372">Dataset Finder</text>
+<text class="fg-small" x="264" y="396">Fragment Pattern</text>
+<g class="fg-g-spectrum"><rect class="fg-gbox" x="484" y="62" width="224" height="290" rx="10"/><g clip-path="url(#cl-spectrum)"><g transform="translate(708 352) scale(.62) translate(-708 -352)"><path class="fg-gpat" d="M696 344V330"/><path class="fg-gpat" d="M688 344V314"/><path class="fg-gpat" d="M680 344V322"/><path class="fg-gpat" d="M672 344V284"/><path class="fg-gpat" d="M664 344V326"/><path class="fg-gpat" d="M656 344V304"/><path class="fg-gpat" d="M648 344V318"/><path class="fg-gpat" d="M640 344V260"/><path class="fg-gpat" d="M632 344V324"/><path class="fg-gpat" d="M624 344V310"/><path class="fg-gpat" d="M616 344V328"/><path class="fg-gpat" d="M608 344V292"/><path class="fg-gpat" d="M600 344V320"/><path class="fg-gpat" d="M592 344V274"/><path class="fg-gpat" d="M584 344V326"/><path class="fg-gpat" d="M576 344V316"/><path class="fg-gpat" d="M568 344V308"/><path class="fg-gpat" d="M560 344V324"/><path class="fg-gpat" d="M556 344H702"/></g></g>
+<text class="fg-gtitle" x="500" y="86">Spectrum</text><text class="fg-gtext" x="692" y="86" text-anchor="end">10</text></g>
+<path class="fg-line" d="M496 96H696"/>
+<text class="fg-small" x="500" y="118">Spectrum Cleanup</text>
+<text class="fg-small" x="500" y="142">Similarity</text>
+<text class="fg-small" x="500" y="166">Library Search</text>
+<text class="fg-small" x="500" y="190">Formula Annotation</text>
+<text class="fg-small" x="500" y="214">Structure Prediction</text>
+<text class="fg-small" x="500" y="238">De Novo Structure</text>
+<text class="fg-small" x="500" y="262">EI-MS Prediction</text>
+<text class="fg-small" x="500" y="286">MS/MS Prediction</text>
+<text class="fg-small" x="500" y="310">Fragment Explanation</text>
+<text class="fg-small" x="500" y="334">Alternative Explanations</text>
+<g class="fg-g-calc"><rect class="fg-gbox" x="484" y="364" width="224" height="50" rx="10"/>
+<text class="fg-gtitle" x="500" y="394">Calculator</text></g>
+<text class="fg-title" x="12" y="446">4 workflows</text>
+<text class="fg-muted" x="708" y="446" text-anchor="end">each runs a fixed chain of steps</text>
+<rect class="fg-wf" x="12" y="460" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="28" y="488">MS/MS Annotation</text>
+<text class="fg-wf-sub" x="28" y="508">8 steps</text>
+<path class="fg-wf-line" d="M30 524H336"/>
+<circle class="fg-wf-dot" cx="30.0" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="73.7" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="117.4" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="161.1" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="204.9" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="248.6" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="292.3" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="336.0" cy="524" r="3.5"/>
+<rect class="fg-wf" x="366" y="460" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="382" y="488">EI MS Annotation</text>
+<text class="fg-wf-sub" x="382" y="508">9 steps</text>
+<path class="fg-wf-line" d="M384 524H690"/>
+<circle class="fg-wf-dot" cx="384.0" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="422.2" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="460.5" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="498.8" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="537.0" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="575.2" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="613.5" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="651.8" cy="524" r="3.5"/>
+<circle class="fg-wf-dot" cx="690.0" cy="524" r="3.5"/>
+<rect class="fg-wf" x="12" y="552" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="28" y="580">Targeted Method</text>
+<text class="fg-wf-sub" x="28" y="600">9 steps</text>
+<path class="fg-wf-line" d="M30 616H336"/>
+<circle class="fg-wf-dot" cx="30.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="68.2" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="106.5" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="144.8" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="183.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="221.2" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="259.5" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="297.8" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="336.0" cy="616" r="3.5"/>
+<rect class="fg-wf" x="366" y="552" width="342" height="80" rx="12"/>
+<text class="fg-wf-text" x="382" y="580">Lipid Fragment Explanation</text>
+<text class="fg-wf-sub" x="382" y="600">3 steps</text>
+<path class="fg-wf-line" d="M384 616H690"/>
+<circle class="fg-wf-dot" cx="384.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="537.0" cy="616" r="3.5"/>
+<circle class="fg-wf-dot" cx="690.0" cy="616" r="3.5"/>
+</svg>

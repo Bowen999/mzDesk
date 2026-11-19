@@ -1,0 +1,18 @@
+species,aliases,formula,charge,mass,seen_in,note
+H,,H,1,1.007276,lipidmatch|lipiddetective|pnnl|msdial|swisslipids|lipidin,proton: +H / -H / -2H
+NH4,,H4N,1,18.033826,lipidmatch|lipiddetective|pnnl|msdial|swisslipids|lipidin,ammonium
+Na,,Na,1,22.989221,lipidmatch|lipiddetective|msdial|swisslipids|lipidin,sodium
+K,,K,1,38.963158,swisslipids,potassium
+Li,,Li,1,7.015455,swisslipids,lithium
+Cl,,Cl,-1,34.969401,swisslipids,chloride (35Cl)
+HCO2,CHO2|HCOO,CHO2,-1,44.998203,lipidmatch|lipiddetective|msdial|lipidin,formate anion
+C2H3O2,CH3COO|OAc,C2H3O2,-1,59.013853,lipidmatch|lipiddetective|msdial|lipidin,acetate anion
+H2O,,H2O,0,18.010565,lipiddetective|lipidin,neutral loss/gain of water
+NH3,,H3N,0,17.026549,,neutral ammonia
+CH3,,CH3,0,15.023475,lipiddetective,methyl loss ([M-CH3]- of PC/SM formate adducts)
+CO,,CO,0,27.994915,lipidmatch,carbon monoxide loss (+NH4-CO)
+CO2,,CO2,0,43.989829,,carbon dioxide
+FA,,CH2O2,0,46.005479,,"formic acid, neutral ([M+FA-H]-)"
+HAc,Hac|HOAc,C2H4O2,0,60.021129,,"acetic acid, neutral ([M+HAc-H]-)"
+ACN,,C2H3N,0,41.026549,,"acetonitrile, neutral"
+MeOH,CH3OH,CH4O,0,32.026215,,"methanol, neutral"

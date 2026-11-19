@@ -1,0 +1,46 @@
+import { useT } from "../i18n";
+import type { CompareCompound } from "../types";
+import { Mol3D, ThemedSvg } from "./Figure";
+import { MiddleEllipsis } from "./MiddleEllipsis";
+
+/**
+ * Structure & formats: one card per compound (1-3), for side-by-side comparison.
+ * Both boxes are square and take the full card width, so the 2D depiction and the 3D viewer
+ * always have the same width and height. One compound: the two boxes sit side by side.
+ * The head shows the compound's label (its optional label, else the searched name) and elides
+ * the middle of a name that does not fit, so the formula stays on the same line.
+ */
+export function CompoundCompare({ items }: { items: CompareCompound[] }) {
+  const t = useT();
+  return (
+    <div className={"compare-grid" + (items.length === 1 ? " single" : "")}>
+      {items.map((c, i) => {
+        const name = c.label || t("Compound {n}", { n: i + 1 });
+        return (
+          <div className="compare-col" key={`${name}-${i}`}>
+            <div className="compare-head">
+              <MiddleEllipsis className="compare-name" text={name} />
+              {c.formula && <span className="compare-formula">{c.formula}</span>}
+            </div>
+            <div className="compare-views">
+              <div className="compare-cell">
+                <div className="compare-label">{t("2D depiction")}</div>
+                <div className="compare-box">
+                  {c.svg
+                    ? <ThemedSvg svg={c.svg} className="compare-svg" alt={t("{name} 2D depiction", { name })} />
+                    : <span className="compare-empty">{t("No 2D depiction")}</span>}
+                </div>
+              </div>
+              <div className="compare-cell">
+                <div className="compare-label">{t("3D viewer")}</div>
+                <div className="compare-box">
+                  {c.mol3d ? <Mol3D molblock={c.mol3d} /> : <span className="compare-empty">{t("3D viewer unavailable")}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

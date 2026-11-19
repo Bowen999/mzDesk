@@ -1,0 +1,50 @@
+name,smiles,note
+ibuprofen,CC(C)Cc1ccc(cc1)C(C)C(=O)O,literature set; carboxylic acid
+aspirin,CC(=O)Oc1ccccc1C(=O)O,literature set
+lidocaine,CCN(CC)CC(=O)Nc1c(C)cccc1C,literature set; tertiary amine + anilide
+morphine,CN1CC[C@]23[C@@H]4[C@H]1Cc5ccc(O)c(O[C@H]2[C@@H](O)C=C4)c35,literature set; amine + phenol
+caffeine,Cn1cnc2c1c(=O)n(C)c(=O)n2C,literature set; purine
+glycine,NCC(=O)O,literature set; amino acid
+sulfamethoxazole,Cc1cc(NS(=O)(=O)c2ccc(N)cc2)no1,literature set; sulfonamide
+metformin,CN(C)C(=N)NC(N)=N,literature set; biguanide
+salicylic acid,OC(=O)c1ccccc1O,literature set
+procainamide,CCN(CC)CCNC(=O)c1ccc(N)cc1,literature set
+phenylephrine,CNC[C@H](O)c1cccc(O)c1,amine + phenol
+nicotine,CN1CCC[C@H]1c1cccnc1,pyridine + pyrrolidine
+imidazole,c1c[nH]cn1,azole
+histamine,NCCc1c[nH]cn1,imidazole + primary amine
+pyridine,c1ccncc1,
+aniline,Nc1ccccc1,
+phenol,Oc1ccccc1,
+benzoic acid,OC(=O)c1ccccc1,
+acetic acid,CC(=O)O,
+phosphoric acid dimethyl ester,COP(=O)(O)OC,phosphate diester
+glyphosate,OC(=O)CNCP(=O)(O)O,phosphonate + amine + acid
+benzenesulfonic acid,OS(=O)(=O)c1ccccc1,
+thiophenol,Sc1ccccc1,thiol
+acetohydroxamic acid,CC(=O)NO,hydroxamic acid
+tetrazole drug (losartan),CCCCc1nc(Cl)c(CO)n1Cc1ccc(cc1)-c1ccccc1-c1nnn[nH]1,tetrazole + imidazole
+phenytoin,O=C1NC(=O)C(N1)(c1ccccc1)c1ccccc1,imide
+barbital,CCC1(CC)C(=O)NC(=O)NC1=O,barbiturate
+theophylline,Cn1c(=O)c2[nH]cnc2n(C)c1=O,N-H acid
+acetaminophen,CC(=O)Nc1ccc(O)cc1,
+propranolol,CC(C)NCC(O)COc1cccc2ccccc12,
+atenolol,CC(C)NCC(O)COc1ccc(CC(N)=O)cc1,
+diazepam,CN1C(=O)CN=C(c2ccccc2)c2cc(Cl)ccc12,
+omeprazole,COc1ccc2[nH]c(nc2c1)S(=O)Cc1ncc(C)c(OC)c1C,benzimidazole + pyridine
+ciprofloxacin,OC(=O)C1=CN(C2CC2)c2cc(N3CCNCC3)c(F)cc2C1=O,zwitterion drug
+tryptophan,N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O,amino acid
+arginine,N[C@@H](CCCNC(N)=N)C(=O)O,guanidine
+aspartic acid,N[C@@H](CC(=O)O)C(=O)O,diacid amino acid
+cysteine,N[C@@H](CS)C(=O)O,thiol amino acid
+tyrosine,N[C@@H](Cc1ccc(O)cc1)C(=O)O,
+choline,C[N+](C)(C)CCO,permanent cation
+carnitine,C[N+](C)(C)C[C@H](O)CC([O-])=O,betaine (anion next to nothing: neutralized)
+phosphatidylcholine PC 32:0,CCCCCCCCCCCCCCCC(=O)OC[C@H](COP(=O)([O-])OCC[N+](C)(C)C)OC(=O)CCCCCCCCCCCCCCC,permanent cation + phosphate
+glucose,OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O,no ionizable site expected
+cetirizine,OC(=O)COCCN1CCN(CC1)C(c1ccccc1)c1ccc(Cl)cc1,zwitterion drug
+acepromazine,CN(C)CCCN1C2=CC=CC=C2SC2=C1C=C(C=C2)C(C)=O,MolGpKa README example
+chloroquine-like quinoline,Clc3ccc2nccc(Cn1cccn1)c2c3,MolGpKa API example
+aminopyrimidine kinase fragment,Nc1cc(C(F)(F)F)c(-c2cc(N3CCCC3)nc(N3CCOCC3)n2)cn1,MolGpKa protonate example
+sodium acetate (salt),CC(=O)[O-].[Na+],input is a salt
+glycine zwitterion,[NH3+]CC([O-])=O,input is charged

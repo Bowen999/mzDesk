@@ -1,0 +1,39 @@
+<svg viewBox="0 0 720 372" xmlns="http://www.w3.org/2000/svg">
+<title>Where your data goes</title>
+<desc>On mzdesk.com your browser sends your input to the mzDesk server, which runs the analysis and the online lookups. In the local version the browser and the server are both on your computer; only the online lookups you allow with the Internet search switch, and a version check, leave it.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<text class="fg-title" x="20" y="28">mzdesk.com</text>
+<text class="fg-muted" x="116" y="28">your input is sent to the server</text>
+<rect class="fg-box" x="20" y="50" width="150" height="64" rx="8"/>
+<text class="fg-text" x="95" y="87" text-anchor="middle">Your browser</text>
+<path class="fg-arrow" d="M170 82L250 82" marker-end="url(#ah)"/>
+<text class="fg-muted" x="210" y="72" text-anchor="middle">your input</text>
+<rect class="fg-box-accent" x="250" y="50" width="210" height="64" rx="8"/>
+<text class="fg-text" x="355" y="79" text-anchor="middle">mzDesk server</text>
+<text class="fg-small" x="355" y="97" text-anchor="middle">runs the analysis</text>
+<path class="fg-arrow" d="M460 82L540 82" marker-end="url(#ah)"/>
+<text class="fg-muted" x="500" y="72" text-anchor="middle">lookups</text>
+<rect class="fg-box-soft" x="540" y="50" width="160" height="64" rx="8"/>
+<text class="fg-text" x="620" y="87" text-anchor="middle">Online databases</text>
+<path class="fg-line" d="M20 142L700 142"/>
+<text class="fg-title" x="20" y="172">Local version</text>
+<text class="fg-muted" x="136" y="172">your input stays on your computer</text>
+<rect class="fg-box-accent" x="20" y="190" width="420" height="166" rx="12"/>
+<text class="fg-accent-text" x="36" y="214">Your computer</text>
+<rect class="fg-box" x="36" y="238" width="140" height="64" rx="8"/>
+<text class="fg-text" x="106" y="275" text-anchor="middle">Your browser</text>
+<path class="fg-arrow" d="M176 270L246 270" marker-end="url(#ah)"/>
+<rect class="fg-box" x="246" y="238" width="180" height="64" rx="8"/>
+<text class="fg-text" x="336" y="267" text-anchor="middle">mzDesk server</text>
+<text class="fg-muted" x="336" y="285" text-anchor="middle">runs the analysis</text>
+<text class="fg-small" x="211" y="260" text-anchor="middle">your input</text>
+<text class="fg-small" x="36" y="334">analysis and results stay here</text>
+<rect class="fg-box-soft" x="560" y="190" width="140" height="56" rx="8"/>
+<text class="fg-text" x="630" y="223" text-anchor="middle">Online databases</text>
+<path class="fg-arrow" d="M426 258L560 224" marker-end="url(#ah)" stroke-dasharray="5 4"/>
+<text class="fg-muted" x="500" y="214" text-anchor="middle">allowed lookups</text>
+<rect class="fg-box-soft" x="560" y="300" width="140" height="56" rx="8"/>
+<text class="fg-text" x="630" y="333" text-anchor="middle">mzdesk.com</text>
+<path class="fg-arrow" d="M426 286L560 322" marker-end="url(#ah)" stroke-dasharray="5 4"/>
+<text class="fg-muted" x="500" y="350" text-anchor="middle">version check</text>
+</svg>

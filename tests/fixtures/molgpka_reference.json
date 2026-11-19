@@ -1,0 +1,78 @@
+{
+ "versions": {
+  "torch": "2.6.0",
+  "torch_geometric": "2.4.0",
+  "rdkit": "2024.09.6",
+  "python": "3.12.12",
+  "repo_commit": "4dc835219baad18c2e705274ac54d49597703966"
+ },
+ "molecules": {
+  "ibuprofen": {
+   "smiles": "CC(C)Cc1ccc(cc1)C(C)C(=O)O",
+   "same_graph": {
+    "acid": {
+     "32": 4.4000654220581055
+    },
+    "base": {}
+   }
+  },
+  "lidocaine": {
+   "smiles": "CCN(CC)CC(=O)Nc1c(C)cccc1C",
+   "same_graph": {
+    "acid": {
+     "29": 13.872206687927246
+    },
+    "base": {
+     "2": 7.59928035736084,
+     "8": 5.1961989402771
+    }
+   }
+  },
+  "morphine": {
+   "smiles": "CN1CC[C@]23[C@@H]4[C@H]1Cc5ccc(O)c(O[C@H]2[C@@H](O)C=C4)c35",
+   "same_graph": {
+    "acid": {
+     "34": 9.425707817077637,
+     "37": 13.102544784545898
+    },
+    "base": {
+     "1": 8.027571678161621
+    }
+   }
+  },
+  "glycine": {
+   "smiles": "NCC(=O)O",
+   "same_graph": {
+    "acid": {
+     "9": 2.0931015014648438
+    },
+    "base": {
+     "0": 9.635560035705566
+    }
+   }
+  },
+  "metformin": {
+   "smiles": "CN(C)C(=N)NC(N)=N",
+   "same_graph": {
+    "acid": {
+     "15": 10.328219413757324,
+     "16": 12.415614128112793,
+     "19": 9.850810050964355
+    },
+    "base": {
+     "4": 9.570220947265625,
+     "8": 9.1774320602417
+    }
+   }
+  },
+  "phosphoric acid dimethyl ester": {
+   "smiles": "COP(=O)(O)OC",
+   "same_graph": {
+    "acid": {
+     "10": 1.4190338850021362
+    },
+    "base": {}
+   }
+  }
+ }
+}

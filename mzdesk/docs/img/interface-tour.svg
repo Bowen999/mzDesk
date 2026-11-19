@@ -1,0 +1,91 @@
+<svg viewBox="0 0 720 540" xmlns="http://www.w3.org/2000/svg">
+<title>The mzDesk window</title>
+<desc>A schematic of the mzDesk window. Down the left, the sidebar: the logo, the module groups, the workflows, the Internet search switch, the Session report button, Docs, and the theme, language and feedback buttons. On the right, the page: its head, the input form, the Run and example buttons, then the progress bar, the answer and the steps. Twelve numbered marks, in the margins, point at these parts.</desc>
+<!--
+Numbers in this figure (the list on the Quick Start page uses the same):
+ 1 logo, version, collapse button        7 theme, language, feedback          
+ 2 module groups (and the Calculator)    8 page head                          
+ 3 workflows                             9 input form                         
+ 4 Internet search switch (local)       10 Run, Clear and the example buttons 
+ 5 Session report                       11 progress bar, answer, candidates   
+ 6 Docs                                 12 steps timeline (workflows)        
+-->
+<rect class="fg-box" x="44" y="8" width="626" height="520" rx="12"/>
+<path class="fg-box-accent" d="M250 8H56a12 12 0 0 0-12 12V516a12 12 0 0 0 12 12H250z"/>
+<rect class="fg-fill-accent" x="60" y="23" width="22" height="22" rx="6"/><text class="fg-title" x="90" y="40">mzDesk</text>
+<rect class="fg-box" x="216" y="24" width="20" height="20" rx="5"/><path class="fg-line" d="M226 27V41"/>
+<path class="fg-line" d="M38 24H34V44H38M31 34.0H34"/>
+<circle class="fg-dot" cx="20" cy="34.0" r="11"/><text class="fg-dot-text" x="20" y="34.0" dy=".35em" text-anchor="middle">1</text>
+<text class="fg-muted" x="60" y="72">Modules</text>
+<text class="fg-small" x="60" y="99">Compound</text>
+<text class="fg-small" x="236" y="99" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="123">Detectability</text>
+<text class="fg-small" x="236" y="123" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="147">MS1</text>
+<text class="fg-small" x="236" y="147" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="171">Spectrum</text>
+<text class="fg-small" x="236" y="171" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="195">Orthogonal</text>
+<text class="fg-small" x="236" y="195" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="219">Dataset Search</text>
+<text class="fg-small" x="236" y="219" text-anchor="end">›</text>
+<text class="fg-small" x="60" y="243">Calculator</text>
+<path class="fg-line" d="M38 83H34V249H38M31 166.0H34"/>
+<circle class="fg-dot" cx="20" cy="166.0" r="11"/><text class="fg-dot-text" x="20" y="166.0" dy=".35em" text-anchor="middle">2</text>
+<text class="fg-muted" x="60" y="270">Workflows</text>
+<rect class="fg-box" x="52" y="280" width="190" height="24" rx="6"/><text class="fg-text" x="60" y="297">MS/MS Annotation</text>
+<text class="fg-small" x="60" y="321">EI MS Annotation</text><text class="fg-small" x="60" y="345">Targeted Method</text><text class="fg-small" x="60" y="369">Lipid Fragment Explanation</text>
+<path class="fg-line" d="M38 281H34V375H38M31 328.0H34"/>
+<circle class="fg-dot" cx="20" cy="328.0" r="11"/><text class="fg-dot-text" x="20" y="328.0" dy=".35em" text-anchor="middle">3</text>
+<text class="fg-small" x="60" y="421">Internet search</text>
+<rect class="fg-fill-accent" x="204" y="408" width="32" height="18" rx="9"/><circle class="fg-box" cx="227" cy="417" r="6"/>
+<path class="fg-line" d="M38 404H34V428H38M31 416.0H34"/>
+<circle class="fg-dot" cx="20" cy="416.0" r="11"/><text class="fg-dot-text" x="20" y="416.0" dy=".35em" text-anchor="middle">4</text>
+<text class="fg-small" x="60" y="449">Session report</text>
+<rect class="fg-box" x="212" y="435" width="24" height="18" rx="9"/><text class="fg-small" x="224" y="449" text-anchor="middle">1</text>
+<path class="fg-line" d="M38 432H34V456H38M31 444.0H34"/>
+<circle class="fg-dot" cx="20" cy="444.0" r="11"/><text class="fg-dot-text" x="20" y="444.0" dy=".35em" text-anchor="middle">5</text>
+<text class="fg-small" x="60" y="477">Docs</text>
+<path class="fg-line" d="M38 460H34V484H38M31 472.0H34"/>
+<circle class="fg-dot" cx="20" cy="472.0" r="11"/><text class="fg-dot-text" x="20" y="472.0" dy=".35em" text-anchor="middle">6</text>
+<rect class="fg-box" x="56" y="494" width="80" height="24" rx="12"/><circle class="fg-line" cx="76" cy="506" r="5"/><circle class="fg-fill-accent" cx="96" cy="506" r="5"/><circle class="fg-line" cx="116" cy="506" r="5"/>
+<text class="fg-small" x="162" y="511">EN</text><rect class="fg-box" x="216" y="494" width="20" height="24" rx="6"/>
+<path class="fg-line" d="M38 494H34V518H38M31 506.0H34"/>
+<circle class="fg-dot" cx="20" cy="506.0" r="11"/><text class="fg-dot-text" x="20" y="506.0" dy=".35em" text-anchor="middle">7</text>
+<rect class="fg-box-accent" x="274" y="24" width="32" height="32" rx="9"/>
+<text class="fg-title" x="318" y="38">MS/MS Annotation</text><text class="fg-muted" x="318" y="56">ESI MS/MS spectrum → adduct, formula, structures</text>
+<path class="fg-line" d="M678 24H682V56H678M682 40.0H691"/>
+<circle class="fg-dot" cx="702" cy="40.0" r="11"/><text class="fg-dot-text" x="702" y="40.0" dy=".35em" text-anchor="middle">8</text>
+<rect class="fg-box" x="274" y="76" width="372" height="148" rx="10"/>
+<rect class="fg-box-soft" x="288" y="90" width="108" height="30" rx="7"/><text class="fg-muted" x="298" y="110">Precursor m/z</text>
+<rect class="fg-box-soft" x="406" y="90" width="108" height="30" rx="7"/><text class="fg-muted" x="416" y="110">Ion mode</text>
+<rect class="fg-box-soft" x="524" y="90" width="108" height="30" rx="7"/><text class="fg-muted" x="534" y="110">Adduct</text>
+<rect class="fg-box-soft" x="288" y="132" width="344" height="56" rx="7"/>
+<text class="fg-small" x="298" y="152">MS2 spectrum</text><text class="fg-muted" x="298" y="172">m/z and intensity, one peak per line</text>
+<text class="fg-muted" x="288" y="208">Libraries, tolerances, options, Advanced</text>
+<path class="fg-line" d="M678 76H682V224H678M682 150.0H691"/>
+<circle class="fg-dot" cx="702" cy="150.0" r="11"/><text class="fg-dot-text" x="702" y="150.0" dy=".35em" text-anchor="middle">9</text>
+<rect class="fg-fill-accent" x="274" y="240" width="64" height="32" rx="8"/><text class="fg-dot-text" x="306" y="256" dy=".35em" text-anchor="middle">Run</text>
+<rect class="fg-box" x="346" y="240" width="64" height="32" rx="8"/><text class="fg-small" x="378.0" y="256" dy=".35em" text-anchor="middle">Clear</text>
+<rect class="fg-box" x="418" y="240" width="104" height="32" rx="8"/><text class="fg-small" x="470.0" y="256" dy=".35em" text-anchor="middle">Example 1</text>
+<rect class="fg-box" x="530" y="240" width="104" height="32" rx="8"/><text class="fg-small" x="582.0" y="256" dy=".35em" text-anchor="middle">Example 2</text>
+<path class="fg-line" d="M678 240H682V272H678M682 256.0H691"/>
+<circle class="fg-dot" cx="702" cy="256.0" r="11"/><text class="fg-dot-text" x="702" y="256.0" dy=".35em" text-anchor="middle">10</text>
+<text class="fg-small" x="274" y="304">Step 2 of 8 · Formula</text><text class="fg-small" x="646" y="304" text-anchor="end">22%</text>
+<rect class="fg-box-soft" x="274" y="312" width="372" height="8" rx="4"/><rect class="fg-fill-accent" x="274" y="312" width="82" height="8" rx="4"/>
+<rect class="fg-box" x="274" y="334" width="372" height="60" rx="10"/><rect class="fg-fill-accent" x="274" y="342" width="4" height="44" rx="2"/>
+<text class="fg-title" x="292" y="358">Caffeine</text>
+<rect class="fg-box-accent" x="376" y="340" width="72" height="24" rx="12"/><text class="fg-accent-text" x="412" y="352" dy=".35em" text-anchor="middle">Level 2a</text>
+<text class="fg-muted" x="292" y="382">Details</text>
+<rect class="fg-box" x="274" y="406" width="372" height="32" rx="8"/>
+<text class="fg-small" x="290" y="427">1</text><text class="fg-small" x="322" y="427">Caffeine</text><text class="fg-muted" x="520" y="427">Level 2a</text><text class="fg-small" x="630" y="427" text-anchor="end">0.80</text>
+<path class="fg-line" d="M678 296H682V438H678M682 367.0H691"/>
+<circle class="fg-dot" cx="702" cy="367.0" r="11"/><text class="fg-dot-text" x="702" y="367.0" dy=".35em" text-anchor="middle">11</text>
+<text class="fg-title" x="274" y="473">Steps</text>
+<path class="fg-line" d="M346 468H586"/>
+<circle class="fg-dot" cx="346" cy="468" r="6"/><text class="fg-small" x="346" y="492" text-anchor="middle">Adduct</text>
+<circle class="fg-dot" cx="466" cy="468" r="6"/><text class="fg-small" x="466" y="492" text-anchor="middle">Formula</text>
+<circle class="fg-dot" cx="586" cy="468" r="6"/><text class="fg-small" x="586" y="492" text-anchor="middle">Library search</text>
+<path class="fg-line" d="M678 456H682V496H678M682 476.0H691"/>
+<circle class="fg-dot" cx="702" cy="476.0" r="11"/><text class="fg-dot-text" x="702" y="476.0" dy=".35em" text-anchor="middle">12</text>
+</svg>

@@ -1,0 +1,11 @@
+# Bulky run outputs: kept locally and in the Zenodo benchmark archive. Committed per run: report.md, summary.json,
+# summary.csv, inputs/sample.json and code/FROZEN.json (the commit tested).
+*/cases/
+*/case_logs/
+*/direct/
+*/direct_library/
+*/run.log
+*/code/*
+!*/code/FROZEN.json
+*.console.log
+__pycache__/

@@ -1,0 +1,45 @@
+<svg viewBox="0 0 720 264" xmlns="http://www.w3.org/2000/svg">
+<title>From one input to one answer</title>
+<desc>A module takes one input and gives one result. A workflow takes one input, runs a fixed chain of modules on it, in order, and ends with one answer.</desc>
+<defs><marker id="ah" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head" d="M1 1.5L9 5L1 8.5z"/></marker><marker id="ahx" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path class="fg-head-accent" d="M1 1.5L9 5L1 8.5z"/></marker></defs>
+<text class="fg-title" x="20" y="28">Module</text>
+<text class="fg-muted" x="86" y="28">one question on its own</text>
+<rect class="fg-box" x="20" y="44" width="140" height="52" rx="10"/>
+<text class="fg-title" x="90" y="75" text-anchor="middle">Your input</text>
+<path class="fg-arrow" d="M160 70L196 70" marker-end="url(#ah)"/>
+<rect class="fg-box-soft" x="196" y="44" width="328" height="52" rx="10"/>
+<text class="fg-title" x="360" y="66" text-anchor="middle">One module</text>
+<text class="fg-muted" x="360" y="84" text-anchor="middle">for example Library Search or Identity</text>
+<path class="fg-arrow" d="M524 70L560 70" marker-end="url(#ah)"/>
+<rect class="fg-box" x="560" y="44" width="140" height="52" rx="10"/>
+<text class="fg-title" x="630" y="75" text-anchor="middle">Its result</text>
+<path class="fg-line" d="M20 118L700 118"/>
+<text class="fg-title" x="20" y="148">Workflow</text>
+<text class="fg-muted" x="104" y="148">a fixed chain of modules on one input</text>
+<rect class="fg-box" x="20" y="164" width="140" height="88" rx="10"/>
+<text class="fg-title" x="90" y="200" text-anchor="middle">One input</text>
+<text class="fg-muted" x="90" y="221" text-anchor="middle">a spectrum or</text>
+<text class="fg-muted" x="90" y="239" text-anchor="middle">a compound</text>
+<path class="fg-arrow" d="M160 208L196 208" marker-end="url(#ah)"/>
+<rect class="fg-box-accent" x="196" y="164" width="328" height="88" rx="10"/>
+<rect class="fg-box" x="214" y="178" width="44" height="40" rx="8"/>
+<text class="fg-title" x="236" y="204" text-anchor="middle">1</text>
+<path class="fg-arrow" d="M258 198L276 198" marker-end="url(#ah)"/>
+<rect class="fg-box" x="276" y="178" width="44" height="40" rx="8"/>
+<text class="fg-title" x="298" y="204" text-anchor="middle">2</text>
+<path class="fg-arrow" d="M320 198L338 198" marker-end="url(#ah)"/>
+<rect class="fg-box" x="338" y="178" width="44" height="40" rx="8"/>
+<text class="fg-title" x="360" y="204" text-anchor="middle">3</text>
+<path class="fg-arrow" d="M382 198L400 198" marker-end="url(#ah)"/>
+<rect class="fg-box" x="400" y="178" width="44" height="40" rx="8"/>
+<text class="fg-title" x="422" y="204" text-anchor="middle">4</text>
+<path class="fg-arrow" d="M444 198L462 198" marker-end="url(#ah)"/>
+<rect class="fg-box" x="462" y="178" width="44" height="40" rx="8"/>
+<text class="fg-title" x="484" y="204" text-anchor="middle">5</text>
+<text class="fg-small" x="360" y="240" text-anchor="middle">modules, one after another</text>
+<path class="fg-arrow" d="M524 208L560 208" marker-end="url(#ah)"/>
+<rect class="fg-box" x="560" y="164" width="140" height="88" rx="10"/>
+<text class="fg-title" x="630" y="200" text-anchor="middle">One answer</text>
+<text class="fg-muted" x="630" y="221" text-anchor="middle">with its level</text>
+<text class="fg-muted" x="630" y="239" text-anchor="middle">and evidence</text>
+</svg>

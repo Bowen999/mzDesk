@@ -1,0 +1,36 @@
+/* Password lock. Loaded before styles.css, so every rule here is prefixed to win on specificity. */
+.lock-gate { position: relative; }
+.lock-gate.is-locked { height: 100vh; height: 100dvh; overflow: hidden; }
+.lock-gate.is-locked > .lock-content { filter: blur(14px); pointer-events: none; user-select: none; -webkit-user-select: none; }
+
+.lock-gate > .lock-overlay {
+  position: absolute; inset: 0; display: flex; align-items: flex-start; justify-content: center; padding: 16px;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--bg) 40%, transparent);
+}
+.lock-overlay > .lock-card {
+  width: 320px; max-width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 10px; text-align: center;
+  margin: auto 0; padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .18);
+}
+.lock-card > .lock-card-icon { align-self: center; color: var(--muted); }
+.lock-card > h2 { margin: 0; font-size: 18px; }
+.lock-card > input[type=password] {
+  font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 4px; width: 100%; background: var(--bg); color: var(--ink);
+}
+.lock-card > input[type=password]:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+.lock-card > input[aria-invalid=true] { border-color: #dc2626; }
+.lock-card > .lock-error { min-height: 18px; font-size: 13px; color: #dc2626; text-align: left; }
+.lock-card > .btn { width: 100%; }
+.lock-card > .lock-note { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+
+/* sidebar */
+.sidebar svg.lock-icon { flex: none; margin-left: 6px; vertical-align: -1px; opacity: .55; }
+.sidebar .lock-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+.sidebar .lock-brand-row > .brand { margin-bottom: 0; }
+.sidebar .lock-btn {
+  display: inline-flex; align-items: center; gap: 4px; font: inherit; font-size: 11px; padding: 2px 8px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted);
+}
+.sidebar .lock-btn:hover { color: var(--ink); background: var(--bg); }
+.sidebar .lock-btn .lock-icon { margin: 0; float: none; opacity: 1; }

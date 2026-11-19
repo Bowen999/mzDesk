@@ -1,0 +1,48 @@
+{
+  "source": "https://github.com/robinschmid/microbe_masst",
+  "sha": "5dd2a0f6981697d9a10c26750c45013ca50ab328",
+  "licence": "MIT (Copyright (c) 2023 Robin Schmid)",
+  "built": "2026-11-14",
+  "columns": [
+    "dataset",
+    "file_key",
+    "domain",
+    "category"
+  ],
+  "rows": 144664,
+  "domains": {
+    "microbe": {
+      "rows": 57868,
+      "files": 57868,
+      "categories": 2853,
+      "blank_or_qc_dropped": 2912
+    },
+    "plant": {
+      "rows": 41754,
+      "files": 41754,
+      "categories": 4014,
+      "blank_or_qc_dropped": 3060
+    },
+    "tissue": {
+      "rows": 40521,
+      "files": 40521,
+      "categories": 356,
+      "blank_or_qc_dropped": 4264
+    },
+    "food": {
+      "rows": 3579,
+      "files": 3579,
+      "categories": 723,
+      "blank_or_qc_dropped": 0
+    },
+    "personal_care": {
+      "rows": 942,
+      "files": 942,
+      "categories": 58,
+      "blank_or_qc_dropped": 0
+    }
+  },
+  "sha256": "337b73605be8952b9ae3f34eb005d3916263986185c3a1355036003a9e81e196",
+  "file_key": "lower-case basename without extension",
+  "note": "Blank and QC files are dropped. The microbiome table is not included."
+}

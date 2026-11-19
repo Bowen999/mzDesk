@@ -1,0 +1,163 @@
+name: macOS and Linux
+
+# unit: the test suite on Linux x64, macOS Intel and macOS Apple silicon (macos-15), on every change to the code or the tests. A fresh checkout has no MetFrag jar, web build
+#   or components, so the tests that need them (NEEDS_SETUP in tests/conftest.py) are skipped here (MZDESK_TESTS_WITHOUT_SETUP=1).
+# full: `python dev_setup.py` (everything, one command), then every test; started by hand (Run workflow, full=true).
+# engines: the real installs and one check per engine, started by hand (Actions -> macOS and Linux -> Run workflow).
+#   Same setup command as the local version's dialog; on these systems it also fetches Mono (conda-forge) for MS-FINDER and, where there
+#   is no conda, micromamba for FRIGID. CFM-ID runs in Docker, which only the Linux runner has.
+# The spectral libraries (2.3 GB download, 1.3 GB index) are left out to stay inside the runner's guaranteed 14 GB of disk.
+on:
+  workflow_dispatch:
+    inputs:
+      engines:
+        description: "Also install and run MS-FINDER, FRIGID, NEIMS, RepoRT, CCS, Pan-ReDU and (Linux) CFM-ID (long)"
+        type: boolean
+        default: false
+      full:
+        description: "Also run dev_setup.py (everything) and then every test (long)"
+        type: boolean
+        default: false
+  pull_request:
+    paths: ["mzdesk/**", "tests/**", "requirements.txt", "pyproject.toml", "dev_setup.py", ".github/workflows/posix.yml"]
+  push:
+    branches: [main]
+    paths: ["mzdesk/**", "tests/**", "requirements.txt", "pyproject.toml", "dev_setup.py", ".github/workflows/posix.yml"]
+
+jobs:
+  unit:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements.txt pytest httpx
+      - name: msbuddy version
+        run: python -m pip show msbuddy | grep Version
+      - name: OpenMP runtime for LightGBM (macOS; install.sh does the same)
+        if: ${{ runner.os == 'macOS' }}
+        run: python -m mzdesk.shared.openmp --install
+      - name: Tests that need no setup
+        env:
+          MZDESK_TESTS_WITHOUT_SETUP: "1"
+        run: python -m pytest tests -q -p no:cacheprovider
+
+  full:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.full }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: astral-sh/setup-uv@v5
+      - name: One command for everything
+        run: python dev_setup.py
+      - name: Every test
+        if: ${{ !cancelled() }}
+        run: python -m pytest tests -q -p no:cacheprovider
+      - name: Disk used
+        if: ${{ !cancelled() }}
+        run: |
+          df -h "$HOME"
+          du -sh "$HOME/.mzdesk" 2>/dev/null || true
+
+  engines:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.engines }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    env:
+      PYTHONUNBUFFERED: "1"      # the log shows each line when it is written (the time stamps say which step is slow)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v5
+      - run: python -m pip install -r requirements.txt
+      - name: OpenMP runtime for LightGBM (macOS; install.sh does the same)
+        if: ${{ runner.os == 'macOS' }}
+        run: python -m mzdesk.shared.openmp --install
+      - name: Setup msfinder (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes msfinder
+      - name: Setup neims (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes neims
+      - name: Setup molgpka (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes molgpka
+      - name: Setup repo (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes repo
+      - name: Setup ccs (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes ccs
+      - name: Setup redu (same code as the dialog)
+        if: ${{ !cancelled() }}
+        timeout-minutes: 30      # one slow component cannot hold up the others
+        run: python -m mzdesk setup --yes redu
+      - name: MS-FINDER
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py msfinder
+      - name: BUDDY (msbuddy and its LightGBM model)
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py buddy
+      - name: NEIMS
+        if: ${{ !cancelled() }}   # run every engine even when an earlier one failed
+        run: python validation/windows/smoke.py neims
+      - name: RepoRT
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py repo
+      - name: CCS
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py ccs
+      - name: Pan-ReDU
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py redu
+      - name: MS2DeepScore and Spec2Vec (torch, gensim)
+        if: ${{ !cancelled() }}
+        run: python validation/windows/smoke.py deep
+      - name: CFM-ID setup (Docker, Linux only)
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        run: python -m mzdesk setup --yes cfmid
+      - name: CFM-ID
+        if: ${{ !cancelled() && runner.os == 'Linux' }}
+        run: python validation/windows/smoke.py cfmid
+      - name: FRIGID setup
+        if: ${{ !cancelled() && !(runner.os == 'macOS' && runner.arch == 'X64') }}   # not on Intel Macs (components.py)
+        run: python -m mzdesk setup --yes frigid
+      - name: FRIGID
+        if: ${{ !cancelled() && !(runner.os == 'macOS' && runner.arch == 'X64') }}   # not on Intel Macs (components.py)
+        run: python validation/windows/smoke.py frigid
+      - name: Disk used
+        if: ${{ !cancelled() }}
+        run: |
+          df -h "$HOME"
+          du -sh "$HOME/.mzdesk" 2>/dev/null || true
+      - name: Processes still running (what a stopped step left behind)
+        if: ${{ always() }}
+        run: ps -ef | grep -E "python|uv|mono|micromamba|curl" | grep -v grep || true

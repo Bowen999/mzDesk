@@ -1,0 +1,43 @@
+/* Reference Spectra: clickable rows of the table (Blocks.tsx, row.reference) and the Selected spectrum block under it (ReferenceSpectrum.tsx).
+   The block reuses the fact cards and the spectrum frame of the fragment view (fragment-view.css). */
+.out-table tr.row-open { cursor: pointer; }
+.out-table tr.row-open:hover > td { background: var(--hover); }
+.out-table tr.row-open.is-shown > td { background: var(--accent-bg); }
+.out-table tr.row-open.is-shown > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.out-table tr.row-open:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.rs-panel { position: relative; }
+.out:has(> .rs-panel) { scroll-margin-top: 16px; }
+.rs-panel.is-loading > :not(.rs-loading) { opacity: .45; transition: opacity .15s; pointer-events: none; }
+.rs-loading { position: absolute; z-index: 2; top: 0; right: 0; padding: 3px 10px; color: var(--muted); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; font-size: 12px; }
+.rs-error { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.rs-error .alert { flex: 1 1 260px; margin: 0; }
+.rs-head { min-width: 0; margin: 0 0 14px; }
+.rs-name { color: var(--ink); font-size: 17px; font-weight: 600; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-sub { margin-top: 2px; color: var(--muted); font: 12px var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.rv-scores { margin-bottom: 16px; }
+.rv-spectrum { margin: 0 0 20px; padding: 10px 12px 8px; }
+.rv-spectrum figcaption { margin: 2px 4px 2px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.rv-heading { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--ink); font-size: 13.5px; font-weight: 600; }
+
+.rv-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 22px; margin: 0 0 22px; padding: 14px 16px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.rv-meta > div { min-width: 0; }
+.rv-meta > .mono { grid-column: 1 / -1; }
+.rv-meta dt { color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.rv-meta dd { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; overflow-wrap: anywhere; }
+.rv-meta > .mono dd { font-family: var(--mono); font-size: 12px; }
+
+.rv-lower { display: grid; grid-template-columns: minmax(220px, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.rv-lower > section { min-width: 0; }
+.rv-peaks-box { max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; overscroll-behavior: contain; }
+.rv-peaks-box .table-wrap { border: 0; margin: 0; }
+.rv-peaks-box thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); }
+.rv-formats .out { margin: 0; }
+.rv-formats .code { max-height: 300px; overflow: auto; }
+
+@media (max-width: 760px) {
+  .rv-lower { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.egg-info/
+
+# large vendored binary (downloaded by dev_setup.py)
+mzdesk/lib/*.jar
+
+# frontend
+web/node_modules/
+web/dist/
+mzdesk/static/
+
+# release build: the wheel and version.json
+dist/
+build/
+
+# Pan-ReDU metadata: never committed or shipped; downloaded on first use (mzdesk/gnps/redu_setup.py)
+mzdesk/gnps/redu_cache/*.gz

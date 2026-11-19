@@ -1,0 +1,8 @@
+abbr,C,DB,token,n,evidence
+HETE,20,4,OH,1,RikenOxPLs n=98 (fam_fa 2); reference label chain = hydroxy-eicosatetraenoyl
+HEPE,20,5,OH,1,RikenOxPLs n=54; hydroxy-eicosapentaenoyl
+HDoHE,22,6,OH,1,RikenOxPLs n=58; hydroxy-docosahexaenoyl
+HODE,18,2,OH,1,RikenOxPLs n=25; hydroxy-octadecadienoyl
+EET,20,4,Ep,1,RikenOxPLs n=37; epoxy-eicosatrienoyl (epoxide ring already counted in DB)
+EpETE,20,5,Ep,1,RikenOxPLs n=67; epoxy-eicosatetraenoyl (epoxide ring already counted in DB)
+EpDPE,22,6,Ep,1,RikenOxPLs n=13; epoxy-docosapentaenoyl (epoxide ring already counted in DB)
